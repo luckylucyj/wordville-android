@@ -1,0 +1,182 @@
+[
+  {
+    "id": "reservation",
+    "word": "reservation",
+    "meaning": "예약",
+    "example": "I would like to confirm my reservation.",
+    "translation": "예약을 확인하고 싶습니다.",
+    "role": "호텔 직원",
+    "dialogue": "예약 번호를 확인해 드리겠습니다."
+  },
+  {
+    "id": "invoice",
+    "word": "invoice",
+    "meaning": "청구서",
+    "example": "Please send the invoice by Friday.",
+    "translation": "금요일까지 청구서를 보내 주세요.",
+    "role": "회계 담당자",
+    "dialogue": "금액과 결제 기한을 확인해 주세요."
+  },
+  {
+    "id": "deadline",
+    "word": "deadline",
+    "meaning": "마감일",
+    "example": "The deadline for applications is Monday.",
+    "translation": "지원서 마감일은 월요일입니다.",
+    "role": "인사 담당자",
+    "dialogue": "월요일까지 지원서를 제출해 주세요."
+  },
+  {
+    "id": "appointment",
+    "word": "appointment",
+    "meaning": "약속",
+    "example": "I have an appointment at ten.",
+    "translation": "10시에 약속이 있습니다.",
+    "role": "접수 직원",
+    "dialogue": "성함과 방문 시간을 확인하겠습니다."
+  },
+  {
+    "id": "refund",
+    "word": "refund",
+    "meaning": "환불",
+    "example": "You can request a refund within seven days.",
+    "translation": "7일 이내에 환불을 요청할 수 있습니다.",
+    "role": "매장 직원",
+    "dialogue": "영수증과 상품을 확인하겠습니다."
+  },
+  {
+    "id": "shipment",
+    "word": "shipment",
+    "meaning": "배송",
+    "example": "The shipment will arrive tomorrow.",
+    "translation": "배송 물품은 내일 도착합니다.",
+    "role": "물류 담당자",
+    "dialogue": "배송 번호로 도착 일정을 확인해 주세요."
+  },
+  {
+    "id": "budget",
+    "word": "budget",
+    "meaning": "예산",
+    "example": "We need to review the annual budget.",
+    "translation": "연간 예산을 검토해야 합니다.",
+    "role": "재무 담당자",
+    "dialogue": "예상 비용과 사용 가능한 금액을 비교해 주세요."
+  },
+  {
+    "id": "approve",
+    "word": "approve",
+    "meaning": "승인하다",
+    "example": "The manager will approve the request.",
+    "translation": "관리자가 요청을 승인할 것입니다.",
+    "role": "관리자",
+    "dialogue": "요청 내용을 검토한 뒤 승인하겠습니다."
+  },
+  {
+    "id": "attend",
+    "word": "attend",
+    "meaning": "참석하다",
+    "example": "All employees must attend the meeting.",
+    "translation": "모든 직원은 회의에 참석해야 합니다.",
+    "role": "팀장",
+    "dialogue": "오전 10시 회의에 참석해 주세요."
+  },
+  {
+    "id": "purchase",
+    "word": "purchase",
+    "meaning": "구매",
+    "example": "Keep the receipt for your purchase.",
+    "translation": "구매 영수증을 보관하세요.",
+    "role": "매장 직원",
+    "dialogue": "구매 내역을 영수증에서 확인하세요."
+  },
+  {
+    "id": "schedule",
+    "word": "schedule",
+    "meaning": "일정",
+    "example": "The schedule has been updated.",
+    "translation": "일정이 수정되었습니다.",
+    "role": "비서",
+    "dialogue": "변경된 시간과 장소를 확인해 주세요."
+  },
+  {
+    "id": "available",
+    "word": "available",
+    "meaning": "이용 가능한",
+    "example": "A conference room is available.",
+    "translation": "회의실을 이용할 수 있습니다.",
+    "role": "안내 직원",
+    "dialogue": "현재 예약 가능한 회의실이 있습니다."
+  },
+  {
+    "id": "confirm",
+    "word": "confirm",
+    "meaning": "확인하다",
+    "example": "Please confirm your email address.",
+    "translation": "이메일 주소를 확인해 주세요.",
+    "role": "접수 직원",
+    "dialogue": "입력하신 주소가 맞는지 확인해 주세요."
+  },
+  {
+    "id": "application",
+    "word": "application",
+    "meaning": "지원서",
+    "example": "Submit your application online.",
+    "translation": "지원서를 온라인으로 제출하세요.",
+    "role": "인사 담당자",
+    "dialogue": "지원서를 제출하면 접수 여부를 알려드립니다."
+  },
+  {
+    "id": "employee",
+    "word": "employee",
+    "meaning": "직원",
+    "example": "Every employee receives training.",
+    "translation": "모든 직원은 교육을 받습니다.",
+    "role": "교육 담당자",
+    "dialogue": "신입 직원 교육은 월요일에 진행됩니다."
+  },
+  {
+    "id": "customer",
+    "word": "customer",
+    "meaning": "고객",
+    "example": "The customer requested a replacement.",
+    "translation": "고객이 교환을 요청했습니다.",
+    "role": "상담 직원",
+    "dialogue": "고객님, 교환하실 상품을 확인하겠습니다."
+  },
+  {
+    "id": "receipt",
+    "word": "receipt",
+    "meaning": "영수증",
+    "example": "May I have a receipt?",
+    "translation": "영수증을 받을 수 있을까요?",
+    "role": "매장 직원",
+    "dialogue": "결제 금액이 표시된 영수증입니다."
+  },
+  {
+    "id": "equipment",
+    "word": "equipment",
+    "meaning": "장비",
+    "example": "The equipment needs maintenance.",
+    "translation": "장비에 정비가 필요합니다.",
+    "role": "시설 담당자",
+    "dialogue": "사용 전에 장비 상태를 점검해 주세요."
+  },
+  {
+    "id": "maintenance",
+    "word": "maintenance",
+    "meaning": "유지보수",
+    "example": "Regular maintenance prevents problems.",
+    "translation": "정기 유지보수는 문제를 예방합니다.",
+    "role": "시설 담당자",
+    "dialogue": "이번 주 금요일에 정기 점검을 진행합니다."
+  },
+  {
+    "id": "negotiate",
+    "word": "negotiate",
+    "meaning": "협상하다",
+    "example": "We will negotiate the price.",
+    "translation": "우리는 가격을 협상할 것입니다.",
+    "role": "구매 담당자",
+    "dialogue": "수량과 가격 조건을 함께 검토하겠습니다."
+  }
+]

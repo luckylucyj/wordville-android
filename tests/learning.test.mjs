@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import '../app/src/main/assets/engine.js';
+const E=globalThis.Wordville;
+test('Korean answer normalization and blank rejection',()=>{assert.equal(E.isCorrect(' 이용 가능한! ','이용 가능한'),true);assert.equal(E.isCorrect('','예약'),false);assert.equal(E.isCorrect('청구서','예약'),false);});
+test('correct answer schedules first and third day and gives rewards once per due cycle',()=>{let s=E.review(E.fresh(),'a',true,1000);assert.equal(s.xp,10);assert.equal(s.reviews.a.due,86401000);s=E.review(s,'a',true,2000);assert.equal(s.xp,10);assert.equal(s.reviews.a.due,259202000);});
+test('wrong answer schedules retry after ten minutes without reward',()=>{const s=E.review(E.fresh(),'a',false,1000);assert.equal(s.coins,0);assert.equal(s.reviews.a.due,601000);assert.equal(s.reviews.a.streak,0);});
+test('interval caps at thirty days',()=>{let s=E.fresh(),now=1000;for(let i=0;i<8;i++){s=E.review(s,'a',true,now);now=s.reviews.a.due;}assert.equal(s.reviews.a.streak,5);assert.equal(s.reviews.a.due,now);});
+test('combination prevents reverse duplicates and same-word rewards',()=>{let s=E.combine(E.fresh(),'reservation','confirm','예약 확인');assert.equal(s.coins,5);assert.equal(s.concepts[0].name,'예약 확인');assert.throws(()=>E.combine(s,'confirm','reservation','확인 예약'));assert.throws(()=>E.combine(s,'x','x','같음'));assert.throws(()=>E.combine(s,'x','y',' '));});
+test('review and concept data survive JSON persistence',()=>{let s=E.combine(E.review(E.fresh(),'invoice',false,1000),'invoice','deadline','청구서 기한');assert.deepEqual(JSON.parse(JSON.stringify(s)),s);});
+test('sample vocabulary has unique IDs and complete examples',()=>{const words=JSON.parse(fs.readFileSync(new URL('../app/src/main/assets/words.json',import.meta.url)));assert.equal(words.length,20);assert.equal(new Set(words.map(w=>w.id)).size,20);for(const w of words)for(const key of ['id','word','meaning','example','translation','role','dialogue'])assert.ok(w[key]);});
