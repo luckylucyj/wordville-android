@@ -17,11 +17,19 @@ jobs:
           node-version: '22'
       - name: Test learning logic
         run: npm test
+      - name: Test mobile web interactions
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          python3 -m http.server 4173 --directory app/src/main/assets &
+          CHROME_PATH="$(command -v google-chrome)" node tests/browser.cjs
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - name: Install SDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
