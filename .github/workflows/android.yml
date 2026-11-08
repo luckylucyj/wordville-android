@@ -99,7 +99,7 @@ jobs:
             adb install smoke/androidTest/debug/app-debug-androidTest.apk
             adb shell am instrument -w com.wordville.app.village.test/androidx.test.runner.AndroidJUnitRunner > android-test-result.txt
             cat android-test-result.txt
-            rg 'OK \([0-9]+ tests?\)' android-test-result.txt
+            grep -Eq 'OK \([0-9]+ tests?\)' android-test-result.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
