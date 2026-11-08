@@ -89,3 +89,36 @@ $('upload-local-images').addEventListener('click',async e=>{
 });
 if(cloud){cloud.auth.onAuthStateChange((_event,session)=>{authState(session?.user||null);});cloud.auth.getSession().then(({data,error})=>{if(error)authMessage('로그인 정보를 확인하지 못했습니다. 다시 로그인해 주세요.');else authState(data.session?.user||null);});}else{$('cloud-status').textContent='서버 모듈 로드 실패';}
 document.addEventListener('village-study',e=>{const w=words.find(w=>w.id===e.detail.word);if(w)openWord(w);});
+
+/* Explicit learning snapshot sync; existing device records stay untouched until chosen. */
+(function(){
+ const host=$('cloud-account'); if(!host)return;
+ const box=document.createElement('section');box.className='card';
+ const heading=document.createElement('h3');heading.textContent='학습 기록 · 다이어리 연동';
+ const info=document.createElement('p');info.textContent='XP·코인·복습·개념 기록을 같은 계정의 다이어리에서 확인합니다. 서버 저장과 불러오기는 직접 선택합니다.';
+ const msg=document.createElement('p');msg.setAttribute('role','status');
+ const push=document.createElement('button');push.type='button';push.textContent='이 기기 학습 기록 서버에 저장';
+ const pull=document.createElement('button');pull.type='button';pull.textContent='서버 학습 기록 이 기기로 불러오기';
+ box.append(heading,info,push,pull,msg);host.append(box);
+ let working=false;
+ function valid(s){return s&&s.version===1&&Number.isFinite(s.xp)&&s.xp>=0&&Number.isFinite(s.coins)&&s.coins>=0&&s.reviews&&typeof s.reviews==='object'&&!Array.isArray(s.reviews)&&Array.isArray(s.concepts)&&JSON.stringify(s).length<490000;}
+ async function withLock(action){if(working)return;const uid=cloudUser?.id;if(!uid||!cloud){msg.textContent='먼저 Wordville 계정으로 로그인해 주세요.';return;}working=true;push.disabled=pull.disabled=true;msg.textContent='서버 확인 중…';try{await action(uid);}catch(e){msg.textContent=e.message||'연결에 실패했습니다. 기기 기록은 유지됩니다.';}finally{working=false;push.disabled=pull.disabled=false;}}
+ push.addEventListener('click',()=>withLock(async uid=>{
+ const snapshot=JSON.parse(JSON.stringify(state));if(!valid(snapshot))throw Error('학습 기록 형식을 확인해 주세요.');
+ const {data:old,error}=await cloud.from('wordville_learning').select('payload,version,updated_at').eq('owner_id',uid).maybeSingle();if(error)throw Error('서버 학습 기록을 읽지 못했습니다. 연결을 확인해 주세요.');
+ if(old&&JSON.stringify(old.payload)!==JSON.stringify(snapshot)&&!confirm('서버 '+old.payload.xp+' XP / 이 기기 '+snapshot.xp+' XP입니다. 이 기기 기록으로 서버 기록을 바꿀까요?')){msg.textContent='취소했습니다. 기록은 유지됩니다.';return;}
+ if(cloudUser?.id!==uid)throw Error('계정이 바뀌었습니다. 다시 시도해 주세요.');
+ const values={owner_id:uid,payload:snapshot,version:(old?.version||0)+1,updated_at:new Date().toISOString()};
+ const result=old?await cloud.from('wordville_learning').update(values).eq('owner_id',uid).eq('version',old.version).select('version'):await cloud.from('wordville_learning').insert(values).select('version');
+ if(result.error||!result.data?.length)throw Error('서버 저장 실패 또는 다른 기기에서 변경했습니다. 다시 확인해 주세요.');
+ msg.textContent='서버 저장 완료 · '+new Date().toLocaleString()+' · 다이어리의 Wordville 탭에서 같은 계정으로 확인하세요.';
+ }));
+ pull.addEventListener('click',()=>withLock(async uid=>{
+ const {data:row,error}=await cloud.from('wordville_learning').select('payload,updated_at').eq('owner_id',uid).maybeSingle();
+ if(error)throw Error('서버 기록을 읽지 못했습니다.');if(!row)throw Error('저장된 서버 학습 기록이 없습니다. 먼저 기록이 있는 기기에서 서버에 저장해 주세요.');if(!valid(row.payload))throw Error('서버 기록 형식이 맞지 않습니다.');
+ if(!confirm('이 기기 '+state.xp+' XP를 서버 '+row.payload.xp+' XP 기록으로 바꿀까요? 현재 기록은 이 기기에 백업합니다.')){msg.textContent='취소했습니다.';return;}
+ if(cloudUser?.id!==uid)throw Error('계정이 바뀌었습니다.');
+ localStorage.setItem('wordville.learning.backup.'+Date.now(),JSON.stringify(state));
+ if(!save(row.payload))throw Error('기기에 저장하지 못했습니다.');renderConcepts();msg.textContent='서버 기록을 불러왔습니다. 이전 기기 기록은 백업했습니다.';
+ }));
+})();
