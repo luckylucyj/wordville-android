@@ -15,11 +15,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install web dependencies
+        run: npm ci
+      - name: Bundle cloud client
+        run: npm run build:web
       - name: Test learning logic
         run: npm test
       - name: Test mobile web interactions
         run: |
-          npm install --no-save --package-lock=false playwright@1.56.1
           python3 -m http.server 4173 --directory app/src/main/assets &
           CHROME_PATH="$(command -v google-chrome)" node tests/browser.cjs
       - uses: actions/setup-java@v4
@@ -35,8 +38,14 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: wordville-test-signing-v1
       - name: Build and lint Android app
-        run: gradle --no-daemon assembleDebug lintDebug
+        run: gradle --no-daemon assembleDebug assembleDebugAndroidTest lintDebug
+      - name: Verify APK signature
+        run: '$ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk'
       - name: Name APK
         run: cp app/build/outputs/apk/debug/app-debug.apk wordville-debug.apk
       - uses: actions/upload-artifact@v4
@@ -50,4 +59,50 @@ jobs:
         with:
           name: android-lint-report
           path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-smoke-apks
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          if-no-files-found: error
+          retention-days: 7
+  android-device-test:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-smoke-apks
+          path: smoke
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install smoke/debug/app-debug.apk
+            adb install smoke/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w com.wordville.app.village.test/androidx.test.runner.AndroidJUnitRunner > android-test-result.txt
+            cat android-test-result.txt
+            rg 'OK \([0-9]+ tests?\)' android-test-result.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-device-test-result
+          path: android-test-result.txt
           if-no-files-found: ignore

@@ -10,6 +10,7 @@ import androidx.webkit.WebViewAssetLoader;
 import java.io.ByteArrayInputStream;
 public class MainActivity extends Activity {
  private WebView web; private ValueCallback<Uri[]> chooser;
+ private static final String CLOUD_HOST = "tvqzgyxsyuxiesplfyyg.supabase.co";
  private static final String HOST = "appassets.androidplatform.net";
  @Override public void onCreate(Bundle saved) {
   super.onCreate(saved);
@@ -23,6 +24,7 @@ public class MainActivity extends Activity {
    @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
     Uri url=request.getUrl();
     if ("https".equals(url.getScheme()) && HOST.equals(url.getHost())) { WebResourceResponse r=loader.shouldInterceptRequest(url); if(r!=null)return r; }
+    if ("https".equals(url.getScheme()) && CLOUD_HOST.equals(url.getHost())) return null;
     return new WebResourceResponse("text/plain", "UTF-8", new ByteArrayInputStream(new byte[0]));
    }
    @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return !("https".equals(request.getUrl().getScheme()) && HOST.equals(request.getUrl().getHost())); }

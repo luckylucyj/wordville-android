@@ -1,50 +1,73 @@
-# Wordville Android
+# Wordville Village 1.1
 
-픽셀 마을을 배경으로 단어를 배우는 영어 학습 앱의 재구성 버전입니다.
-기존 `wordville_toeic_prototype_v4.html`은 확인 시 0바이트였고 기존 ZIP은 찾지 못했기 때문에, 이전 요구사항에 맞춰 소스를 새로 작성했습니다. 원본 v4와 동일한 화면·데이터를 복원한 것은 아닙니다.
+Android에서 실행되는 영어 학습 앱입니다. WebView 내부에서 HTML·JavaScript·Canvas로 픽셀 마을을 그립니다. Unity 프로젝트는 아닙니다.
 
-## 구현 기능
+## 마을과 학습
 
-- 자체 작성 기초 TOEIC 상황 예시 단어 20개, 영어·한국어 검색
-- 뜻 가리기, 영어 예문·한국어 번역, 주민 역할과 대화
-- 단어별 기억용 이미지 업로드·조회·삭제 (IndexedDB, 개별 이미지 최대 5MB)
-- 한국어 뜻 입력 복습, 오답 10분 후 재출제, 정답 1·3·7·14·30일 간격
-- 복습 정답 XP·코인 보상, 같은 복습 주기의 반복 보상 방지
-- 서로 다른 단어 2개 조합, 직접 개념 이름 입력, 도감 저장·중복 보상 방지
-- localStorage 학습 기록, IndexedDB 이미지: 같은 기기에만 저장
-- 외부 API·키·네트워크 없이 APK 내부 콘텐츠 실행
+- 첨부 레퍼런스의 석조 건물·가로수·광장·카페·중앙 탑 구성을 참고한 자체 Canvas 픽셀 그래픽
+- 주민 12명: 알렉스, 엘리엇, 하비, 샘, 세바스찬, 셰인, 헤일리, 레아, 마루, 페니, 애비게일, 에밀리
+- 연결된 산책로 위 이동, 가까이 만난 주민끼리 대화, 대화 기록, 주민 선택 후 연관 단어 학습
+- 기기의 현재 시간으로 낮(06–18시)·저녁(18–20시)·밤(20–06시) 전환. 일출·일몰 관측값은 사용하지 않습니다.
+- 낮·밤 미리보기, 확대·축소, 주민 움직임 일시 정지
+- 앱을 연 동안만 시뮬레이션이 실행됩니다. 오프라인에서도 마을은 동작합니다.
+- 예시 단어 20개, 검색·예문·복습·개념 조합. Word Card 뜻 보기/숨기기는 반복 토글입니다.
+- 주민 대화는 준비된 문장입니다. AI 생성 대화나 여러 실제 사용자 간 멀티플레이는 아닙니다.
 
-주민 설명은 미리 작성한 예문·대화이며 AI 생성 기능은 없습니다. 단어 조합은 사용자가 연결 의미와 개념 이름을 작성하는 기능입니다. 로그인, Supabase 동기화, 전체 TOEIC 단어장, 기존 기기 데이터 자동 이전은 포함하지 않았습니다. 앱 삭제·저장 데이터 삭제 시 기록이 사라집니다.
+## 이미지 서버
 
-## 모바일에서 APK 받기
+Wordville 전용 Supabase 프로젝트(서울), 비공개 `wordville-images` 버킷을 사용합니다.
 
-1. 저장소 상단 **Actions** 탭을 엽니다.
-2. **Build wordville Android APK**의 초록색 완료 실행을 엽니다.
-3. 아래 **Artifacts → wordville-android-apk**를 누릅니다. GitHub 로그인이 필요할 수 있습니다.
-4. ZIP을 압축 해제하고 `wordville-debug.apk`를 갤럭시에서 엽니다.
+- 앱 하단에서 이메일로 회원가입 → 이메일 인증 → 로그인
+- 로그인 후 단어 카드에서 선택한 이미지는 본인 계정의 서버 폴더에 저장
+- 같은 계정으로 다른 기기에서 로그인하면 단어별 이미지 조회 가능
+- PNG/JPEG/WebP/GIF, 개별 이미지 5 MiB 이하. SVG·그 외 파일은 차단
+- RLS(행별 접근 규칙)로 본인 폴더만 조회·업로드·교체·삭제 가능
+- 로그인 전 이미지는 IndexedDB(기기 안의 저장 공간)에 저장
+- 서버 연결 실패 시 기기 저장 여부를 표시하고 재시도 버튼 제공
+- 현재 앱의 로그인 전 기존 이미지는 사용자가 `이 기기의 기존 이미지 서버에 복사`를 눌러 이전
+- 학습 점수·복습 기록·개념 도감은 기기 저장이며 서버 동기화 대상은 이미지입니다.
 
-`main` 업로드 시 자동 빌드합니다. 수동 빌드는 Actions → Build wordville Android APK → Run workflow입니다.
-APK는 테스트용 debug 서명입니다. 서로 다른 빌드의 debug 서명이 달라 업데이트 설치가 안 될 수 있습니다. 기존 앱을 삭제하기 전에 학습 기록 손실을 고려해야 합니다. Play Store 출시용 서명은 별도로 설정해야 합니다.
+공개 클라이언트에는 publishable key만 포함합니다. service-role key는 포함하지 않습니다.
+서버 설정 SQL: `server/storage.sql`. Wordville 전용 프로젝트에 적용되어 있습니다.
 
-## 웹 미리보기·테스트
+## 기존 앱과 설치
 
-Node.js 22 이상과 Python 3 사용:
+이전 1.0 설치본의 서명 키를 이어받을 수 없어서 새 테스트 앱 ID는 `com.wordville.app.village`, 이름은 **Wordville Village**입니다. 기존 Wordville을 삭제할 필요가 없습니다. 기존 앱의 기기 저장 기록은 새 앱으로 자동 이전되지 않습니다.
+
+테스트용 debug 서명입니다. 향후 테스트 APK는 CI의 debug keystore 캐시를 재사용하지만 캐시 삭제·만료 시 서명이 달라질 수 있습니다. 정식 배포 시 소유자가 보관하는 별도 서명 키와 보안 CI 비밀 저장 설정이 필요합니다. 서명 키를 공개 저장소에 넣지 마세요.
+
+## 개발·확인
+
+Node.js 22 이상, Python 3:
 
 ```sh
+npm ci
+npm run build:web
 npm test
 npm run serve
 ```
 
-브라우저에서 `http://localhost:4173`을 엽니다. HTML 파일을 직접 여는 대신 HTTP 서버를 사용하세요.
+`http://localhost:4173`에서 미리볼 수 있습니다. Supabase SDK는 로컬 파일로 묶이므로 CDN 스크립트가 필요 없습니다.
 
-## Android 빌드
-
-JDK 17, Android SDK 35, Gradle 8.9가 필요합니다. 저장소에는 Gradle Wrapper 바이너리를 포함하지 않았습니다. GitHub Actions가 지정한 Gradle을 설치합니다.
+모바일 브라우저 테스트:
 
 ```sh
-gradle assembleDebug lintDebug
+npx playwright install chromium --only-shell
+node tests/browser.cjs
 ```
 
-APK: `app/build/outputs/apk/debug/app-debug.apk`
+브라우저 테스트 전 `npm run serve`로 서버를 켜야 합니다. GitHub Actions는 Chrome을 지정해 같은 테스트를 실행합니다.
 
-워크플로에서 학습 로직 테스트, Android 컴파일, Android lint를 실행하고 APK를 30일간 보관합니다. 실제 갤럭시 설치·이미지 선택은 기기 검증이 필요합니다.
+Android: JDK 17, Gradle 8.9, SDK 35.
+
+```sh
+gradle assembleDebug assembleDebugAndroidTest lintDebug
+```
+
+GitHub Actions의 Android 기기 테스트는 API 35 가상 기기에서 설치·시작·WebView 로딩·뜻 토글·주민 12명·야간 전환을 검사합니다. 본인의 실제 갤럭시에서 설치·사진 선택·이메일 로그인도 확인해야 합니다.
+
+APK는 Actions 실행의 `wordville-android-apk`에서 받을 수 있습니다.
+
+## Unity·Blender로 확장할 때
+
+현재 저장소는 Android Studio에서 폴더를 열 수 있는 Gradle 프로젝트입니다. Unity는 사용하지 않습니다. 3D로 전환하려면 Blender에서 모델을 만들어 FBX로 내보내고 Unity에서 장면·이동·상호작용을 구현해야 합니다. Unity에서 Android APK를 바로 빌드하거나 Gradle 프로젝트를 내보내 Android Studio에서 빌드할 수 있습니다. 현재 웹 화면이 Unity 장면으로 자동 변환되지는 않습니다.
