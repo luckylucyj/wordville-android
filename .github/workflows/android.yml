@@ -10,6 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      WORDVILLE_KEYSTORE: ${{ github.workspace }}/.signing/wordville-debug.keystore
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,8 +42,27 @@ jobs:
           gradle-version: '8.9'
       - uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
-          key: wordville-test-signing-v1
+          path: ${{ env.WORDVILLE_KEYSTORE }}
+          key: wordville-reviewed-signing-v2
+      - name: Prepare persistent signing key
+        run: |
+          mkdir -p "$(dirname "$WORDVILLE_KEYSTORE")"
+          if [ ! -f "$WORDVILLE_KEYSTORE" ]; then
+            keytool -genkeypair -keystore "$WORDVILLE_KEYSTORE" -storetype PKCS12 -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 3072 -validity 10000 -dname "CN=Wordville Reviewed, O=Wordville, C=KR"
+          fi
+      - name: Encrypt signing-key recovery backup
+        run: |
+          mkdir -p "$RUNNER_TEMP/wordville-signing-backup"
+          openssl rand -hex 32 > "$RUNNER_TEMP/signing-backup-password"
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in "$WORDVILLE_KEYSTORE" -out "$RUNNER_TEMP/wordville-signing-backup/keystore.enc" -pass file:"$RUNNER_TEMP/signing-backup-password"
+          openssl pkeyutl -encrypt -pubin -inkey scripts/build-signing-public.pem -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in "$RUNNER_TEMP/signing-backup-password" -out "$RUNNER_TEMP/wordville-signing-backup/password.enc"
+          rm "$RUNNER_TEMP/signing-backup-password"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wordville-signing-recovery-encrypted
+          path: ${{ runner.temp }}/wordville-signing-backup/
+          retention-days: 7
+          if-no-files-found: error
       - name: Build and lint Android app
         run: gradle --no-daemon assembleDebug assembleDebugAndroidTest lintDebug
       - name: Verify APK signature
@@ -97,7 +118,7 @@ jobs:
           script: |
             adb install smoke/debug/app-debug.apk
             adb install smoke/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w com.wordville.app.village.vocabulary.test/androidx.test.runner.AndroidJUnitRunner > android-test-result.txt
+            adb shell am instrument -w com.wordville.app.village.vocabulary.reviewed.test/androidx.test.runner.AndroidJUnitRunner > android-test-result.txt
             cat android-test-result.txt
             grep -Eq 'OK \([0-9]+ tests?\)' android-test-result.txt
       - uses: actions/upload-artifact@v4

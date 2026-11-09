@@ -77,7 +77,7 @@ APK는 Actions 실행의 `wordville-android-apk`에서 받을 수 있습니다.
 - 업로드한 PDF에서 6,251항목을 추출하고 중복을 합쳐 5,620개 단어·표현 카드로 구성했습니다. 이디엄 120개를 포함합니다.
 - Day 01–30 / 이디엄 분류, 영문·뜻 검색, 한 화면 60개와 이전·다음 이동을 지원합니다.
 - 복습은 선택한 Day와 검색 결과 중 복습할 시간이 된 단어에서 20개·40개·전체를 선택합니다. 단어 카드에 원본 PDF 쪽수를 표시합니다.
-- 기존 20개 단어 ID, localStorage 키와 IndexedDB 이름을 유지합니다. 기존 배포 APK의 서명 키를 복구할 수 없어 applicationId를 `com.wordville.app.village.vocabulary`로 분리했습니다. ‘Wordville 단어장’으로 기존 앱과 함께 설치되며, 이전 앱과 데이터는 유지됩니다. 기존 앱에서 학습 기록 서버 저장·이미지 서버 복사 후, 새 앱에서 같은 계정으로 로그인하고 서버 학습 기록 불러오기를 선택합니다. 이 과정은 사용자가 직접 선택하며 자동 전송하지 않습니다.
+- 기존 20개 단어 ID, localStorage 키와 IndexedDB 이름을 유지합니다. 기존 배포 APK의 서명 키를 복구할 수 없어 applicationId를 `com.wordville.app.village.vocabulary.reviewed`로 분리했습니다. ‘Wordville 검수 단어장’으로 기존 앱과 함께 설치되며, 이전 앱과 데이터는 유지됩니다. 기존 앱에서 학습 기록 서버 저장·이미지 서버 복사 후, 새 앱에서 같은 계정으로 로그인하고 서버 학습 기록 불러오기를 선택합니다. 이 과정은 사용자가 직접 선택하며 자동 전송하지 않습니다.
 - PDF 원본과 스캔 이미지는 APK에 포함하지 않습니다. 새 단어의 예문은 생성하지 않았으며, 기존 예문은 유지합니다.
 - OCR 결과에는 잔여 오독이나 누락이 있을 수 있습니다. 책 전체 7,600여 표현을 모두 수록했다는 뜻은 아닙니다. 5,622개 기존 카드 텍스트를 직접 검토하고, 수정 후보 원본 435개 크롭 및 영문 불일치 후보 27개 크롭을 확인했습니다. 전체 원본 이미지의 수동 대조 완료나 절대 무오류를 뜻하지 않습니다. 추출 통계는 `docs/vocabulary-import.json`에 있습니다.
 
@@ -87,3 +87,7 @@ APK는 Actions 실행의 `wordville-android-apk`에서 받을 수 있습니다.
 - effect / inform / representative 중복 카드의 옛 ID를 별칭으로 보존합니다. 기존 복습 기록과 개념 기록을 삭제하지 않으며, 옛 ID로 저장한 이미지도 찾습니다. 학습 기록 변환 전 기기 백업을 남깁니다.
 - fair에 섞인 PDF 164쪽의 fall을 분리했습니다. fair의 실제 Day 9 / PDF 166쪽 연결은 유지합니다.
 - 재현: `git show 080d91c:app/src/main/assets/words.json > /tmp/wordville-before-audit.json` 후 `python3 scripts/vocabulary-audit/apply.py /tmp/wordville-before-audit.json`.
+
+## 검수 APK 서명과 설치
+
+1.2.0 빌드의 서명 캐시 경로에 키 파일이 존재하지 않아 서명 키를 복구할 수 없었습니다. 1.2.1 검수 APK는 `com.wordville.app.village.vocabulary.reviewed` / “Wordville 검수 단어장”으로 별도 설치되며 이전 앱과 그 기록을 유지합니다. 새 빌드는 명시적인 키 경로를 사용하며, 키 캐시와 공개키로 암호화한 복구용 백업을 생성합니다. 개인키와 복호화된 서명 키는 저장소에 포함하지 않습니다. 로컬 빌드에는 `WORDVILLE_KEYSTORE`에 해당 키 파일 경로를 지정합니다.
