@@ -9,4 +9,12 @@ test('wrong answer schedules retry after ten minutes without reward',()=>{const 
 test('interval caps at thirty days',()=>{let s=E.fresh(),now=1000;for(let i=0;i<8;i++){s=E.review(s,'a',true,now);now=s.reviews.a.due;}assert.equal(s.reviews.a.streak,5);assert.equal(s.reviews.a.due,now);});
 test('combination prevents reverse duplicates and same-word rewards',()=>{let s=E.combine(E.fresh(),'reservation','confirm','예약 확인');assert.equal(s.coins,5);assert.equal(s.concepts[0].name,'예약 확인');assert.throws(()=>E.combine(s,'confirm','reservation','확인 예약'));assert.throws(()=>E.combine(s,'x','x','같음'));assert.throws(()=>E.combine(s,'x','y',' '));});
 test('review and concept data survive JSON persistence',()=>{let s=E.combine(E.review(E.fresh(),'invoice',false,1000),'invoice','deadline','청구서 기한');assert.deepEqual(JSON.parse(JSON.stringify(s)),s);});
-test('sample vocabulary has unique IDs and complete examples',()=>{const words=JSON.parse(fs.readFileSync(new URL('../app/src/main/assets/words.json',import.meta.url)));assert.equal(words.length,20);assert.equal(new Set(words.map(w=>w.id)).size,20);for(const w of words)for(const key of ['id','word','meaning','example','translation','role','dialogue'])assert.ok(w[key]);});
+test('expanded vocabulary has stable IDs, merged senses and source pages',()=>{
+ const words=JSON.parse(fs.readFileSync(new URL('../app/src/main/assets/words.json',import.meta.url)));
+ assert.ok(words.length>5000);assert.equal(new Set(words.map(w=>w.id)).size,words.length);assert.equal(new Set(words.map(w=>w.word.toLowerCase())).size,words.length);
+ const original=JSON.parse(fs.readFileSync(new URL('./original-word-ids.json',import.meta.url)));
+ for(const [word,id] of Object.entries(original))assert.equal(words.find(w=>w.word===word)?.id,id);
+ for(const w of words){assert.ok(w.word&&w.meaning);assert.doesNotMatch(w.word,/[가-힣]/);assert.ok(w.meanings.length);assert.deepEqual(w.days,[...new Set(w.days)].sort((a,b)=>a-b));assert.ok(w.pdfPages.every(p=>Number.isInteger(p)&&p>=1&&p<=565));}
+ for(let day=1;day<=30;day++)assert.ok(words.filter(w=>w.days.includes(day)).length>=150);
+ assert.ok(words.filter(w=>w.sourceTypes.includes('이디엄')).length>=115);
+});

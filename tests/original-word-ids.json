@@ -1,0 +1,22 @@
+{
+  "reservation": "reservation",
+  "invoice": "invoice",
+  "deadline": "deadline",
+  "appointment": "appointment",
+  "refund": "refund",
+  "shipment": "shipment",
+  "budget": "budget",
+  "approve": "approve",
+  "attend": "attend",
+  "purchase": "purchase",
+  "schedule": "schedule",
+  "available": "available",
+  "confirm": "confirm",
+  "application": "application",
+  "employee": "employee",
+  "customer": "customer",
+  "receipt": "receipt",
+  "equipment": "equipment",
+  "maintenance": "maintenance",
+  "negotiate": "negotiate"
+}
