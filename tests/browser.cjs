@@ -7,6 +7,29 @@ const assert = require('node:assert/strict');
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:4173');await page.waitForSelector('.word');
   assert.equal(await page.locator('.word').count(),60);
+  await page.evaluate(async()=>{
+   const alias='voca-l-effect';
+   localStorage.setItem('wordville.rebuilt.v1',JSON.stringify({...Wordville.fresh(),reviews:{[alias]:{attempts:4,streak:2,due:123}}}));
+   await imageAction('put',alias,new Blob(['legacy-image'],{type:'image/png'}));
+  });
+  await page.reload();await page.waitForSelector('.word');
+  assert.equal(await page.evaluate(()=>state.reviews['voca-effect'].attempts),4);
+  assert.ok(await page.evaluate(()=>localStorage.getItem('wordville.learning.before-vocabulary-audit')));
+  await page.locator('#search').fill('effect');await page.locator('.word').filter({has:page.locator('strong',{hasText:/^effect$/})}).click();
+  await page.waitForFunction(()=>!document.querySelector('#memory-image').hidden);
+  await page.locator('#remove-image').click();await page.waitForFunction(()=>document.querySelector('#memory-image').hidden);
+  assert.equal(await page.evaluate(()=>imageAction('get','voca-l-effect')),undefined);
+  await page.locator('#close-dialog').click();await page.locator('#search').fill('');
+  const fallback=await page.evaluate(async()=>{
+   const original=cloud.storage.from,calls=[];
+   cloud.storage.from=()=>({download:async path=>{calls.push(path);return path==='audit-user/voca-l-effect'?{data:new Blob(['cloud-alias']),error:null}:{data:null,error:{message:'missing'}};}});
+   try{cloudUser={id:'audit-user'};const image=await readMemoryImage('voca-effect');cloudUser={id:'other-user'};const other=await readMemoryImage('voca-effect');return {text:await image.text(),other:!!other,calls};}
+   finally{cloudUser=null;cloud.storage.from=original;}
+  });
+  assert.equal(fallback.text,'cloud-alias');assert.equal(fallback.other,false);
+  assert.deepEqual(fallback.calls,['audit-user/voca-effect','audit-user/voca-l-effect','other-user/voca-effect','other-user/voca-l-effect']);
+  await page.evaluate(()=>{localStorage.setItem('wordville.rebuilt.v1',JSON.stringify(Wordville.fresh()));});
+  await page.reload();await page.waitForSelector('.word');
   const first=await page.locator('.word strong').first().innerText();await page.locator('#next-page').click();assert.notEqual(await page.locator('.word strong').first().innerText(),first);await page.locator('#day-filter').selectOption('2');assert.equal(await page.locator('#page-info').innerText().then(t=>t.startsWith('1 /')),true);await page.locator('#day-filter').selectOption('');
   assert.equal(await page.locator('[data-person]').count(),12);
   await page.locator('#search').fill('reservation');assert.ok(await page.locator('.word').count()>=1);

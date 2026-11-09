@@ -36,13 +36,17 @@ function cloudPath(id,uid=cloudUser?.id){if(!uid)throw Error('먼저 로그인�
 function imageLock(value){imageBusy=value;for(const id of ['image-input','remove-image','sync-image'])$(id).disabled=value;}
 function refreshImageButtons(){ $('sync-image').hidden=!cloudUser||$('memory-image').hidden; }
 async function readMemoryImage(id){
- const uid=cloudUser?.id,key=localImageKey(id,uid);
- let cached=null;try{cached=await imageAction('get',key);}catch{}
+ const uid=cloudUser?.id,ids=E.wordIds(words.find(w=>w.id===id)||{id});
+ let cached=null;for(const candidate of ids){try{cached=await imageAction('get',localImageKey(candidate,uid));}catch{}if(cached)break;}
  if(!uid||!cloud)return cached;
- const {data,error}=await cloud.storage.from(bucket).download(cloudPath(id,uid));
- if(error){if(active?.id===id)$('detail-status').textContent=cached?'기기에 저장된 이미지를 표시합니다. 서버 불러오기는 완료하지 못했습니다.':'서버에 저장된 이미지가 없거나 연결하지 못했습니다.';return cached;}
- try{await imageAction('put',key,data);}catch{}
- return data;
+ for(const candidate of ids){
+  const {data,error}=await cloud.storage.from(bucket).download(cloudPath(candidate,uid));
+  if(error)continue;
+  try{await imageAction('put',localImageKey(id,uid),data);}catch{}
+  return data;
+ }
+ if(active?.id===id)$('detail-status').textContent=cached?'기기에 저장된 이미지를 표시합니다. 서버 불러오기는 완료하지 못했습니다.':'서버에 저장된 이미지가 없거나 연결하지 못했습니다.';
+ return cached;
 }
 $('image-input').addEventListener('change',async event=>{
  const file=event.target.files[0],w=active,uid=cloudUser?.id;if(!file||!w||imageBusy)return;
@@ -55,14 +59,15 @@ $('image-input').addEventListener('change',async event=>{
  }catch(e){if(active===w)$('detail-status').textContent=e.message;}finally{imageLock(false);refreshImageButtons();}
 });
 $('sync-image').addEventListener('click',async()=>{const w=active,uid=cloudUser?.id;if(!w||!uid||imageBusy)return;imageLock(true);try{const file=await imageAction('get',localImageKey(w.id,uid));if(!file)throw Error('먼저 이미지를 선택해 주세요.');const {error}=await cloud.storage.from(bucket).upload(cloudPath(w.id,uid),file,{upsert:true,contentType:file.type});if(error)throw Error('서버 저장에 실패했습니다. 다시 로그인하거나 인터넷 연결을 확인해 주세요.');if(active===w)$('detail-status').textContent='기억용 이미지를 서버에 저장했습니다.';}catch(e){if(active===w)$('detail-status').textContent=e.message;}finally{imageLock(false);}});
-$('remove-image').addEventListener('click',async()=>{const w=active,uid=cloudUser?.id;if(!w||imageBusy)return;imageLock(true);try{if(uid&&cloud){const {error}=await cloud.storage.from(bucket).remove([cloudPath(w.id,uid)]);if(error)throw Error('서버 이미지를 삭제하지 못했습니다. 연결 상태를 확인해 주세요.');}await imageAction('delete',localImageKey(w.id,uid));if(active===w){showImage(null);$('detail-status').textContent=uid?'서버와 기기에서 이미지를 삭제했습니다.':'기기에서 이미지를 삭제했습니다.';}}catch(e){if(active===w)$('detail-status').textContent=e.message;}finally{imageLock(false);}});
+$('remove-image').addEventListener('click',async()=>{const w=active,uid=cloudUser?.id;if(!w||imageBusy)return;imageLock(true);try{if(uid&&cloud){const {error}=await cloud.storage.from(bucket).remove(E.wordIds(w).map(id=>cloudPath(id,uid)));if(error)throw Error('서버 이미지를 삭제하지 못했습니다. 연결 상태를 확인해 주세요.');}for(const id of E.wordIds(w))await imageAction('delete',localImageKey(id,uid));if(active===w){showImage(null);$('detail-status').textContent=uid?'서버와 기기에서 이미지를 삭제했습니다.':'기기에서 이미지를 삭제했습니다.';}}catch(e){if(active===w)$('detail-status').textContent=e.message;}finally{imageLock(false);}});
 $('start-review').addEventListener('click',()=>{const list=filteredWords().filter(w=>!state.reviews[w.id]||state.reviews[w.id].due<=Date.now());const limit=$('review-limit').value;queue=limit==='all'?list:list.slice(0,Number(limit));$('review-card').hidden=false;nextQuestion();});
 $('answer-form').addEventListener('submit',event=>{event.preventDefault();if(!reviewWord)return;const correct=E.isCorrect($('answer').value,reviewWord.meaning);const next=E.review(state,reviewWord.id,correct);if(!save(next))return;$('answer-result').textContent=correct?'정답입니다. +10 XP · +3 코인':`뜻: ${reviewWord.meaning}. 10분 뒤 다시 복습해요.`;$('answer-form').hidden=true;$('next').hidden=false;reviewWord=null;});
 $('next').addEventListener('click',nextQuestion);
 $('combine-form').addEventListener('submit',event=>{event.preventDefault();try{if(save(E.combine(state,$('word-a').value,$('word-b').value,$('concept-name').value))){notify('개념 도감에 저장했습니다. +15 XP · +5 코인');$('concept-name').value='';}}catch(e){notify(e.message);}});
 $('word-a').addEventListener('change',connection);$('word-b').addEventListener('change',connection);
 $('random').addEventListener('click',()=>{let a=Math.floor(Math.random()*words.length),b=(a+1+Math.floor(Math.random()*(words.length-1)))%words.length;$('word-a').selectedIndex=a;$('word-b').selectedIndex=b;connection();});
-async function init(){try{db=await openDatabase();}catch{notify('기억용 이미지 저장을 사용할 수 없습니다.');}try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option',`${w.word} · ${w.meaning}`);option.value=w.id;$(id).append(option);}}$('word-b').selectedIndex=1;connection();renderWords();renderStats();}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
+function migrateLearningAliases(){const next=E.migrateAliases(state,words);if(next!==state){localStorage.setItem('wordville.learning.before-vocabulary-audit',JSON.stringify(state));save(next);}}
+async function init(){try{db=await openDatabase();}catch{notify('기억용 이미지 저장을 사용할 수 없습니다.');}try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option',`${w.word} · ${w.meaning}`);option.value=w.id;$(id).append(option);}}$('word-b').selectedIndex=1;connection();renderWords();renderStats();}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
 init();
 
 function authState(user){
@@ -89,13 +94,13 @@ $('cloud-signup').addEventListener('click',()=>authAction('signup'));
 $('cloud-logout').addEventListener('click',async()=>{const {error}=await cloud.auth.signOut();if(error){authMessage('로그아웃하지 못했습니다. 연결 상태를 확인해 주세요.');return;}authState(null);authMessage('로그아웃했습니다.');});
 $('upload-local-images').addEventListener('click',async e=>{
  const uid=cloudUser?.id;if(!uid)return;e.currentTarget.disabled=true;let count=0;authMessage('기존 이미지를 서버에 복사하는 중…');
- try{for(const w of words){if(cloudUser?.id!==uid)throw Error();const file=await imageAction('get',w.id);if(!file)continue;
+ try{for(const w of words){if(cloudUser?.id!==uid)throw Error();let file=null;for(const id of E.wordIds(w)){file=await imageAction('get',id);if(file)break;}if(!file)continue;
  if(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type))continue;
  const {error}=await cloud.storage.from(bucket).upload(cloudPath(w.id,uid),file,{upsert:true,contentType:file.type});if(error)throw error;await imageAction('put',localImageKey(w.id,uid),file);count++;}authMessage(`${count}개 이미지를 서버에 복사했습니다. 기존 기기 원본은 유지됩니다.`);
  }catch{authMessage(`${count}개 저장 후 중단됐습니다. 연결을 확인하고 다시 시도해 주세요.`);}finally{e.currentTarget.disabled=false;}
 });
 if(cloud){cloud.auth.onAuthStateChange((_event,session)=>{authState(session?.user||null);});cloud.auth.getSession().then(({data,error})=>{if(error)authMessage('로그인 정보를 확인하지 못했습니다. 다시 로그인해 주세요.');else authState(data.session?.user||null);});}else{$('cloud-status').textContent='서버 모듈 로드 실패';}
-document.addEventListener('village-study',e=>{const w=words.find(w=>w.id===e.detail.word);if(w)openWord(w);});
+document.addEventListener('village-study',e=>{const w=words.find(w=>E.wordIds(w).includes(e.detail.word));if(w)openWord(w);});
 
 /* Explicit learning snapshot sync; existing device records stay untouched until chosen. */
 (function(){
@@ -126,6 +131,6 @@ document.addEventListener('village-study',e=>{const w=words.find(w=>w.id===e.det
  if(!confirm('이 기기 '+state.xp+' XP를 서버 '+row.payload.xp+' XP 기록으로 바꿀까요? 현재 기록은 이 기기에 백업합니다.')){msg.textContent='취소했습니다.';return;}
  if(cloudUser?.id!==uid)throw Error('계정이 바뀌었습니다.');
  localStorage.setItem('wordville.learning.backup.'+Date.now(),JSON.stringify(state));
- if(!save(row.payload))throw Error('기기에 저장하지 못했습니다.');renderConcepts();msg.textContent='서버 기록을 불러왔습니다. 이전 기기 기록은 백업했습니다.';
+ if(!save(E.migrateAliases(row.payload,words)))throw Error('기기에 저장하지 못했습니다.');renderConcepts();msg.textContent='서버 기록을 불러왔습니다. 이전 기기 기록은 백업했습니다.';
  }));
 })();

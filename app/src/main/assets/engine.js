@@ -17,6 +17,20 @@
   const key=[a,b].sort().join('|');if(state.concepts.some(c=>c.key===key))throw Error('이미 저장한 단어 조합입니다.');
   return {...state,xp:state.xp+15,coins:state.coins+5,concepts:[...state.concepts,{key,a,b,name}]};
  }
- const api={fresh,normalize,isCorrect,review,combine};
+ function wordIds(word){return [...new Set([word.id,...(word.aliases||[])])];}
+ function migrateAliases(state,words){
+  let next=state;
+  for(const word of words){
+   const records=wordIds(word).map(id=>state.reviews[id]).filter(Boolean);
+   if(!records.length)continue;
+   const best=records.reduce((a,b)=>(b.attempts||0)>(a.attempts||0)?b:a);
+   if(state.reviews[word.id]===best)continue;
+   if(next===state)next={...state,reviews:{...state.reviews}};
+   next.reviews[word.id]={...best};
+  }
+  // Keep legacy records and concept IDs intact for old snapshots and images.
+  return next;
+ }
+ const api={fresh,normalize,isCorrect,review,combine,wordIds,migrateAliases};
  if(typeof module!=='undefined')module.exports=api;root.Wordville=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

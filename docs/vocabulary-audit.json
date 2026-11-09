@@ -1,0 +1,148 @@
+{
+  "release": "1.2.1",
+  "baselineCards": 5622,
+  "finalCards": 5620,
+  "explicitMeaningEditRecords": 433,
+  "spellingOrDisplayEditRecords": 73,
+  "mergedCardPairs": 3,
+  "splitMisassignedSourceCards": 1,
+  "textReviewedCards": 5622,
+  "sourceImageContactCropsReviewed": 435,
+  "additionalEnglishDisagreementCropsReviewed": 27,
+  "sourcePagesReOcr": 416,
+  "originalIdsRetainedAsPrimaryOrAlias": true,
+  "allSourceImagesManuallyReviewed": false,
+  "absoluteErrorFreeGuarantee": false,
+  "reviewLedger": {
+    "textReviewedRanges": [
+      [
+        0,
+        399
+      ],
+      [
+        400,
+        799
+      ],
+      [
+        800,
+        1199
+      ],
+      [
+        1200,
+        1599
+      ],
+      [
+        1600,
+        1999
+      ],
+      [
+        2000,
+        2399
+      ],
+      [
+        2400,
+        2799
+      ],
+      [
+        2800,
+        3199
+      ],
+      [
+        3200,
+        3599
+      ],
+      [
+        3600,
+        3999
+      ],
+      [
+        4000,
+        4399
+      ],
+      [
+        4400,
+        4799
+      ],
+      [
+        4800,
+        5199
+      ],
+      [
+        5200,
+        5621
+      ]
+    ],
+    "sourceImageReviewedPages": [
+      54
+    ],
+    "note": "Text review and source-image review are tracked separately; no blanket manual-verification claim.",
+    "sourceCropReviewedRanges": [
+      [
+        0,
+        434
+      ]
+    ],
+    "additionalSourceImageChecks": [
+      "PDF 78: set down to work",
+      "PDF 109: draw a distinction between",
+      "PDF 504: practitioner",
+      "PDF 523: hit the store",
+      "PDF 125: owed",
+      "PDF 332: rewarding",
+      "PDF 142: momentum",
+      "PDF 142: consolidate"
+    ]
+  },
+  "dictionaryEditorialCorrections": [
+    {
+      "original": "set down to work",
+      "corrected": "get down to work",
+      "reference": "https://www.oxfordlearnersdictionaries.com/definition/english/get-down-to"
+    },
+    {
+      "original": "hit the store",
+      "corrected": "hit the stores",
+      "reference": "https://www.oxfordlearnersdictionaries.com/definition/english/hit_1"
+    },
+    {
+      "word": "practitioner",
+      "originalMeaning": "전문의",
+      "correctedMeaning": "의사; 전문직 종사자",
+      "reference": "https://dictionary.cambridge.org/dictionary/english/practitioner"
+    },
+    {
+      "word": "rewarding",
+      "originalMeaning": "보답을 받는; 보상으로서의",
+      "correctedMeaning": "보람 있는, 가치 있는; 보상이 되는",
+      "reference": "https://www.oxfordlearnersdictionaries.com/us/definition/english/rewarding"
+    },
+    {
+      "word": "momentum",
+      "originalMeaning": "추진력; 탄성",
+      "correctedMeaning": "추진력, 기세",
+      "reference": "https://dictionary.cambridge.org/us/dictionary/english/momentum"
+    },
+    {
+      "word": "take a message",
+      "originalMeaning": "메시지를 남겨 주다",
+      "correctedMeaning": "(다른 사람에게 전할) 메시지를 받아 적다",
+      "reference": "https://www.oxfordlearnersdictionaries.com/definition/english/message_1"
+    },
+    {
+      "word": "owed",
+      "correctedMeaning": "지불·상환해야 하는; 빚진",
+      "reference": "https://dictionary.cambridge.org/dictionary/english/owed"
+    }
+  ],
+  "validation": {
+    "nodeTests": {
+      "passed": 14,
+      "failed": 0
+    },
+    "mobileBrowser": "passed",
+    "legacyLocalImageFallback": "passed",
+    "legacyCloudImageFallbackWithMockedStorage": "passed",
+    "accountImageIsolationWithMockedStorage": "passed",
+    "androidBuild": "pending GitHub Actions build after user approval"
+  }
+}
