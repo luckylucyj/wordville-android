@@ -33,6 +33,9 @@
    sync();
  }
  globalThis.WordvillePortraits={image,order,position,portrait,sheet};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',decorate,{once:true});
- else decorate();
+ // Loaded with defer after village.js: HTML and residents already exist.
+ decorate();
+ // Safely populate late-added residents without duplicating portraits.
+ const list=document.getElementById('resident-list');
+ if(list)new MutationObserver(()=>{if(list.querySelector('[data-person]:not(:has(.wv-portrait))'))decorate();}).observe(list,{childList:true});
 })();
