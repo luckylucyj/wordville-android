@@ -27,6 +27,11 @@ jobs:
         run: |
           python3 -m http.server 4173 --directory app/src/main/assets &
           CHROME_PATH="$(command -v google-chrome)" node tests/browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/homes.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/facilities-browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/life-browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/etymology-browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/characters-browser.cjs
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -50,19 +55,6 @@ jobs:
           if [ ! -f "$WORDVILLE_KEYSTORE" ]; then
             keytool -genkeypair -keystore "$WORDVILLE_KEYSTORE" -storetype PKCS12 -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 3072 -validity 10000 -dname "CN=Wordville Reviewed, O=Wordville, C=KR"
           fi
-      - name: Encrypt signing-key recovery backup
-        run: |
-          mkdir -p "$RUNNER_TEMP/wordville-signing-backup"
-          openssl rand -hex 32 > "$RUNNER_TEMP/signing-backup-password"
-          openssl enc -aes-256-cbc -pbkdf2 -salt -in "$WORDVILLE_KEYSTORE" -out "$RUNNER_TEMP/wordville-signing-backup/keystore.enc" -pass file:"$RUNNER_TEMP/signing-backup-password"
-          openssl pkeyutl -encrypt -pubin -inkey scripts/build-signing-public.pem -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in "$RUNNER_TEMP/signing-backup-password" -out "$RUNNER_TEMP/wordville-signing-backup/password.enc"
-          rm "$RUNNER_TEMP/signing-backup-password"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wordville-signing-recovery-encrypted
-          path: ${{ runner.temp }}/wordville-signing-backup/
-          retention-days: 7
-          if-no-files-found: error
       - name: Build and lint Android app
         run: gradle --no-daemon assembleDebug assembleDebugAndroidTest lintDebug
       - name: Verify APK signature

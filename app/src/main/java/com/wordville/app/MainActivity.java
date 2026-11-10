@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.ActivityNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.Toast;
 import android.view.View;
 import android.webkit.*;
 import androidx.webkit.WebViewAssetLoader;
@@ -12,6 +13,11 @@ public class MainActivity extends Activity {
  private WebView web; private ValueCallback<Uri[]> chooser;
  private static final String CLOUD_HOST = "tvqzgyxsyuxiesplfyyg.supabase.co";
  private static final String HOST = "appassets.androidplatform.net";
+ public static boolean isOxfordUri(Uri uri) {
+  if(uri==null || !"https".equals(uri.getScheme()) || uri.getUserInfo()!=null || (uri.getPort()!=-1 && uri.getPort()!=443)) return false;
+  String host=uri.getHost(), path=uri.getPath();
+  return ("www.oxfordlearnersdictionaries.com".equals(host)||"www.oxfordlearnersdictionaries.co.uk".equals(host)) && path!=null && (path.startsWith("/definition/english/")||path.startsWith("/us/definition/english/")||path.startsWith("/search/english/"));
+ }
  @Override public void onCreate(Bundle saved) {
   super.onCreate(saved);
   web = new WebView(this); setContentView(web);
@@ -27,7 +33,15 @@ public class MainActivity extends Activity {
     if ("https".equals(url.getScheme()) && CLOUD_HOST.equals(url.getHost())) return null;
     return new WebResourceResponse("text/plain", "UTF-8", new ByteArrayInputStream(new byte[0]));
    }
-   @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return !("https".equals(request.getUrl().getScheme()) && HOST.equals(request.getUrl().getHost())); }
+   @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+    Uri uri=request.getUrl();
+    if(request.isForMainFrame() && isOxfordUri(uri)) {
+     try { startActivity(new Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)); }
+     catch(ActivityNotFoundException e) { Toast.makeText(MainActivity.this,"Oxford 원문을 열 브라우저를 찾을 수 없습니다.",Toast.LENGTH_LONG).show(); }
+     return true;
+    }
+    return !("https".equals(uri.getScheme()) && HOST.equals(uri.getHost()));
+   }
   });
   web.setWebChromeClient(new WebChromeClient() {
    @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {

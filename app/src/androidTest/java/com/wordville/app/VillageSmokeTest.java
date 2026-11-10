@@ -14,6 +14,14 @@ public class VillageSmokeTest {
   InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> web.evaluateJavascript(js, v -> {result.set(v);latch.countDown();}));
   assertTrue("WebView callback",latch.await(5,TimeUnit.SECONDS));return result.get();
  }
+ @Test public void oxfordLinksOnlyUseTrustedHttpsOrigins() {
+  assertTrue(MainActivity.isOxfordUri(android.net.Uri.parse("https://www.oxfordlearnersdictionaries.com/definition/english/reservation")));
+  assertTrue(MainActivity.isOxfordUri(android.net.Uri.parse("https://www.oxfordlearnersdictionaries.com/search/english/?q=look%20into")));
+  assertFalse(MainActivity.isOxfordUri(android.net.Uri.parse("http://www.oxfordlearnersdictionaries.com/definition/english/reservation")));
+  assertFalse(MainActivity.isOxfordUri(android.net.Uri.parse("https://www.oxfordlearnersdictionaries.com.evil.test/definition/english/reservation")));
+  assertFalse(MainActivity.isOxfordUri(android.net.Uri.parse("https://user@www.oxfordlearnersdictionaries.com/definition/english/reservation")));
+  assertFalse(MainActivity.isOxfordUri(android.net.Uri.parse("javascript:alert(1)")));
+ }
  @Test public void villageAndWordCardRunOnAndroid() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
   Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -29,6 +37,25 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("\"night\"",eval(web,"document.getElementById('close-dialog').click();var mode=document.getElementById('village-time-mode');mode.value='night';mode.dispatchEvent(new Event('change'));WordvilleVillage.period"));
   assertEquals("true",eval(web,"WordvilleVillage.select('alex');!document.getElementById('village-dialogue').hidden"));
+  assertEquals("12",eval(web,"document.querySelectorAll('[data-home]').length"));
+  assertEquals("13",eval(web,"document.querySelectorAll('[data-facility]').length"));
+  assertEquals("true",eval(web,"VillageHomes.homes.every(function(h){WordvilleHomes.open(h.id);var ok=document.getElementById('home-dialog').open && document.querySelectorAll('#home-objects button').length===3;document.getElementById('home-close').click();return ok;})"));
+  assertEquals("true",eval(web,"VillageFacilities.facilities.every(function(f){WordvilleFacilities.open(f.id);document.querySelector('#facility-actions button').click();var ok=document.getElementById('facility-dialog').open && document.getElementById('facility-result').textContent===f.results[0];document.getElementById('facility-close').click();return ok;})"));
+  assertEquals("true",eval(web,"WordvilleFacilities.open('burger');document.getElementById('facility-study').click();document.getElementById('word-dialog').open && document.getElementById('detail-word').textContent==='customer'"));
+  assertEquals("true",eval(web,"document.getElementById('close-dialog').click();WordvilleFacilities.open('botanical');document.querySelector('#facility-records').textContent.includes('1회')"));
+  assertEquals("true",eval(web,"JSON.parse(localStorage.getItem(VillageFacilities.KEY)).records.botanical.counts[0]===1"));
+  assertEquals("25",eval(web,"VillageLife.places.length"));
+  assertEquals("true",eval(web,"document.getElementById('facility-close').click();Object.assign(WordvilleLifeUI.state,VillageLife.create(23));VillageLife.invite(WordvilleLifeUI.state,'alex','burger');WordvilleLifeUI.state.residents.find(function(p){return p.id==='alex';}).stage==='walking'"));
+  assertEquals("true",eval(web,"for(var i=0;i<2000;i++){VillageLife.tick(WordvilleLifeUI.state,.1);if(VillageLife.occupants(WordvilleLifeUI.state,'burger').some(function(p){return p.id==='alex';}))break;}VillageLife.occupants(WordvilleLifeUI.state,'burger').some(function(p){return p.id==='alex';})"));
+  assertEquals("true",eval(web,"WordvilleLifeUI.open('burger');document.querySelector('#facility-life [data-life-person=alex]').click();!document.querySelector('#facility-life .life-dialogue').hidden && document.querySelector('#facility-life .life-first').textContent.includes('알렉스')"));
+  assertEquals("true",eval(web,"document.querySelector('#facility-actions button').click();document.querySelector('#facility-life .life-first').textContent.includes('같이 참여')"));
+  assertEquals("18",eval(web,"WordvilleEtymology.count"));
+  assertEquals("true",eval(web,"document.getElementById('facility-close').click();openWord(words.find(function(w){return w.word==='reservation';}));document.getElementById('etymology-summary').textContent.includes('reservare')"));
+  assertEquals("true",eval(web,"document.getElementById('etymology-source').href.includes('/definition/english/reservation')"));
+  assertEquals("true",eval(web,"document.getElementById('close-dialog').click();openWord(words.find(function(w){return w.word==='deadline';}));document.getElementById('etymology-status').textContent.includes('미확인') && document.getElementById('etymology-history').children.length===0"));
+  assertEquals("true",eval(web,"WordvilleCharacters.loaded"));
+  assertEquals("12",eval(web,"document.querySelectorAll('[data-character]').length"));
+  assertEquals("true",eval(web,"document.getElementById('close-dialog').click();WordvilleVillage.select('harvey');document.getElementById('speaker-portrait').dataset.portrait==='harvey'"));
   inst.runOnMainSync(activity::finish);
  }
 }
