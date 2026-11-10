@@ -1,0 +1,54 @@
+/* One-place-at-a-time navigator. All graphics and controls are Wordville-specific. */
+.wv-mode-switch{display:flex;gap:10px;padding:12px 16px;background:#c39a5e;border-bottom:4px solid #8b643e;}
+.wv-mode-switch button{flex:1;min-width:0;min-height:48px;font-weight:900;font-size:15px;border:3px solid #80562f;background:#f6dfad;box-shadow:inset 0 0 0 2px #fff0ca,2px 2px #785636;color:#65401e}
+.wv-mode-switch button[aria-selected=true]{background:#537d57;color:#fff5d7;border-color:#3b5e3d;box-shadow:inset 0 0 0 2px #8fad7d,2px 2px #355439}
+#wv-map-view[hidden],#wv-places-view[hidden]{display:none!important}
+.wv-places-view{padding:16px clamp(12px,3vw,25px) 24px;background:#f4e1b9;color:#553923;min-width:0}
+.wv-place-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.wv-place-top small{font-size:11px;font-weight:800;letter-spacing:1px;color:#8b6745}
+.wv-place-top h2{font-size:clamp(21px,4vw,30px);margin:3px 0 2px;color:#55381e}
+.wv-place-top p{margin:0 0 14px;font-size:13px;color:#806042}
+.wv-place-count{flex-shrink:0;font-size:12px;white-space:nowrap;font-weight:900;padding:8px 10px;background:#fff0ca;border:3px solid #a37a4a;box-shadow:2px 2px #7f5a36}
+.wv-place-filters{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin;scroll-snap-type:x proximity;padding:2px 2px 12px;white-space:nowrap}
+.wv-place-filters button{flex:0 0 auto;padding:8px 12px;min-height:42px;font-weight:800;background:#f7e5bc;border:3px solid #ab8051;scroll-snap-align:start}
+.wv-place-filters button[aria-pressed=true]{background:#66865e;border-color:#43603f;color:#fff9df}
+.wv-place-picker{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;gap:7px;margin:0 0 16px;align-items:stretch;min-width:0}
+.wv-place-picker>button{padding:0;min-height:48px;font-size:22px;background:#e9cca1;border:3px solid #8b5f39;color:#50341e}
+.wv-place-rail{display:flex;min-width:0;overflow-x:auto;gap:7px;padding:2px 4px 7px;scrollbar-width:thin;overscroll-behavior-x:contain;scroll-snap-type:x mandatory}
+.wv-place-chip{flex:0 0 auto;min-height:44px;padding:9px 12px;font-size:13px;font-weight:900;white-space:nowrap;scroll-snap-align:start;border:3px solid #9d7345;background:#fff0cc}
+.wv-place-chip[aria-pressed=true]{color:#fff5d7;background:#527d5a;border-color:#375941}
+.wv-spotlight{overflow:hidden;border:5px solid #9e6d3d;background:#fff1d2;box-shadow:inset 0 0 0 3px #f9dca5,4px 5px #6b492c;border-radius:3px}
+.wv-place-stage{height:auto;border-bottom:5px solid #a87946;background:#a9c0ae}
+#wv-place-canvas{display:block;width:100%;height:auto;aspect-ratio:512/240;image-rendering:pixelated;image-rendering:crisp-edges}
+.wv-place-detail{padding:14px 18px 10px}
+.wv-place-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+#wv-place-category{display:inline-block;background:#e5d09d;border:2px solid #a47c50;color:#6c4a2d;padding:2px 8px;font-size:12px;font-weight:900}
+#wv-place-en{font-size:13px;color:#846447;font-weight:800}
+#wv-place-name{font-size:26px;color:#57371e;margin:9px 0 3px;line-height:1.25}
+#wv-place-description{color:#77553a;font-size:14px;margin:2px 0 13px;line-height:1.6}
+.wv-place-resident-label{font-weight:900;font-size:13px;color:#5d402c;margin:7px 0}
+.wv-place-people{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;padding:0}
+.wv-place-person{display:flex;align-items:center;gap:9px;padding:6px 10px 6px 6px;background:#fff2d8;font-size:13px;border:3px solid #a47b4e;min-height:54px}
+.wv-place-person[aria-pressed=true]{background:#dce9ca;border-color:#5d8157}
+.wv-venue-mini{width:45px;height:45px;aspect-ratio:1;flex:0 0 auto}
+.wv-place-dialogue{padding:12px 14px;margin:10px 0 3px;border:4px solid #b28a59;background:#fff9e6;box-shadow:inset 0 0 0 2px #efdab5}
+#wv-place-speaker{font-size:15px;color:#684427}
+#wv-place-dialogue-en{font-weight:900;color:#3d674d;font-size:16px;line-height:1.5;margin:8px 0 0}
+#wv-place-dialogue-ko{color:#6b5038;font-size:13px;line-height:1.6;margin:4px 0 12px}
+.wv-place-actions{display:flex;gap:9px;flex-wrap:wrap}
+.wv-place-actions button{flex:1 1 140px;min-width:0;min-height:46px;font-size:13px;padding:8px}
+.wv-places-view .primary{color:#fff8de;background:#527c56;border-color:#34543d}
+.village-section[data-period=night] .wv-places-view{background:#e8d7ad;color:#593c26}
+.village-section[data-period=night] .wv-place-top p{color:#72553b}
+@media(max-width:480px){
+ .wv-mode-switch{gap:7px;padding:10px}
+ .wv-mode-switch button{font-size:13px;padding:8px 6px;min-height:44px}
+ .wv-place-picker{grid-template-columns:38px minmax(0,1fr) 38px;gap:4px}
+ .wv-place-picker>button{font-size:18px}
+ .wv-place-rail{gap:5px}
+ .wv-place-chip{font-size:12px;padding:8px 10px}
+ .wv-spotlight{border-width:4px}
+ .wv-place-detail{padding:12px}
+ #wv-place-name{font-size:23px}
+ .wv-place-actions button{flex-basis:100%}
+}
