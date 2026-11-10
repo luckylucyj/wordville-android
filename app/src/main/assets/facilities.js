@@ -39,7 +39,7 @@ case 'botanical':
 rect(24,136,552,180,'#c5d2b2');for(const x of [65,180,295,410,525]){rect(x-19,264,38,35,'#b28c6b');rect(x-3,170,6,100,'#6b9063');for(let i=0;i<4;i++){rect(x-30+(i%2)*27,180+i*18,32,13,['#7a9e6b','#8eab70'][i%2]);}}rect(47,118,506,12,'#9db4a0');for(const x of [70,185,300,415,530])rect(x,110,5,38,'#9db4a0');label('GROW · OBSERVE · CARE',300,322,17);break;
 
 }
-ctx.restore();}
+ctx.restore();globalThis.WordvilleLifeUI?.paintOccupants(canvas,f.id);}
 function save(next){try{localStorage.setItem(F.KEY,JSON.stringify(next));state=next;return true;}catch{$('facility-result').textContent='기록을 저장할 수 없어요. 저장 공간 설정을 확인해 주세요.';return false;}}
 function records(){const f=F.facilities[current],entry=state.records[f.id],counts=entry?.counts||[0,0,0];$('facility-records').replaceChildren();
 if(f.id==='salon'){const p=document.createElement('p');p.textContent=entry?.choice!=null?'현재 스타일: '+f.actions[entry.choice].replace(' 선택',''):'아직 선택한 스타일이 없어요.';$('facility-records').append(p);}
@@ -50,5 +50,5 @@ function open(id){const index=F.facilities.findIndex(f=>f.id===id);if(index<0)re
 for(const f of F.facilities){const b=document.createElement('button');b.className='facility-card';b.dataset.facility=f.id;b.setAttribute('aria-label',f.name+' 방문하기');const cv=document.createElement('canvas');cv.width=300;cv.height=170;cv.setAttribute('aria-hidden','true');draw(cv,f);const name=document.createElement('strong'),desc=document.createElement('span'),tag=document.createElement('small');name.textContent=f.name;desc.textContent=f.description;tag.textContent=f.residents;b.append(cv,name,desc,tag);b.onclick=()=>open(f.id);$('facility-list').append(b);}
 $('facility-close').onclick=()=>dialog.close();$('facility-prev').onclick=()=>{current=(current+F.facilities.length-1)%F.facilities.length;render();dialog.scrollTop=0;};$('facility-next').onclick=()=>{current=(current+1)%F.facilities.length;render();dialog.scrollTop=0;};$('facility-reset').onclick=()=>{const next=F.normalize(state);delete next.records[F.facilities[current].id];if(save(next)){$('facility-result').textContent='이 시설의 기록을 초기화했어요.';records();}};
 $('facility-study').onclick=()=>{const f=F.facilities[current];dialog.close();document.dispatchEvent(new CustomEvent('village-study',{detail:{word:f.word}}));};
-globalThis.WordvilleFacilities={open,get selected(){return F.facilities[current].id;}};
+globalThis.WordvilleFacilities={open,refreshScene:()=>draw($('facility-scene'),F.facilities[current]),get selected(){return F.facilities[current].id;}};
 })();

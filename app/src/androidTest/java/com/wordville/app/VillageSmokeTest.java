@@ -36,6 +36,11 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"WordvilleFacilities.open('burger');document.getElementById('facility-study').click();document.getElementById('word-dialog').open && document.getElementById('detail-word').textContent==='customer'"));
   assertEquals("true",eval(web,"document.getElementById('close-dialog').click();WordvilleFacilities.open('botanical');document.querySelector('#facility-records').textContent.includes('1회')"));
   assertEquals("true",eval(web,"JSON.parse(localStorage.getItem(VillageFacilities.KEY)).records.botanical.counts[0]===1"));
+  assertEquals("25",eval(web,"VillageLife.places.length"));
+  assertEquals("true",eval(web,"document.getElementById('facility-close').click();Object.assign(WordvilleLifeUI.state,VillageLife.create(23));VillageLife.invite(WordvilleLifeUI.state,'alex','burger');WordvilleLifeUI.state.residents.find(function(p){return p.id==='alex';}).stage==='walking'"));
+  assertEquals("true",eval(web,"for(var i=0;i<2000;i++){VillageLife.tick(WordvilleLifeUI.state,.1);if(VillageLife.occupants(WordvilleLifeUI.state,'burger').some(function(p){return p.id==='alex';}))break;}VillageLife.occupants(WordvilleLifeUI.state,'burger').some(function(p){return p.id==='alex';})"));
+  assertEquals("true",eval(web,"WordvilleLifeUI.open('burger');document.querySelector('#facility-life [data-life-person=alex]').click();!document.querySelector('#facility-life .life-dialogue').hidden && document.querySelector('#facility-life .life-first').textContent.includes('알렉스')"));
+  assertEquals("true",eval(web,"document.querySelector('#facility-actions button').click();document.querySelector('#facility-life .life-first').textContent.includes('같이 참여')"));
   inst.runOnMainSync(activity::finish);
  }
 }

@@ -20,8 +20,8 @@ else if(h.id==='abigail'){if(i===0){rect(cx-40,cy-35,80,38,'#ded1ae');for(let j=
 else if(h.id==='harvey'){if(i===0){rect(cx-24,cy-24,40,25,'#e6edcf');rect(cx+16,cy-18,12,13,'#b0c6ab');rect(cx-35,cy+2,70,3,'#b2996b');}else{rect(cx-32,cy-34,64,36,i===1?'#e7dfc1':'#a6bfbb');label(i===1?'+':'✈',cx,cy-8,25);}}
 else{rect(cx-32,cy-38,64,40,'#d1bd95');if(i===0){dot(cx,cy-15,17,'#f0e5c7');rect(cx+12,cy-30,13,11,'#d3a15d');}else if(i===1){for(let j=0;j<3;j++)rect(cx-22,cy-30+j*10,44,3,'#7e9581');}else{rect(cx-38,cy-23,76,26,'#82947d');rect(cx-38,cy-44,18,25,'#82947d');rect(cx+20,cy-44,18,25,'#82947d');}}
 }rect(220,295,160,35,h.roof);label('방문 중',300,320,17);
-const p=M.people.find(p=>p.id===h.id);rect(288,124,24,22,p.hair);rect(292,143,16,14,p.skin);rect(284,157,32,33,p.shirt);rect(287,190,9,18,'#444b55');rect(304,190,9,18,'#444b55');
-}c.restore();}
+const p=M.people.find(p=>p.id===h.id);if(!globalThis.WordvilleLifeUI){rect(288,124,24,22,p.hair);rect(292,143,16,14,p.skin);rect(284,157,32,33,p.shirt);rect(287,190,9,18,'#444b55');rect(304,190,9,18,'#444b55');}
+}c.restore();globalThis.WordvilleLifeUI?.paintOccupants(canvas,'home:'+h.id);}
 function open(id){const i=H.homes.findIndex(h=>h.id===id);if(i<0)return;current=i;talk=0;render();if(!dialog.open)dialog.showModal();dialog.scrollTop=0;}
 function render(){const h=H.homes[current],p=M.people.find(p=>p.id===h.id);$('home-title').textContent=h.title;$('home-address').textContent=h.address;$('home-owner').textContent=p.name+'의 집 · 자주 가는 곳: '+p.home;$('home-room').setAttribute('aria-label',p.name+'의 방: '+h.items.map(o=>o.name).join(', '));draw($('home-room'),h,true);
 $('home-personality').replaceChildren();for(const [key,title] of [['personality','성격'],['temperament','기질'],['trait','특성'],['preference','성향']]){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=title;dd.textContent=h[key];$('home-personality').append(dt,dd);}
@@ -31,5 +31,5 @@ $('home-close').onclick=()=>dialog.close();$('home-next').onclick=()=>{current=(
 $('home-talk').onclick=()=>{const h=H.homes[current];talk++;$('home-greeting').textContent=talk%2?h.items[talk%3].name+'도 살펴봐. '+h.items[talk%3].description:h.greeting;};
 $('home-study').onclick=()=>{const p=M.people.find(p=>p.id===H.homes[current].id);dialog.close();document.dispatchEvent(new CustomEvent('village-study',{detail:{word:p.word}}));};
 const visit=document.createElement('button');visit.textContent='이 주민의 집 방문하기';visit.id='resident-visit';visit.onclick=()=>{const selected=document.querySelector('[data-person][aria-pressed="true"]');if(selected)open(selected.dataset.person);};$('village-dialogue').append(visit);
-globalThis.WordvilleHomes={open,get selected(){return H.homes[current].id;}};
+globalThis.WordvilleHomes={open,refreshScene:()=>draw($('home-room'),H.homes[current],true),get selected(){return H.homes[current].id;}};
 })();
