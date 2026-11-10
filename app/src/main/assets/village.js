@@ -43,6 +43,16 @@ function ground(p){
  for(const [x,y] of [[527,370],[556,389]]){r(x-9,y-9,18,3,'#a88e67');r(x-1,y-6,2,10,'#665e55');r(x-15,y-4,5,3,'#778c70');r(x+10,y-4,5,3,'#778c70');}
 }
 function sprite(p){const x=Math.round(p.x),y=Math.round(p.y),walk=!p.chat&&p.wait<=0&&p.route.length>0?Math.floor(p.steps*6)%2:0;r(x-5,y+1,10,2,'#24394744');r(x-4,y-17,8,6,p.hair);r(x-3,y-13,6,5,p.skin);r(x-4,y-9,8,8,p.shirt);r(x-6,y-8,2,6,p.skin);r(x+4,y-8,2,6,p.skin);r(x-3,y-1,2,4+walk,'#404852');r(x+1,y-1,2,5-walk,'#404852');r(x-3,y+3+walk,3,1,'#343c44');r(x+1,y+4-walk,3,1,'#343c44');r(x-2,y-12,1,1,'#394347');r(x+2,y-12,1,1,'#394347');
+ // Resident hair and face are cropped from the same portrait sheet used in dialogue.
+ const portraits=globalThis.WordvillePortraits;
+ const index=portraits?.order?.[p.id];
+ const img=portraits?.image;
+ if(index!==undefined&&img?.complete&&img.naturalWidth>=4&&img.naturalHeight>=3){
+   const tileW=img.naturalWidth/4,tileH=img.naturalHeight/3;
+   // A compact pixel face sits above the walking body; nearest-neighbor keeps the grid crisp.
+   const sx=(index%4)*tileW,sy=Math.floor(index/4)*tileH;
+   ctx.drawImage(img,sx+tileW*0.19,sy+tileH*0.03,tileW*0.62,tileH*0.64,x-7,y-24,14,14);
+ }
  if(p.id===selected){r(x-7,y-21,14,1,'#f9d993');r(x-7,y-21,1,22,'#f9d993');r(x+7,y-21,1,22,'#f9d993');}
  if(p.chat>0){r(x-6,y-27,13,7,'#f8f1dc');text('···',x,y-21,7);}
  if(zoom>1.2||p.id===selected){const width=p.name.length*7+8;r(x-width/2,y+7,width,11,period==='night'?'#243849dd':'#fbf3dadd');text(p.name,x,y+15,7,period==='night'?'#f4e7c8':'#35494a');}
