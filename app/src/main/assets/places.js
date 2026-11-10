@@ -71,8 +71,10 @@ function render(){
    b.setAttribute('aria-pressed',String(place.id===p.id));
    ids('wv-place-rail').append(b);
  }
- const activeButton=ids('wv-place-rail').querySelector('[aria-pressed="true"]');
- if(activeButton)activeButton.scrollIntoView({block:'nearest',inline:'nearest'});
+ const rail=ids('wv-place-rail');
+ const activeButton=rail.querySelector('[aria-pressed="true"]');
+ // Scroll only the horizontal venue strip; do not move the entire page.
+ if(activeButton)rail.scrollLeft=Math.max(0,activeButton.offsetLeft-rail.offsetLeft-12);
  ids('wv-place-filters').querySelectorAll('[data-place-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.placeFilter===filter)));
  renderConversation();draw(p);
 }
