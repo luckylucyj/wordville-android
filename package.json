@@ -1,10 +1,10 @@
 {
   "name": "wordville-android",
-  "version": "1.6.0",
+  "version": "1.8.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.mjs && node tests/homes-dom.cjs && node tests/facilities-dom.cjs && node tests/life-dom.cjs",
+    "test": "node --test tests/*.test.mjs && node tests/homes-dom.cjs && node tests/facilities-dom.cjs && node tests/life-dom.cjs && node tests/etymology-dom.cjs && node tests/characters-dom.cjs",
     "serve": "python3 -m http.server 4173 --directory app/src/main/assets",
     "build:web": "esbuild scripts/cloud-entry.js --bundle --minify --format=iife --outfile=app/src/main/assets/vendor/cloud.js"
   },

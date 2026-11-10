@@ -1,0 +1,24 @@
+(function(root){
+'use strict';
+const people=root.VillageModel.people;
+const looks=[
+['스포츠컷 · 초록 운동복','짧고 단정한 스포츠컷과 민소매 운동복'],['묶은 장발 · 멜빵 셔츠','낮게 묶은 붉은 장발과 멜빵 셔츠'],['가르마 · 안경 · 의사 가운','단정한 가르마, 콧수염, 둥근 안경과 흰 가운'],['높은 금발 · 헤드폰 재킷','높이 세운 금발과 헤드폰, 노랑·파랑 재킷'],['비대칭 앞머리 · 긴 코트','한쪽 눈을 가리는 앞머리, 은색 옆머리와 긴 코트'],['넘긴 짧은 머리 · 데님 작업복','뒤로 넘긴 머리, 짧은 수염과 데님 작업복'],['금발 웨이브 · 분홍 블라우스','긴 금발 웨이브와 꽃 장식'],['붉은 땋은 머리 · 작업 앞치마','옆으로 땋은 붉은 머리와 초록 앞치마'],['갈색 단발 · 안경 · 멜빵바지','갈색 단발, 둥근 안경과 보라색 멜빵바지'],['구릿빛 단발 · 베이지 블라우스','옆으로 넘긴 단발과 리본 블라우스'],['보라색 단발 · 니트','보라색 단발과 라일락 니트'],['파란 웨이브 · 붉은 블라우스','짧은 파란 웨이브와 청록색 귀걸이']
+];
+const rects=[[122,11,119,341],[473,13,129,340],[838,13,128,339],[1198,4,135,348],[122,373,124,341],[472,371,135,343],[826,373,152,341],[1197,376,129,338],[113,736,135,340],[477,737,135,339],[834,736,135,340],[1196,739,140,337]];
+const profiles=people.map((p,i)=>({id:p.id,index:i,col:i%4,row:Math.floor(i/4),look:looks[i][0],description:looks[i][1],spriteRect:rects[i]}));
+const get=id=>profiles.find(p=>p.id===id);
+const portraits=new Image(),sprites=new Image();let portraitReady=false,spriteReady=false;
+function imageReady(img,src,onReady){return new Promise(resolve=>{img.onload=()=>{onReady();resolve(true);};img.onerror=()=>resolve(false);img.src=src;});}
+function drawPortrait(canvas,id){const profile=get(id);if(!profile)return false;const ctx=canvas.getContext('2d');if(!ctx)return false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;if(!portraitReady){ctx.fillStyle='#eee7d7';ctx.fillRect(0,0,canvas.width,canvas.height);return false;}const w=portraits.naturalWidth/4,h=portraits.naturalHeight/3;ctx.drawImage(portraits,profile.col*w,profile.row*h,w,h,0,0,canvas.width,canvas.height);return true;}
+function portrait(id,size=160){const p=people.find(p=>p.id===id),canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;canvas.dataset.portrait=id;canvas.className='resident-portrait';canvas.setAttribute('role','img');canvas.setAttribute('aria-label',(p?.name||id)+' 초상화');drawPortrait(canvas,id);return canvas;}
+function drawResident(ctx,id,x,y,options={}){const p=get(id);if(!p||!spriteReady)return false;const height=options.height||36,phase=options.walking?Math.floor((options.time||0)*5)%2:0,[sx,sy,sw,sh]=p.spriteRect,w=Math.max(1,Math.round(sw/sh*height)),h=height+phase;ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(Math.round(x),Math.round(y));if(options.flip)ctx.scale(-1,1);ctx.drawImage(sprites,sx,sy,sw,sh,-Math.round(w/2),-h,w,h);ctx.restore();return true;}
+function showMain(id){const c=document.getElementById('speaker-portrait');if(!c)return;c.hidden=false;c.dataset.portrait=id;c.setAttribute('aria-label',people.find(p=>p.id===id).name+' 초상화');drawPortrait(c,id);}
+function showHome(id){const c=document.getElementById('home-owner-portrait');if(!c)return;c.dataset.portrait=id;c.setAttribute('aria-label',people.find(p=>p.id===id).name+' 초상화');drawPortrait(c,id);}
+function showConversation(container,a,b){if(!container)return;container.replaceChildren(portrait(a,144));if(b&&b!==a)container.append(portrait(b,144));}
+const ready=Promise.all([imageReady(portraits,'art/resident-portraits.webp',()=>{portraitReady=true;for(const c of document.querySelectorAll('[data-portrait]'))drawPortrait(c,c.dataset.portrait);}),imageReady(sprites,'art/resident-sprites.webp',()=>{spriteReady=true;})]);
+root.WordvilleCharacters={profiles,get,portrait,drawPortrait,drawResident,showMain,showHome,showConversation,ready,get loaded(){return portraitReady&&spriteReady;}};
+const main=portrait(people[0].id,200);main.id='speaker-portrait';main.hidden=true;document.getElementById('village-dialogue').prepend(main);
+const owner=portrait(people[0].id,200);owner.id='home-owner-portrait';document.getElementById('home-owner').before(owner);
+const section=document.createElement('section');section.className='resident-gallery';section.setAttribute('aria-labelledby','resident-gallery-title');const heading=document.createElement('h2');heading.id='resident-gallery-title';heading.textContent='Wordville 주민 도감';const note=document.createElement('p');note.textContent='주민을 누르면 성격과 대화를 확인할 수 있어요.';const grid=document.createElement('div');grid.className='resident-gallery-grid';
+for(const p of people){const b=document.createElement('button');b.type='button';b.className='resident-gallery-card';b.dataset.character=p.id;b.append(portrait(p.id,200));const name=document.createElement('strong'),look=document.createElement('span');name.textContent=p.name;look.textContent=get(p.id).look;b.append(name,look);b.onclick=()=>{root.WordvilleVillage?.select(p.id);document.getElementById('village-dialogue').scrollIntoView({behavior:'smooth',block:'center'});};grid.append(b);}section.append(heading,note,grid);document.querySelector('.homes-section').before(section);
+})(globalThis);
