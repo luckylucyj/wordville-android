@@ -262,6 +262,7 @@ for(const id of venueIds){
  landmarkAssets[id]=referenceImage('art/'+id+'.webp',id);
 }
 function town(ctx,period,elapsed=0){
+ if(globalThis.WordvilleHubMap?.paint){globalThis.WordvilleHubMap.paint(ctx,period);return;}
  if(mapReference.complete&&mapReference.naturalWidth>0){
    ctx.imageSmoothingEnabled=true;
    ctx.drawImage(mapReference,0,0,600,800);
@@ -443,5 +444,5 @@ function place(c,p){
  c.imageSmoothingEnabled=false;c.clearRect(0,0,c.canvas.width,c.canvas.height);
  c.drawImage(sceneCaches.get(id),0,0,c.canvas.width,c.canvas.height);
 }
-globalThis.WordvilleWorldArt={town,place,house,conservatory,landmarks:LANDMARKS,referenceLandmarks:REFERENCE_LANDMARKS,wildlife:WILDLIFE,reference:mapReference,venueImages:landmarkAssets};
+globalThis.WordvilleWorldArt={town,place,house,conservatory,landmarks:LANDMARKS,hubLandmarks:globalThis.WordvilleHubMap?.landmarks||[],referenceLandmarks:REFERENCE_LANDMARKS,wildlife:WILDLIFE,reference:mapReference,venueImages:landmarkAssets};
 })();
