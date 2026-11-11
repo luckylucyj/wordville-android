@@ -22,7 +22,29 @@ function openDatabase(){return new Promise((resolve,reject)=>{const req=indexedD
 function imageAction(mode,key,value){return new Promise((resolve,reject)=>{if(!db)return reject(Error('이미지 저장소를 사용할 수 없습니다.'));const tx=db.transaction('images',mode==='get'?'readonly':'readwrite');const store=tx.objectStore('images');let request=mode==='get'?store.get(key):mode==='put'?store.put(value,key):store.delete(key);let result;request.onsuccess=()=>result=request.result;tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
 let imageUrl=null;
 function showImage(blob){if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=blob?URL.createObjectURL(blob):null;$('memory-image').hidden=!blob;$('remove-image').hidden=!blob;if(blob)$('memory-image').src=imageUrl;else $('memory-image').removeAttribute('src');refreshImageButtons();}
-async function openWord(w){active=w;$('detail-source').textContent=(w.days?.length?'Day '+w.days.map(d=>d===0?'이디엄':d).join(', '):'기존 예시')+(w.pdfPages?.length?' · PDF '+w.pdfPages.join(', ')+'쪽':'');$('detail-word').textContent=w.word;$('detail-meaning').textContent=w.meaning;$('detail-meaning').hidden=true;$('reveal').hidden=false;$('reveal').textContent='뜻 보기';$('reveal').setAttribute('aria-expanded','false');$('detail-example').textContent=w.example||'';$('detail-translation').textContent=w.translation||'';$('role').textContent=w.role||'나의 기억 이미지';$('dialogue').textContent=w.dialogue||'단어와 연결할 이미지를 직접 저장해 보세요.';$('detail-status').textContent='';$('image-input').value='';showImage(null);$('word-dialog').showModal();try{const blob=await readMemoryImage(w.id);if(active===w)showImage(blob);}catch{$('detail-status').textContent='이미지 저장소를 사용할 수 없습니다.';}}
+function renderWordConversations(w){
+ const list=$('word-examples-list'),details=$('word-examples-details');
+ if(!list||!details)return;
+ const day=$('day-filter').value || w.days?.find(d=>d>0) || 0;
+ const examples=globalThis.WordvilleConversations?.get(w,day)||[];
+ const cards=document.createDocumentFragment();
+ for(const item of examples){
+  const li=document.createElement('li');
+  const category=document.createElement('span');
+  category.className='example-context';
+  category.textContent='Day '+String(Number(day)).padStart(2,'0')+' · '+item.topic;
+  const english=document.createElement('p');
+  english.className='example-en';
+  english.lang='en';
+  english.textContent=item.english;
+  li.append(category,english);
+  cards.append(li);
+ }
+ list.replaceChildren(cards);
+ details.open=false;
+ $('word-examples-toggle').textContent='영어 대화 예시 '+examples.length+'개 펼치기';
+}
+async function openWord(w){active=w;renderWordConversations(w);$('detail-source').textContent=(w.days?.length?'Day '+w.days.map(d=>d===0?'이디엄':d).join(', '):'기존 예시')+(w.pdfPages?.length?' · PDF '+w.pdfPages.join(', ')+'쪽':'');$('detail-word').textContent=w.word;$('detail-meaning').textContent=w.meaning;$('detail-meaning').hidden=true;$('reveal').hidden=false;$('reveal').textContent='뜻 보기';$('reveal').setAttribute('aria-expanded','false');$('detail-example').textContent=w.example||'';$('detail-translation').textContent=w.translation||'';$('role').textContent=w.role||'나의 기억 이미지';$('dialogue').textContent=w.dialogue||'단어와 연결할 이미지를 직접 저장해 보세요.';$('detail-status').textContent='';$('image-input').value='';showImage(null);$('word-dialog').showModal();try{const blob=await readMemoryImage(w.id);if(active===w)showImage(blob);}catch{$('detail-status').textContent='이미지 저장소를 사용할 수 없습니다.';}}
 function renderConcepts(){$('concepts').replaceChildren();if(!state.concepts.length)$('concepts').append(make('p','아직 저장한 개념이 없습니다. 조합실에서 만들어 보세요.'));for(const c of state.concepts){const card=make('article',undefined,'card');card.append(make('h3',c.name),make('p',`${c.a} + ${c.b}`));$('concepts').append(card);}}
 function connection(){const a=words.find(w=>w.id===$('word-a').value),b=words.find(w=>w.id===$('word-b').value);if(!a||!b)return;$('connection').textContent=`${a.meaning} + ${b.meaning} — 두 뜻을 함께 사용하는 상황을 떠올리고 이름을 입력해 주세요.`;}
 function nextQuestion(){reviewWord=queue.shift();$('answer-result').textContent='';$('next').hidden=true;$('answer').value='';$('answer-form').hidden=!reviewWord;if(!reviewWord){$('question').textContent='이번 복습을 마쳤어요.';return;}$('question').textContent=reviewWord.word;$('answer').focus();}
