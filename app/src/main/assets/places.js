@@ -95,6 +95,7 @@ function scenery(p){
  }
 }
 function draw(p){
+ if(globalThis.WordvilleWorldArt?.place){globalThis.WordvilleWorldArt.place(ctx,p);return;}
  ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,512,240);scenery(p);
  const i=p.id;
  if(i==='pool'){outlined(68,115,378,109,'#71a8b6');rect(82,126,351,88,'#4b98c6');for(let n=0;n<4;n++)rect(86,143+n*19,343,3,'#e8f5da');rect(48,111,12,94,'#d5dbd2');rect(44,120,19,5,'#f3f7e4');rect(455,111,10,94,'#d5dbd2');rect(454,129,15,5,'#f3f7e4');}
