@@ -88,6 +88,7 @@ function toggleMore(){
 function activate(screen){
  if(!['town','places','residents','learn','review','lab','book','account'].includes(screen))return;
  current=screen;lastScreen=screen;
+ if(screen!=='town'){toolPanel.hidden=true;toolButton.setAttribute('aria-expanded','false');}
  more.hidden=true;buttons.get('more').setAttribute('aria-expanded','false');
  document.body.dataset.screen=screen;
  village.hidden=!['town','places','residents'].includes(screen);
