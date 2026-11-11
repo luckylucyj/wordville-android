@@ -1,0 +1,121 @@
+/* Immersive Wordville layout.
+ * The map uses all the available area between system-inset-safe header and tab bar. */
+:root{--wv-top:58px;--wv-bottom:76px}
+html,body{height:100%;overscroll-behavior:none}
+body{display:flex;flex-direction:column;width:100%;height:100dvh;min-height:100dvh;overflow:hidden;background:#e4d7b6}
+body>header{
+ z-index:5;flex:0 0 var(--wv-top);height:var(--wv-top);min-height:var(--wv-top);max-height:var(--wv-top);
+ width:100%;padding:8px 14px;background:linear-gradient(#705030,#67462b);
+ border-bottom:4px solid #ab8051;box-shadow:0 2px 0 #3f2c21;
+ color:#fff1c9;position:relative
+}
+body>header .brand{color:#fff3d4;font-size:18px;text-shadow:2px 2px #3c2b21;letter-spacing:1px}
+#balance{font-size:12px;padding:6px 8px;background:#dfc18b;border:2px solid #4e3e26;box-shadow:none;max-width:54%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body>main{max-width:none;width:100%;min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 0 16px;margin:0;background:linear-gradient(0deg,#f6e8ca,#f7ead4)}
+body[data-screen="town"]>main{overflow:hidden;padding:0}
+body[data-screen="places"]>main,body[data-screen="residents"]>main{overflow:hidden;padding:0}
+body .wv-legacy-nav{display:none!important}
+.village-section{
+ margin:0 auto;max-width:1100px;width:100%;
+ border:0;border-radius:0;box-shadow:none;
+ background:#d9c8a1;
+}
+.village-section .village-heading{display:none}
+.village-section .wv-mode-switch{display:none}
+body[data-screen="town"] .village-section{height:100%;max-width:none;overflow:hidden;background:#344b48}
+body[data-screen="town"] #wv-map-view{height:100%;min-height:0;display:block}
+body[data-screen="town"] .canvas-wrap{
+ position:relative;display:block;height:100%;min-height:0;max-height:100%;
+ border:0;overflow:hidden;background:#557b67
+}
+body[data-screen="town"] #village-canvas{
+ display:block;width:100%;height:100%;margin:0;padding:0;
+ image-rendering:pixelated;image-rendering:crisp-edges;
+ object-fit:fill;touch-action:manipulation;
+}
+body[data-screen="town"] .map-label{position:absolute;bottom:15px;left:13px;top:auto;
+ font-size:10px;opacity:.85;background:#2a4038df;color:#fff0c9;border:2px solid #b69667;
+ box-shadow:2px 2px #293d33;padding:5px 9px;letter-spacing:.8px}
+.village-section .wv-world-clock{
+ position:absolute;top:14px;left:14px;right:auto;z-index:2;
+ display:flex;flex-direction:column;align-items:flex-start;gap:0;
+ border:2px solid #bc9d66;background:#f8e5bcd9;padding:7px 11px;
+ box-shadow:2px 3px 0 #37473978;max-width:145px;text-shadow:none
+}
+.village-section .wv-world-clock b{font-size:16px;color:#483523}
+.village-section .wv-world-clock span{font-size:10px;line-height:1.3;color:#64472a}
+body[data-screen="town"] .zoom-controls{z-index:3;position:absolute;right:12px;bottom:68px;display:flex;gap:7px}
+body[data-screen="town"] .zoom-controls button{background:#f7e2afed;font-weight:900;border:3px solid #916642;min-width:43px;min-height:43px}
+#wv-map-tools{
+ position:absolute;top:13px;right:13px;z-index:4;min-width:44px;min-height:44px;
+ background:#f8e4b9ef;border:3px solid #8d633b;color:#4c3925;
+ font-size:21px;padding:4px 8px;box-shadow:2px 3px #4c3a27;
+}
+#wv-map-tool-panel{
+ position:absolute;top:66px;right:12px;z-index:4;max-width:min(340px,calc(100% - 24px));
+ background:#fff0cadf;border:4px solid #976840;padding:12px;box-shadow:4px 4px #3c3a2d;
+ border-radius:3px;backdrop-filter:blur(4px);font-size:12px;color:#4b3928
+}
+#wv-map-tool-panel .village-controls{display:flex;flex-direction:column;gap:8px;align-items:stretch;padding:0;background:transparent}
+#wv-map-tool-panel .time-select{margin:0}
+#wv-map-tool-panel .time-note{font-size:10px;color:#5b4c35;line-height:1.45;margin:8px 0 0}
+#wv-map-tool-panel #pause-village{min-height:42px}
+body[data-screen="places"] .village-section,body[data-screen="residents"] .village-section{
+ height:100%;max-width:930px;overflow-y:auto;overscroll-behavior:contain;box-shadow:none
+}
+body[data-screen="places"] .wv-places-view{overflow:visible;min-height:100%;padding:17px 15px 35px}
+body[data-screen="residents"] .wv-residents-screen{min-height:100%;display:block;background:#f2e0b8;padding:17px 15px 35px}
+.wv-residents-header{padding:13px 14px;background:#e8cf99;border:4px solid #a97942;box-shadow:inset 0 0 0 2px #fff0c5,3px 3px #775333;margin-bottom:14px}
+.wv-residents-header small{font-size:10px;font-weight:850;letter-spacing:1px;color:#84613d}
+.wv-residents-header h2{font-size:24px;color:#4e311e;margin:6px 0}
+.wv-residents-header p{font-size:12px;margin:0;color:#745539;line-height:1.5}
+.wv-residents-screen .neighbors{border:0;padding:0;margin:0}
+.wv-residents-screen .neighbors summary{display:none}
+.wv-residents-screen .resident-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.wv-residents-screen .resident-list button{min-height:150px;border:4px solid #aa7b47;box-shadow:inset 0 0 0 3px #f5d9a6,2px 3px #65452e;padding:6px;font-size:13px}
+.wv-residents-screen .wv-portrait{width:100%;max-width:130px}
+.wv-residents-screen .village-dialogue{margin:20px 0 14px;background:#fff0cf}
+.wv-residents-screen .conversation-feed{padding-top:8px;margin-top:16px}
+.wv-residents-screen .conversation-feed summary,.wv-residents-screen .neighbors summary{color:#66442c}
+body[data-screen="learn"] #learn,
+body[data-screen="review"] #review,
+body[data-screen="lab"] #lab,
+body[data-screen="book"] #book{
+ margin:16px auto 28px;max-width:980px;width:calc(100% - 24px);scroll-margin-top:8px;
+ padding:18px 15px 35px
+}
+#wv-account-view{width:calc(100% - 24px);max-width:960px;margin:16px auto 30px;padding:16px;
+ background:#f4e5c4;border:5px solid #a77b4e}
+#wv-account-view>.card{margin:16px 0}
+#wv-account-view .cloud-panel{margin-top:18px}
+.wv-bottom-dock{
+ flex:0 0 var(--wv-bottom);height:var(--wv-bottom);position:relative;z-index:20;
+ display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;
+ margin:0;padding:5px max(6px,env(safe-area-inset-right)) 7px max(6px,env(safe-area-inset-left));
+ overflow:visible;border-top:4px solid #b28d57;background:#604633;box-shadow:0 -3px 10px #2b221655
+}
+.wv-bottom-dock .wv-dock-tab{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+ min-height:0;min-width:0;height:100%;padding:4px 0;border:2px solid transparent;border-radius:5px;box-shadow:none;
+ background:transparent;color:#f7e7ca;white-space:normal;font-weight:850;line-height:1.15
+}
+.wv-bottom-dock .wv-dock-tab[aria-selected=true]{
+ color:#fff9dc;background:#4c734f;border-color:#cfb174;box-shadow:inset 0 0 0 2px #6a966a
+}
+.wv-dock-icon{font-size:21px;line-height:1.15}
+.wv-dock-label{font-size:11px;white-space:nowrap}
+.wv-more-panel{
+ position:fixed;z-index:21;bottom:var(--wv-bottom);right:7px;min-width:190px;
+ padding:8px;background:#f7e7bf;border:4px solid #895d39;box-shadow:4px -4px #4c3526;
+ display:flex;flex-direction:column;gap:7px;border-radius:5px
+}
+.wv-more-panel[hidden]{display:none!important}
+.wv-more-panel button{background:#fff4d9;border:2px solid #bb9060;color:#4f3826;min-height:44px;box-shadow:none;text-align:left}
+body[data-screen="town"] .wv-more-panel{bottom:var(--wv-bottom)}
+@media(min-width:700px){
+ :root{--wv-top:64px;--wv-bottom:78px}
+ .wv-bottom-dock{justify-content:center;grid-template-columns:repeat(6,minmax(75px,120px));gap:10px}
+ .wv-residents-screen .resident-list{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:340px){.wv-dock-icon{font-size:18px}.wv-dock-label{font-size:10px}.wv-bottom-dock{padding-inline:2px}}
+@media(prefers-reduced-motion:reduce){.wv-bottom-dock *{transition:none!important}}
