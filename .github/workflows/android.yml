@@ -146,3 +146,34 @@ jobs:
           name: android-device-test-result
           path: android-test-result.txt
           if-no-files-found: ignore
+  publish-apk:
+    name: Publish signed install-fix APK to GitHub Releases
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wordville-android-apk
+          path: release
+      - name: Prepare standalone APK file
+        run: |
+          test -s release/wordville-debug.apk
+          cp release/wordville-debug.apk release/Wordville_Pixel_Village_InstallFix_v1.3.0.apk
+      - name: Publish download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.3.0-installfix"
+          ASSET="release/Wordville_Pixel_Village_InstallFix_v1.3.0.apk"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "Wordville Pixel Village - Install Fix (test build)" \
+              --notes "Android test APK. Uses separate application ID com.wordville.app.village.vocabulary.safeinstall to avoid upgrade-signature conflicts with older Wordville versions. Existing app data is not automatically migrated. PDF Day word order and location navigation included." \
+              --prerelease
+          fi
