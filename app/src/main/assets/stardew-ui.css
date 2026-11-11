@@ -122,3 +122,10 @@ footer{color:#735940}
 
 /* High-density nearest-neighbour portraits. Never blur or downsample in CSS. */
 .wv-portrait,.wv-place-person .wv-portrait{background-repeat:no-repeat;background-size:400% 300%;image-rendering:pixelated!important;image-rendering:crisp-edges;filter:none;transform:translateZ(0);}
+
+/* Full-map navigation: large, thumb-friendly targets and readable active zone. */
+.wv-map-zones{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:10px 12px 3px;background:#ead4ab}
+.wv-map-zones button{min-width:0;min-height:44px;padding:8px 3px;border:3px solid #966d46;background:#fff2ca;color:#4d3928;font-weight:900;font-size:12px}
+.wv-map-zones button[aria-pressed=true]{background:#527a58;color:#fff8df;border-color:#304c35}
+.wv-map-tip{margin:0!important;padding:5px 12px 10px;background:#ead4ab;color:#695037;font-size:12px;line-height:1.45}
+@media(max-width:370px){.wv-map-zones button{font-size:11px;letter-spacing:-.3px}}
