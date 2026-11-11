@@ -51,10 +51,21 @@ public class VillageSmokeTest {
    Thread.sleep(200);
   }
   assertTrue("All 18 reference art images must decode on Android",artReady);
-  // Capture the REAL emulator screen only after the whole map and every venue atlas have decoded.
+  // PixelCopy captures this Activity window, excluding unrelated Android launcher ANR dialogs.
   Thread.sleep(1600);
-  android.graphics.Bitmap bitmap=inst.getUiAutomation().takeScreenshot();
-  assertNotNull("Screenshot taken after scene is ready",bitmap);
+  int width=activity.getWindow().getDecorView().getWidth();
+  int height=activity.getWindow().getDecorView().getHeight();
+  assertTrue("Window has laid out",width>100&&height>100);
+  android.graphics.Bitmap bitmap=android.graphics.Bitmap.createBitmap(width,height,android.graphics.Bitmap.Config.ARGB_8888);
+  java.util.concurrent.CountDownLatch copied=new java.util.concurrent.CountDownLatch(1);
+  java.util.concurrent.atomic.AtomicReference<Integer> code=new java.util.concurrent.atomic.AtomicReference<>(-1);
+  android.os.HandlerThread screenshotThread=new android.os.HandlerThread("wordville-visual-qa");
+  screenshotThread.start();
+  try{
+   android.view.PixelCopy.request(activity.getWindow(),bitmap,result->{code.set(result);copied.countDown();},new android.os.Handler(screenshotThread.getLooper()));
+   assertTrue("Window capture callback",copied.await(10,TimeUnit.SECONDS));
+   assertEquals("Window capture success",android.view.PixelCopy.SUCCESS,code.get().intValue());
+  }finally{screenshotThread.quitSafely();}
   java.io.File screenshots=inst.getTargetContext().getExternalFilesDir(null);
   assertNotNull("App screenshot directory",screenshots);
   java.io.File screenshot=new java.io.File(screenshots,"wordville-map-emulator.png");
