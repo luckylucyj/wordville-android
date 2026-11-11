@@ -5,7 +5,7 @@ on:
   pull_request:
   workflow_dispatch:
 concurrency:
-  group: wordville-signing-${{ github.repository }}-v1.7
+  group: wordville-signing-${{ github.repository }}-v1.7-${{ github.event_name }}
   cancel-in-progress: false
 permissions:
   contents: read
