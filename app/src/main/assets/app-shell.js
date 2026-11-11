@@ -46,6 +46,10 @@ const toolPanel=document.createElement('div');
 toolPanel.id='wv-map-tool-panel';toolPanel.hidden=true;
 if(controls)toolPanel.append(controls);
 if(timeNote)toolPanel.append(timeNote);
+const zoneControls=document.querySelector('.wv-map-zones');
+if(zoneControls)toolPanel.append(zoneControls);
+const zoneTip=document.querySelector('.wv-map-tip');
+if(zoneTip)toolPanel.append(zoneTip);
 wrap.append(toolPanel);
 toolButton.addEventListener('click',()=>{
  toolPanel.hidden=!toolPanel.hidden;
