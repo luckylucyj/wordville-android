@@ -4,6 +4,9 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: wordville-signing-${{ github.repository }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
@@ -40,16 +43,24 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - uses: actions/cache@v4
+      - name: Restore stable Wordville signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.WORDVILLE_KEYSTORE }}
-          key: wordville-reviewed-signing-v2
+          key: wordville-safeinstall-signing-v1
       - name: Prepare persistent signing key
         run: |
           mkdir -p "$(dirname "$WORDVILLE_KEYSTORE")"
           if [ ! -f "$WORDVILLE_KEYSTORE" ]; then
             keytool -genkeypair -keystore "$WORDVILLE_KEYSTORE" -storetype PKCS12 -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 3072 -validity 10000 -dname "CN=Wordville Reviewed, O=Wordville, C=KR"
           fi
+      - name: Cache signing key before any later tests can fail
+        if: steps.signing-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.WORDVILLE_KEYSTORE }}
+          key: wordville-safeinstall-signing-v1
       - name: Encrypt signing-key recovery backup
         run: |
           mkdir -p "$RUNNER_TEMP/wordville-signing-backup"
@@ -118,7 +129,7 @@ jobs:
           script: |
             adb install smoke/debug/app-debug.apk
             adb install smoke/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w com.wordville.app.village.vocabulary.reviewed.test/androidx.test.runner.AndroidJUnitRunner > android-test-result.txt
+            adb shell am instrument -w com.wordville.app.village.vocabulary.safeinstall.test/androidx.test.runner.AndroidJUnitRunner > android-test-result.txt
             cat android-test-result.txt
             grep -Eq 'OK \([0-9]+ tests?\)' android-test-result.txt
       - uses: actions/upload-artifact@v4
