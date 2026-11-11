@@ -45,6 +45,12 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"document.getElementById('next-page').click();document.getElementById('page-info').textContent.startsWith('2 /')"));
   assertEquals("true",eval(web,"var day=document.getElementById('day-filter');day.value='2';day.dispatchEvent(new Event('change'));document.getElementById('page-info').textContent.startsWith('1 /')"));
   assertEquals("12",eval(web,"WordvilleVillage.residents.length"));
+  boolean artReady=false;
+  for(int i=0;i<55;i++){
+   if("true".equals(eval(web,"globalThis.WordvilleWorldArt?.reference?.naturalWidth===840&&Object.keys(globalThis.WordvilleWorldArt?.venueImages||{}).length===17&&Object.values(globalThis.WordvilleWorldArt.venueImages).every(img=>img.complete&&img.naturalWidth===640)"))){artReady=true;break;}
+   Thread.sleep(200);
+  }
+  assertTrue("All 18 reference art images must decode on Android",artReady);
   assertEquals("true",eval(web,"document.querySelector('.word').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("false",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("true",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
