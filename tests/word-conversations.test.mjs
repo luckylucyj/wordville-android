@@ -28,3 +28,9 @@ test('conversation contexts change by Day without losing base word data',()=>{
  const example=words.find(x=>x.word==='reservation');
  assert.equal(conversations.get(example,18).length,10);
 });
+
+test('POS classification recognizes -ly verbs, nouns and adjectives',()=>{
+  for(const word of ['apply','comply','rely'])assert.equal(conversations.wordType(words.find(w=>w.word===word)),'verb',word);
+  for(const word of ['assembly','monopoly','rally'])assert.equal(conversations.wordType(words.find(w=>w.word===word)),'noun',word);
+  for(const word of ['timely','costly','likely'])assert.equal(conversations.wordType(words.find(w=>w.word===word)),'adjective',word);
+});
