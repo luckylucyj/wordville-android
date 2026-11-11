@@ -129,3 +129,6 @@ body[data-screen="town"] .wv-more-panel{bottom:var(--wv-bottom)}
 .wv-loading-track span{display:block;height:100%;width:34%;background:#799c6f;animation:wv-loading-progress 1.8s ease-in-out infinite alternate}
 @keyframes wv-loading-progress{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
 @media(prefers-reduced-motion:reduce){.wv-loading-track span{animation:none;width:100%}}
+
+/* v2.0: do not nearest-neighbor scale detailed photographs/portraits in fullscreen. */
+body[data-screen="town"] #village-canvas{image-rendering:auto!important}

@@ -51,6 +51,14 @@ public class VillageSmokeTest {
    Thread.sleep(200);
   }
   assertTrue("All 18 reference art images must decode on Android",artReady);
+  boolean residentArtReady=false;
+  for(int i=0;i<60;i++){
+   if("true".equals(eval(web,"WordvillePortraits.image.naturalWidth===1536&&WordvillePortraits.image.naturalHeight===1152&&WordvillePortraits.spriteImage.naturalWidth===1312&&WordvillePortraits.spriteImage.naturalHeight===756"))){residentArtReady=true;break;}
+   Thread.sleep(150);
+  }
+  assertTrue("Original high resolution portraits and sprite atlas must decode on Android",residentArtReady);
+  assertEquals("true",eval(web,"VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))"));
+  assertEquals("true",eval(web,"VillageModel.isStairEdge(7,8)&&VillageModel.isStairEdge(8,9)"));
   // PixelCopy captures this Activity window, excluding unrelated Android launcher ANR dialogs.
   Thread.sleep(1600);
   int width=activity.getWindow().getDecorView().getWidth();

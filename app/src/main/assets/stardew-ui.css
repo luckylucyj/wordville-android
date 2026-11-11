@@ -129,3 +129,8 @@ footer{color:#735940}
 .wv-map-zones button[aria-pressed=true]{background:#527a58;color:#fff8df;border-color:#304c35}
 .wv-map-tip{margin:0!important;padding:5px 12px 10px;background:#ead4ab;color:#695037;font-size:12px;line-height:1.45}
 @media(max-width:370px){.wv-map-zones button{font-size:11px;letter-spacing:-.3px}}
+
+/* v2.0: original 384×384 portraits at native fidelity, with browser-quality downsampling. */
+.wv-portrait,.wv-place-person .wv-portrait{background-image:url('portraits/wordville-portraits-original.png')!important;background-size:400% 300%!important;image-rendering:auto!important;filter:none!important;transform:none!important;background-color:#fff7e8}
+#village-canvas{image-rendering:auto!important}
+@media(max-width:699px){.wv-residents-screen .resident-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px}.wv-residents-screen .wv-portrait{max-width:none}.wv-residents-screen .resident-list button{min-height:185px;padding:8px}}

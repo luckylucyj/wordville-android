@@ -20,9 +20,16 @@ const assert = require('node:assert/strict');
   assert.deepEqual(await page.evaluate(()=>({
     portrait:[WordvillePortraits.image.naturalWidth,WordvillePortraits.image.naturalHeight],
     sprites:[WordvillePortraits.spriteImage.naturalWidth,WordvillePortraits.spriteImage.naturalHeight]
-  })),{portrait:[320,240],sprites:[256,192]});
-  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='pixelated'||getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='crisp-edges'),true);
+  })),{portrait:[1536,1152],sprites:[1312,756]});
+  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='auto'),true);
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
+  assert.equal(await page.evaluate(()=>VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))),true);
+  assert.equal(await page.evaluate(()=>VillageModel.links.filter(([a,b])=>VillageModel.isStairEdge(a,b)).length),2);
+  await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
+  assert.equal(await page.locator('.wv-residents-screen .wv-portrait').count(),12);
+  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.wv-residents-screen .wv-portrait')).imageRendering),'auto');
+  await page.screenshot({path:'wordville-portraits-browser.png'});
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   // Fullscreen town map zone controls must remain accessible inside the gear menu.
   await page.locator('#wv-map-tools').click();
   assert.equal(await page.locator('#wv-map-tool-panel [data-map-zone]').count(),4);
@@ -85,7 +92,7 @@ const assert = require('node:assert/strict');
   await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.naturalWidth>0);
   assert.equal(await page.locator('.resident-list .wv-portrait').count(),12);
   assert.ok(await page.evaluate(()=>WordvillePortraits.image.naturalWidth>=128));
-  assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('.resident-list .wv-portrait')).backgroundImage.includes('wordville-portrait-ref.webp')));
+  assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('.resident-list .wv-portrait')).backgroundImage.includes('wordville-portraits-original.png')));
   assert.ok(await page.evaluate(()=>!!document.querySelector('link[href="stardew-ui.css"]')));
   // Place explorer: map and venue screen are mutually exclusive, not a long vertical list.
   assert.equal(await page.locator('#wv-places-view').isVisible(),false);

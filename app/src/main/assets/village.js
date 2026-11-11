@@ -43,39 +43,42 @@ function ground(p){
  for(const [x,y] of [[527,370],[556,389]]){r(x-9,y-9,18,3,'#a88e67');r(x-1,y-6,2,10,'#665e55');r(x-15,y-4,5,3,'#778c70');r(x+10,y-4,5,3,'#778c70');}
 }
 function sprite(p){
- const x=Math.round(p.x),y=Math.round(p.y);
- const isWalking=!p.chat&&p.wait<=0&&p.route.length>0;
- const portraits=globalThis.WordvillePortraits;
- const img=portraits?.spriteImage;
- const idx=portraits?.order?.[p.id];
- // Both frames are genuine cuts from the supplied standing/walking sprite sheet.
- // Never re-render a portrait face over an invented stick-figure body.
- if(idx!==undefined&&img?.complete&&img.naturalWidth===256&&img.naturalHeight===192){
-  const col=idx%4,row=Math.floor(idx/4),pose=isWalking?Math.floor(p.steps*4)%2:0;
-  const sx=col*64+pose*32,sy=row*64;
-  const width=32,height=54;
-  const movingTo=p.route.length?M.nodes[p.route[0]]:null;
-  const facingLeft=isWalking&&movingTo&&movingTo.x<p.x-.5;
+ const x=p.x,y=p.y,walking=!p.chat&&p.wait<=0&&p.route.length>0;
+ const sprites=globalThis.WordvillePortraits;
+ const img=sprites?.spriteImage;
+ const idx=sprites?.order?.[p.id];
+ const width=61,height=94;
+ if(idx!==undefined&&img?.complete&&img.naturalWidth===1312&&img.naturalHeight===756){
+  const col=idx%4,row=Math.floor(idx/4),cycle=p.steps*10+idx*.23;
+  // Source contains the original idle and walking poses at 164×252 pixels each.
+  // Preserve their artwork; animated pose timing, sway and a small leg stride add movement.
+  const pose=walking?((p.onStairs&&Math.sin(cycle)<-.65)?0:1):0;
+  const sx=(col*2+pose)*164,sy=row*252;
+  const lift=walking?(p.onStairs?1.5+Math.abs(Math.sin(cycle))*3:Math.abs(Math.sin(cycle))*1.8):0;
+  const tilt=walking?Math.sin(cycle)*.023+(p.onStairs?.025:0):Math.sin(t*1.15+idx)*.004;
+  const shadowWidth=walking?15:17;
   ctx.save();
-  ctx.imageSmoothingEnabled=false;
-  if(facingLeft){ctx.translate(2*x,0);ctx.scale(-1,1);}
-  ctx.drawImage(img,sx,sy,32,64,Math.round(x-width/2),Math.round(y-height+7),width,height);
+  ctx.fillStyle='#302d3055';ctx.beginPath();ctx.ellipse(x,y+3,shadowWidth,3.8,0,0,Math.PI*2);ctx.fill();
+  ctx.translate(x,Math.round(y-lift));
+  if(p.heading<0)ctx.scale(-1,1);
+  ctx.rotate(tilt);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  // Preserve the PNG-derived figure and its transparent alpha, including every original detail.
+  ctx.drawImage(img,sx,sy,164,252,-width/2,-height+5,width,height);
   ctx.restore();
  }else{
-  // Clear fallback during initial image load. Body is a whole figure, not a cropped face.
   r(x-4,y-17,8,7,p.hair);r(x-3,y-11,6,5,p.skin);
   r(x-5,y-7,10,8,p.shirt);r(x-3,y+1,3,5,'#4b4850');r(x+1,y+1,3,5,'#4b4850');
  }
  if(p.id===selected){
-  r(x-17,y-49,34,2,'#ffdb81');
-  r(x-17,y-48,2,55,'#ffdb81');
-  r(x+15,y-48,2,55,'#ffdb81');
+   ctx.strokeStyle='#ffe08b';ctx.lineWidth=2;
+   ctx.strokeRect(Math.round(x-width/2-2),Math.round(y-height+4),width+4,height+7);
  }
- if(p.chat>0){r(x-8,y-59,16,9,'#f8f1dc');text('···',x,y-52,7);}
+ if(p.chat>0){r(x-8,y-105,16,9,'#f8f1dc');text('···',x,y-98,7);}
  if(zoom>1.2||p.id===selected){
-  const width=p.name.length*7+8;
-  r(x-width/2,y+9,width,12,period==='night'?'#243849dd':'#fbf3dadd');
-  text(p.name,x,y+17,7,period==='night'?'#f4e7c8':'#35494a');
+  const w=p.name.length*7+8;
+  r(x-w/2,y+10,w,12,period==='night'?'#243849dd':'#fbf3dadd');
+  text(p.name,x,y+18,7,period==='night'?'#f4e7c8':'#35494a');
  }
 }
 function syncTime(){const now=new Date(),h=now.getHours();period=mode==='auto'?M.period(h):mode;const stamp=now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});document.getElementById('village-clock').textContent=stamp;document.getElementById('village-period').textContent=({day:'낮',dusk:'저녁',night:'밤'})[period]+(mode==='auto'?' · 현재 시간':' · 미리보기');document.querySelector('.village-section').dataset.period=period;document.documentElement.dataset.period=period;minute=now.getMinutes();}
@@ -94,7 +97,7 @@ function setMapZone(zone){
 }
 function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet);}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].sort((a,b)=>a.y-b.y))sprite(p);ctx.restore();requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>select(p.id));document.getElementById('resident-list').append(b);}
-canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=[...residents].filter(p=>Math.abs(p.x-wx)<22&&wy>=p.y-54&&wy<=p.y+9).sort((a,b)=>Math.abs((a.y-23)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-23)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
+canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=[...residents].filter(p=>Math.abs(p.x-wx)<33&&wy>=p.y-96&&wy<=p.y+11).sort((a,b)=>Math.abs((a.y-47)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-47)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 const landmarks=globalThis.WordvilleWorldArt?.landmarks||[];
 const place=landmarks.map(s=>({ ...s,dist:Math.hypot(s.x-wx,s.y-wy)})).filter(s=>s.dist<35).sort((a,b)=>a.dist-b.dist)[0];
 if(place&&globalThis.WordvillePlaces){if(globalThis.WordvilleShell?.activate)globalThis.WordvilleShell.activate('places');else globalThis.WordvillePlaces.show('places');globalThis.WordvillePlaces.pick(place.id);}

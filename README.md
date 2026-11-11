@@ -97,3 +97,12 @@ APK는 Actions 실행의 `wordville-android-apk`에서 받을 수 있습니다.
 - 전체 지도에 원본 마을 한 장을 사용하고, 17개 장소 화면은 제공된 8개 장소 이미지와 마을 장면에서 개별 크롭했습니다. 각 장소 이미지 해상도 640×525, 맵 이미지 840×1120입니다.
 - 같은 원본 이미지가 여러 장소에 사용됩니다. 체육관·의료시설·아이스크림 등 정확한 기능별 외관이 원본에 없으므로 개별 장면의 1:1 시각적 일치를 보장하지 않습니다.
 - 맵은 화면 크기에 맞춰 원본 이미지 비율을 유지하여 표시합니다. 주민 12명의 별도 걷기 애니메이션, 대화, 학습 데이터는 유지됩니다.
+
+
+## Wordville v2.0.0 — 12 residents at original resolution and fountain-safe stairs
+- Portrait source is the provided 1536×1152 PNG, copied without any resizing or recompression; every resident has a 384×384 source region, instead of the old 80×80 source.
+- Walking/standing sprites come from the user's 1536×1152 scene sheet. Original figures were cropped at native resolution, the cream card background masked, and the resulting 1312×756 RGBA atlas compressed **losslessly** as WebP. Pixel content of surviving characters is unchanged.
+- Animation reuses these two supplied poses, adds a small timed stride, gentle sway, and stair-specific bob/lean. Additional truly drawn leg-direction frames were not present in the reference source; this procedural movement is not a claim of pixel-for-pixel new pose reproduction.
+- The new connected 19-node sidewalk graph avoids an ellipse around the central fountain including safety margin, and the entrance steps have explicit stair edges and step motion. A deterministic simulation test checks 6000 ticks for fountain collisions.
+- The exact original visual detail is preserved as file data; a mobile screen renders portraits smaller than their original 384×384 source dimensions. Portraits are downsampled smoothly for display rather than magnified from 80×80 pixels.
+- Existing install package ID, signing identity, Wordville words, and local study history remain unchanged.
