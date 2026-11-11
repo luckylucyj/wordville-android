@@ -114,11 +114,28 @@
   if(radio)radio.checked=true;
   $('wv-status-date').value=localNow();
   $('wv-status-reason').value='';
+  showReasonChoices();
   const old=$('wv-status-legacy');
   old.hidden=!item.legacyStatus;
   if(item.legacyStatus)old.textContent='이전 기록: '+N.LEGACY_LABEL[item.legacyStatus]+' → '+item.status+' (임시 분류). 이전 상태의 정확한 원인을 알 수 없어 직접 다시 선택해 주세요.';
   $('wv-status-message').textContent='';
   renderStatusHistory();
+ }
+ const reasonPresets={
+  'N':['처음 보는 단어','반복해서 봐도 계속 낯설게 느껴짐'],
+  'R':['봤지만 뜻이 생각나지 않음','5번 봤지만 회상 실패','어제 기억했지만 오늘 잊음'],
+  'F':['대략 알지만 뜻이 흐릿함','유사한 뜻 중 정확한 의미를 구분하지 못함'],
+  'X':['비슷한 철자의 단어와 혼동','다른 단어의 한국어 뜻과 혼동'],
+  'U':['한국어 번역의 개념을 이해하지 못함','정의를 봐도 의미를 설명할 수 없음'],
+  'C':['번역은 알지만 쓰이는 상황을 모르겠음','실제 대화에서 자연스럽게 사용하지 못함'],
+  '✓':['뜻을 가리지 않고 스스로 회상 성공','예문에서 의미를 바로 이해함']
+ };
+ function showReasonChoices(){
+  const chosen=statusDialog.querySelector('input[name="wv-study-status"]:checked')?.value||'N';
+  const sel=$('wv-status-reason-preset');
+  sel.replaceChildren(new Option('직접 입력 또는 선택', ''));
+  for(const reason of reasonPresets[chosen]||[])sel.add(new Option(reason,reason));
+  $('wv-status-advice').textContent='권장 행동: '+N.statusMeta(chosen).action;
  }
  function exposeNote(w,day){
   noteWord=w;noteDirty=false;
@@ -234,6 +251,10 @@
   });
  }
  $('wv-status-day').addEventListener('change',showStatusSelection);
+ statusDialog.querySelectorAll('input[name="wv-study-status"]').forEach(radio=>radio.addEventListener('change',showReasonChoices));
+ $('wv-status-reason-preset').addEventListener('change',()=>{
+  if($('wv-status-reason-preset').value)$('wv-status-reason').value=$('wv-status-reason-preset').value;
+ });
  $('wv-status-close').addEventListener('click',()=>statusDialog.close());
  $('wv-status-form').addEventListener('submit',async event=>{
   event.preventDefault();if(!statusWord)return;
