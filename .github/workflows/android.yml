@@ -161,19 +161,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Pixel_Village_InstallFix_v1.3.0.apk
+          cp release/wordville-debug.apk release/Wordville_Immersive_Town_v1.4.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v1.3.0-installfix"
-          ASSET="release/Wordville_Pixel_Village_InstallFix_v1.3.0.apk"
+          TAG="v1.4.0-immersive"
+          ASSET="release/Wordville_Immersive_Town_v1.4.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville Pixel Village - Install Fix (test build)" \
-              --notes "Android test APK. Uses separate application ID com.wordville.app.village.vocabulary.safeinstall to avoid upgrade-signature conflicts with older Wordville versions. Existing app data is not automatically migrated. PDF Day word order and location navigation included." \
+              --title "Wordville v1.4.0 - Immersive Pixel Town and Tabs" \
+              --notes "Wordville v1.4.0. Fullscreen original isometric town, 17 themed locations, residents, fixed bottom tabs, PDF Day sequence and ten vocabulary dialogues per card. Upgrades version 1.3.0 safeinstall without clearing its on-device records. Other package IDs remain separate." \
               --prerelease
           fi
