@@ -5,8 +5,9 @@
  'use strict';
  const N=globalThis.WordvilleNoteModel;
  const $=id=>document.getElementById(id);
- const dbName='wordville-thought-notes-v1',storeName='entries';
+ const dbName='wordville-thought-notes-v1',storeName='entries',historyStore='status-history';
  const cache=new Map();
+ const history=[]; // Append-only status events; distinct from notes and review scores.
  let db=null,loadingError='',statusWord=null,noteWord=null,noteDirty=false;
  const statusDialog=$('wv-status-dialog'),noteDialog=$('wv-note-dialog');
  const ids={overview:'wv-note-overview',topic:'wv-note-topic',category:'wv-note-category',notes:'wv-note-body',opinion:'wv-note-opinion',summary:'wv-note-summary'};
@@ -18,35 +19,75 @@
  }
  function getEntry(w,day){const d=dayOf(w,day);return cache.get(N.key(w.id,d))||N.blank(w.id,d);}
  function statusFor(w,day){return getEntry(w,day).status;}
- function statusClass(s){return 'wv-status-'+(N.STATUSES.some(x=>x.id===s)?s:'new');}
+ function statusClass(s){return 'wv-status-'+(s==='✓'?'ok':N.STATUS_IDS.has(s)?s:'N');}
  function openDb(){
   return new Promise((resolve,reject)=>{
    if(!globalThis.indexedDB)return reject(new Error('기기에서 IndexedDB를 지원하지 않습니다.'));
-   const request=indexedDB.open(dbName,1);
+   const request=indexedDB.open(dbName,2);
    request.onupgradeneeded=()=>{
     if(!request.result.objectStoreNames.contains(storeName))request.result.createObjectStore(storeName,{keyPath:'key'});
+    if(!request.result.objectStoreNames.contains(historyStore)){
+     const changes=request.result.createObjectStore(historyStore,{keyPath:'id',autoIncrement:true});
+     changes.createIndex('wordDay','key',{unique:false});
+    }
    };
    request.onsuccess=()=>resolve(request.result);
    request.onerror=()=>reject(request.error||new Error('노트 저장소를 열지 못했습니다.'));
    request.onblocked=()=>reject(new Error('다른 앱 창에서 노트 저장소를 사용 중입니다.'));
   });
  }
- function readAll(database){
+ function readAll(database,table=storeName){
   return new Promise((resolve,reject)=>{
-   const tx=database.transaction(storeName,'readonly'),req=tx.objectStore(storeName).getAll();
+   const tx=database.transaction(table,'readonly'),req=tx.objectStore(table).getAll();
    req.onsuccess=()=>resolve(req.result||[]);
    req.onerror=()=>reject(req.error||new Error('노트를 불러올 수 없습니다.'));
   });
  }
- function put(entry){
+ function put(entry,event=null){
   return new Promise((resolve,reject)=>{
    if(!db)return reject(new Error(loadingError||'저장소가 준비되지 않았습니다.'));
-   const tx=db.transaction(storeName,'readwrite');
+   // A status change and its history event commit together or not at all.
+   const tx=db.transaction(event?[storeName,historyStore]:[storeName],'readwrite');
    tx.objectStore(storeName).put(entry);
-   tx.oncomplete=()=>{cache.set(entry.key,entry);resolve(entry);};
+   let assigned=null;
+   if(event){
+    const req=tx.objectStore(historyStore).add(event);
+    req.onsuccess=()=>{assigned=req.result;};
+   }
+   tx.oncomplete=()=>{
+    cache.set(entry.key,entry);
+    if(event){history.push({...event,id:assigned});history.sort(eventSort);}
+    resolve(entry);
+   };
    tx.onerror=()=>reject(tx.error||new Error('노트 저장에 실패했습니다.'));
    tx.onabort=()=>reject(tx.error||new Error('노트 저장이 중단됐습니다.'));
   });
+ }
+ function eventSort(a,b){return Date.parse(a.occurredAt)-Date.parse(b.occurredAt)||Number(a.id||0)-Number(b.id||0);}
+ function localNow(){
+  const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+ }
+ function eventsFor(w,day){
+  const k=N.key(w.id,dayOf(w,day));
+  return history.filter(e=>e.key===k).sort(eventSort);
+ }
+ function displayDate(value){
+  return new Date(value).toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+ }
+ function renderStatusHistory(){
+  const list=$('wv-status-history-list');list.replaceChildren();
+  if(!statusWord)return;
+  const changes=eventsFor(statusWord,$('wv-status-day').value).slice().reverse();
+  if(!changes.length){list.append(makeEl('p','아직 기록된 상태 변경 이력이 없습니다. 이번에 저장하는 기록부터 표시됩니다.','wv-empty-history'));return;}
+  for(const e of changes){
+   const item=makeEl('article',undefined,'wv-history-event');
+   const header=makeEl('div',undefined,'wv-history-head');
+   const code=makeEl('b',(e.from?e.from+' → ':'')+e.to,statusClass(e.to));
+   const kind=e.kind==='initial'?'최초 체크':e.kind==='recheck'?'상태 유지·재점검':'상태 변경';
+   header.append(code,makeEl('span',kind+' · '+displayDate(e.occurredAt)));
+   item.append(header,makeEl('p',e.reason||'원인 메모 없음'));
+   list.append(item);
+  }
  }
  function daysOptions(select,w,value){
   select.replaceChildren();
@@ -71,7 +112,13 @@
   const item=getEntry(statusWord,$('wv-status-day').value);
   const radio=statusDialog.querySelector('input[name="wv-study-status"][value="'+item.status+'"]');
   if(radio)radio.checked=true;
+  $('wv-status-date').value=localNow();
+  $('wv-status-reason').value='';
+  const old=$('wv-status-legacy');
+  old.hidden=!item.legacyStatus;
+  if(item.legacyStatus)old.textContent='이전 기록: '+N.LEGACY_LABEL[item.legacyStatus]+' → '+item.status+' (임시 분류). 이전 상태의 정확한 원인을 알 수 없어 직접 다시 선택해 주세요.';
   $('wv-status-message').textContent='';
+  renderStatusHistory();
  }
  function exposeNote(w,day){
   noteWord=w;noteDirty=false;
@@ -110,22 +157,27 @@
   const selected=dayOf(w,day),entry=getEntry(w,selected);
   const actions=document.createElement('div');actions.className='wv-word-actions';
   const status=document.createElement('button');status.type='button';status.className='wv-word-status '+statusClass(entry.status);
-  status.textContent=N.statusName(entry.status);
-  status.setAttribute('aria-label',w.word+' '+N.dayLabel(selected)+' 상태 '+N.statusName(entry.status)+' 변경');
+  status.textContent=entry.status;
+  status.title=entry.status+' · '+N.statusName(entry.status)+(entry.legacyStatus?' (이전 상태 재분류 필요)':'');
+  status.setAttribute('aria-label',w.word+' '+N.dayLabel(selected)+' 상태 '+entry.status+' '+N.statusName(entry.status)+' 변경');
   status.addEventListener('click',()=>exposeStatus(w,selected));
+  // Put exactly one character next to the word, never a full status label.
+  const head=document.createElement('div');head.className='wv-word-head';
+  const wordButton=row.querySelector('.word');
+  if(wordButton)head.append(wordButton,status);
+  row.prepend(head);
   const note=document.createElement('button');note.type='button';note.className='wv-word-note';
   note.textContent=N.hasContent(entry)?'📝 노트 보기':'＋ 노트';
   note.setAttribute('aria-label',w.word+' '+N.dayLabel(selected)+' 생각코딩 노트 편집');
   note.addEventListener('click',()=>exposeNote(w,selected));
-  actions.append(status,note);row.append(actions);
+  actions.append(note);row.append(actions);
  }
  function renderSummary(){
   if(!$('wv-day-status-summary'))return;
   const day=pageDay();
   const matching=words.filter(w=>day===''||(w.days||[]).includes(Number(day)));
-  const counts={new:0,learning:0,review:0,mastered:0};
-  for(const w of matching)counts[statusFor(w,day)]++;
-  $('wv-day-status-summary').textContent=(day===''?'전체 Day':N.dayLabel(day))+' · 전체 '+matching.length+'개 | 학습 중 '+counts.learning+' · 복습 필요 '+counts.review+' · 암기 완료 '+counts.mastered;
+  const stats=N.distribution(matching.map(w=>getEntry(w,day)));
+  $('wv-day-status-summary').textContent=(day===''?'전체 Day':N.dayLabel(day))+' · '+matching.length+'개 | 체크 '+stats.marked+' · 미기록 '+stats.unmarked+' · ✓ '+stats.counts['✓']+'개';
  }
  function sync(){
   if(typeof renderWords==='function'&&words.length)renderWords();
@@ -151,14 +203,14 @@
    saved.sort((a,b)=>(rank.get(a.wordId)??1e7)-(rank.get(b.wordId)??1e7));
   }
   $('wv-note-archive-status').textContent='저장된 노트 및 상태 '+saved.length+'건';
-  if(!saved.length){container.append(makeEl('p','이 Day에 저장된 노트나 체크한 학습 상태가 없습니다. 단어장에서 상태나 노트를 입력해 보세요.','wv-empty-notes'));return;}
+  if(!saved.length){container.append(makeEl('p','이 Day에 저장된 노트나 체크한 학습 상태가 없습니다. 단어장에서 상태나 노트를 입력해 보세요.','wv-empty-notes'));globalThis.WordvilleStatusCharts?.render(archiveDay);return;}
   const fragment=document.createDocumentFragment();
   for(const entry of saved){
    const w=wordById(entry.wordId);if(!w)continue;
    const item=makeEl('article',undefined,'wv-note-archive-card');
    const head=makeEl('div',undefined,'wv-note-archive-head');
    const title=makeEl('strong',w.word);
-   const tag=makeEl('span',N.dayLabel(entry.day)+' · '+N.statusName(entry.status),statusClass(entry.status));
+   const tag=makeEl('span',N.dayLabel(entry.day)+' · '+entry.status+' '+N.statusName(entry.status),statusClass(entry.status));
    head.append(title,tag);
    const brief=(entry.summary||entry.notes||entry.overview||entry.opinion||w.meaning).trim();
    const excerpt=makeEl('p',brief.length>110?brief.slice(0,110)+'…':brief,'wv-note-excerpt');
@@ -169,6 +221,7 @@
    actions.append(b,c);item.append(head,excerpt,review,actions);fragment.append(item);
   }
   container.append(fragment);
+  globalThis.WordvilleStatusCharts?.render(archiveDay);
  }
  function initSelects(){
   const select=$('wv-notes-day');
@@ -186,10 +239,16 @@
   event.preventDefault();if(!statusWord)return;
   const d=Number($('wv-status-day').value),radio=statusDialog.querySelector('input[name="wv-study-status"]:checked');
   if(!radio){$('wv-status-message').textContent='학습 상태를 선택하세요.';return;}
-  const base=getEntry(statusWord,d);
-  const next=N.clean({...base,status:radio.value,updatedAt:new Date().toISOString()},statusWord.id,d);
+  const base=getEntry(statusWord,d),dateInput=$('wv-status-date').value;
+  const changedAt=new Date(dateInput);
+  if(!dateInput||!Number.isFinite(changedAt.getTime())){$('wv-status-message').textContent='유효한 날짜와 시간을 선택해 주세요.';return;}
+  const occurredAt=changedAt.toISOString(),reason=$('wv-status-reason').value.trim();
+  const kind=!base.hasStatus?'initial':base.status===radio.value?'recheck':'change';
+  const next=N.clean({...base,status:radio.value,hasStatus:true,legacyStatus:'',statusChangedAt:occurredAt,updatedAt:new Date().toISOString()},statusWord.id,d);
+  const eventRecord={key:next.key,wordId:statusWord.id,day:d,from:base.hasStatus?base.status:null,to:radio.value,
+   kind,reason,occurredAt,recordedAt:new Date().toISOString()};
   const button=statusDialog.querySelector('button[type="submit"]');button.disabled=true;
-  try{await put(next);statusDialog.close();sync();}
+  try{await put(next,eventRecord);statusDialog.close();sync();}
   catch(error){$('wv-status-message').textContent='저장 실패: '+error.message;}
   finally{button.disabled=false;}
  });
@@ -226,11 +285,17 @@
   try{db=await openDb();for(const item of await readAll(db)){
     if(!item?.wordId||!N.validDay(item.day))continue;
     const normalized=N.clean(item,item.wordId,item.day);cache.set(normalized.key,normalized);
-   }}
+   }
+   for(const raw of await readAll(db,historyStore)){
+    const event=N.normalizeEvent(raw);if(event)history.push(event);
+   }
+   history.sort(eventSort);
+  }
   catch(err){loadingError=err.message;console.warn('Wordville notes storage:',err.message);}
   sync();return !loadingError;
  })();
- const api={ready,statusFor,attachCard:cardButtons,renderSummary,renderArchive,openNote:exposeNote,openStatus:exposeStatus,get:(w,d)=>getEntry(w,d),get count(){return cache.size;},get error(){return loadingError;}};
+ const api={ready,statusFor,attachCard:cardButtons,renderSummary,renderArchive,openNote:exposeNote,openStatus:exposeStatus,get:(w,d)=>getEntry(w,d),eventsFor,
+   get events(){return history.slice();},get count(){return cache.size;},get error(){return loadingError;}};
  globalThis.WordvilleStudy=api;
  initSelects();renderArchive();
 })();
