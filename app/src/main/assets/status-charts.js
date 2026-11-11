@@ -49,7 +49,7 @@
    (day==='all'||e.day===Number(day))&&N.STATUS_IDS.has(e.to)&&e.occurredAt);
   const groups=new Map();
   for(const e of events){
-   const key=e.occurredAt.slice(0,10);
+   const date=new Date(e.occurredAt);const key=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
    if(!groups.has(key))groups.set(key,Object.fromEntries(N.STATUSES.map(s=>[s.id,0])));
    groups.get(key)[e.to]++;
   }
