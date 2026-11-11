@@ -86,7 +86,10 @@
  function showNoteValues(){
   if(!noteWord)return;
   const entry=getEntry(noteWord,$('wv-note-day').value);
-  for(const f of N.FIELD_NAMES)$(ids[f]).value=entry[f]||(f==='topic'&&!entry.updatedAt?noteWord.word:'');
+  for(const f of N.FIELD_NAMES){
+   const prefill=!entry.updatedAt&&f==='topic'?noteWord.word:!entry.updatedAt&&f==='overview'?noteWord.meaning:'';
+   $(ids[f]).value=entry[f]||prefill;
+  }
   noteDialog.querySelectorAll('[data-check]').forEach(el=>el.checked=entry.checks[Number(el.dataset.check)]===true);
   $('wv-note-state-label').textContent='학습 상태: '+N.statusName(entry.status);
   $('wv-note-message').textContent=loadingError||'';
