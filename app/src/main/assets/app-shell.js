@@ -76,7 +76,7 @@ for(const [key,icon,label] of tabDefs){
 document.body.append(dock);
 const more=document.createElement('div');more.id='wv-more-panel';more.className='wv-more-panel';
 more.setAttribute('aria-label','Wordville 추가 기능');more.hidden=true;
-for(const [key,icon,label] of [['lab','✦','단어 조합실'],['book','▧','개념 도감'],['account','⚙','계정·동기화']]){
+for(const [key,icon,label] of [['notes','📝','Day별 생각코딩 노트'],['lab','✦','단어 조합실'],['book','▧','개념 도감'],['account','⚙','계정·동기화']]){
  const b=document.createElement('button');b.type='button';b.dataset.more=key;
  b.textContent=icon+' '+label;b.addEventListener('click',()=>activate(key));more.append(b);
 }
@@ -86,7 +86,7 @@ function toggleMore(){
  buttons.get('more').setAttribute('aria-expanded',String(toOpen));
 }
 function activate(screen){
- if(!['town','places','residents','learn','review','lab','book','account'].includes(screen))return;
+ if(!['town','places','residents','learn','review','lab','book','notes','account'].includes(screen))return;
  current=screen;lastScreen=screen;
  if(screen!=='town'){toolPanel.hidden=true;toolButton.setAttribute('aria-expanded','false');}
  more.hidden=true;buttons.get('more').setAttribute('aria-expanded','false');
@@ -109,9 +109,10 @@ function activate(screen){
   }
   get(id).hidden=screen!==id;
  }
+ get('wv-notes-view').hidden=screen!=='notes';
  account.hidden=screen!=='account';
  for(const [key,b] of buttons){
-  const active=key===screen||(key==='more'&&['lab','book','account'].includes(screen));
+  const active=key===screen||(key==='more'&&['notes','lab','book','account'].includes(screen));
   b.setAttribute('aria-current',active?'page':'false');
   b.setAttribute('aria-selected',String(active));
  }
