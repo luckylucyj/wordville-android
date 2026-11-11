@@ -44,35 +44,31 @@ function ground(p){
 }
 function sprite(p){
  const x=p.x,y=p.y,walking=!p.chat&&p.wait<=0&&p.route.length>0;
- const sprites=globalThis.WordvillePortraits;
- const img=sprites?.spriteImage;
- const idx=sprites?.order?.[p.id];
+ const assets=globalThis.WordvillePortraits,img=assets?.spriteImage,index=assets?.order?.[p.id];
  const width=61,height=94;
- if(idx!==undefined&&img?.complete&&img.naturalWidth===1312&&img.naturalHeight===756){
-  const col=idx%4,row=Math.floor(idx/4),cycle=p.steps*10+idx*.23;
-  // Source contains the original idle and walking poses at 164×252 pixels each.
-  // Preserve their artwork; animated pose timing, sway and a small leg stride add movement.
-  const pose=walking?((p.onStairs&&Math.sin(cycle)<-.65)?0:1):0;
-  const sx=(col*2+pose)*164,sy=row*252;
-  const lift=walking?(p.onStairs?1.5+Math.abs(Math.sin(cycle))*3:Math.abs(Math.sin(cycle))*1.8):0;
-  const tilt=walking?Math.sin(cycle)*.023+(p.onStairs?.025:0):Math.sin(t*1.15+idx)*.004;
-  const shadowWidth=walking?15:17;
+ if(index!==undefined&&img?.complete&&img.naturalWidth===2560&&img.naturalHeight===768){
+  const col=index%4,row=Math.floor(index/4),time=p.steps*7.5+index*.19;
+  // Two source-identical poses + two clean transitional variants = four animation slots.
+  const motion=[1,2,3,2];
+  const pose=walking?motion[Math.floor(time)%motion.length]:0;
+  const sx=col*640+pose*160,sy=row*256;
+  const lift=walking?(p.onStairs?1.5+Math.abs(Math.sin(time*1.4))*3:Math.abs(Math.sin(time))*1.3):0;
+  const tilt=walking?(Math.sin(time)*.013+(p.onStairs?.019:0)):Math.sin(t*1.15+index)*.003;
   ctx.save();
-  ctx.fillStyle='#302d3055';ctx.beginPath();ctx.ellipse(x,y+3,shadowWidth,3.8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#302d3044';ctx.beginPath();ctx.ellipse(x,y+3,15,3,0,0,Math.PI*2);ctx.fill();
   ctx.translate(x,Math.round(y-lift));
   if(p.heading<0)ctx.scale(-1,1);
   ctx.rotate(tilt);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  // Preserve the PNG-derived figure and its transparent alpha, including every original detail.
-  ctx.drawImage(img,sx,sy,164,252,-width/2,-height+5,width,height);
+  ctx.drawImage(img,sx,sy,160,256,-width/2,-height+5,width,height);
   ctx.restore();
  }else{
   r(x-4,y-17,8,7,p.hair);r(x-3,y-11,6,5,p.skin);
   r(x-5,y-7,10,8,p.shirt);r(x-3,y+1,3,5,'#4b4850');r(x+1,y+1,3,5,'#4b4850');
  }
  if(p.id===selected){
-   ctx.strokeStyle='#ffe08b';ctx.lineWidth=2;
-   ctx.strokeRect(Math.round(x-width/2-2),Math.round(y-height+4),width+4,height+7);
+  ctx.strokeStyle='#ffe08b';ctx.lineWidth=2;
+  ctx.strokeRect(Math.round(x-width/2-2),Math.round(y-height+4),width+4,height+7);
  }
  if(p.chat>0){r(x-8,y-105,16,9,'#f8f1dc');text('···',x,y-98,7);}
  if(zoom>1.2||p.id===selected){

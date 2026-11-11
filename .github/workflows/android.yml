@@ -177,19 +177,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_HiRes_Residents_Stairs_v2.0.0.apk
+          cp release/wordville-debug.apk release/Wordville_Clean_Walk_Poses_v2.0.1.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.0.0-hires-residents-stairs"
-          ASSET="release/Wordville_HiRes_Residents_Stairs_v2.0.0.apk"
+          TAG="v2.0.1-clean-portrait-poses"
+          ASSET="release/Wordville_Clean_Walk_Poses_v2.0.1.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.0.0 - Original HiRes Portraits and Fountain-Safe Walking" \
-              --notes "Wordville v2.0.0. User-supplied 1536x1152 portraits included bit-identically; 12 residents have lossless transparency-extracted original two-pose sprites (1312x756 atlas), four-phase sway/bob walking and staircase movement. The navigation graph excludes fountain water and stone, plus connected entrance stairs. Existing study data, storage and package/signature are preserved. Test on your Galaxy to validate display quality and all touch gestures." \
+              --title "Wordville v2.0.1 - Clean High-Resolution Walk Poses" \
+              --notes "Wordville v2.0.1. Corrects holes in clothing and hair caused by alpha masking in the earlier walking atlas. Preserves user-provided 1536x1152 original portrait PNG byte-for-byte. Adds four walk-cycle slots per resident (original standing and walking source poses plus two source-derived transitions) at 160x256, with 2560x768 atlas. Preserves connected fountain-safe walk paths and stair step animation. Same package ID/signing key for update." \
               --prerelease
           fi

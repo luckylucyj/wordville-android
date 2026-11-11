@@ -5,7 +5,7 @@
  const ids=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily'];
  const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'];
  const sheet='portraits/wordville-portraits-original.png';
- const spriteSheet='portraits/wordville-poses-hires.webp';
+ const spriteSheet='portraits/wordville-walk-4phase.png';
  const spriteImage=new Image();spriteImage.decoding='async';spriteImage.src=spriteSheet;
  const image=new Image();image.decoding='async';image.src=sheet;
  const order=Object.fromEntries(ids.map((id,i)=>[id,i]));
@@ -34,7 +34,7 @@
    new MutationObserver(sync).observe(speaker,{characterData:true,childList:true,subtree:true});
    sync();
  }
- globalThis.WordvillePortraits={image,spriteImage,order,position,portrait,sheet,spriteSheet,portraitCell:384,spriteCell:{width:164,height:252}};
+ globalThis.WordvillePortraits={image,spriteImage,order,position,portrait,sheet,spriteSheet,portraitCell:384,spriteCell:{width:160,height:256,frames:4}};
  // Loaded with defer after village.js: HTML and residents already exist.
  decorate();
  // Safely populate late-added residents without duplicating portraits.

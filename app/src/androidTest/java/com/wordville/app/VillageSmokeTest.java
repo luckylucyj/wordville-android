@@ -53,7 +53,7 @@ public class VillageSmokeTest {
   assertTrue("All 18 reference art images must decode on Android",artReady);
   boolean residentArtReady=false;
   for(int i=0;i<60;i++){
-   if("true".equals(eval(web,"WordvillePortraits.image.naturalWidth===1536&&WordvillePortraits.image.naturalHeight===1152&&WordvillePortraits.spriteImage.naturalWidth===1312&&WordvillePortraits.spriteImage.naturalHeight===756"))){residentArtReady=true;break;}
+   if("true".equals(eval(web,"WordvillePortraits.image.naturalWidth===1536&&WordvillePortraits.image.naturalHeight===1152&&WordvillePortraits.spriteImage.naturalWidth===2560&&WordvillePortraits.spriteImage.naturalHeight===768"))){residentArtReady=true;break;}
    Thread.sleep(150);
   }
   assertTrue("Original high resolution portraits and sprite atlas must decode on Android",residentArtReady);

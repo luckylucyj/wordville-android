@@ -20,13 +20,14 @@ const assert = require('node:assert/strict');
   assert.deepEqual(await page.evaluate(()=>({
     portrait:[WordvillePortraits.image.naturalWidth,WordvillePortraits.image.naturalHeight],
     sprites:[WordvillePortraits.spriteImage.naturalWidth,WordvillePortraits.spriteImage.naturalHeight]
-  })),{portrait:[1536,1152],sprites:[1312,756]});
+  })),{portrait:[1536,1152],sprites:[2560,768]});
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='auto'),true);
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
   assert.equal(await page.evaluate(()=>VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))),true);
   assert.equal(await page.evaluate(()=>VillageModel.links.filter(([a,b])=>VillageModel.isStairEdge(a,b)).length),2);
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
   assert.equal(await page.locator('.wv-residents-screen .wv-portrait').count(),12);
+  assert.equal(await page.evaluate(()=>WordvillePortraits.spriteCell.frames),4);
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.wv-residents-screen .wv-portrait')).imageRendering),'auto');
   await page.screenshot({path:'wordville-portraits-browser.png'});
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();

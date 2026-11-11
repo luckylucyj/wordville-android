@@ -106,3 +106,9 @@ APK는 Actions 실행의 `wordville-android-apk`에서 받을 수 있습니다.
 - The new connected 19-node sidewalk graph avoids an ellipse around the central fountain including safety margin, and the entrance steps have explicit stair edges and step motion. A deterministic simulation test checks 6000 ticks for fountain collisions.
 - The exact original visual detail is preserved as file data; a mobile screen renders portraits smaller than their original 384×384 source dimensions. Portraits are downsampled smoothly for display rather than magnified from 80×80 pixels.
 - Existing install package ID, signing identity, Wordville words, and local study history remain unchanged.
+
+## v2.0.1 걷기 이미지 품질 재검수
+- 기존 v2.0.0 1312×756 WebP 아틀라스에서 일부 옷/팔이 투명하게 뚫려 보이는 부분을 확인했습니다.
+- 손실 없는 PNG 2560×768 아틀라스를 새로 적용했습니다. 주민 12명 각각 160×256 크기의 프레임 4개(원본 서기, 원본 걷기, 서기 변형, 걷기 변형)로 구성합니다. 원본 서기·걷기 픽셀은 마스킹된 앞쪽 부분을 제외하면 원본 색상을 유지합니다.
+- 원본 초상화 PNG SHA-256: 0e70bab534788338dbc7e454a88205adb6019a3c39a7f212eba11ee073254219 (사용자가 보내주신 파일과 일치).
+- 원본과 픽셀 단위로 같은 것은 초상화 원본 파일입니다. 작은 스마트폰 화면은 화소 수와 크기 때문에 원본 수준을 항상 그대로 표시할 수는 없으며, 새 포즈 2개는 기존 이미지에서 파생한 동작입니다.
