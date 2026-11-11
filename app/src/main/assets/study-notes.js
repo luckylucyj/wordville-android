@@ -76,6 +76,7 @@
  function exposeNote(w,day){
   noteWord=w;noteDirty=false;
   daysOptions($('wv-note-day'),w,day);
+  $('wv-note-day').dataset.lastDay=$('wv-note-day').value;
   $('wv-note-word-name').textContent=w.word+' · '+w.meaning;
   if(statusDialog.open)statusDialog.close();
   if($('word-dialog').open)$('word-dialog').close();
@@ -140,15 +141,7 @@
   const archiveDay=$('wv-notes-day').value,status=$('wv-notes-filter').value;
   const saved=[...cache.values()].filter(entry=>
     N.hasContent(entry)&&(archiveDay==='all'||entry.day===Number(archiveDay))&&(status==='all'||entry.status===status));
-  saved.sort((a,b)=>{
-    if(a.day!==b.day)return a.day-b.day;
-    const order=globalThis.WordvilleBookOrder;
-    if(order?.sort&&archiveDay!=='all'){
-      // Sorted below in bulk, using the book's verified Day order.
-      return a.wordId.localeCompare(b.wordId);
-    }
-    return a.wordId.localeCompare(b.wordId);
-  });
+  saved.sort((a,b)=>a.day-b.day||a.wordId.localeCompare(b.wordId));
   if(archiveDay!=='all'&&saved.length>1){
    const sorted=globalThis.WordvilleBookOrder?.sort(words.filter(w=>w.days.includes(Number(archiveDay))),archiveDay)||[];
    const rank=new Map(sorted.map((w,i)=>[w.id,i]));
