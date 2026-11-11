@@ -177,19 +177,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Clean_Walk_Poses_v2.0.1.apk
+          cp release/wordville-debug.apk release/Wordville_Interactive_Venues_v2.1.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.0.1-clean-portrait-poses"
-          ASSET="release/Wordville_Clean_Walk_Poses_v2.0.1.apk"
+          TAG="v2.1.0-interactive-venues"
+          ASSET="release/Wordville_Interactive_Venues_v2.1.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.0.1 - Clean High-Resolution Walk Poses" \
+              --title "Wordville v2.1.0 - Indoor Walk Navigation" \
               --notes "Wordville v2.0.1. Corrects holes in clothing and hair caused by alpha masking in the earlier walking atlas. Preserves user-provided 1536x1152 original portrait PNG byte-for-byte. Adds four walk-cycle slots per resident (original standing and walking source poses plus two source-derived transitions) at 160x256, with 2560x768 atlas. Preserves connected fountain-safe walk paths and stair step animation. Same package ID/signing key for update." \
               --prerelease
           fi
