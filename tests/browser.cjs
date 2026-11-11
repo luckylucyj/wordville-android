@@ -7,6 +7,17 @@ const assert = require('node:assert/strict');
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:4173');await page.waitForSelector('.word');
   assert.equal(await page.locator('.word').count(),60);
+  assert.equal(await page.evaluate(()=>WordvilleBookOrder.status),'ready');
+  assert.equal(await page.locator('.word strong').first().innerText(),'resume');
+  await page.locator('#day-filter').selectOption('1');
+  assert.equal(await page.locator('.word strong').first().innerText(),'resume');
+  await page.locator('#day-filter').selectOption('2');
+  assert.equal(await page.locator('.word strong').first().innerText(),'attire');
+  await page.locator('#day-filter').selectOption('30');
+  assert.equal(await page.locator('.word strong').first().innerText(),'fatigue');
+  await page.locator('#day-filter').selectOption('0');
+  assert.equal(await page.locator('.word strong').first().innerText(),'across the board');
+  await page.locator('#day-filter').selectOption('');
   await page.evaluate(async()=>{
    const alias='voca-l-effect';
    localStorage.setItem('wordville.rebuilt.v1',JSON.stringify({...Wordville.fresh(),reviews:{[alias]:{attempts:4,streak:2,due:123}}}));
