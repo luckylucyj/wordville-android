@@ -4,6 +4,11 @@ import android.content.Intent;
 import android.content.ActivityNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
+import android.graphics.Color;
+import android.view.WindowInsets;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.view.View;
 import android.webkit.*;
 import androidx.webkit.WebViewAssetLoader;
@@ -14,9 +19,33 @@ public class MainActivity extends Activity {
  private static final String HOST = "appassets.androidplatform.net";
  @Override public void onCreate(Bundle saved) {
   super.onCreate(saved);
-  web = new WebView(this); setContentView(web);
-  web.setOnApplyWindowInsetsListener((v, insets) -> { v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(), insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom()); return insets; });
-  web.requestApplyInsets();
+  // Android 15+ draws behind system bars. Reserve bar insets OUTSIDE the WebView
+  // so scrolling content cannot pass behind the status clock or gesture area.
+  getWindow().setStatusBarColor(Color.rgb(83,55,34));
+  getWindow().setNavigationBarColor(Color.rgb(83,55,34));
+  getWindow().getDecorView().setSystemUiVisibility(
+    View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+  if (Build.VERSION.SDK_INT >= 30) getWindow().setDecorFitsSystemWindows(false);
+  FrameLayout root = new FrameLayout(this);
+  root.setBackgroundColor(Color.rgb(83,55,34));
+  web = new WebView(this);
+  root.addView(web,new FrameLayout.LayoutParams(
+    ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
+  root.setOnApplyWindowInsetsListener((view,insets) -> {
+    int l,t,r,b;
+    if (Build.VERSION.SDK_INT >= 30) {
+      android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());
+      l=bars.left; t=bars.top; r=bars.right; b=bars.bottom;
+    } else {
+      l=insets.getSystemWindowInsetLeft(); t=insets.getSystemWindowInsetTop();
+      r=insets.getSystemWindowInsetRight(); b=insets.getSystemWindowInsetBottom();
+    }
+    view.setPadding(l,t,r,b);
+    return insets;
+  });
+  setContentView(root);
+  root.requestApplyInsets();
   WebSettings settings = web.getSettings(); settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true);
   settings.setAllowFileAccess(false); settings.setAllowContentAccess(false); settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
   WebViewAssetLoader loader = new WebViewAssetLoader.Builder().addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this)).build();
