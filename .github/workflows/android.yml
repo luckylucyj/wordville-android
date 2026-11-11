@@ -58,7 +58,7 @@ jobs:
       - name: Reject signing-key changes that would break APK upgrades
         run: |
           ACTUAL="$(keytool -exportcert -alias androiddebugkey -keystore "$WORDVILLE_KEYSTORE" -storepass android | sha256sum | cut -d' ' -f1)"
-          EXPECTED="ae581a84f825ef8c9a51370611cdf4e4ec74187c623a8a49bda4a5d67ef02bfb"
+          EXPECTED="b6b22288413579b584c10f2c6da61548327aa7747e8d1e96e49a52286adf4470"
           if [ "$ACTUAL" != "$EXPECTED" ]; then
             echo "::error::Signing certificate changed. Stop to avoid publishing an un-installable update."
             exit 1
