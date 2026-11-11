@@ -162,19 +162,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Crisp_Residents_v1.7.0.apk
+          cp release/wordville-debug.apk release/Wordville_World_Map_Wildlife_v1.8.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v1.7.0-crisp-residents"
-          ASSET="release/Wordville_Crisp_Residents_v1.7.0.apk"
+          TAG="v1.8.0-world-map-wildlife"
+          ASSET="release/Wordville_World_Map_Wildlife_v1.8.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v1.7.0 - Crisp Portraits and Animated Residents" \
-              --notes "Wordville v1.7.0. All 12 villagers use direct crops of the two user-provided character references: portraits in the Residents and Conversations tabs; transparent full-body standing/walking pairs in the animated village. Nearest-neighbor rendering eliminates blurry enlarged face cutouts and stick-figure bodies. Tests verify atlas dimensions and 12 residents. All vocabulary, Day notes and N/R/F/X/U/C/check status histories remain intact. Same package and signing key as v1.6.0 for updates." \
+              --title "Wordville v1.8.0 - Town Map and Wildlife" \
+              --notes "Wordville v1.8.0. Pixel town now includes 17 selectable locations, ten original pixel animal species, whole-map and regional views, a venue navigation bar, and undistorted place scenes. All 12 resident portrait and walk sprites, saved vocabulary and study records remain unchanged. Same app package and signing key as v1.7.0." \
               --prerelease
           fi
