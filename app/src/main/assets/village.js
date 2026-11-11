@@ -97,7 +97,7 @@ for(const p of M.people){const b=document.createElement('button');b.type='button
 canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=[...residents].filter(p=>Math.abs(p.x-wx)<22&&wy>=p.y-54&&wy<=p.y+9).sort((a,b)=>Math.abs((a.y-23)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-23)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 const landmarks=globalThis.WordvilleWorldArt?.landmarks||[];
 const place=landmarks.map(s=>({ ...s,dist:Math.hypot(s.x-wx,s.y-wy)})).filter(s=>s.dist<35).sort((a,b)=>a.dist-b.dist)[0];
-if(place&&globalThis.WordvillePlaces){globalThis.WordvillePlaces.show('places');globalThis.WordvillePlaces.pick(place.id);}
+if(place&&globalThis.WordvillePlaces){if(globalThis.WordvilleShell?.activate)globalThis.WordvilleShell.activate('places');else globalThis.WordvillePlaces.show('places');globalThis.WordvillePlaces.pick(place.id);}
 });
 document.querySelectorAll('[data-map-zone]').forEach(button=>button.addEventListener('click',()=>setMapZone(button.dataset.mapZone)));
 function syncCanvasResolution(){
