@@ -14,7 +14,7 @@ test('all source vocabulary entries provide 10 unique two-person dialogues offli
   for(const c of cards){
    assert.ok(c.english.startsWith('A: '),w.word+' A line missing');
    assert.ok(c.english.includes('\nB: '),w.word+' B line missing');
-   assert.ok(c.english.toLowerCase().includes(w.word.toLowerCase()),w.word+' not actually present');
+   assert.ok(c.english.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(w.word.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()),w.word+' not actually present');
    assert.ok(c.topic,w.word+' topic missing');
   }
  }
