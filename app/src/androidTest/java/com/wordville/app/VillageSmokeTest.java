@@ -57,6 +57,20 @@ public class VillageSmokeTest {
    Thread.sleep(150);
   }
   assertTrue("Original high resolution portraits and sprite atlas must decode on Android",residentArtReady);
+  // The on-device actor renderer must use the existing high-resolution atlas.
+  assertEquals("true",eval(web,"WordvilleWalk.atlas.naturalWidth===2560&&WordvilleWalk.sourceFrameCount===4"));
+  assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:50,width:32});})()"));
+  // Open a real indoor venue and verify that the route avoids modeled furniture.
+  assertEquals("true",eval(web,"WordvillePlaces.show('places');WordvillePlaces.pick('bookstore');WordvilleVenueSpec.isBlocked('bookstore',2,2)&&!WordvilleVenueSpec.isBlocked('bookstore',8,10)"));
+  boolean venueReady=false;
+  for(int i=0;i<30;i++){
+   if("true".equals(eval(web,"WordvilleVenueRuntime.scene==='bookstore'&&WordvilleVenueRuntime.actors.length>=2"))){venueReady=true;break;}
+   Thread.sleep(150);
+  }
+  assertTrue("Indoor resident scene starts",venueReady);
+  assertEquals("true",eval(web,"(function(){var a=WordvilleVenueRuntime.actors[0],q=WordvilleVenueSpec.nearest('bookstore',1,1);return WordvilleVenueRuntime.moveTo(a,q.x,q.y)&&a.route.length>0&&a.route.every(t=>!WordvilleVenueSpec.isBlocked('bookstore',t.x,t.y));})()"));
+  assertEquals("true",eval(web,"WordvillePlaces.show('map');document.getElementById('wv-places-view').hidden"));
+
   assertEquals("true",eval(web,"VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))"));
   assertEquals("true",eval(web,"VillageModel.isStairEdge(7,8)&&VillageModel.isStairEdge(8,9)"));
   // PixelCopy captures this Activity window, excluding unrelated Android launcher ANR dialogs.
