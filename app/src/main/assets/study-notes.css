@@ -81,3 +81,76 @@ body[data-screen="notes"] #wv-notes-view{display:block}
  .wv-paper-note .wv-checks label{flex:0 1 29px}
 }
 @media(max-width:350px){.wv-note-footer{flex-wrap:wrap}.wv-note-footer button{flex:1 0 100%}}
+
+/* v1.6: one-character adjacent badges, color-coded recall diagnostics */
+.wv-word-head{display:flex;align-items:stretch;gap:4px;min-width:0}
+.wv-word-item .wv-word-head .word{flex:1 1 auto;width:auto;min-width:0;min-height:76px}
+.wv-word-item .wv-word-head .wv-word-status{
+ flex:0 0 40px;align-self:stretch;min-height:40px;min-width:0;
+ padding:3px;text-align:center;font-size:22px;font-weight:950;line-height:1;
+ border:3px solid #7b6c56;box-shadow:inset 0 0 0 1px #fff8df;cursor:pointer;
+}
+.wv-word-item .wv-word-actions{display:block}
+.wv-word-item .wv-word-actions .wv-word-note{width:100%;min-height:34px}
+.wv-word-status.wv-status-N,.wv-code-chip.wv-status-N,.wv-history-head .wv-status-N,
+.wv-distribution-fill.wv-status-N,.wv-trend-segment.wv-status-N{background:#d5dbe5;color:#33445a}
+.wv-word-status.wv-status-R,.wv-code-chip.wv-status-R,.wv-history-head .wv-status-R,
+.wv-distribution-fill.wv-status-R,.wv-trend-segment.wv-status-R{background:#f0bc81;color:#68401f}
+.wv-word-status.wv-status-F,.wv-code-chip.wv-status-F,.wv-history-head .wv-status-F,
+.wv-distribution-fill.wv-status-F,.wv-trend-segment.wv-status-F{background:#ead58b;color:#584a1f}
+.wv-word-status.wv-status-X,.wv-code-chip.wv-status-X,.wv-history-head .wv-status-X,
+.wv-distribution-fill.wv-status-X,.wv-trend-segment.wv-status-X{background:#edb7cd;color:#712d51}
+.wv-word-status.wv-status-U,.wv-code-chip.wv-status-U,.wv-history-head .wv-status-U,
+.wv-distribution-fill.wv-status-U,.wv-trend-segment.wv-status-U{background:#cfbde8;color:#503479}
+.wv-word-status.wv-status-C,.wv-code-chip.wv-status-C,.wv-history-head .wv-status-C,
+.wv-distribution-fill.wv-status-C,.wv-trend-segment.wv-status-C{background:#b6dceb;color:#265a72}
+.wv-word-status.wv-status-ok,.wv-code-chip.wv-status-ok,.wv-history-head .wv-status-ok,
+.wv-distribution-fill.wv-status-ok,.wv-trend-segment.wv-status-ok{background:#b8dec0;color:#276137}
+.wv-code-chip{display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px;
+ min-width:28px;height:28px;border:2px solid #8f7c64;font-size:16px;font-weight:950;border-radius:3px}
+.wv-status-hint{font-size:11px;color:#795d42;line-height:1.45}
+.wv-status-choices{grid-template-columns:1fr;gap:7px}
+.wv-status-dialog .wv-status-choices .wv-choice{display:flex;align-items:center;flex-wrap:nowrap;
+ gap:9px;min-height:56px;margin:0;border:2px solid #b49a73;background:#fff8e9}
+.wv-status-dialog .wv-status-choices .wv-choice:has(input:checked){background:#e5eecf;border-color:#537d58;box-shadow:inset 0 0 0 2px #c4d9b2}
+.wv-status-dialog .wv-status-choices .wv-choice>span{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;line-height:1.4}
+.wv-status-dialog .wv-status-choices .wv-choice strong{font-size:13px}
+.wv-status-dialog .wv-status-choices .wv-choice small{font-size:11px;line-height:1.4;color:#715f4c}
+.wv-status-metadata{display:grid;grid-template-columns:1fr;gap:10px;margin:12px 0}
+.wv-status-metadata label{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:13px;font-weight:850}
+.wv-status-metadata input,.wv-status-metadata textarea{width:100%;min-width:0;max-width:100%;
+ box-sizing:border-box;font:inherit;font-size:14px;padding:9px;background:#fff8e6;line-height:1.5}
+.wv-legacy-note{font-size:12px;padding:10px;background:#f8e9be;color:#704926;border-left:4px solid #b87e3d}
+.wv-status-history{border-top:2px dashed #b89a71;padding-top:9px}
+.wv-status-history h3{margin:4px 0 8px;font-size:15px}
+.wv-history-event{border-left:4px solid #ab8e65;margin:8px 0;background:#fff5dc;padding:9px 10px}
+.wv-history-head{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;flex-wrap:wrap}
+.wv-history-head b{font-size:14px;padding:4px 8px;border:2px solid #94795c;min-width:32px;text-align:center}
+.wv-history-event p,.wv-empty-history{margin:6px 0 0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.wv-status-dashboard{background:#fff3d7;border:4px solid #b59060;padding:12px 10px;margin:15px 0;min-width:0}
+.wv-status-dashboard h3{font-size:16px;color:#553821;margin:5px 0 7px}
+.wv-chart-note,.wv-graph-foot,.wv-graph-caption{font-size:11px;color:#6f5b43;line-height:1.5;margin:6px 0 10px}
+.wv-distribution-row{display:grid;grid-template-columns:minmax(92px,1.1fr) minmax(40px,2fr) 26px;gap:7px;
+ align-items:center;margin:7px 0}
+.wv-bar-name{display:flex;gap:5px;align-items:center;min-width:0;font-size:11px;line-height:1.25}
+.wv-bar-name .wv-code-chip{flex:0 0 25px;min-width:25px;height:25px;font-size:13px}
+.wv-bar-count{text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
+.wv-distribution-track{height:19px;background:#e7d6b9;border:1px solid #bca47b;overflow:hidden}
+.wv-distribution-fill{display:block;height:100%;min-width:0;transition:width .15s ease}
+.wv-trend-bars{display:flex;gap:6px;align-items:flex-end;overflow-x:auto;padding:8px 0 6px;min-height:168px;
+ border-bottom:2px solid #bb9c72}
+.wv-trend-column{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;
+ flex:1 0 26px;min-width:26px;max-width:65px;height:154px}
+.wv-trend-count{font-size:10px;line-height:1.3}
+.wv-trend-stack{display:flex;flex-direction:column-reverse;justify-content:flex-start;width:100%;overflow:hidden;
+ border:1px solid #937e61;box-sizing:border-box}
+.wv-trend-segment{width:100%;flex:0 0 auto;min-height:2px}
+.wv-trend-date{font-size:9px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wv-status-legend{display:flex;flex-wrap:wrap;gap:6px 10px;margin:10px 0}
+.wv-chart-key{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#634e3a}
+.wv-chart-key .wv-code-chip{min-width:20px;width:20px;height:20px;font-size:11px}
+.wv-empty-trend{padding:13px 4px;font-size:12px;color:#72573d}
+@media(max-width:370px){
+ .wv-distribution-row{grid-template-columns:minmax(90px,1.1fr) minmax(28px,1.7fr) 22px;gap:4px}
+ .wv-status-dialog .wv-status-choices .wv-choice small{font-size:10px}
+}
