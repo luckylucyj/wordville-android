@@ -51,6 +51,18 @@ public class VillageSmokeTest {
    Thread.sleep(200);
   }
   assertTrue("All 18 reference art images must decode on Android",artReady);
+  // Capture the REAL emulator screen only after the whole map and every venue atlas have decoded.
+  Thread.sleep(1600);
+  android.graphics.Bitmap bitmap=inst.getUiAutomation().takeScreenshot();
+  assertNotNull("Screenshot taken after scene is ready",bitmap);
+  java.io.File screenshots=inst.getTargetContext().getExternalFilesDir(null);
+  assertNotNull("App screenshot directory",screenshots);
+  java.io.File screenshot=new java.io.File(screenshots,"wordville-map-emulator.png");
+  try(java.io.FileOutputStream fos=new java.io.FileOutputStream(screenshot)){
+   assertTrue("PNG screenshot encoded",bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,fos));
+  }
+  bitmap.recycle();
+  assertTrue("PNG screenshot created",screenshot.length()>120000);
   assertEquals("true",eval(web,"document.querySelector('.word').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("false",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("true",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
