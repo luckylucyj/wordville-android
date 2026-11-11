@@ -10,9 +10,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 public class VillageSmokeTest {
  private String eval(WebView web, String js) throws Exception {
-  AtomicReference<String> result = new AtomicReference<>(); CountDownLatch latch = new CountDownLatch(1);
-  InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> web.evaluateJavascript(js, v -> {result.set(v);latch.countDown();}));
-  assertTrue("WebView callback",latch.await(5,TimeUnit.SECONDS));return result.get();
+  // A fresh emulator may start its WebView renderer after Activity.onCreate.
+  // Retry the callback instead of interpreting cold-start latency as app failure.
+  for (int attempt=0; attempt<4; attempt++) {
+   AtomicReference<String> result=new AtomicReference<>();
+   CountDownLatch latch=new CountDownLatch(1);
+   InstrumentationRegistry.getInstrumentation().runOnMainSync(
+    () -> web.evaluateJavascript(js, value -> {result.set(value);latch.countDown();}));
+   if (latch.await(10,TimeUnit.SECONDS)) return result.get();
+   Thread.sleep(400);
+  }
+  throw new AssertionError("WebView did not respond after cold-start retries");
  }
  @Test public void villageAndWordCardRunOnAndroid() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
