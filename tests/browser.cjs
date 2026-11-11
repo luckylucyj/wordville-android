@@ -11,6 +11,13 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('#village-canvas').isVisible(),true);
   assert.equal(await page.evaluate(()=>document.querySelector('#village-canvas').getBoundingClientRect().height>innerHeight*.68),true);
   assert.equal(await page.evaluate(()=>!!globalThis.WordvilleWorldArt?.town),true);
+  await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.complete&&globalThis.WordvillePortraits?.spriteImage?.complete);
+  assert.deepEqual(await page.evaluate(()=>({
+    portrait:[WordvillePortraits.image.naturalWidth,WordvillePortraits.image.naturalHeight],
+    sprites:[WordvillePortraits.spriteImage.naturalWidth,WordvillePortraits.spriteImage.naturalHeight]
+  })),{portrait:[320,240],sprites:[256,192]});
+  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='pixelated'||getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='crisp-edges'),true);
+  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
   await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   assert.equal(await page.locator('.word').count(),60);
   assert.equal(await page.evaluate(()=>WordvilleBookOrder.status),'ready');
@@ -52,7 +59,7 @@ const assert = require('node:assert/strict');
   await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.naturalWidth>0);
   assert.equal(await page.locator('.resident-list .wv-portrait').count(),12);
   assert.ok(await page.evaluate(()=>WordvillePortraits.image.naturalWidth>=128));
-  assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('.resident-list .wv-portrait')).backgroundImage.includes('wordville-residents.webp')));
+  assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('.resident-list .wv-portrait')).backgroundImage.includes('wordville-portrait-ref.webp')));
   assert.ok(await page.evaluate(()=>!!document.querySelector('link[href="stardew-ui.css"]')));
   // Place explorer: map and venue screen are mutually exclusive, not a long vertical list.
   assert.equal(await page.locator('#wv-places-view').isVisible(),false);

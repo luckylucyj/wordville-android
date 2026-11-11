@@ -57,7 +57,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 }
 .resident-list button[aria-pressed=true]{background:#dcedbc;border-color:#638456;box-shadow:inset 0 0 0 3px #f3eeca,3px 3px #415a38}
 .wv-portrait{
- display:block;width:100%;aspect-ratio:1;background-image:url('portraits/wordville-residents.webp');
+ display:block;width:100%;aspect-ratio:1;background-image:url('portraits/wordville-portrait-ref.webp');
  background-size:400% 300%;background-repeat:no-repeat;background-color:#f5e7d0;
  image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid #714b35;
  box-shadow:inset 0 0 0 2px #f7d7a9;flex-shrink:0;
@@ -119,3 +119,6 @@ footer{color:#735940}
 }
 @media(max-width:370px){.resident-list{grid-template-columns:repeat(2,minmax(0,1fr))}.brand{font-size:15px}#balance{font-size:10px;padding:6px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+
+/* High-density nearest-neighbour portraits. Never blur or downsample in CSS. */
+.wv-portrait,.wv-place-person .wv-portrait{background-repeat:no-repeat;background-size:400% 300%;image-rendering:pixelated!important;image-rendering:crisp-edges;filter:none;transform:translateZ(0);}
