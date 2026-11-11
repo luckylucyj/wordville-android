@@ -11,6 +11,8 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('#village-canvas').isVisible(),true);
   await page.waitForFunction(()=>globalThis.WordvilleWorldArt?.reference?.naturalWidth===840&&Object.values(globalThis.WordvilleWorldArt?.venueImages||{}).length===17&&Object.values(globalThis.WordvilleWorldArt.venueImages).every(x=>x.naturalWidth===640));
   assert.equal(await page.evaluate(()=>WordvilleWorldArt.landmarks.length),17);
+  await page.waitForFunction(()=>document.getElementById('wv-loading-cover')?.hidden===true);
+  assert.equal(await page.locator('#wv-loading-cover').isVisible(),false);
 
   assert.equal(await page.evaluate(()=>document.querySelector('#village-canvas').getBoundingClientRect().height>innerHeight*.68),true);
   assert.equal(await page.evaluate(()=>!!globalThis.WordvilleWorldArt?.town),true);
