@@ -56,6 +56,20 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('.wv-spotlight').count(),1);
   assert.equal(await page.locator('#wv-place-name').innerText(),'수영장');
   assert.equal(await page.locator('#wv-place-rail .wv-place-chip').count(),17);
+  // Narrow screen: viewport and venue content must not overflow sideways.
+  const venueLayout=await page.evaluate(()=>{
+    const rect=s=>document.querySelector(s).getBoundingClientRect();
+    const left=rect('#wv-place-prev'),right=rect('#wv-place-next'),rail=rect('#wv-place-rail');
+    const residents=[...document.querySelectorAll('.wv-place-person')].map(e=>e.getBoundingClientRect());
+    return {overflow:document.documentElement.scrollWidth>window.innerWidth+2,
+      arrowOverlap:left.right>rail.left+1||right.left<rail.right-1,
+      residentOverlap:residents.length>1&&residents[0].right>residents[1].left+1,
+      outside:residents.some(r=>r.right>window.innerWidth+2||r.left<0)};
+  });
+  assert.equal(venueLayout.overflow,false,JSON.stringify(venueLayout));
+  assert.equal(venueLayout.arrowOverlap,false,JSON.stringify(venueLayout));
+  assert.equal(venueLayout.residentOverlap,false,JSON.stringify(venueLayout));
+  assert.equal(venueLayout.outside,false,JSON.stringify(venueLayout));
   await page.locator('#wv-place-next').click();
   assert.equal(await page.locator('#wv-place-name').innerText(),'목장');
   await page.locator('#wv-place-filters [data-place-filter="leisure"]').click();
@@ -75,6 +89,11 @@ const assert = require('node:assert/strict');
 
   await page.locator('#search').fill('reservation');assert.ok(await page.locator('.word').count()>=1);
   await page.locator('.word').filter({has:page.locator('strong',{hasText:/^reservation$/})}).click();
+  assert.equal(await page.locator('#word-examples-list li').count(),10);
+  assert.equal(await page.locator('#word-examples-details').getAttribute('open'),null);
+  await page.locator('#word-examples-details summary').click();
+  assert.equal(await page.locator('#word-examples-list li').count(),10);
+  assert.ok((await page.locator('#word-examples-list li').first().innerText()).includes('reservation'));
   assert.equal(await page.locator('#reveal').getAttribute('aria-expanded'),'false');
   for(let i=0;i<3;i++){await page.locator('#reveal').click();assert.equal(await page.locator('#detail-meaning').isVisible(),i%2===0);assert.equal(await page.locator('#reveal').innerText(),i%2===0?'뜻 숨기기':'뜻 보기');}
   await page.locator('#image-input').setInputFiles({name:'memory.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')});
