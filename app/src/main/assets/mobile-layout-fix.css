@@ -1,0 +1,72 @@
+/* Mobile layout repair (Galaxy): avoid clipped tabs, overlapping cards and system bars.
+   App-specific tokens; no third-party visual assets. */
+html,body{max-width:100%;overflow-x:clip}
+body{min-width:280px}
+main,main>*,.village-section,.wv-places-view,#wv-map-view{min-width:0;max-width:100%}
+.village-section{overflow:hidden}
+.village-heading{min-width:0}
+.village-heading>div:first-child{min-width:0}
+.village-heading h1{overflow-wrap:anywhere}
+.wv-places-view{overflow:hidden}
+.wv-place-top{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin-bottom:12px}
+.wv-place-top>div{min-width:0}
+.wv-place-top small{display:block;overflow-wrap:anywhere}
+.wv-place-top h2{overflow-wrap:anywhere;line-height:1.3}
+.wv-place-top p{max-width:100%;margin-bottom:6px}
+.wv-place-count{display:inline-flex;justify-self:start;align-items:center;width:auto;max-width:100%;padding:5px 10px;line-height:1.4;overflow:visible;white-space:nowrap}
+.wv-place-filters{max-width:100%;scroll-padding-inline:4px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.wv-place-filters button{line-height:1.4;max-width:none}
+.wv-place-picker{position:relative;isolation:isolate;max-width:100%;overflow:hidden;min-width:0;grid-template-columns:40px minmax(0,1fr) 40px;gap:6px;align-items:stretch}
+.wv-place-picker>button{position:relative;z-index:2;max-width:100%;min-width:0;min-height:50px;align-self:stretch;background:#f4d8a7;box-shadow:inset 0 0 0 2px #fff0cd;display:flex;justify-content:center;align-items:center}
+.wv-place-rail{position:relative;z-index:1;display:flex;align-items:stretch;min-width:0;max-width:100%;width:100%;overflow-x:auto;overflow-y:hidden;scroll-padding:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;gap:7px;padding:2px 1px 5px}
+.wv-place-rail::-webkit-scrollbar{display:none}
+.wv-place-chip{flex:0 0 auto;max-width:none;min-height:49px;line-height:1.35;white-space:nowrap;padding:9px 12px}
+.wv-spotlight{min-width:0;width:100%;max-width:100%;overflow:hidden}
+.wv-place-stage{width:100%;overflow:hidden}
+.wv-place-detail{min-width:0;overflow-wrap:break-word}
+.wv-place-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:100%;align-items:stretch}
+.wv-place-person{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;width:100%;max-width:100%;gap:6px;padding:9px 5px;white-space:normal;overflow-wrap:break-word;word-break:keep-all;line-height:1.45;text-align:center;box-shadow:inset 0 0 0 2px #ffe8c2,2px 2px #8c6042}
+.wv-place-person .wv-venue-mini{display:block;width:72px;height:72px;max-width:100%;flex:0 0 auto;float:none;margin:0}
+.wv-place-dialogue{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.wv-place-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.wv-place-actions button{min-width:0;width:100%;min-height:48px;margin:0;padding:8px;white-space:normal;line-height:1.4;overflow-wrap:break-word}
+.time-select{min-width:0;max-width:100%}
+.time-select select{min-width:0;max-width:100%;width:auto}
+.village-controls{align-items:center;gap:10px}
+.village-controls button{min-width:0}
+.resident-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.resident-list button{min-width:0;width:100%;max-width:100%;line-height:1.4;word-break:keep-all;overflow-wrap:break-word;white-space:normal;text-align:center}
+.resident-list .wv-portrait{max-width:100%}
+#village-dialogue{min-width:0;overflow-wrap:break-word}
+dialog{max-width:calc(100% - 20px);max-height:calc(100dvh - 32px);overscroll-behavior:contain}
+.word-examples{clear:both;margin:18px 0;padding:13px;border:3px solid #aa7c49;background:#f7e8c6;border-radius:4px}
+.word-examples h3{font-size:17px;margin:0 0 6px;color:#593923}
+.word-examples-note{margin:0 0 13px;color:#795c3c;font-size:12px;line-height:1.5}
+.word-examples ol{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:dialogue}
+.word-examples li{counter-increment:dialogue;background:#fff9ec;border:2px solid #ddc69a;padding:10px;min-width:0;overflow-wrap:anywhere}
+.word-examples li::before{content:counter(dialogue) ". ";font-weight:900;color:#81522d}
+.word-examples .example-en{color:#315d4b;white-space:pre-wrap;font-size:14px;line-height:1.5;margin:6px 0}
+.word-examples .example-ko{color:#70563c;white-space:pre-wrap;font-size:12px;line-height:1.55;margin:6px 0}
+.word-examples .example-context{display:inline-block;color:#795734;font-size:11px;font-weight:700}
+.word-examples summary{cursor:pointer;font-weight:850;padding:3px}
+@media(max-width:480px){
+ main{padding:14px 10px 60px}
+ .wv-places-view{padding:14px 12px 24px}
+ .wv-place-top h2{font-size:22px}
+ .wv-place-picker{grid-template-columns:38px minmax(0,1fr) 38px;gap:5px}
+ .wv-place-chip{font-size:12px}
+ .wv-place-people{gap:8px}
+ .wv-place-person{font-size:13px;padding:7px 3px}
+ .wv-place-person .wv-venue-mini{width:min(68px,90%);height:auto;aspect-ratio:1}
+ .wv-place-actions{grid-template-columns:minmax(0,1fr)}
+ .wv-place-actions button{flex:none}
+ .time-select{flex:1 1 145px}
+ .village-controls>button{flex:0 0 auto}
+ .village-heading{gap:7px}
+ .time-badge{flex:0 0 auto}
+}
+@media(max-width:350px){
+ .resident-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wv-mode-switch button{font-size:12px;padding:8px 4px}
+ .wv-place-people{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
