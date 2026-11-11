@@ -11,6 +11,13 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('#village-canvas').isVisible(),true);
   assert.equal(await page.evaluate(()=>document.querySelector('#village-canvas').getBoundingClientRect().height>innerHeight*.68),true);
   assert.equal(await page.evaluate(()=>!!globalThis.WordvilleWorldArt?.town),true);
+  await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.complete&&globalThis.WordvillePortraits?.spriteImage?.complete);
+  assert.deepEqual(await page.evaluate(()=>({
+    portrait:[WordvillePortraits.image.naturalWidth,WordvillePortraits.image.naturalHeight],
+    sprites:[WordvillePortraits.spriteImage.naturalWidth,WordvillePortraits.spriteImage.naturalHeight]
+  })),{portrait:[320,240],sprites:[256,192]});
+  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='pixelated'||getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='crisp-edges'),true);
+  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
   await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   assert.equal(await page.locator('.word').count(),60);
   assert.equal(await page.evaluate(()=>WordvilleBookOrder.status),'ready');
