@@ -82,9 +82,9 @@ function syncTime(){const now=new Date(),h=now.getHours();period=mode==='auto'?M
 function select(id){selected=id;const p=residents.find(r=>r.id===id);const partner=residents.find(r=>r.id===p.partner);document.getElementById('speaker').textContent=p.name;document.getElementById('resident-home').textContent=p.home;document.getElementById('resident-line').textContent=p.chat>0&&partner?`${partner.name}, 오늘은 ${p.home}에서 함께 공부할래요?`:`안녕하세요! 저는 ${p.name}이에요. ${p.home}에서 자주 만날 수 있어요.`;document.getElementById('resident-english').textContent=p.chat>0?'Would you like to study together?':'Let’s learn a new word together.';document.getElementById('resident-korean').textContent=p.chat>0?'함께 공부할래요?':'새로운 단어를 함께 배워요.';panel.hidden=false;document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id}}));}
 function meet(a,b){chatCount++;const messages=[['Let’s meet at the cafe.','카페에서 만나요.'],['Can you confirm the reservation?','예약을 확인해 줄 수 있나요?'],['The shipment will arrive tomorrow.','배송 물품은 내일 도착해요.'],['The appointment is at ten.','약속은 10시예요.'],['Let’s review our schedule.','우리 일정을 확인해요.']];const [en,ko]=messages[(chatCount-1)%messages.length];const li=document.createElement('li');li.textContent=`${a.name} ↔ ${b.name} · ${ko}`;feed.prepend(li);while(feed.children.length>5)feed.lastChild.remove();document.getElementById('conversation-count').textContent=chatCount+'번의 대화';if(selected===a.id||selected===b.id){const p=selected===a.id?a:b;document.getElementById('speaker').textContent=p.name;document.getElementById('resident-line').textContent=`${a.name}와 ${b.name}의 대화`;document.getElementById('resident-english').textContent=en;document.getElementById('resident-korean').textContent=ko;panel.hidden=false;}}
 
-const MAP_ZONES={all:500,north:205,central:505,south:800};
+const MAP_ZONES={all:400,north:160,central:405,south:645};
 function currentMapView(){
- const scale=(viewZone==='all'?Math.min(canvas.width/600,canvas.height/1050):canvas.width/600)*zoom;
+ const scale=(viewZone==='all'?Math.min(canvas.width/600,canvas.height/800):Math.max(canvas.width/600,canvas.height/800)*1.35)*zoom;
  return {scale,offsetX:canvas.width/2-300*scale,offsetY:canvas.height/2-MAP_ZONES[viewZone]*scale};
 }
 function setMapZone(zone){
@@ -92,14 +92,24 @@ function setMapZone(zone){
  viewZone=zone;zoom=1;
  document.querySelectorAll('[data-map-zone]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mapZone===zone)));
 }
-function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet);}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].sort((a,b)=>a.y-b.y))sprite(p);ctx.restore();requestAnimationFrame(frame);}
+function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet);}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].sort((a,b)=>a.y-b.y))sprite(p);ctx.restore();requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>select(p.id));document.getElementById('resident-list').append(b);}
 canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=[...residents].filter(p=>Math.abs(p.x-wx)<22&&wy>=p.y-54&&wy<=p.y+9).sort((a,b)=>Math.abs((a.y-23)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-23)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 const landmarks=globalThis.WordvilleWorldArt?.landmarks||[];
-const place=landmarks.find(s=>Math.abs(s.x-wx)<47&&Math.abs(s.y-wy)<29);
+const place=landmarks.map(s=>({ ...s,dist:Math.hypot(s.x-wx,s.y-wy)})).filter(s=>s.dist<35).sort((a,b)=>a.dist-b.dist)[0];
 if(place&&globalThis.WordvillePlaces){globalThis.WordvillePlaces.show('places');globalThis.WordvillePlaces.pick(place.id);}
 });
 document.querySelectorAll('[data-map-zone]').forEach(button=>button.addEventListener('click',()=>setMapZone(button.dataset.mapZone)));
+function syncCanvasResolution(){
+ const rect=canvas.getBoundingClientRect();
+ if(rect.width<2||rect.height<2)return;
+ const scale=Math.min(window.devicePixelRatio||1,2);
+ const w=Math.max(2,Math.round(rect.width*scale)),h=Math.max(2,Math.round(rect.height*scale));
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+}
+new ResizeObserver(syncCanvasResolution).observe(canvas);
+window.addEventListener('resize',syncCanvasResolution);
+syncCanvasResolution();
 document.getElementById('village-time-mode').addEventListener('change',e=>{mode=e.target.value;syncTime();});
 document.getElementById('zoom-in').addEventListener('click',()=>{zoom=Math.min(2,zoom+.25);});document.getElementById('zoom-out').addEventListener('click',()=>{zoom=Math.max(1,zoom-.25);});
 document.getElementById('pause-village').addEventListener('click',e=>{paused=!paused;e.currentTarget.textContent=paused?'주민 움직이기':'잠시 멈추기';e.currentTarget.setAttribute('aria-pressed',String(paused));});

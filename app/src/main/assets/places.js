@@ -136,6 +136,7 @@ for(const tab of [ids('wv-map-tab'),ids('wv-places-tab')]){
   }
  });
 }
+document.addEventListener('wordville-art-ready',e=>{if(e.detail?.id===active&&siteView&&!siteView.hidden)draw(current());});
 render();
 show('map');
 globalThis.WordvillePlaces={places,filters,show,pick,step,get active(){return active;},get filter(){return filter;}};

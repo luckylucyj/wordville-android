@@ -164,15 +164,23 @@ function townBackground(c,p){
 
 // Map destinations align with the 17 interactive venue cards.
 const LANDMARKS=[
- {id:'library',name:'도서관',x:103,y:156},{id:'clinic',name:'진료소',x:477,y:135},
- {id:'greenhouse',name:'식물원',x:499,y:289},{id:'cafe',name:'카페',x:67,y:348},
- {id:'studio',name:'음악실',x:528,y:369},{id:'bookstore',name:'서점',x:101,y:620},
- {id:'market',name:'시장',x:404,y:612},{id:'museum',name:'미술관',x:109,y:875},
- {id:'pool',name:'수영장',x:278,y:324},{id:'ranch',name:'목장',x:522,y:939},
- {id:'gym',name:'헬스장',x:285,y:445},{id:'burger',name:'햄버거',x:68,y:482},
- {id:'icecream',name:'아이스크림',x:518,y:489},{id:'pub',name:'펍',x:282,y:571},
- {id:'square',name:'광장',x:303,y:215},{id:'workshop',name:'공방',x:101,y:742},
- {id:'park',name:'공원',x:405,y:753}
+ {id:'library',name:'도서관',x:300,y:196},
+ {id:'clinic',name:'진료소',x:496,y:298},
+ {id:'greenhouse',name:'식물원',x:55,y:334},
+ {id:'cafe',name:'카페',x:93,y:608},
+ {id:'studio',name:'음악실',x:118,y:142},
+ {id:'bookstore',name:'서점',x:85,y:519},
+ {id:'market',name:'시장',x:85,y:725},
+ {id:'museum',name:'미술관',x:495,y:100},
+ {id:'pool',name:'수영장',x:301,y:575},
+ {id:'ranch',name:'목장',x:365,y:672},
+ {id:'gym',name:'헬스장',x:220,y:125},
+ {id:'burger',name:'햄버거',x:159,y:470},
+ {id:'icecream',name:'아이스크림',x:177,y:521},
+ {id:'pub',name:'펍',x:490,y:112},
+ {id:'square',name:'광장',x:303,y:325},
+ {id:'workshop',name:'공방',x:457,y:412},
+ {id:'park',name:'공원',x:474,y:713}
 ];
 function miniVenue(c,x,y,name,shade='#a87657'){
  // Compact, distinct roof and storefront at a consistent base pixel scale.
@@ -241,7 +249,28 @@ const WILDLIFE=[
 ];
 
 const cache=new Map();
+const landmarkAssets={};
+function referenceImage(path,id){
+ if(typeof Image==='undefined')return {complete:false,naturalWidth:0};
+ const img=new Image();img.decoding='async';
+ if(id)img.onload=()=>document.dispatchEvent(new CustomEvent('wordville-art-ready',{detail:{id}}));
+ img.src=path;return img;
+}
+const mapReference=referenceImage('art/town-reference.webp');
+const venueIds=['pool','ranch','gym','burger','icecream','pub','museum','greenhouse','cafe','bookstore','clinic','library','studio','market','square','workshop','park'];
+for(const id of venueIds){
+ landmarkAssets[id]=referenceImage('art/'+id+'.webp',id);
+}
 function town(ctx,period,elapsed=0){
+ if(mapReference.complete&&mapReference.naturalWidth>0){
+   ctx.imageSmoothingEnabled=true;
+   ctx.drawImage(mapReference,0,0,600,800);
+   // Subtle tint maintains the original color detail when the village turns to night.
+   if(period==='night'){rect(ctx,0,0,600,800,'#0d1e3555');}
+   else if(period==='dusk'){rect(ctx,0,0,600,800,'#59455b20');}
+   ctx.imageSmoothingEnabled=false;
+   return;
+ }
  let image=cache.get(period);
  if(!image){
   image=document.createElement('canvas');image.width=600;image.height=1400;
@@ -391,12 +420,19 @@ function sceneDecor(c,id){
 }
 const sceneCaches=new Map();
 function place(c,p){
- const id=p.id;if(!sceneCaches.has(id)){
+ const id=p.id;
+ const photo=landmarkAssets[id];
+ if(photo?.complete&&photo.naturalWidth>0){
+   c.clearRect(0,0,c.canvas.width,c.canvas.height);
+   c.imageSmoothingEnabled=true;
+   c.drawImage(photo,0,0,c.canvas.width,c.canvas.height);
+   return;
+ }if(!sceneCaches.has(id)){
   const img=document.createElement('canvas');img.width=512;img.height=420;
   const z=img.getContext('2d');z.imageSmoothingEnabled=false;sceneDecor(z,id);sceneCaches.set(id,img);
  }
  c.imageSmoothingEnabled=false;c.clearRect(0,0,c.canvas.width,c.canvas.height);
  c.drawImage(sceneCaches.get(id),0,0,c.canvas.width,c.canvas.height);
 }
-globalThis.WordvilleWorldArt={town,place,house,conservatory,landmarks:LANDMARKS,wildlife:WILDLIFE};
+globalThis.WordvilleWorldArt={town,place,house,conservatory,landmarks:LANDMARKS,wildlife:WILDLIFE,reference:mapReference,venueImages:landmarkAssets};
 })();

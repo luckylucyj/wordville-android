@@ -9,7 +9,7 @@ const people=[
  ['abigail','애비게일','광장','reservation','#836aa1','#895995'],['emily','에밀리','재봉실','customer','#b96463','#4d74ab']
 ].map(([id,name,home,word,shirt,hair],i)=>({id,name,home,word,shirt,hair,skin:['#edbe98','#d19b78','#f0c8a2','#b9805e'][i%4]}));
 // Only these connected walkways are navigable; buildings and gardens are excluded.
-const nodes=[{x:300,y:350},{x:220,y:350},{x:380,y:350},{x:135,y:350},{x:465,y:350},{x:300,y:272},{x:220,y:272},{x:380,y:272},{x:300,y:220},{x:220,y:405},{x:380,y:405},{x:135,y:405},{x:465,y:405}];
+const nodes=[{x:300,y:380},{x:220,y:375},{x:380,y:385},{x:135,y:400},{x:465,y:400},{x:300,y:290},{x:220,y:290},{x:380,y:290},{x:300,y:225},{x:220,y:490},{x:380,y:490},{x:135,y:490},{x:465,y:490}];
 const edges=[[1,2,5],[0,3,6,9],[0,4,7,10],[1,11],[2,12],[0,6,7,8],[1,5],[2,5],[5],[1,10,11],[2,9,12],[3,9],[4,10]];
 function period(hour){return hour>=6&&hour<18?'day':hour>=18&&hour<20?'dusk':'night';}
 function path(from,to){const q=[[from]],visited=new Set([from]);while(q.length){const p=q.shift(),last=p.at(-1);if(last===to)return p;for(const next of edges[last])if(!visited.has(next)){visited.add(next);q.push([...p,next]);}}return [from];}

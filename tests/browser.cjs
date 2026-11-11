@@ -9,6 +9,9 @@ const assert = require('node:assert/strict');
   await page.waitForFunction(()=>globalThis.WordvilleShell?.screen==='town'&&document.querySelector('.word'));
   assert.equal(await page.locator('#wv-bottom-dock .wv-dock-tab').count(),6);
   assert.equal(await page.locator('#village-canvas').isVisible(),true);
+  await page.waitForFunction(()=>globalThis.WordvilleWorldArt?.reference?.naturalWidth===840&&Object.values(globalThis.WordvilleWorldArt?.venueImages||{}).length===17&&Object.values(globalThis.WordvilleWorldArt.venueImages).every(x=>x.naturalWidth===640));
+  assert.equal(await page.evaluate(()=>WordvilleWorldArt.landmarks.length),17);
+
   assert.equal(await page.evaluate(()=>document.querySelector('#village-canvas').getBoundingClientRect().height>innerHeight*.68),true);
   assert.equal(await page.evaluate(()=>!!globalThis.WordvilleWorldArt?.town),true);
   await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.complete&&globalThis.WordvillePortraits?.spriteImage?.complete);

@@ -162,19 +162,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_World_Map_Wildlife_v1.8.0.apk
+          cp release/wordville-debug.apk release/Wordville_Reference_Scenery_v1.9.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v1.8.0-world-map-wildlife"
-          ASSET="release/Wordville_World_Map_Wildlife_v1.8.0.apk"
+          TAG="v1.9.0-reference-scenery"
+          ASSET="release/Wordville_Reference_Scenery_v1.9.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v1.8.0 - Town Map and Wildlife" \
-              --notes "Wordville v1.8.0. Pixel town now includes 17 selectable locations, ten original pixel animal species, whole-map and regional views, a venue navigation bar, and undistorted place scenes. All 12 resident portrait and walk sprites, saved vocabulary and study records remain unchanged. Same app package and signing key as v1.7.0." \
+              --title "Wordville v1.9.0 - User Reference Scenery" \
+              --notes "Wordville v1.9.0. The real user-provided reference town image is now the map background. All 17 venue cards load cropped reference-image backgrounds in a consistent aspect ratio. On-screen canvas resizing preserves image proportions. All 12 original villager portrait/walk sprites, learning records and day notes remain unchanged. Some venue-specific props are approximations because no matching reference was supplied. Build and device-smoke-tested." \
               --prerelease
           fi

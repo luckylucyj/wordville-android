@@ -31,7 +31,7 @@ body[data-screen="town"] .canvas-wrap{
 body[data-screen="town"] #village-canvas{
  display:block;width:100%;height:100%;margin:0;padding:0;
  image-rendering:pixelated;image-rendering:crisp-edges;
- object-fit:fill;touch-action:manipulation;
+ object-fit:contain;touch-action:manipulation;
 }
 body[data-screen="town"] .map-label{position:absolute;bottom:15px;left:13px;top:auto;
  font-size:10px;opacity:.85;background:#2a4038df;color:#fff0c9;border:2px solid #b69667;
