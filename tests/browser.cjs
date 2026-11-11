@@ -21,6 +21,27 @@ const assert = require('node:assert/strict');
   })),{portrait:[320,240],sprites:[256,192]});
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='pixelated'||getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='crisp-edges'),true);
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
+  // Fullscreen town map zone controls must remain accessible inside the gear menu.
+  await page.locator('#wv-map-tools').click();
+  assert.equal(await page.locator('#wv-map-tool-panel [data-map-zone]').count(),4);
+  await page.locator('#wv-map-tool-panel [data-map-zone="south"]').click();
+  assert.equal(await page.evaluate(()=>WordvilleVillage.zone),'south');
+  await page.locator('#wv-map-tool-panel [data-map-zone="all"]').click();
+  assert.equal(await page.evaluate(()=>WordvilleVillage.zone),'all');
+  await page.locator('#wv-map-tools').click();
+  // Clicking a map landmark must navigate the entire app to the corresponding venue.
+  const visited=await page.evaluate(()=>{
+    const c=document.getElementById('village-canvas'),r=c.getBoundingClientRect();
+    const s=WordvilleWorldArt.landmarks.find(p=>p.id==='ranch');
+    const scale=Math.min(c.width/600,c.height/800)*WordvilleVillage.zoom;
+    const x=c.width/2-300*scale+s.x*scale;
+    const y=c.height/2-400*scale+s.y*scale;
+    c.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.left+x/c.width*r.width,clientY:r.top+y/c.height*r.height}));
+    return {screen:WordvilleShell.screen,place:WordvillePlaces.active};
+  });
+  assert.deepEqual(visited,{screen:'places',place:'ranch'});
+  await page.evaluate(()=>WordvillePlaces.pick('pool'));
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   assert.equal(await page.locator('.word').count(),60);
   assert.equal(await page.evaluate(()=>WordvilleBookOrder.status),'ready');
