@@ -104,7 +104,7 @@ function water(c,x,y,w,h){
  for(let i=0;i<13;i++){const xx=x+rng(i+54)*w,yy=y+rng(i+83)*h;rect(c,xx,yy,8,3,'#7b9b66');rect(c,xx+4,yy-3,2,3,'#8bb77a');}
 }
 function cobbles(c){
- rect(c,0,-350,600,1350,'#6c966b');
+ rect(c,0,-350,600,1400,'#6c966b');
  for(let yy=-340;yy<950;yy+=14){
   for(let xx=-35+(Math.floor(yy/14)%2)*17;xx<630;xx+=34){
    const n=Math.floor(xx/34)*61+yy*3;const stone=(xx>118&&xx<502&&yy>92&&yy<650)||yy>490&&yy<570||xx>290&&yy<90;
@@ -133,6 +133,14 @@ function townBackground(c,p){
  house(c,335,590,143,104,{sign:'GROCER',roof:'green',night});
  house(c,22,841,175,134,{sign:'ART GALLERY',roof:'blue',night});
  house(c,285,865,161,119,{sign:'GREENHOUSE',roof:'green',night});
+ // Additional explorable stores and distinct venue silhouettes.
+ miniVenue(c,275,336,'POOL','#669eac');
+ miniVenue(c,275,450,'GYM','#618b87');
+ miniVenue(c,70,489,'BURGER','#b76f56');
+ miniVenue(c,518,495,'ICE CREAM','#c489aa');
+ miniVenue(c,282,578,'PUB','#8c6754');
+ miniVenue(c,102,748,'WORKSHOP','#9b785d');
+ miniVenue(c,523,945,'RANCH','#a16a54');
  // Garden and park at the north bank, with stepped flower borders.
  poly(c,[[222,95],[360,68],[404,108],[267,140]],'#d3c7ad');
  for(let i=0;i<5;i++){shrub(c,230+i*26,117-i*8,i);shrub(c,235+i*24,146-i*6,i+9);}
@@ -147,20 +155,101 @@ function townBackground(c,p){
  for(const [x,y] of [[215,461],[394,468],[259,618]]){rect(c,x-18,y-9,36,4,'#876347');rect(c,x-19,y-4,38,4,'#b78d62');rect(c,x-15,y,3,8,'#584e44');rect(c,x+14,y,3,8,'#584e44');}
  for(let i=0;i<3;i++){let x=60+i*42,y=740;rect(c,x,y-6,34,9,'#b06f55');rect(c,x+4,y-8,26,4,'#d9b86b');for(let k=0;k<5;k++)rect(c,x+7+k*5,y-12,4,5,['#a6bd7e','#d68875','#f0c57e'][k%3]);}
  bridge(c,476,715);
+ for(const s of LANDMARKS)venueLabel(c,s);
  for(let j=0;j<45;j++){const x=rng(j+154)*600,y=620+rng(j+57)*300;if(x>440&&y>660)continue;if(j%3===0)blossom(c,x,y,j);}
  // Night ambience uses transparent shading, never a completely opaque overlay.
  if(night){rect(c,0,-350,600,1350,'#14243b38');}
  else if(light){rect(c,0,-350,600,1350,'#6544521c');}
 }
+
+// Map destinations align with the 17 interactive venue cards.
+const LANDMARKS=[
+ {id:'library',name:'도서관',x:103,y:156},{id:'clinic',name:'진료소',x:477,y:135},
+ {id:'greenhouse',name:'식물원',x:499,y:289},{id:'cafe',name:'카페',x:67,y:348},
+ {id:'studio',name:'음악실',x:528,y:369},{id:'bookstore',name:'서점',x:101,y:620},
+ {id:'market',name:'시장',x:404,y:612},{id:'museum',name:'미술관',x:109,y:875},
+ {id:'pool',name:'수영장',x:278,y:324},{id:'ranch',name:'목장',x:522,y:939},
+ {id:'gym',name:'헬스장',x:285,y:445},{id:'burger',name:'햄버거',x:68,y:482},
+ {id:'icecream',name:'아이스크림',x:518,y:489},{id:'pub',name:'펍',x:282,y:571},
+ {id:'square',name:'광장',x:303,y:215},{id:'workshop',name:'공방',x:101,y:742},
+ {id:'park',name:'공원',x:405,y:753}
+];
+function miniVenue(c,x,y,name,shade='#a87657'){
+ // Compact, distinct roof and storefront at a consistent base pixel scale.
+ rect(c,x-40,y-43,80,43,'#d4bda2');rect(c,x-44,y-47,88,7,'#755342');
+ poly(c,[[x-47,y-47],[x-28,y-69],[x+27,y-69],[x+48,y-47]],shade);
+ rect(c,x-35,y-35,20,21,'#7c9aa0');rect(c,x+15,y-35,20,21,'#7c9aa0');
+ rect(c,x-8,y-30,16,30,'#795a46');rect(c,x+4,y-14,2,2,'#eddb9b');
+ rect(c,x-40,y-9,80,7,'#aa8360');
+ label(c,name,x,y-52,'#fff4d3',9);
+}
+function venueLabel(c,s){
+ const x=s.x,y=s.y;rect(c,x-31,y-13,62,16,'#423a37');
+ rect(c,x-29,y-11,58,12,'#f2deaf');
+ rect(c,x-29,y-11,3,12,'#7b567b');
+ label(c,s.name,x,y-2,'#493d36',9);
+ rect(c,x-4,y+3,8,5,'#a8784c');
+}
+function drawCreature(c,kind,x,y,phase=0){
+ // Tiny original pixel animals: no interpolation or image enlargement artifacts.
+ const u=kind==='horse'||kind==='bear'?2:1;
+ const bob=Math.floor(phase)%2;
+ const R=(a,b,w,h,color)=>rect(c,x+a*u,y+(b+bob)*u,w*u,h*u,color);
+ const fur={sparrow:'#8d6851',dog:'#bb946e',cat:'#9299a0',chicken:'#efe6cf',horse:'#a06b4a',hamster:'#cfae80',rabbit:'#e8e0d5',fox:'#c7774a',wolf:'#747f88',bear:'#80634e'}[kind];
+ if(!fur)return;
+ R(-9,1,19,2,'#37443744');
+ if(kind==='sparrow'){
+  R(-5,-7,9,5,fur);R(2,-9,4,4,fur);R(-7,-5,5,2,'#66584f');
+  R(5,-7,4,2,'#e7bc65');R(1,-8,1,1,'#292d30');R(-2,-2,1,3,'#70563e');
+ }else if(kind==='chicken'){
+  R(-7,-9,12,10,fur);R(3,-12,6,7,'#e6cf9d');
+  R(4,-15,3,3,'#bd6056');R(8,-10,4,2,'#d5a34a');R(6,-10,1,1,'#293238');
+  R(-9,-12,4,7,'#d2ad78');R(-3,1,2,4,'#ac7a46');R(3,1,2,4,'#ac7a46');
+ }else if(kind==='horse'){
+  R(-11,-12,19,13,fur);R(5,-20,6,14,fur);R(9,-20,5,6,'#bd9676');
+  R(7,-23,3,5,'#624738');R(11,-24,3,5,'#624738');R(11,-17,1,1,'#2d2a2e');
+  R(-9,1,3,9,'#6b5143');R(2,1,3,9,'#6b5143');R(-15,-10,4,12,'#665044');
+ }else if(kind==='rabbit'){
+  R(-8,-8,14,9,fur);R(3,-12,7,8,fur);
+  R(3,-21,3,12,fur);R(8,-22,3,13,fur);R(5,-19,1,8,'#d79da0');
+  R(8,-10,1,1,'#4a3e42');R(-11,-5,5,5,'#f6eee5');
+ }else if(kind==='hamster'){
+  R(-9,-8,17,10,fur);R(-6,-12,5,6,fur);R(3,-12,5,6,fur);
+  R(-3,-5,10,6,'#f0dfc1');R(4,-8,1,1,'#2b3434');R(9,-4,2,2,'#d7969a');
+ }else if(kind==='bear'){
+  R(-13,-12,25,14,fur);R(0,-22,12,14,fur);R(0,-25,4,5,fur);R(10,-25,4,5,fur);
+  R(9,-15,6,5,'#ab9175');R(11,-19,1,1,'#202c34');
+  R(-9,1,5,6,'#604c3e');R(6,1,5,6,'#604c3e');
+ }else{
+  const isFox=kind==='fox',isWolf=kind==='wolf',isCat=kind==='cat';
+  R(-10,-10,17,11,fur);R(5,-16,10,12,fur);
+  if(isFox||isWolf||isCat){R(4,-20,4,6,fur);R(11,-21,4,7,fur);}
+  else{R(5,-18,4,9,'#7e5b4b');R(13,-17,3,8,'#7e5b4b');}
+  R(13,-11,4,4,isFox?'#e6d4b9':'#b7a9a0');
+  R(12,-15,1,2,'#253139');R(-7,1,3,5,'#675548');R(2,1,3,5,'#675548');
+  if(isFox||isWolf){R(-19,-10,10,5,fur);R(-21,-8,5,3,isFox?'#f7e4cf':'#c1bcc0');}
+  else if(isCat){R(-14,-17,4,14,fur);R(-16,-19,3,4,fur);}
+  else{R(-14,-11,6,5,fur);}
+ }
+}
+const WILDLIFE=[
+ {kind:'sparrow',x:345,y:220},{kind:'dog',x:248,y:387},
+ {kind:'cat',x:433,y:469},{kind:'chicken',x:130,y:678},
+ {kind:'horse',x:485,y:919},{kind:'hamster',x:341,y:529},
+ {kind:'rabbit',x:373,y:720},{kind:'fox',x:52,y:784},
+ {kind:'wolf',x:435,y:835},{kind:'bear',x:531,y:826}
+];
+
 const cache=new Map();
-function town(ctx,period){
+function town(ctx,period,elapsed=0){
  let image=cache.get(period);
  if(!image){
-  image=document.createElement('canvas');image.width=600;image.height=1300;
+  image=document.createElement('canvas');image.width=600;image.height=1400;
   const c=image.getContext('2d');c.imageSmoothingEnabled=false;c.translate(0,350);
   townBackground(c,period);cache.set(period,image);
  }
  ctx.imageSmoothingEnabled=false;ctx.drawImage(image,0,-350);
+ for(let i=0;i<WILDLIFE.length;i++){const a=WILDLIFE[i];drawCreature(ctx,a.kind,a.x,a.y,Math.floor(elapsed*2+i%3));}
 }
 function isoBox(c,x,y,w,d,h,front='#a07855',top='#ca9e72'){
  poly(c,[[x,y-h],[x+w,y-h],[x+w+d,y-h-d*.42],[x+d,y-h-d*.42]],top);
@@ -296,6 +385,8 @@ function sceneDecor(c,id){
   } else {water(c,116,252,261,133);bridge(c,257,260);}
   for(let i=0;i<5;i++)shrub(c,59+i*101,351-(i%2)*48,i);
  }
+ const guests={ranch:['horse','chicken','dog'],park:['rabbit','sparrow','fox'],square:['sparrow','dog','cat'],greenhouse:['rabbit','hamster'],pub:['cat'],cafe:['dog'],museum:['sparrow'],workshop:['cat']};
+ if(guests[id])guests[id].forEach((a,i)=>drawCreature(c,a,95+i*115,370-i*23,0));
  for(let i=0;i<9;i++){const x=22+rng(i+67)*465,y=385-rng(i+13)*18;if(i%2)rect(c,x,y,4,2,'#edcba1');}
 }
 const sceneCaches=new Map();
@@ -307,5 +398,5 @@ function place(c,p){
  c.imageSmoothingEnabled=false;c.clearRect(0,0,c.canvas.width,c.canvas.height);
  c.drawImage(sceneCaches.get(id),0,0,c.canvas.width,c.canvas.height);
 }
-globalThis.WordvilleWorldArt={town,place,house,conservatory};
+globalThis.WordvilleWorldArt={town,place,house,conservatory,landmarks:LANDMARKS,wildlife:WILDLIFE};
 })();
