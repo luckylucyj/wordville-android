@@ -9,6 +9,17 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 public class VillageSmokeTest {
+ private WebView findWebView(android.view.View view) {
+   if (view instanceof WebView) return (WebView)view;
+   if (view instanceof android.view.ViewGroup) {
+     android.view.ViewGroup group=(android.view.ViewGroup)view;
+     for (int i=0;i<group.getChildCount();i++) {
+       WebView result=findWebView(group.getChildAt(i));
+       if (result!=null)return result;
+     }
+   }
+   return null;
+ }
  private String eval(WebView web, String js) throws Exception {
   // A fresh emulator may start its WebView renderer after Activity.onCreate.
   // Retry the callback instead of interpreting cold-start latency as app failure.
@@ -25,7 +36,9 @@ public class VillageSmokeTest {
  @Test public void villageAndWordCardRunOnAndroid() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
   Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-  WebView web=(WebView)((android.view.ViewGroup)activity.findViewById(android.R.id.content)).getChildAt(0);
+  android.view.ViewGroup content=activity.findViewById(android.R.id.content);
+  WebView web=findWebView(content);
+  assertNotNull("WebView is present inside the safe-inset container",web);
   boolean ready=false;for(int i=0;i<100;i++){if("true".equals(eval(web,"!!globalThis.WordvilleVillage && document.querySelectorAll('.word').length===60"))){ready=true;break;}Thread.sleep(200);}
   assertTrue("Bundled app initializes",ready);
   assertEquals("32",eval(web,"document.getElementById('day-filter').options.length"));
