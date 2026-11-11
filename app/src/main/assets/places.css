@@ -19,7 +19,7 @@
 .wv-place-chip[aria-pressed=true]{color:#fff5d7;background:#527d5a;border-color:#375941}
 .wv-spotlight{overflow:hidden;border:5px solid #9e6d3d;background:#fff1d2;box-shadow:inset 0 0 0 3px #f9dca5,4px 5px #6b492c;border-radius:3px}
 .wv-place-stage{height:auto;border-bottom:5px solid #a87946;background:#a9c0ae}
-#wv-place-canvas{display:block;width:100%;height:auto;aspect-ratio:512/240;image-rendering:pixelated;image-rendering:crisp-edges}
+#wv-place-canvas{display:block;width:100%;height:auto;aspect-ratio:512/420;image-rendering:pixelated;image-rendering:crisp-edges}
 .wv-place-detail{padding:14px 18px 10px}
 .wv-place-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 #wv-place-category{display:inline-block;background:#e5d09d;border:2px solid #a47c50;color:#6c4a2d;padding:2px 8px;font-size:12px;font-weight:900}
