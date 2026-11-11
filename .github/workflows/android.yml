@@ -141,11 +141,9 @@ jobs:
             adb shell am instrument -w com.wordville.app.village.vocabulary.safeinstall.test/androidx.test.runner.AndroidJUnitRunner > android-test-result.txt
             cat android-test-result.txt
             grep -Eq 'OK \([0-9]+ tests?\)' android-test-result.txt
-            adb shell am force-stop com.wordville.app.village.vocabulary.safeinstall || true
-            adb shell am start -W -n com.wordville.app.village.vocabulary.safeinstall/com.wordville.app.MainActivity
-            sleep 5
-            adb exec-out screencap -p > wordville-map-emulator.png
+            adb pull /sdcard/Android/data/com.wordville.app.village.vocabulary.safeinstall/files/wordville-map-emulator.png wordville-map-emulator.png
             test -s wordville-map-emulator.png
+            test "$(stat -c%s wordville-map-emulator.png)" -gt 120000
       - uses: actions/upload-artifact@v4
         if: always()
         with:
