@@ -190,6 +190,6 @@ jobs:
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
               --title "Wordville v2.1.0 - Indoor Walk Navigation" \
-              --notes "Wordville v2.0.1. Corrects holes in clothing and hair caused by alpha masking in the earlier walking atlas. Preserves user-provided 1536x1152 original portrait PNG byte-for-byte. Adds four walk-cycle slots per resident (original standing and walking source poses plus two source-derived transitions) at 160x256, with 2560x768 atlas. Preserves connected fountain-safe walk paths and stair step animation. Same package ID/signing key for update." \
+              --notes "v2.1.0: Fix resident animation using bundled 2560x768 atlas; avoid nonexistent walk and venue image paths; add 17 collision-aware venue tile maps, furniture-aware tap and keyboard navigation, resident spacing and collision inspection. Background photos remain visual references, not pixel-accurate collision geometry. Existing package ID, signing and local study data retained." \
               --prerelease
           fi
