@@ -59,7 +59,7 @@ const assert = require('node:assert/strict');
   await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.naturalWidth>0);
   assert.equal(await page.locator('.resident-list .wv-portrait').count(),12);
   assert.ok(await page.evaluate(()=>WordvillePortraits.image.naturalWidth>=128));
-  assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('.resident-list .wv-portrait')).backgroundImage.includes('wordville-residents.webp')));
+  assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('.resident-list .wv-portrait')).backgroundImage.includes('wordville-portrait-ref.webp')));
   assert.ok(await page.evaluate(()=>!!document.querySelector('link[href="stardew-ui.css"]')));
   // Place explorer: map and venue screen are mutually exclusive, not a long vertical list.
   assert.equal(await page.locator('#wv-places-view').isVisible(),false);
