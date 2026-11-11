@@ -162,19 +162,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Immersive_Town_v1.4.0.apk
+          cp release/wordville-debug.apk release/Wordville_Day_Notes_v1.5.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v1.4.0-immersive"
-          ASSET="release/Wordville_Immersive_Town_v1.4.0.apk"
+          TAG="v1.5.0-day-notes"
+          ASSET="release/Wordville_Day_Notes_v1.5.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v1.4.0 - Immersive Pixel Town and Tabs" \
-              --notes "Wordville v1.4.0. Fullscreen original isometric town, 17 themed locations, residents, fixed bottom tabs, PDF Day sequence and ten vocabulary dialogues per card. Upgrades version 1.3.0 safeinstall without clearing its on-device records. Other package IDs remain separate." \
+              --title "Wordville v1.5.0 - Day Notes and Learning Status" \
+              --notes "Wordville v1.5.0: Day-scoped manual word status popup (new, learning, review, mastered), image-based thought-coding note with overview/topic/checks/category/writing/opinion/summary, IndexedDB persistence, Day archive & status filters. Preserves the same safeinstall package and signing certificate for in-place upgrade from 1.3.0/1.4.0. Notes are local to this device, not automatically cloud-synced." \
               --prerelease
           fi
