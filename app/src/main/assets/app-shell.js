@@ -42,6 +42,12 @@ toolButton.title='마을 시간과 주민 움직임';
 toolButton.setAttribute('aria-label','마을 설정 펼치기');
 toolButton.setAttribute('aria-expanded','false');
 wrap.append(toolButton);
+const exploreButton=document.createElement('button');
+exploreButton.id='wv-visit-places';exploreButton.type='button';
+exploreButton.textContent='🏠 장소 둘러보기';
+exploreButton.setAttribute('aria-label','마을의 장소 17곳 선택하기');
+exploreButton.addEventListener('click',()=>activate('places'));
+wrap.append(exploreButton);
 const toolPanel=document.createElement('div');
 toolPanel.id='wv-map-tool-panel';toolPanel.hidden=true;
 if(controls)toolPanel.append(controls);
@@ -128,10 +134,8 @@ function activate(screen){
 }
 function resizeVillage(){
  if(current!=='town')return;
- const c=get('village-canvas'),bounds=wrap.getBoundingClientRect();
- if(bounds.width<20||bounds.height<20)return;
- const width=600,height=Math.max(480,Math.min(1500,Math.round(600*bounds.height/bounds.width)));
- if(c.width!==width||c.height!==height){c.width=width;c.height=height;}
+ // The village renderer is the single authority for canvas DPR and backing size.
+ globalThis.WordvilleVillage?.resize?.();
 }
 let resizeObserver;
 if(typeof ResizeObserver!=='undefined'){

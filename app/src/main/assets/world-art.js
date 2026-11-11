@@ -418,6 +418,15 @@ function sceneDecor(c,id){
  if(guests[id])guests[id].forEach((a,i)=>drawCreature(c,a,95+i*115,370-i*23,0));
  for(let i=0;i<9;i++){const x=22+rng(i+67)*465,y=385-rng(i+13)*18;if(i%2)rect(c,x,y,4,2,'#edcba1');}
 }
+// Only the venues actually identifiable in the shipped reference artwork can be
+// clicked directly. All 17 venues remain accessible through the Places tab.
+const REFERENCE_LANDMARKS=[
+ {id:'library',name:'도서관',x:298,y:169},
+ {id:'bookstore',name:'서점',x:82,y:520},
+ {id:'cafe',name:'카페',x:94,y:590},
+ {id:'ranch',name:'목장',x:361,y:682},
+ {id:'square',name:'광장',x:297,y:344}
+];
 const sceneCaches=new Map();
 function place(c,p){
  const id=p.id;
@@ -434,5 +443,5 @@ function place(c,p){
  c.imageSmoothingEnabled=false;c.clearRect(0,0,c.canvas.width,c.canvas.height);
  c.drawImage(sceneCaches.get(id),0,0,c.canvas.width,c.canvas.height);
 }
-globalThis.WordvilleWorldArt={town,place,house,conservatory,landmarks:LANDMARKS,wildlife:WILDLIFE,reference:mapReference,venueImages:landmarkAssets};
+globalThis.WordvilleWorldArt={town,place,house,conservatory,landmarks:LANDMARKS,referenceLandmarks:REFERENCE_LANDMARKS,wildlife:WILDLIFE,reference:mapReference,venueImages:landmarkAssets};
 })();

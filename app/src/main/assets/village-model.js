@@ -8,35 +8,33 @@ const people=[
  ['maru','마루','연구실','maintenance','#7b8aa9','#663e39'],['penny','페니','도서관','deadline','#bc8951','#b96639'],
  ['abigail','애비게일','광장','reservation','#836aa1','#895995'],['emily','에밀리','재봉실','customer','#b96463','#4d74ab']
 ].map(([id,name,home,word,shirt,hair],i)=>({id,name,home,word,shirt,hair,skin:['#edbe98','#d19b78','#f0c8a2','#b9805e'][i%4]}));
-// The source map is 840×1120, displayed at a 600×800 world coordinate scale.
-// Fountain water/stone: center (299,318), ellipse radii 77×49 INCLUDING a safety margin.
-const fountain={x:299,y:316,rx:77,ry:49};
+// Coordinates are 600×800 scene units traced from the shipped town-reference.webp.
+// Character feet follow paved paths instead of the older, misaligned procedural map.
+const fountain={"x":300,"y":252,"rx":79,"ry":49};
 const nodes=[
- {x:300,y:390},  // 0 southern plaza below fountain
- {x:203,y:390},  // 1 west plaza
- {x:397,y:390},  // 2 east plaza
- {x:139,y:419},  // 3 west cobblestone path
- {x:460,y:425},  // 4 east cobblestone path
- {x:207,y:267},  // 5 west upper promenade
- {x:393,y:267},  // 6 east upper promenade
- {x:300,y:258,stair:true}, // 7 staircase landing
- {x:300,y:237,stair:true}, // 8 staircase middle
- {x:300,y:214,stair:true}, // 9 staircase at main entrance
- {x:198,y:313},  // 10 left of fountain
- {x:402,y:313},  // 11 right of fountain
- {x:208,y:370},  // 12 southwest perimeter
- {x:392,y:370},  // 13 southeast perimeter
- {x:302,y:438},  // 14 bridge approach
- {x:277,y:470},  // 15 bridge entry
- {x:306,y:495},  // 16 on the bridge
- {x:168,y:267},  // 17 west terrace
- {x:437,y:267}   // 18 east terrace
+ {x:300,y:377}, // 0
+ {x:222,y:376}, // 1
+ {x:379,y:377}, // 2
+ {x:160,y:423}, // 3
+ {x:439,y:421}, // 4
+ {x:194,y:237}, // 5
+ {x:407,y:236}, // 6
+ {x:426,y:266,stair:true}, // 7
+ {x:442,y:289,stair:true}, // 8
+ {x:451,y:312,stair:true}, // 9
+ {x:184,y:309}, // 10
+ {x:415,y:327}, // 11
+ {x:214,y:344}, // 12
+ {x:386,y:349}, // 13
+ {x:296,y:425}, // 14
+ {x:259,y:458}, // 15
+ {x:315,y:479}, // 16
+ {x:176,y:270}, // 17
+ {x:414,y:256}, // 18
 ];
+// Only vetted walkway segments are traversable. No straight-line shortcut through water.
 const links=[
- [0,1],[0,2],[0,14],[1,12],[1,3],[2,13],[2,4],
- [5,7],[6,7],[7,8],[8,9],
- [5,10],[6,11],[10,12],[11,13],
- [5,17],[6,18],[14,15],[15,16]
+ [0,1],[0,2],[0,14],[1,12],[1,3],[2,13],[2,4],[5,17],[6,18],[17,10],[18,7],[10,12],[11,13],[6,7],[7,8],[8,9],[9,11],[14,15],[15,16],[5,10]
 ];
 const edges=nodes.map(()=>[]);
 for(const [a,b] of links){edges[a].push(b);edges[b].push(a);}
@@ -59,9 +57,9 @@ function tick(residents,dt,onMeet){
   p.heading=dx<-.5?-1:dx>.5?1:p.heading;p.direction=Math.abs(dx)>=Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
   const speed=p.onStairs?12:18,step=speed*dt;
   if(d<=step){p.x=n.x;p.y=n.y;p.node=p.route.shift();p.wait=.16;p.onStairs=false;}
-  else{const nx=p.x+dx/d*step,ny=p.y+dy/d*step;if(residents.some(other=>other!==p&&Math.hypot(other.x-nx,other.y-ny)<10)){p.wait=.16;continue;}p.x=nx;p.y=ny;p.steps+=dt;p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;}
+  else{const nx=p.x+dx/d*step,ny=p.y+dy/d*step;if(residents.some(other=>other!==p&&Math.hypot(other.x-nx,other.y-ny)<23)){p.wait=.16;continue;}p.x=nx;p.y=ny;p.steps+=dt;p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;}
  }
- for(let i=0;i<residents.length;i++){const a=residents[i];if(a.chat||a.cooldown>0||a.onStairs)continue;for(let j=i+1;j<residents.length;j++){const b=residents[j];if(b.chat||b.cooldown>0||b.onStairs)continue;if(Math.hypot(a.x-b.x,a.y-b.y)<15){a.chat=b.chat=3.5;a.cooldown=b.cooldown=15;a.partner=b.id;b.partner=a.id;onMeet?.(a,b);break;}}}
+ for(let i=0;i<residents.length;i++){const a=residents[i];if(a.chat||a.cooldown>0||a.onStairs)continue;for(let j=i+1;j<residents.length;j++){const b=residents[j];if(b.chat||b.cooldown>0||b.onStairs)continue;if(Math.hypot(a.x-b.x,a.y-b.y)<29){a.chat=b.chat=3.5;a.cooldown=b.cooldown=15;a.partner=b.id;b.partner=a.id;onMeet?.(a,b);break;}}}
  for(const p of residents)p.cooldown=Math.max(0,(p.cooldown||0)-dt);
 }
 const api={people,nodes,edges,links,fountain,inFountain,segmentHitsFountain,isStairEdge,period,path,freshResidents,tick};

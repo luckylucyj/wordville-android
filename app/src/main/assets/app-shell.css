@@ -132,3 +132,15 @@ body[data-screen="town"] .wv-more-panel{bottom:var(--wv-bottom)}
 
 /* v2.0: do not nearest-neighbor scale detailed photographs/portraits in fullscreen. */
 body[data-screen="town"] #village-canvas{image-rendering:auto!important}
+/* Town-screen QA: reliable entry to all venues without guessing artwork locations. */
+body[data-screen="town"] #wv-visit-places{
+ position:absolute;left:12px;bottom:69px;z-index:3;
+ min-height:46px;padding:8px 12px;border:3px solid #916642;
+ background:#f7e2aff2;color:#4c3925;font-size:12px;font-weight:850;
+ box-shadow:2px 3px #4c3a27;
+}
+body[data-screen="town"] .zoom-controls button{min-width:46px;min-height:46px}
+body[data-screen="town"] #wv-map-tools:focus-visible,
+body[data-screen="town"] #wv-visit-places:focus-visible,
+body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #fff8e4;outline-offset:3px}
+@media(max-width:340px){body[data-screen="town"] #wv-visit-places{font-size:11px;padding:7px 9px}}
