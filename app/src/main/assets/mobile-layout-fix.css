@@ -70,3 +70,10 @@ dialog{max-width:calc(100% - 20px);max-height:calc(100dvh - 32px);overscroll-beh
  .wv-mode-switch button{font-size:12px;padding:8px 4px}
  .wv-place-people{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* A light control strip is used even during night mode; labels must stay dark. */
+.village-section .village-controls{color:#583a26}
+.village-section .village-controls .time-select,
+.village-section[data-period=night] .village-controls .time-select,
+.village-section[data-period=dusk] .village-controls .time-select{color:#583a26!important}
+.village-section .village-controls .time-select select{color:#304943;background:#fff5d7}
