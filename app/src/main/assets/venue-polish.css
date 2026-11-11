@@ -1,0 +1,5 @@
+/* Faithful pixel scaling for interactive actor overlays. */
+#wv-place-canvas,#wv-venue-actors,#village-canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+.wv-place-stage{position:relative;overflow:hidden}
+#wv-venue-actors{display:block;user-select:none}
+@media(prefers-reduced-motion:reduce){#wv-venue-actors{opacity:.93}}

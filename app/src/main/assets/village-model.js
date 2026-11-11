@@ -56,10 +56,10 @@ function tick(residents,dt,onMeet){
   if(!p.route.length){const goal=(p.node+5+p.id.length+(p.visits++*7))%nodes.length;p.route=path(p.node,goal).slice(1);p.wait=.25;continue;}
   const nextIndex=p.route[0],n=nodes[nextIndex],dx=n.x-p.x,dy=n.y-p.y,d=Math.hypot(dx,dy);
   p.onStairs=isStairEdge(p.node,nextIndex);
-  p.heading=dx<-.5?-1:dx>.5?1:p.heading;
+  p.heading=dx<-.5?-1:dx>.5?1:p.heading;p.direction=Math.abs(dx)>=Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
   const speed=p.onStairs?12:18,step=speed*dt;
   if(d<=step){p.x=n.x;p.y=n.y;p.node=p.route.shift();p.wait=.16;p.onStairs=false;}
-  else{p.x+=dx/d*step;p.y+=dy/d*step;p.steps+=dt;p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;}
+  else{const nx=p.x+dx/d*step,ny=p.y+dy/d*step;if(residents.some(other=>other!==p&&Math.hypot(other.x-nx,other.y-ny)<16)){p.wait=.16;continue;}p.x=nx;p.y=ny;p.steps+=dt;p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;}
  }
  for(let i=0;i<residents.length;i++){const a=residents[i];if(a.chat||a.cooldown>0||a.onStairs)continue;for(let j=i+1;j<residents.length;j++){const b=residents[j];if(b.chat||b.cooldown>0||b.onStairs)continue;if(Math.hypot(a.x-b.x,a.y-b.y)<15){a.chat=b.chat=3.5;a.cooldown=b.cooldown=15;a.partner=b.id;b.partner=a.id;onMeet?.(a,b);break;}}}
  for(const p of residents)p.cooldown=Math.max(0,(p.cooldown||0)-dt);
