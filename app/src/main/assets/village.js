@@ -2,7 +2,7 @@
 (() => {
 const M=VillageModel,canvas=document.getElementById('village-canvas'),ctx=canvas.getContext('2d');
 const panel=document.getElementById('village-dialogue'),feed=document.getElementById('village-feed');
-const residents=M.freshResidents();let mode='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day';
+const residents=M.freshResidents();let mode='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day',viewZone='all';
 const paints={day:{sky:'#9ccdda',ground:'#93b078',stone:'#d8ceb3',shade:'#b3a58b',roof:'#536a82',wall:'#e1d3b8',side:'#b5ac98',leaf:'#5c8b59',leaf2:'#83a15e',window:'#668396',path:'#c9c4b2'},dusk:{sky:'#b5a1b3',ground:'#718064',stone:'#b9a695',shade:'#94887e',roof:'#4c566c',wall:'#cbb7a8',side:'#9a8e8b',leaf:'#526e56',leaf2:'#71825a',window:'#e8c482',path:'#aaa199'},night:{sky:'#172b48',ground:'#344a43',stone:'#667078',shade:'#4c5766',roof:'#2d405a',wall:'#839096',side:'#616e7c',leaf:'#324f48',leaf2:'#436459',window:'#eed598',path:'#657480'}};
 const r=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
 function poly(points,color){ctx.fillStyle=color;ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(Math.round(x),Math.round(y)):ctx.moveTo(Math.round(x),Math.round(y)));ctx.closePath();ctx.fill();}
@@ -81,14 +81,30 @@ function sprite(p){
 function syncTime(){const now=new Date(),h=now.getHours();period=mode==='auto'?M.period(h):mode;const stamp=now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});document.getElementById('village-clock').textContent=stamp;document.getElementById('village-period').textContent=({day:'낮',dusk:'저녁',night:'밤'})[period]+(mode==='auto'?' · 현재 시간':' · 미리보기');document.querySelector('.village-section').dataset.period=period;document.documentElement.dataset.period=period;minute=now.getMinutes();}
 function select(id){selected=id;const p=residents.find(r=>r.id===id);const partner=residents.find(r=>r.id===p.partner);document.getElementById('speaker').textContent=p.name;document.getElementById('resident-home').textContent=p.home;document.getElementById('resident-line').textContent=p.chat>0&&partner?`${partner.name}, 오늘은 ${p.home}에서 함께 공부할래요?`:`안녕하세요! 저는 ${p.name}이에요. ${p.home}에서 자주 만날 수 있어요.`;document.getElementById('resident-english').textContent=p.chat>0?'Would you like to study together?':'Let’s learn a new word together.';document.getElementById('resident-korean').textContent=p.chat>0?'함께 공부할래요?':'새로운 단어를 함께 배워요.';panel.hidden=false;document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id}}));}
 function meet(a,b){chatCount++;const messages=[['Let’s meet at the cafe.','카페에서 만나요.'],['Can you confirm the reservation?','예약을 확인해 줄 수 있나요?'],['The shipment will arrive tomorrow.','배송 물품은 내일 도착해요.'],['The appointment is at ten.','약속은 10시예요.'],['Let’s review our schedule.','우리 일정을 확인해요.']];const [en,ko]=messages[(chatCount-1)%messages.length];const li=document.createElement('li');li.textContent=`${a.name} ↔ ${b.name} · ${ko}`;feed.prepend(li);while(feed.children.length>5)feed.lastChild.remove();document.getElementById('conversation-count').textContent=chatCount+'번의 대화';if(selected===a.id||selected===b.id){const p=selected===a.id?a:b;document.getElementById('speaker').textContent=p.name;document.getElementById('resident-line').textContent=`${a.name}와 ${b.name}의 대화`;document.getElementById('resident-english').textContent=en;document.getElementById('resident-korean').textContent=ko;panel.hidden=false;}}
-function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet);}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();const scale=canvas.width/600*zoom;ctx.translate(canvas.width/2-300*scale,canvas.height/2-245*scale);ctx.scale(scale,scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].sort((a,b)=>a.y-b.y))sprite(p);ctx.restore();requestAnimationFrame(frame);}
+
+const MAP_ZONES={all:500,north:205,central:505,south:800};
+function currentMapView(){
+ const scale=(viewZone==='all'?Math.min(canvas.width/600,canvas.height/1050):canvas.width/600)*zoom;
+ return {scale,offsetX:canvas.width/2-300*scale,offsetY:canvas.height/2-MAP_ZONES[viewZone]*scale};
+}
+function setMapZone(zone){
+ if(!Object.hasOwn(MAP_ZONES,zone))return;
+ viewZone=zone;zoom=1;
+ document.querySelectorAll('[data-map-zone]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mapZone===zone)));
+}
+function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet);}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].sort((a,b)=>a.y-b.y))sprite(p);ctx.restore();requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>select(p.id));document.getElementById('resident-list').append(b);}
-canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),scale=canvas.width/600*zoom,x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-canvas.width/2)/scale+300,wy=(y-canvas.height/2)/scale+245;const found=[...residents].filter(p=>Math.abs(p.x-wx)<22&&wy>=p.y-54&&wy<=p.y+9).sort((a,b)=>Math.abs((a.y-23)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-23)-wy)-Math.abs(b.x-wx))[0];if(found)select(found.id);});
+canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=[...residents].filter(p=>Math.abs(p.x-wx)<22&&wy>=p.y-54&&wy<=p.y+9).sort((a,b)=>Math.abs((a.y-23)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-23)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
+const landmarks=globalThis.WordvilleWorldArt?.landmarks||[];
+const place=landmarks.find(s=>Math.abs(s.x-wx)<47&&Math.abs(s.y-wy)<29);
+if(place&&globalThis.WordvillePlaces){globalThis.WordvillePlaces.show('places');globalThis.WordvillePlaces.pick(place.id);}
+});
+document.querySelectorAll('[data-map-zone]').forEach(button=>button.addEventListener('click',()=>setMapZone(button.dataset.mapZone)));
 document.getElementById('village-time-mode').addEventListener('change',e=>{mode=e.target.value;syncTime();});
 document.getElementById('zoom-in').addEventListener('click',()=>{zoom=Math.min(2,zoom+.25);});document.getElementById('zoom-out').addEventListener('click',()=>{zoom=Math.max(1,zoom-.25);});
 document.getElementById('pause-village').addEventListener('click',e=>{paused=!paused;e.currentTarget.textContent=paused?'주민 움직이기':'잠시 멈추기';e.currentTarget.setAttribute('aria-pressed',String(paused));});
 document.getElementById('resident-study').addEventListener('click',()=>{const p=residents.find(r=>r.id===selected);if(p)document.dispatchEvent(new CustomEvent('village-study',{detail:{word:p.word}}));});
 document.addEventListener('visibilitychange',()=>{last=0;syncTime();});
-globalThis.WordvilleVillage={residents,select,get period(){return period;},get conversations(){return chatCount;},get zoom(){return zoom;}};
+globalThis.WordvilleVillage={residents,select,get period(){return period;},get conversations(){return chatCount;},get zoom(){return zoom;},get zone(){return viewZone;},setZone:setMapZone};
 syncTime();requestAnimationFrame(frame);
 })();
