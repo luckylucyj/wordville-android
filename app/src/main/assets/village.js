@@ -51,7 +51,7 @@ function sprite(p){
  // Both frames are genuine cuts from the supplied standing/walking sprite sheet.
  // Never re-render a portrait face over an invented stick-figure body.
  if(idx!==undefined&&img?.complete&&img.naturalWidth===256&&img.naturalHeight===192){
-  const col=idx%4,row=Math.floor(idx/4),pose=isWalking?1:0;
+  const col=idx%4,row=Math.floor(idx/4),pose=isWalking?Math.floor(p.steps*4)%2:0;
   const sx=col*64+pose*32,sy=row*64;
   const width=32,height=54;
   const movingTo=p.route.length?M.nodes[p.route[0]]:null;
