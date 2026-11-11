@@ -162,19 +162,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Day_Notes_v1.5.0.apk
+          cp release/wordville-debug.apk release/Wordville_Recall_Status_v1.6.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v1.5.0-day-notes"
-          ASSET="release/Wordville_Day_Notes_v1.5.0.apk"
+          TAG="v1.6.0-status-history"
+          ASSET="release/Wordville_Recall_Status_v1.6.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v1.5.0 - Day Notes and Learning Status" \
-              --notes "Wordville v1.5.0: Day-scoped manual word status popup (new, learning, review, mastered), image-based thought-coding note with overview/topic/checks/category/writing/opinion/summary, IndexedDB persistence, Day archive & status filters. Preserves the same safeinstall package and signing certificate for in-place upgrade from 1.3.0/1.4.0. Notes are local to this device, not automatically cloud-synced." \
+              --title "Wordville v1.6.0 - Recall Codes and Status History" \
+              --notes "Wordville v1.6.0. Seven one-character recall states N/R/F/X/U/C/check with distinct colors, manually dated status changes and cause notes, chronological history, per-Day distribution and recorded-event trend charts, deduplicated explanations and suggested actions. Existing Day notes are kept. Legacy learning is provisionally N with explicit reclassification notice. Same app ID and signing key allow updating 1.3.0-1.5.0 in place. Data is stored locally, not synced automatically." \
               --prerelease
           fi
