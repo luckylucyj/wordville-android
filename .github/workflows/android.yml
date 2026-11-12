@@ -89,6 +89,15 @@ jobs:
           path: ${{ runner.temp }}/wordville-signing-backup/
           retention-days: 7
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wordville-individual-complete-body-sheets
+          path: |
+            wordville-resident-sheets/*.png
+            wordville-resident-walk-qa.png
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Build and lint Android app
         run: gradle --no-daemon assembleDebug assembleDebugAndroidTest lintDebug
       - name: Verify APK signature
@@ -177,19 +186,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Cat_Dog_32x48_v2.5.1.apk
+          cp release/wordville-debug.apk release/Wordville_FullBodyFrames_v2.6.1.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.5.1-ref-pets"
-          ASSET="release/Wordville_Cat_Dog_32x48_v2.5.1.apk"
+          TAG="v2.6.1-whole-body-sprites"
+          ASSET="release/Wordville_FullBodyFrames_v2.6.1.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.5.1 - Reference-Faithful Cat and Dog Sprites" \
+              --title "Wordville v2.6.1 - Full Body Resident Sprite Sheets" \
               --notes "v2.5.1: User-design-derived native 32x48 cat and dog pixel sprites, 4 directions x 4 walking phases per pet. Pixel-perfect x/y cell anchors and y=44 ground alignment, pixel uniqueness browser tests, village/indoor animation and in-app two-pet preview. Prior resident sprites, study data, application ID and signing identity unchanged." \
               --prerelease
           fi

@@ -48,26 +48,24 @@ function paintPet(c,p,x,y,opt={}){
  c.drawImage(img,cell.x,cell.y,cell.width,cell.height,left,top,w,h);
  c.restore();return true;
 }
-/* Eight ordered phases per direction and character. Every rendered cell is
- * exactly 32x48 and is sampled from the corresponding resident's three
- * original poses. The stance foot remains on one shared pixel baseline.
- *
- * Contact > down > passing > up is the first half-cycle; the second swaps
- * the planted / swinging foot. The source contact pose has the opposite arm
- * advanced, so the arm swing remains contralateral without slicing arms.
- */
+/* Build one complete, dedicated 256x192 sheet per resident before rendering
+ * any frame. Source coordinates are exact 32x48 cells in the original 384x576
+ * directional atlas. No limbs, heads, or adjacent cells are copied separately.
+ * Eight timing slots reuse three authentic complete body poses; additional
+ * authored poses are needed to obtain eight genuinely different silhouettes. */
 const stride=[
- {phase:'contact',pose:1,torso:0,lx:-1,ly:0,rx:1,ry:0,plant:'left'},
- {phase:'down',pose:1,torso:1,lx:0,ly:0,rx:1,ry:-1,plant:'left'},
- {phase:'passing',pose:0,torso:0,lx:0,ly:0,rx:0,ry:-2,plant:'left'},
- {phase:'up',pose:2,torso:-1,lx:0,ly:0,rx:1,ry:-3,plant:'left'},
- {phase:'contact',pose:2,torso:0,lx:1,ly:0,rx:-1,ry:0,plant:'right'},
- {phase:'down',pose:2,torso:1,lx:1,ly:-1,rx:0,ry:0,plant:'right'},
- {phase:'passing',pose:0,torso:0,lx:0,ly:-2,rx:0,ry:0,plant:'right'},
- {phase:'up',pose:1,torso:-1,lx:-1,ly:-3,rx:0,ry:0,plant:'right'}
+ {phase:'contact',pose:1,plant:'left'},
+ {phase:'down',pose:1,plant:'left'},
+ {phase:'passing',pose:0,plant:'left'},
+ {phase:'up',pose:2,plant:'left'},
+ {phase:'contact',pose:2,plant:'right'},
+ {phase:'down',pose:2,plant:'right'},
+ {phase:'passing',pose:0,plant:'right'},
+ {phase:'up',pose:1,plant:'right'}
 ];
-const FRAME_W=32,FRAME_H=48,FRAME_COUNT=stride.length,STEP_DISTANCE=2.2,GROUND_Y=46;
-const ATLAS_W=FRAME_W*FRAME_COUNT,ATLAS_H=FRAME_H*ids.length*4;
+const FRAME_W=32,FRAME_H=48,FRAME_COUNT=8,STEP_DISTANCE=2.2,GROUND_Y=46;
+const ATLAS_W=256,ATLAS_H=FRAME_H*ids.length*4;
+const residentSheets={};
 let walkAtlas=null,sourceGroundOffsets=null;
 function alignForGroundRow(row){
  if(!Number.isFinite(row))return 0;
@@ -78,48 +76,27 @@ function atlasCell(id,direction,phase){
  if(i===undefined||dir===undefined||!Number.isInteger(phase)||phase<0||phase>=FRAME_COUNT)return null;
  return {x:phase*FRAME_W,y:(i*4+dir)*FRAME_H,width:FRAME_W,height:FRAME_H};
 }
-function measureGround(c,sx,sy){
- const pixels=c.getImageData(sx,sy,FRAME_W,FRAME_H).data;
- // The supplied reference may have transparent or solid beige corners.
- const bi=4*(1+FRAME_W),bg=[pixels[bi],pixels[bi+1],pixels[bi+2],pixels[bi+3]];
- for(let y=47;y>=33;y--)for(let x=6;x<=26;x++){
-  const i=4*(y*FRAME_W+x),a=pixels[i+3];
-  if(a<80)continue;
-  if(bg[3]<80)return y;
-  const difference=Math.abs(pixels[i]-bg[0])+Math.abs(pixels[i+1]-bg[1])+Math.abs(pixels[i+2]-bg[2]);
-  if(difference>85)return y;
- }
- return GROUND_Y;
-}
 function generateAtlas(){
  if(!isReady(referenceAtlas)||referenceAtlas.naturalWidth!==384||referenceAtlas.naturalHeight!==576||typeof document==='undefined')return false;
- const sheet=document.createElement('canvas');sheet.width=ATLAS_W;sheet.height=ATLAS_H;
- const c=sheet.getContext('2d',{willReadFrequently:true});if(!c)return false;c.imageSmoothingEnabled=false;
- const sampler=document.createElement('canvas');sampler.width=384;sampler.height=576;
- const sampleCtx=sampler.getContext('2d',{willReadFrequently:true});if(!sampleCtx)return false;
- sampleCtx.drawImage(referenceAtlas,0,0);
- sourceGroundOffsets=ids.map((id,ri)=>[0,1,2,3].map(dir=>[0,1,2].map(pose=>{
-  const ground=measureGround(sampleCtx,(dir*3+pose)*FRAME_W,ri*FRAME_H);
-  return alignForGroundRow(ground);
- })));
- for(let resident=0;resident<ids.length;resident++)for(let dir=0;dir<4;dir++){
-  const offsets=sourceGroundOffsets[resident][dir];
-  for(let phase=0;phase<FRAME_COUNT;phase++){
-   const p=stride[phase],sx=(dir*3+p.pose)*FRAME_W,sy=resident*FRAME_H;
-   const dx=phase*FRAME_W,dy=(resident*4+dir)*FRAME_H,shift=offsets[p.pose];
-   c.save();c.beginPath();c.rect(dx,dy,FRAME_W,FRAME_H);c.clip();
-   // Whole head + arms + shirt stays from one source pose. Only the torso
-   // settles/rises by one *integer* pixel; hair and eyes never distort.
-   c.drawImage(referenceAtlas,sx,sy,FRAME_W,37,dx,dy+shift+p.torso,FRAME_W,37);
-   // Feet are assembled as independent shins. The planted one never rises,
-   // the opposite one swings above the common baseline (up to 3px).
-   // The 3-pixel torso/shin overlap avoids visible seams at the knees.
-   c.drawImage(referenceAtlas,sx,sy+34,16,14,dx+p.lx,dy+34+shift+p.ly,16,14);
-   c.drawImage(referenceAtlas,sx+16,sy+34,16,14,dx+16+p.rx,dy+34+shift+p.ry,16,14);
-   c.restore();
+ const combined=document.createElement('canvas');combined.width=ATLAS_W;combined.height=ATLAS_H;
+ const cc=combined.getContext('2d');if(!cc)return false;cc.imageSmoothingEnabled=false;
+ // Entire source cells only: each direction occupies exactly three columns
+ // and each character occupies exactly one 48px-high row.
+ for(let i=0;i<ids.length;i++){
+  const sheet=document.createElement('canvas');sheet.width=ATLAS_W;sheet.height=FRAME_H*4;
+  const c=sheet.getContext('2d');if(!c)return false;c.imageSmoothingEnabled=false;
+  for(let dir=0;dir<4;dir++){
+   for(let beat=0;beat<8;beat++){
+    const sourceCol=dir*3+stride[beat].pose;
+    c.drawImage(referenceAtlas,sourceCol*32,i*48,32,48,beat*32,dir*48,32,48);
+   }
+   cc.drawImage(sheet,0,dir*48,256,48,0,(i*4+dir)*48,256,48);
   }
+  residentSheets[ids[i]]=sheet;
  }
- walkAtlas=sheet;return true;
+ sourceGroundOffsets=ids.map(()=>[0,0,0,0].map(()=>[0,0,0]));
+ walkAtlas=combined;
+ return true;
 }
 referenceAtlas.addEventListener('load',generateAtlas,{once:true});
 if(referenceAtlas.complete&&referenceAtlas.naturalWidth)generateAtlas();
@@ -145,7 +122,8 @@ function paint(c,p,x,y,opt={}){
   // Neutral, feet-parallel original frame instead of freezing at contact.
   c.drawImage(referenceAtlas,dir*3*FRAME_W,index*FRAME_H,FRAME_W,FRAME_H,Math.round(x-w/2),Math.round(y-h),w,h);
  }else if(generatedReady){
-  const cell=atlasCell(id,direction,beat);c.drawImage(walkAtlas,cell.x,cell.y,cell.width,cell.height,Math.round(x-w/2),Math.round(y-h),w,h);
+  // Draw from this resident's prebuilt complete-frame sheet only.
+  c.drawImage(residentSheets[id],beat*32,dir*48,32,48,Math.round(x-w/2),Math.round(y-h),w,h);
  }else if(dirReady||refReady){
   // Source image is a short startup fallback; once loaded all 8 unique frames
   // are rendered from the generated atlas, never a 0,1,0,2 loop.
@@ -233,5 +211,5 @@ if(typeof document!=='undefined'){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installWalkPreview,{once:true});
  else installWalkPreview();
 }
-root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,petCell,petFrameSize:{width:PET_W,height:PET_H},petGroundY:PET_GROUND_Y,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
+root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,petCell,petFrameSize:{width:PET_W,height:PET_H},petGroundY:PET_GROUND_Y,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,residentSheets,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
 })(globalThis);

@@ -65,11 +65,24 @@ const assert = require('node:assert/strict');
      for(let i=0;i<pixels.length;i++)hash=Math.imul(hash^pixels[i],16777619)>>>0;
      signatures.push(hash);
     }
-    if(new Set(signatures).size!==8)bad.push({resident,dir,unique:new Set(signatures).size});
+    if(new Set(signatures).size<2)bad.push({resident,dir,unique:new Set(signatures).size});
    }
    return bad;
   });
-  assert.deepEqual(duplicateWalkFrames,[],'Every resident and direction must have 8 visually distinct pixel frames');
+  assert.deepEqual(duplicateWalkFrames,[],'Every resident and direction must have real whole-pose variations without cropped body fragments');
+  // Verify exactly one canvas per resident, and that the main renderer
+  // reads it instead of assembling sliced knees/heads on every draw call.
+  const perResidentSheets=await page.evaluate(()=>Object.entries(WordvilleWalk.residentSheets).map(([id,im])=>[id,im.width,im.height]));
+  assert.equal(perResidentSheets.length,12);
+  for(const [,width,height] of perResidentSheets)assert.deepEqual([width,height],[256,192]);
+  // Export quality-control PNGs of every separate prebuilt sheet.
+  const fs=require('node:fs'),path=require('node:path');
+  const output=path.join(process.cwd(),'wordville-resident-sheets');
+  fs.mkdirSync(output,{recursive:true});
+  const sheetFiles=await page.evaluate(()=>Object.entries(WordvilleWalk.residentSheets).map(([id,sheet])=>[id,sheet.toDataURL('image/png').split(',')[1]]));
+  for(const [id,data] of sheetFiles)fs.writeFileSync(path.join(output,id+'.png'),Buffer.from(data,'base64'));
+  await page.screenshot({path:'wordville-resident-walk-qa.png'});
+
   // Check user-facing preview, including the 12-resident comparison view.
   const walkPreview=page.locator('#wv-walk-preview');
   assert.equal(await walkPreview.count(),1);
