@@ -7,7 +7,7 @@ globalThis.Image=class{
  set src(value){
   this._src=value;
   if(value.startsWith('idle48/')){this.naturalWidth=192;this.naturalHeight=384;}
-  if(value.startsWith('walk48/')){this.naturalWidth=288;this.naturalHeight=384;}
+  if(value.startsWith('walk48/')){this.naturalWidth=384;this.naturalHeight=384;}
  }
  get src(){return this._src;}
  addEventListener(){}

@@ -25,7 +25,7 @@ const assert = require('node:assert/strict');
   await page.waitForFunction(()=>WordvilleWalk?.referenceAtlas?.naturalWidth===384&&WordvilleWalk.referenceAtlas.naturalHeight===576);
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
   assert.equal(await page.evaluate(()=>WordvilleWalk.sourceFrameCount),3);
-  assert.equal(await page.evaluate(()=>WordvilleWalk.frameCount),6);
+  assert.equal(await page.evaluate(()=>WordvilleWalk.frameCount),8);
   await page.waitForFunction(()=>WordvilleWalk.petSheets.cat.naturalWidth===128&&WordvilleWalk.petSheets.dog.naturalWidth===128&&WordvilleWalk.petSheets.cat.naturalHeight===192&&WordvilleWalk.petSheets.dog.naturalHeight===192);
   // Read every actual source cell, not just its declared layout. The cat and
   // dog must each provide sixteen distinct frames and a shared ground row.
@@ -71,13 +71,13 @@ const assert = require('node:assert/strict');
    assert.equal(sheetQA.count,14);
    assert.deepEqual(sheetQA.errors,[]);
    assert.equal(sheetQA.fps,8);
-   await page.waitForFunction(()=>Object.keys(WordvilleWalk.walk48Sheets).length===12&&Object.values(WordvilleWalk.walk48Sheets).every(im=>im.complete&&im.naturalWidth===288&&im.naturalHeight===384));
-   const qaSix=await page.evaluate(()=>{
+   await page.waitForFunction(()=>Object.keys(WordvilleWalk.walk48Sheets).length===12&&Object.values(WordvilleWalk.walk48Sheets).every(im=>im.complete&&im.naturalWidth===384&&im.naturalHeight===384));
+   const qaEight=await page.evaluate(()=>{
     const issues=[],dirs=WordvilleWalk.walk48Directions;
     const c=document.createElement('canvas');c.width=48;c.height=48;const cx=c.getContext('2d',{willReadFrequently:true});
     for(const [id,img] of Object.entries(WordvilleWalk.walk48Sheets))for(const di of dirs){
      const sig=new Set();
-     for(let f=0;f<6;f++){
+     for(let f=0;f<8;f++){
       const rect=WordvilleWalk.walk48Cell(id,di,f);
       cx.clearRect(0,0,48,48);
       cx.drawImage(img,rect.x,rect.y,48,48,0,0,48,48);
@@ -92,13 +92,13 @@ const assert = require('node:assert/strict');
        }
       }
       sig.add(hash);
-      if(bottom!==43||bottom-top+1<37||bottom-top+1>42)issues.push(id+di+f+': wrong height/anchor '+top+'-'+bottom);
+      if(bottom!==43||bottom-top+1<37||bottom-top+1>44)issues.push(id+di+f+': wrong height/anchor '+top+'-'+bottom);
      }
-     if(sig.size!==6)issues.push(id+di+': repeated frame '+sig.size);
+     if(sig.size!==8)issues.push(id+di+': repeated frame '+sig.size);
     }
     return issues;
    });
-   assert.deepEqual(qaSix,[]);
+   assert.deepEqual(qaEight,[]);
    await page.waitForFunction(()=>WordvilleWalk.walkAtlas?.width===256&&WordvilleWalk.walkAtlas.height===2304);
   // Verify actual image pixels: 8 distinct frames for each of 12 residents in all 4 directions.
   const duplicateWalkFrames=await page.evaluate(()=>{

@@ -1,5 +1,5 @@
 /* Wordville 48x48 pre-generated sprite-sheet playback.
- * Asset layout: 8 rows (directions) x 6 distinct crossing-leg frames (contact/down/passing/up for each support foot).
+ * Asset layout: 8 rows (directions) x 8 distinct frames (contact/down/passing/up per support foot).
  * The sheet is built by scripts/build-walk48.py before packaging the APK.
  */
 (function(root){'use strict';
@@ -7,8 +7,8 @@ const W=root.WordvilleWalk;if(!W)return;
 const residentIds=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily'];
 const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'];
 const directions=['down','down-right','right','up-right','up','up-left','left','down-left'];
-const cell=48,anchorY=43,frames=6,stepDistance=2.2,fps=8;
-const phases=['contact-left','down-left','passing-cross-left','contact-right','down-right','passing-cross-right'];
+const cell=48,anchorY=43,frames=8,stepDistance=2.25,fps=8;
+const phases=['contact-left','down-left','passing-cross-left','up-left','contact-right','down-right','passing-cross-right','up-right'];
 const sheets={}, idleSheets={};
 const idlePhases=['neutral','inhale','sway','exhale'];
 const idleFrameCount=4,idleFrameDurationMs=400;
@@ -17,7 +17,7 @@ for(const id of residentIds){
  const idle=new Image();idle.decoding='async';idle.src='idle48/'+id+'.png';idleSheets[id]=idle;
 }
 const existingPaint=W.paint;
-function ready(im){return Boolean(im?.complete&&im.naturalWidth===288&&im.naturalHeight===384);}
+function ready(im){return Boolean(im?.complete&&im.naturalWidth===384&&im.naturalHeight===384);}
 function idleReady(im){return Boolean(im?.complete&&im.naturalWidth===192&&im.naturalHeight===384);}
 function idleFrameFor(ms,id='alex'){
  const time=Number.isFinite(ms)?ms:(typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now());
@@ -26,11 +26,14 @@ function idleFrameFor(ms,id='alex'){
 }
 function getFrame(p,moving,ms){
  if(!moving)return 0;
+ // Sync gait to actual distance; blocked actors do not slide in place.
+ const traveled=p?.walkDistance;
+ if(Number.isFinite(traveled))return Math.floor((Math.max(0,traveled)+1e-6)/stepDistance)%frames;
  const time=Number.isFinite(ms)?ms:(typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now());
  return Math.floor((Math.max(0,time)+1e-6)/125)%frames;
 }
 function getCell(id,direction,frame){
- if(!sheets[id]||!directions.includes(direction)||!Number.isInteger(frame)||frame<0||frame>=6)return null;
+ if(!sheets[id]||!directions.includes(direction)||!Number.isInteger(frame)||frame<0||frame>=frames)return null;
  return {x:frame*cell,y:directions.indexOf(direction)*cell,width:cell,height:cell,anchorX:24,anchorY};
 }
 function getIdleCell(id,direction,frame){
@@ -59,7 +62,7 @@ function directionFromDelta(dx,dy){
  const degrees=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
  return directions[Math.round(degrees/45)%8];
 }
-Object.assign(W,{paint,frameFor:getFrame,frameSize:{width:48,height:48},anchorY,groundY:anchorY,frameCount:6,stepDistance,fps,walk48Sheets:sheets,walk48Directions:directions,walk48Cell:getCell,walk48Phases:phases,idle48Sheets:idleSheets,idle48Cell:getIdleCell,idle48Frame:idleFrameFor,idle48Phases:idlePhases,idle48FrameCount:idleFrameCount,directionFromDelta});
+Object.assign(W,{paint,frameFor:getFrame,frameSize:{width:48,height:48},anchorY,groundY:anchorY,frameCount:frames,stepDistance,fps,walk48Sheets:sheets,walk48Directions:directions,walk48Cell:getCell,walk48Phases:phases,idle48Sheets:idleSheets,idle48Cell:getIdleCell,idle48Frame:idleFrameFor,idle48Phases:idlePhases,idle48FrameCount:idleFrameCount,directionFromDelta});
 root.WordvilleWalk48={ids:residentIds,labels,directions,sheets,idleSheets,getFrame,getCell,getIdleCell,idleFrameFor,directionFromDelta,paint,frameSize:{width:48,height:48},anchorY,fps};
 function installPreview(){
  const zones=document.querySelector('.village-controls')||document.querySelector('.wv-map-zones');if(!zones)return;
@@ -73,7 +76,7 @@ function installPreview(){
  const facing=document.createElement('select');facing.setAttribute('aria-label','8방향 선택');
  directions.forEach((id)=>{const opt=document.createElement('option');opt.value=id;opt.textContent=id;facing.add(opt);});facing.value='right';
  const motion=document.createElement('select');motion.setAttribute('aria-label','움직임 상태');
- [['walk','걷기 · 8방향×6프레임'],['idle','서 있기 · 8방향×4프레임']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;motion.add(option);});
+ [['walk','걷기 · 8방향×8프레임'],['idle','서 있기 · 8방향×4프레임']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;motion.add(option);});
  inputs.append(person,facing,motion);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=168;canvas.style.cssText='width:256px;max-width:100%;height:auto;image-rendering:pixelated;background:#dce9db;border-radius:8px';
  const caption=document.createElement('p');caption.style.cssText='font-size:12px;margin:6px 0 0';

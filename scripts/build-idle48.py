@@ -59,11 +59,11 @@ def standing_pose(base, posture):
         hipx = 24 + sign * 3 + dx
         knee = 24 + sign * 4
         d.line([(hipx, PANT_HIP_Y+dy), (knee, 38),
-                (foot, 42)], fill=ink, width=4)
+                (foot, 41)], fill=ink, width=6)
         d.line([(hipx, PANT_HIP_Y+dy), (knee, 38),
-                (foot, 41)], fill=pants, width=2)
-        d.rectangle((foot-3, 42, foot+2, 43), fill=ink)
-        d.line([(foot-2, 42), (foot+1, 42)], fill=shoes, width=1)
+                (foot, 41)], fill=pants, width=4)
+        d.rectangle((foot-3, 41, foot+3, 43), fill=ink)
+        d.line([(foot-2, 42), (foot+2, 42)], fill=shoes, width=1)
     # Preserve authentic source face, hair and clothing. Do not move shoes.
     # The waist overlaps the leg origins, so the torso stays connected.
     top = base.crop((0, 0, SIZE, PANT_HIP_Y+3))
@@ -74,7 +74,7 @@ def standing_pose(base, posture):
 audit = []
 for resident in IDS:
     src = Image.open(WALK / (resident + ".png")).convert("RGBA")
-    assert src.size == (288, 384), (resident, src.size)
+    assert src.size == (384, 384), (resident, src.size)
     atlas = Image.new("RGBA", (SIZE*len(POSTURES), SIZE*len(DIRECTIONS)))
     for row, direction in enumerate(DIRECTIONS):
         # Source walk contact frame supplies the original costume, not the
