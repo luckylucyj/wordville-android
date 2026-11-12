@@ -20,7 +20,7 @@ const IDS=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','m
 
 test('twelve separate standing sprite sheets keep 48x48 cells and identical ground anchor',()=>{
  assert.equal(W.idle48FrameCount,4);
- assert.deepEqual(W.idle48Phases,['neutral','inhale','sway','exhale']);
+ assert.deepEqual(W.idle48Phases,['neutral','neutral','neutral','neutral']);
  assert.equal(W.anchorY,43);
  for(const id of IDS){
   const png=readFileSync(new URL('../app/src/main/assets/idle48/'+id+'.png',import.meta.url));
@@ -38,18 +38,21 @@ test('twelve separate standing sprite sheets keep 48x48 cells and identical grou
  }
 });
 
-test('idle postures leave both feet planted even when torso moves',()=>{
+test('idle standing remains completely still with planted feet',()=>{
  const report=JSON.parse(readFileSync(new URL('../app/src/main/assets/idle48/audit.json',import.meta.url),'utf8'));
  assert.equal(report.total_frames,384);
  assert.equal(report.frames.length,384);
  assert.deepEqual(report.anchor,[24,43]);
  assert.equal(report.feet_fixed,true);
+ assert.equal(report.no_sway,true);
+ assert.equal(report.frames_identical_per_direction,true);
+ assert.equal(report.center_x,24);
  for(const pose of report.frames){
   assert.deepEqual(pose.anchor,[24,43]);
   assert.deepEqual(pose.feet,report.foot_centers);
   assert.equal(pose.bbox[3],44);
  }
- for(let frame=0;frame<4;frame++)assert.equal(W.idle48Frame(frame*400,'alex'),frame);
+ for(let frame=0;frame<10;frame++)assert.equal(W.idle48Frame(frame*400,'alex'),0);
 });
 
 test('scene rendering switches to idle sheet when resident is not moving',()=>{
