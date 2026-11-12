@@ -28,6 +28,10 @@ const oldFeed=document.querySelector('.conversation-feed');
 if(oldNeighbors){oldNeighbors.open=true;residents.append(oldNeighbors);}
 if(oldDialogue)residents.append(oldDialogue);
 if(oldFeed)residents.append(oldFeed);
+// The town map is a full-screen canvas; the full-day editor belongs to the
+// scrollable Residents tab, not clipped below the canvas.
+const scheduleDetails=get('wv-resident-schedule');
+if(scheduleDetails)residents.append(scheduleDetails);
 village.append(residents);
 const wrap=document.querySelector('.canvas-wrap');
 const timeBadge=document.querySelector('.time-badge');
