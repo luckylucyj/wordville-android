@@ -213,20 +213,20 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_24Hour_Resident_Routines_v2.9.5.apk
+          cp release/wordville-debug.apk release/Wordville_Residents_Routines_Location_DayStudy_v2.9.6.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.9.5-24hour-resident-routines"
-          ASSET="release/Wordville_24Hour_Resident_Routines_v2.9.5.apk"
+          TAG="v2.9.6-resident-routines-location-study"
+          ASSET="release/Wordville_Residents_Routines_Location_DayStudy_v2.9.6.apk"
           test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.9.5 - 12 Residents With Editable 24-Hour Daily Routines" \
-              --notes "v2.9.5: Every resident has a concrete personalized 00:00–24:00 daily routine with place and activity per hour. Residents route to destinations along the existing graph, disappear from the outdoor map when inside buildings or asleep, and appear in interior venues only while scheduled there. Venue NPCs walk to suitable objects to perform tasks. Touch-friendly resident editor, 24-hour clock preview, saved on device. 12 characters, 17 venues plus home, same signature and existing learning records. Automated schedule, routing, browser UI and Android emulator tests. Other visual limitations, including original diagonal sprite source approximations, are unchanged." \
+              --title "Wordville v2.9.6 - Scheduled Resident Behaviors, Portrait Location Links and Day/PDF Learning" \
+              --notes "v2.9.6: Complete hourly 24-hour schedules for all 12 characters, editable on device; room behaviors and furniture routines for 17 venues plus homes; tapping resident portraits navigates to their current indoor room or outdoor position; resident learning now allows any selected Day, 60-word page, original PDF page and word rather than a fixed assigned word. Corrected diagonal face-source orientation and stripped old rear-leg pixels that caused apparent eight-shaped gait; fixed NPC face and foot directions share movement vector. 48x48 8-direction sprites retain y43 floor anchor. Existing app signing certificate and stored vocabulary progress unchanged. Unit, browser and Android emulator smoke tests." \
               --prerelease
           fi
