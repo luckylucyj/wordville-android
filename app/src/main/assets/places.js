@@ -57,7 +57,7 @@ function renderConversation(){
  ids('wv-place-speaker').textContent=(person?.name||'주민')+'의 이야기';
  ids('wv-place-dialogue-en').textContent=p.lines[lineIndex][0];
  ids('wv-place-dialogue-ko').textContent=p.lines[lineIndex][1];
- ids('wv-place-study').textContent='관련 단어 배우기 · '+p.word;
+ ids('wv-place-study').textContent='원하는 단어 선택해 주민과 대화';
  ids('wv-place-people').replaceChildren();
  const roster=globalThis.WordvilleSchedule?.occupants(p.id,globalThis.WordvilleVillage?.clockMinute??globalThis.WordvilleSchedule.minuteNow())||[];
  if(p.id==='home'||p.id===globalThis.WordvilleVillage?.visitingPlace){
@@ -130,7 +130,12 @@ ids('wv-places-tab').addEventListener('click',()=>show('places'));
 ids('wv-place-prev').addEventListener('click',()=>step(-1));
 ids('wv-place-next').addEventListener('click',()=>step(1));
 ids('wv-place-talk').addEventListener('click',()=>{lineIndex=(lineIndex+1)%current().lines.length;renderConversation();});
-ids('wv-place-study').addEventListener('click',()=>document.dispatchEvent(new CustomEvent('village-study',{detail:{word:current().word}})));
+ids('wv-place-study').addEventListener('click',()=>{
+ const place=current();
+ const roster=globalThis.WordvilleSchedule?.occupants(place.id,globalThis.WordvilleVillage?.clockMinute??globalThis.WordvilleSchedule.minuteNow())||[];
+ const residentId=place.people[speakerIndex]||globalThis.WordvilleVenueRuntime?.focusedResident||roster[0]||'alex';
+ document.dispatchEvent(new CustomEvent('wordville-open-venue-study',{detail:{residentId,placeId:place.id}}));
+});
 for(const [id,label] of filters){
  const b=button(label,'wv-place-filter',()=>{filter=id;pick(listed()[0].id);});
  b.dataset.placeFilter=id;
