@@ -40,7 +40,7 @@ jobs:
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:
-          name: wordville-8way8-fourphase-resident-sheets
+          name: wordville-8way6-crossing-feet-resident-sheets
           path: app/src/main/assets/walk48/*.png
           if-no-files-found: error
           retention-days: 30
@@ -206,19 +206,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Walk48_8Direction_8Phase_v2.9.0.apk
+          cp release/wordville-debug.apk release/Wordville_Walk48_Crossing_8by6_v2.9.1.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.9.0-walk48-8phase"
-          ASSET="release/Wordville_Walk48_8Direction_8Phase_v2.9.0.apk"
+          TAG="v2.9.1-crossing-feet-8by6"
+          ASSET="release/Wordville_Walk48_Crossing_8by6_v2.9.1.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.9.0 - 48px Eight-Phase Eight-Direction Walk" \
-              --notes "v2.9.0: Twelve original Wordville residents have 8 directional walking cycles with 8 distinct frames per direction in 48x48 pixel cells (768 frames total), roughly 40 pixel-tall characters, foot baseline y=43, 8FPS. Contact/down/passing/up phases alternate support legs; arms counter-swing. Three opposite directions are mirrored. Diagonal orientations and motion are derived by pixel-level processing of intact original character art, not individually hand-drawn. Preserves original images, pets, vocabulary and app identity." \
+              --title "Wordville v2.9.1 - 48px Crossing-Feet 8 Directions x 6 Frames" \
+              --notes "v2.9.1: 12 resident characters each get 8 directions x 6 unique frames at 48x48 px (576 total), true left-right shoe crossover in passing frames 3 and 6, stable planted foot row y=43 and counter-swinging arms. Generated from existing original whole-body art with exact separate frame cells, 8FPS. Original characters, learning data and animal sprites preserved. Diagonal views remain derived from cardinal poses." \
               --prerelease
           fi

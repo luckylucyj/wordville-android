@@ -146,7 +146,7 @@ for i,id in enumerate(IDS):
 assert len(audit)==576
 (OUT/'audit.json').write_text(json.dumps({
  'resident_count':12,'direction_count':8,'frames_per_direction':6,'total_frames':576,
- 'cell_size':[48,48],'sheet_size':[384,384],'foot_anchor_y':43,'fps':8,
+ 'cell_size':[48,48],'sheet_size':[288,384],'foot_anchor_y':43,'fps':8,
  'unique_per_direction':6,'mirrored_directions':['up-left','left','down-left'],
  'phases':PHASE_NAMES,
  'crossing_keypoints':[{'frame':k+1,'left':[24+FOOT_X[k][0],FOOT_Y[k][0]],'right':[24+FOOT_X[k][1],FOOT_Y[k][1]],'support':SUPPORT[k]} for k in range(6)],
