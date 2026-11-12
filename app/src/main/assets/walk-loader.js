@@ -21,15 +21,18 @@ const indices=Object.fromEntries(ids.map((id,i)=>[id,i]));
 // Every row below is an individually constructed silhouette, not a replayed
 // source frame. Alternating arm positions come from the three source poses;
 // the offsets are new asymmetric left/right leg steps with planted feet.
+// A step is contact > down > passing > up, repeated with support legs reversed.
+// Two mirrored halves keep the support foot at the same source-pixel baseline.
+// Arm motion comes from the opposing original whole-body source poses.
 const stride=[
- {pose:0,lx:0,ly:0,rx:0,ry:0},
- {pose:1,lx:-1,ly:-1,rx:0,ry:0},
- {pose:1,lx:-2,ly:-2,rx:1,ry:0},
- {pose:2,lx:-1,ly:0,rx:2,ry:-1},
- {pose:0,lx:1,ly:0,rx:-1,ry:0},
- {pose:2,lx:1,ly:0,rx:-1,ry:-1},
- {pose:2,lx:2,ly:0,rx:-2,ry:-2},
- {pose:1,lx:1,ly:-1,rx:-1,ry:0}
+ {phase:'contact',pose:1,torso:0,lx:-1,ly:0,rx:1,ry:0,plant:'left'},
+ {phase:'down',pose:1,torso:1,lx:0,ly:0,rx:1,ry:-1,plant:'left'},
+ {phase:'passing',pose:0,torso:0,lx:0,ly:0,rx:0,ry:-2,plant:'left'},
+ {phase:'up',pose:2,torso:-1,lx:0,ly:0,rx:1,ry:-3,plant:'left'},
+ {phase:'contact',pose:2,torso:0,lx:1,ly:0,rx:-1,ry:0,plant:'right'},
+ {phase:'down',pose:2,torso:1,lx:1,ly:-1,rx:0,ry:0,plant:'right'},
+ {phase:'passing',pose:0,torso:0,lx:0,ly:-2,rx:0,ry:0,plant:'right'},
+ {phase:'up',pose:1,torso:-1,lx:-1,ly:-3,rx:0,ry:0,plant:'right'}
 ];
 const FRAME_W=32,FRAME_H=48,FRAME_COUNT=stride.length,STEP_DISTANCE=2.2;
 let walkAtlas=null;
@@ -44,12 +47,15 @@ function generateAtlas(){
   const pose=stride[phase],sx=(dir*3+pose.pose)*FRAME_W,sy=resident*FRAME_H;
   const dx=phase*FRAME_W,dy=(resident*4+dir)*FRAME_H;
   c.save();c.beginPath();c.rect(dx,dy,FRAME_W,FRAME_H);c.clip();
-  // Original pixels above the knees do not stretch or rotate.
-  c.drawImage(referenceAtlas,sx,sy,FRAME_W,35,dx,dy,FRAME_W,35);
-  // Each walking pose uses two individually displaced boot/leg halves.
-  // Translations are pixel-integer and clipped inside the correct cell.
-  c.drawImage(referenceAtlas,sx,sy+35,16,13,dx+pose.lx,dy+35+pose.ly,16,13);
-  c.drawImage(referenceAtlas,sx+16,sy+35,16,13,dx+16+pose.rx,dy+35+pose.ry,16,13);
+  // Keep the hair, face, arms and shirt from a single source pose; no
+  // image stretching or sub-pixel resampling. A one-pixel torso dip/rise
+  // distinguishes down/up without moving the planted boot.
+  c.drawImage(referenceAtlas,sx,sy,FRAME_W,35,dx,dy+pose.torso,FRAME_W,35);
+  // Leg overlays begin at the knees; the planted boot has y=0 in every
+  // phase. The swing boot lifts up to three original sprite pixels.
+  // Horizontal offsets never exceed one pixel to keep knee joints intact.
+  c.drawImage(referenceAtlas,sx,sy+34,16,14,dx+pose.lx,dy+34+pose.ly,16,14);
+  c.drawImage(referenceAtlas,sx+16,sy+34,16,14,dx+16+pose.rx,dy+34+pose.ry,16,14);
   c.restore();
  }
  walkAtlas=sheet;return true;
@@ -73,12 +79,15 @@ function paint(c,p,x,y,opt={}){
  if(!dirReady&&!generatedReady&&!refReady&&!oldReady)return false;
  c.save();c.imageSmoothingEnabled=false;
  c.fillStyle='#2b3b3544';c.beginPath();c.ellipse(Math.round(x),Math.round(y+1),Math.round(w*.29),3,0,0,Math.PI*2);c.fill();
- if(generatedReady){
+ if(refReady&&!moving){
+  // Neutral, feet-parallel original frame instead of freezing at contact.
+  c.drawImage(referenceAtlas,dir*3*FRAME_W,index*FRAME_H,FRAME_W,FRAME_H,Math.round(x-w/2),Math.round(y-h+3),w,h);
+ }else if(generatedReady){
   c.drawImage(walkAtlas,beat*FRAME_W,(index*4+dir)*FRAME_H,FRAME_W,FRAME_H,Math.round(x-w/2),Math.round(y-h+3),w,h);
  }else if(dirReady||refReady){
   // Source image is a short startup fallback; once loaded all 8 unique frames
   // are rendered from the generated atlas, never a 0,1,0,2 loop.
-  const source=dirReady?custom:referenceAtlas,pose=stride[beat].pose;
+  const source=dirReady?custom:referenceAtlas,pose=moving?stride[beat].pose:0;
   const sourceX=(dirReady?pose:dir*3+pose)*FRAME_W;
   const sourceY=(dirReady?dir:index)*FRAME_H;
   c.drawImage(source,sourceX,sourceY,FRAME_W,FRAME_H,Math.round(x-w/2),Math.round(y-h+3),w,h);
@@ -97,5 +106,42 @@ function drawPets(c,t){
   c.fillStyle='#453b37';c.fillRect(x+2,y-17,2,2);
  }
 }
-root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,fps:8,get walkAtlas(){return walkAtlas;}};
+// This preview runs the same paint() renderer used in the village itself.
+function installWalkPreview(){
+ const zones=document.querySelector('.wv-map-zones');
+ if(!zones||document.getElementById('wv-walk-preview'))return;
+ const details=document.createElement('details');details.id='wv-walk-preview';
+ details.style.cssText='margin:12px 0;padding:12px;border:2px solid #957c5b;border-radius:12px;background:#f7eed9;color:#45382e';
+ const summary=document.createElement('summary');summary.textContent='주민 걷기 확인 · 실제 게임 스프라이트 8프레임';
+ summary.style.cssText='font-weight:700;cursor:pointer';
+ const controls=document.createElement('div');controls.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:12px 0';
+ const person=document.createElement('select');person.setAttribute('aria-label','걷기 미리보기 주민');
+ ids.forEach((id,i)=>{const o=document.createElement('option');o.value=id;o.textContent=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'][i];person.add(o);});
+ const direction=document.createElement('select');direction.setAttribute('aria-label','걷기 미리보기 방향');
+ [['down','앞면'],['right','오른쪽'],['left','왼쪽'],['up','뒷면']].forEach(([value,title])=>{const o=document.createElement('option');o.value=value;o.textContent=title;direction.add(o);});
+ direction.value='right';controls.append(person,direction);
+ const canvas=document.createElement('canvas');canvas.width=240;canvas.height=160;
+ canvas.setAttribute('role','img');canvas.setAttribute('aria-label','선택한 주민이 8프레임으로 걷는 확대 미리보기');
+ canvas.style.cssText='display:block;width:240px;max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
+ const status=document.createElement('p');status.style.cssText='font-size:12px;margin:8px 0 0';status.textContent='32×48 원본 픽셀 · 8 FPS · 발 접지 기준 고정';
+ details.append(summary,controls,canvas,status);zones.after(details);
+ const c=canvas.getContext('2d');if(!c)return;
+ function animate(ms){
+  if(details.isConnected&&details.open&&!document.hidden){
+   c.imageSmoothingEnabled=false;c.fillStyle='#dce9db';c.fillRect(0,0,240,160);
+   c.fillStyle='#b7c5a2';c.fillRect(0,131,240,29);
+   c.fillStyle='#a8b69c';c.fillRect(0,128,240,3);
+   const beat=Math.floor(ms/125)%FRAME_COUNT;
+   paint(c,{id:person.value,direction:direction.value,walkDistance:beat*STEP_DISTANCE},120,126,{width:64,height:96,walking:true});
+   status.textContent='32×48 원본 픽셀 · 8 FPS · '+stride[beat].phase+' · 프레임 '+(beat+1)+'/8';
+  }
+  root.requestAnimationFrame(animate);
+ }
+ root.requestAnimationFrame(animate);
+}
+if(typeof document!=='undefined'){
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installWalkPreview,{once:true});
+ else installWalkPreview();
+}
+root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},get walkAtlas(){return walkAtlas;}};
 })(globalThis);
