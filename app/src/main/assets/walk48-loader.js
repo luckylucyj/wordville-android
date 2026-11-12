@@ -10,7 +10,7 @@ const directions=['down','down-right','right','up-right','up','up-left','left','
 const cell=48,anchorY=43,frames=8,stepDistance=2.25,fps=8;
 const phases=['contact-left','down-left','passing-cross-left','up-left','contact-right','down-right','passing-cross-right','up-right'];
 const sheets={}, idleSheets={};
-const idlePhases=['neutral','inhale','sway','exhale'];
+const idlePhases=['neutral','neutral','neutral','neutral'];
 const idleFrameCount=4,idleFrameDurationMs=400;
 for(const id of residentIds){
  const im=new Image();im.decoding='async';im.src='walk48/'+id+'.png';sheets[id]=im;
@@ -20,9 +20,8 @@ const existingPaint=W.paint;
 function ready(im){return Boolean(im?.complete&&im.naturalWidth===384&&im.naturalHeight===384);}
 function idleReady(im){return Boolean(im?.complete&&im.naturalWidth===192&&im.naturalHeight===384);}
 function idleFrameFor(ms,id='alex'){
- const time=Number.isFinite(ms)?ms:(typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now());
- const stagger=Math.max(0,residentIds.indexOf(id))*73;
- return Math.floor((Math.max(0,time)+stagger)/idleFrameDurationMs)%idleFrameCount;
+ // Idle is one fixed neutral pose: no breathing/sway/side-to-side wobble.
+ return 0;
 }
 function getFrame(p,moving,ms){
  if(!moving)return 0;
@@ -69,14 +68,14 @@ function installPreview(){
  const old=document.getElementById('wv-walk-preview');if(old)old.remove();
  const panel=document.createElement('details');panel.id='wv-walk-preview';
  panel.style.cssText='margin:12px 0;padding:12px;border:2px solid #957c5b;border-radius:12px;background:#f7eed9;color:#45382e';
- const title=document.createElement('summary');title.textContent='주민 걷기·서 있기 확인 · 48×48 · 발 접지 고정';title.style.cssText='font-weight:700;cursor:pointer';
+ const title=document.createElement('summary');title.textContent='주민 걷기·정지 확인 · 중앙 정렬 · 다리 교차 없음';title.style.cssText='font-weight:700;cursor:pointer';
  const inputs=document.createElement('div');inputs.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
  const person=document.createElement('select');person.setAttribute('aria-label','주민 선택');
  residentIds.forEach((id,i)=>{const opt=document.createElement('option');opt.value=id;opt.textContent=labels[i];person.add(opt);});
  const facing=document.createElement('select');facing.setAttribute('aria-label','8방향 선택');
  directions.forEach((id)=>{const opt=document.createElement('option');opt.value=id;opt.textContent=id;facing.add(opt);});facing.value='right';
  const motion=document.createElement('select');motion.setAttribute('aria-label','움직임 상태');
- [['walk','걷기 · 8방향×8프레임'],['idle','서 있기 · 8방향×4프레임']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;motion.add(option);});
+ [['walk','걷기 · 8방향×8프레임'],['idle','서 있기 · 고정 자세']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;motion.add(option);});
  inputs.append(person,facing,motion);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=168;canvas.style.cssText='width:256px;max-width:100%;height:auto;image-rendering:pixelated;background:#dce9db;border-radius:8px';
  const caption=document.createElement('p');caption.style.cssText='font-size:12px;margin:6px 0 0';
@@ -93,7 +92,7 @@ function installPreview(){
    c.imageSmoothingEnabled=false;c.fillStyle='#dce9db';c.fillRect(0,0,256,168);
    c.fillStyle='#98aF92';c.fillRect(0,143,256,25);
    const moving=motion.value==='walk',id=person.value;
-   const beat=moving?Math.floor(ms/125)%frames:idleFrameFor(ms,id);
+   const beat=moving?Math.floor(ms/125)%frames:0;
    const im=moving?sheets[id]:idleSheets[id];
    if(moving?ready(im):idleReady(im)){
     paint(c,{id,direction:facing.value,walkDistance:beat*stepDistance},128,142,{width:96,height:96,walking:moving,phase:beat,idlePhase:beat});
