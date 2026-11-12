@@ -4,7 +4,7 @@
 (function(root){
 'use strict';
 const TIERS=Object.freeze({small:Object.freeze({cols:16,rows:12}),medium:Object.freeze({cols:24,rows:18}),large:Object.freeze({cols:40,rows:28})});
-const SIZES={pool:'large',library:'large',square:'large',park:'large',ranch:'large',burger:'medium',cafe:'medium',icecream:'medium',pub:'medium',gym:'medium',market:'medium',museum:'medium',greenhouse:'medium',bookstore:'small',clinic:'small',studio:'small',workshop:'small'};
+const SIZES={home:'medium',pool:'large',library:'large',square:'large',park:'large',ranch:'large',burger:'medium',cafe:'medium',icecream:'medium',pub:'medium',gym:'medium',market:'medium',museum:'medium',greenhouse:'medium',bookstore:'small',clinic:'small',studio:'small',workshop:'small'};
 const cache=new Map();
 function forPlace(id){const tier=SIZES[id]||'small';return {id,tier,...TIERS[tier],tileWidth:64,tileHeight:32,npcSpacingTiles:1.5,walkFPS:10,renderFPS:60,walkingFrames:8};}
 function build(id){
@@ -15,7 +15,11 @@ function build(id){
   for(let cy=Math.max(1,y);cy<Math.min(h-1,y+height);cy++)for(let cx=Math.max(1,x);cx<Math.min(w-1,x+width);cx++)tiles[cy][cx]=kind;
  }
  // Each displayed prop has the same footprint as its collision rectangle.
- if(id==='pool'){
+ if(id==='home'){
+  add('bed',3,3,5,3,'침대');add('bed',14,3,5,3,'침대');
+  add('table',8,9,5,3,'식탁');add('shelf',19,8,2,5,'책장');
+  add('counter',4,12,4,2,'수납장');
+ }else if(id==='pool'){
   add('water',8,7,24,13,'수영 구역');add('bench',3,5,3,1,'휴식 벤치');add('bench',34,6,3,1,'휴식 벤치');
   add('planter',3,18,3,3,'화단');add('planter',34,18,3,3,'화단');
   add('counter',17,3,6,2,'수영장 접수');
