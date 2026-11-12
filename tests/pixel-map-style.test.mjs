@@ -22,7 +22,7 @@ test('four light phases cover dawn, day, sunset and night',()=>{
  assert.equal(style.phaseFor('day',12*60),'day');
  assert.equal(style.phaseFor('day',18*60),'sunset');
  assert.equal(style.phaseFor('night',12*60),'night');
- assert.equal(style.phaseFor('day',23*60),'night');
+ assert.equal(style.phaseFor('day',23*60),'day','manual day preview overrides the actual local time');
  for(const phase of ['dawn','day','sunset','night'])assert.equal(style.skyFor(phase).length,3);
 });
 
