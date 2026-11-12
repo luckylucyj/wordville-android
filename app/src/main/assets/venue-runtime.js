@@ -39,7 +39,7 @@ function reset(){
  for(let i=0;i<Math.min(4,roster.length);i++){
   const target=spots[i],q=spec.nearest(scene,Math.floor(target[0]*s.cols),Math.floor(target[1]*s.rows),actors);
   if(!q)continue;
-  actors.push({...person(roster[i]),id:roster[i],x:q.x,y:q.y,route:[],target:null,steps:0,direction:'down',next:1+i*1.2,wait:0,player:i===0});
+  actors.push({...person(roster[i]),id:roster[i],x:q.x,y:q.y,route:[],target:null,steps:0,walkDistance:0,direction:'down',next:1+i*1.2,wait:0,player:i===0});
  }
 }
 function moveTo(a,x,y){
@@ -91,7 +91,7 @@ function update(dt){
    }
    continue;
   }
-  a.wait=0;a.x=nx;a.y=ny;a.steps+=dt;
+  a.wait=0;a.walkDistance+=Math.hypot(nx-a.x,ny-a.y)*8.5;a.x=nx;a.y=ny;a.steps+=dt;
  }
 }
 function pixelCreature(a,x,y,scale){ctx.fillStyle=a.id==='cat'?'#db9b62':'#ead4af';
