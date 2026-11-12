@@ -206,19 +206,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_HighSensitivity_32x32_v2.7.0.apk
+          cp release/wordville-debug.apk release/Wordville_Walk48_8Direction_v2.8.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.7.0-high-sensitivity-32x32"
-          ASSET="release/Wordville_HighSensitivity_32x32_v2.7.0.apk"
+          TAG="v2.8.0-walk48-8direction"
+          ASSET="release/Wordville_Walk48_8Direction_v2.8.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.7.0 - Audited 32x32 Walking Sprites" \
-              --notes "v2.7.0: Includes fourteen independently rebuilt 32x32 high-sensitivity resident/pet sheets (448 whole-body cells), 8FPS animation, preserved source palette, 30px foot anchor, and edge clipping validation. Original source images retained. Existing 600x800 village map retained; new 320x192 map and eight unique authored poses not supplied." \
+              --title "Wordville v2.8.0 - 48px Eight-Direction Walking Sheets" \
+              --notes "v2.8.0: Creates 12 transparent 384x384 prebuilt resident sprite sheets (48x48 cells, eight directions, eight contact/down/passing/up phases, y=44 ground anchor). Loads frame cells directly rather than repeating three original poses. Uses identical resident hair/face pixels within each direction and preserves the original source art. Gallery preview and device test included. Four diagonal views are mechanically derived from cardinal artwork, not independent hand-painted diagonal art." \
               --prerelease
           fi
