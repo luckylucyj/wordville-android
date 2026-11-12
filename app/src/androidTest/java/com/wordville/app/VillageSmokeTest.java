@@ -92,6 +92,7 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"WordvilleVenueRuntime.actors.some(a=>a.id==='penny')"));
   assertEquals("true",eval(web,"(function(){var s=document.getElementById('wv-schedule-hour');s.value='23';s.dispatchEvent(new Event('change'));return WordvilleVillage.visitResident('harvey')&&WordvillePlaces.active==='home'&&WordvilleVenueRuntime.focusedResident==='harvey';})()"));
   assertEquals("true",eval(web,"WordvilleVenueRuntime.actors.some(a=>a.id==='harvey')"));
+  assertEquals("true",eval(web,"WordvilleVenueRuntime.actors.filter(a=>!a.player).length===1&&WordvilleVenueRuntime.actors.find(a=>!a.player).id==='harvey'"));
   assertEquals("true",eval(web,"WordvillePlaces.pick('bookstore');WordvillePlaces.active==='bookstore'"));
 
   assertEquals("true",eval(web,"(function(){var a=WordvilleVenueRuntime.actors[0],q=WordvilleVenueSpec.nearest('bookstore',1,1);return WordvilleVenueRuntime.moveTo(a,q.x,q.y)&&a.route.length>0&&a.route.every(t=>!WordvilleVenueSpec.isBlocked('bookstore',t.x,t.y));})()"));
