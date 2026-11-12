@@ -48,11 +48,10 @@ function paintPet(c,p,x,y,opt={}){
  c.drawImage(img,cell.x,cell.y,cell.width,cell.height,left,top,w,h);
  c.restore();return true;
 }
-/* Build one complete, dedicated 256x192 sheet per resident before rendering
- * any frame. Source coordinates are exact 32x48 cells in the original 384x576
- * directional atlas. No limbs, heads, or adjacent cells are copied separately.
- * Eight timing slots reuse three authentic complete body poses; additional
- * authored poses are needed to obtain eight genuinely different silhouettes. */
+/* Separate 256x192 sheet per resident. Intact full-body frames are
+ * extracted from the original high-resolution 2560x768 source. The old
+ * 384x576 pose atlas has clipped/overlapping action frames, so they are
+ * excluded. Eight time slots reuse valid authored whole-body poses. */
 const stride=[
  {phase:'contact',pose:1,plant:'left'},
  {phase:'down',pose:1,plant:'left'},
@@ -77,27 +76,41 @@ function atlasCell(id,direction,phase){
  return {x:phase*FRAME_W,y:(i*4+dir)*FRAME_H,width:FRAME_W,height:FRAME_H};
 }
 function generateAtlas(){
- if(!isReady(referenceAtlas)||referenceAtlas.naturalWidth!==384||referenceAtlas.naturalHeight!==576||typeof document==='undefined')return false;
+ // The tiny 384x576 directional atlas has several clipped/cross-contaminated
+ // action poses. Only its intact back-facing neutral pose is used here.
+ // All moving/front/side frames come from the original complete 160x256
+ // resident atlas, which retains the full connected head, arms, torso and feet.
+ if(!isReady(perResidentAtlas)||perResidentAtlas.naturalWidth!==2560||perResidentAtlas.naturalHeight!==768||!isReady(referenceAtlas)||referenceAtlas.naturalWidth!==384||referenceAtlas.naturalHeight!==576||typeof document==='undefined')return false;
  const combined=document.createElement('canvas');combined.width=ATLAS_W;combined.height=ATLAS_H;
  const cc=combined.getContext('2d');if(!cc)return false;cc.imageSmoothingEnabled=false;
- // Entire source cells only: each direction occupies exactly three columns
- // and each character occupies exactly one 48px-high row.
  for(let i=0;i<ids.length;i++){
   const sheet=document.createElement('canvas');sheet.width=ATLAS_W;sheet.height=FRAME_H*4;
   const c=sheet.getContext('2d');if(!c)return false;c.imageSmoothingEnabled=false;
   for(let dir=0;dir<4;dir++){
    for(let beat=0;beat<8;beat++){
-    const sourceCol=dir*3+stride[beat].pose;
-    c.drawImage(referenceAtlas,sourceCol*32,i*48,32,48,beat*32,dir*48,32,48);
+    const dx=beat*32,dy=dir*48;
+    if(dir===3){
+     // The sole verified intact rear view. No invalid walking pose is used.
+     c.drawImage(referenceAtlas,9*32,i*48,32,48,dx,dy,32,48);
+    }else{
+     // 4 authentic complete-body source cells, not split into limb fragments.
+     const pose=dir===0?[0,0,2,0,2,2,0,2][beat]:[1,1,3,1,3,3,1,3][beat];
+     const sx=(i%4*4+pose)*160,sy=Math.floor(i/4)*256;
+     if(dir===2){
+      c.save();c.translate(dx+32,0);c.scale(-1,1);
+      c.drawImage(perResidentAtlas,sx,sy,160,256,0,dy,32,48);
+      c.restore();
+     }else c.drawImage(perResidentAtlas,sx,sy,160,256,dx,dy,32,48);
+    }
    }
    cc.drawImage(sheet,0,dir*48,256,48,0,(i*4+dir)*48,256,48);
   }
   residentSheets[ids[i]]=sheet;
  }
  sourceGroundOffsets=ids.map(()=>[0,0,0,0].map(()=>[0,0,0]));
- walkAtlas=combined;
- return true;
+ walkAtlas=combined;return true;
 }
+perResidentAtlas.addEventListener('load',generateAtlas,{once:true});
 referenceAtlas.addEventListener('load',generateAtlas,{once:true});
 if(referenceAtlas.complete&&referenceAtlas.naturalWidth)generateAtlas();
 function frameFor(p,moving){

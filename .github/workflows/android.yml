@@ -186,19 +186,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_FullBodyFrames_v2.6.1.apk
+          cp release/wordville-debug.apk release/Wordville_WholePose_NoBleed_v2.6.2.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.6.1-whole-body-sprites"
-          ASSET="release/Wordville_FullBodyFrames_v2.6.1.apk"
+          TAG="v2.6.2-whole-pose-no-bleed"
+          ASSET="release/Wordville_WholePose_NoBleed_v2.6.2.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.6.1 - Full Body Resident Sprite Sheets" \
+              --title "Wordville v2.6.2 - Corrected Intact Resident Sprite Source" \
               --notes "v2.5.1: User-design-derived native 32x48 cat and dog pixel sprites, 4 directions x 4 walking phases per pet. Pixel-perfect x/y cell anchors and y=44 ground alignment, pixel uniqueness browser tests, village/indoor animation and in-app two-pet preview. Prior resident sprites, study data, application ID and signing identity unchanged." \
               --prerelease
           fi
