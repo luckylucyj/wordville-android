@@ -107,6 +107,17 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('#wv-map-view').isVisible(),false);
   assert.equal(await page.locator('.wv-spotlight').count(),1);
   assert.equal(await page.locator('#wv-place-name').innerText(),'수영장');
+  // Exit button routes the resident through the real door; it must not teleport.
+  assert.equal(await page.locator('#wv-venue-exit').isVisible(),true);
+  await page.evaluate(()=>{
+    const m=WordvilleVenueSpec.getMap(WordvilleVenueRuntime.scene);
+    const player=WordvilleVenueRuntime.actors[0];
+    player.x=m.entrance.x;player.y=m.entrance.y;player.route=[];player.target=null;
+  });
+  await page.locator('#wv-venue-exit').click();
+  assert.equal(await page.evaluate(()=>WordvilleShell.screen),'places');
+  await page.waitForFunction(()=>WordvilleShell.screen==='town',null,{timeout:4000});
+  await page.locator('#wv-bottom-dock [data-screen="places"]').click();
   assert.equal(await page.locator('#wv-place-rail .wv-place-chip').count(),17);
   const poolScene=await page.locator('#wv-place-canvas').evaluate(el=>el.toDataURL());
   assert.equal(await page.locator('#wv-place-canvas').getAttribute('width'),'512');

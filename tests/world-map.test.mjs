@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import '../app/src/main/assets/hub-map.js';
 import '../app/src/main/assets/world-art.js';
+import '../app/src/main/assets/village-model.js';
 const world=globalThis.WordvilleWorldArt;
 const expected=['sparrow','dog','cat','chicken','horse','hamster','rabbit','fox','wolf','bear'];
 test('entire map has unique destinations for every registered venue',()=>{
@@ -33,3 +34,7 @@ test('hub map has limited landmark density and no painted background people',()=
 
 // Background used for the compact hub is rendered as one 600x800 scene.
 test('compact garden hub artwork is bundled',()=>{assert.ok(statSync(new URL('../app/src/main/assets/art/hub-garden.webp',import.meta.url)).size>100000);});
+
+test('fallback background fountain uses the exact resident collision footprint',()=>{
+ assert.deepEqual(globalThis.WordvilleHubMap.fountain,globalThis.VillageModel.fountain);
+});

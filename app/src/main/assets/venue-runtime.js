@@ -16,8 +16,14 @@ const toggle=document.createElement('button');toggle.type='button';toggle.textCo
 toggle.setAttribute('aria-label','가구와 벽의 충돌 영역 표시');Object.assign(toggle.style,{position:'absolute',right:'8px',top:'8px',zIndex:'3',fontSize:'11px',padding:'5px 7px',background:'#f3e4bc',color:'#563920',border:'2px solid #8c6a43'});
 stage.append(toggle);let showCollision=false;
 toggle.addEventListener('click',()=>{showCollision=!showCollision;toggle.setAttribute('aria-pressed',String(showCollision));});
+// Walk through the actual exit tile before returning to the village.
+const exitButton=document.createElement('button');
+exitButton.id='wv-venue-exit';exitButton.type='button';exitButton.textContent='🚪 마을로 나가기';
+exitButton.setAttribute('aria-label','출입구까지 걸어서 마을로 돌아가기');
+Object.assign(exitButton.style,{position:'absolute',right:'8px',bottom:'8px',zIndex:'3',fontSize:'11px',padding:'5px 7px',background:'#f3e4bc',color:'#563920',border:'2px solid #8c6a43'});
+stage.append(exitButton);
 const notice=document.createElement('div');notice.id='wv-venue-movement-status';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');notice.hidden=true;
-Object.assign(notice.style,{position:'absolute',bottom:'5px',left:'8px',right:'8px',zIndex:'3',pointerEvents:'none',background:'#fff1dce8',color:'#4c3426',fontSize:'12px',padding:'5px',borderRadius:'3px'});
+Object.assign(notice.style,{position:'absolute',bottom:'5px',left:'8px',right:'133px',zIndex:'3',pointerEvents:'none',background:'#fff1dce8',color:'#4c3426',fontSize:'12px',padding:'5px',borderRadius:'3px'});
 stage.append(notice);
 const announce=message=>{notice.textContent=message;notice.hidden=!message;};
 const people=root.VillageModel?.people||[];
@@ -49,6 +55,11 @@ function moveTo(a,x,y){
  if(!path.length)return false;
  a.target=dest;a.route=path;a.wait=0;return true;
 }
+exitButton.addEventListener('click',()=>{
+ if(!actors.length||!scene)return;
+ const door=spec.getMap(scene).door;
+ announce(moveTo(actors[0],door.x,door.y)?'출입구까지 걸어갑니다.':'출입구로 이동할 수 없습니다.');
+});
 function update(dt){
  for(const a of actors){
   const step=a.route[0];
@@ -61,7 +72,12 @@ function update(dt){
   }
   const dx=step.x-a.x,dy=step.y-a.y,d=Math.hypot(dx,dy);
   if(d<.035){a.x=step.x;a.y=step.y;a.route.shift();a.wait=0;
-   if(a.player&&!a.route.length&&a.target&&a.target.x===a.x&&a.target.y===a.y)announce('목적지에 도착했습니다.');
+   if(a.player&&!a.route.length&&a.target&&a.target.x===a.x&&a.target.y===a.y){
+    if(spec.tile(scene,a.x,a.y)==='exit'){
+     announce('마을로 돌아갑니다.');
+     root.WordvilleShell?.activate('town');
+    }else announce('목적지에 도착했습니다.');
+   }
    continue;
   }
   a.direction=Math.abs(dx)>=Math.abs(dy)?(dx>=0?'right':'left'):(dy>=0?'down':'up');

@@ -71,11 +71,11 @@ function draw(ctx,period){
  for(let y=188;y<619;y+=17)for(let x=111;x<488;x+=26){
   if((x+y)%7===0)rect(c,x,y,12,2,p.shade);
  }
- // Fountain is genuinely impassable in village-model at (300,252).
- ellipse(c,300,252,77,49,'#9b9c94');ellipse(c,300,249,71,42,'#d8d3c2');
- ellipse(c,300,246,64,33,p.water);ellipse(c,300,246,45,22,'#89c7c9');
- rect(c,292,222,16,25,'#b6b2a6');rect(c,285,219,30,7,'#dfd8c2');
- rect(c,299,206,2,14,'#d9f6f0');
+ // Fallback fountain matches the 303,470 center and 112×73 footprint of the NPC collision map.
+ ellipse(c,303,470,112,73,'#9b9c94');ellipse(c,303,466,105,65,'#d8d3c2');
+ ellipse(c,303,463,98,57,p.water);ellipse(c,303,460,70,38,'#89c7c9');
+ rect(c,294,432,18,31,'#b6b2a6');rect(c,284,429,38,8,'#dfd8c2');
+ rect(c,302,408,3,21,'#d9f6f0');
  flowers(c,210,228,30);flowers(c,395,229,30);
  // Two gardens and benches frame the open approach, leaving a 200px walking lane.
  flowers(c,113,358,63);flowers(c,494,358,63);
@@ -109,5 +109,5 @@ function paint(ctx,period){
  if(!img){img=document.createElement('canvas');img.width=W;img.height=H;draw(img.getContext('2d'),period);cached.set(period,img);}
  ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0);
 }
-root.WordvilleHubMap={paint,landmarks:LANDMARKS,image:hubImage,scale:{width:W,height:H},humanDecorations:0};
+root.WordvilleHubMap={paint,landmarks:LANDMARKS,image:hubImage,scale:{width:W,height:H},fountain:{x:303,y:470,rx:112,ry:73},humanDecorations:0};
 })(globalThis);

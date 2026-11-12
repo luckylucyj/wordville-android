@@ -177,19 +177,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Unified_Village_v2.2.0.apk
+          cp release/wordville-debug.apk release/Wordville_Unified_Village_v2.2.1.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.2.0-unified-village"
-          ASSET="release/Wordville_Unified_Village_v2.2.0.apk"
+          TAG="v2.2.1-venue-exit"
+          ASSET="release/Wordville_Unified_Village_v2.2.1.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.2.0 - Unified Village & Directional Residents" \
-              --notes "v2.2.0: Rebuilt compact main hub without baked crowd imagery, matched foot coordinates to a world map, bundled user-provided resident 4-direction/3-original-pose atlas and mapped it to an anchored 4-beat walking cycle, and kept 17 destinations available from Places. Same app ID and signing certificate; no study data migration." \
+              --title "Wordville v2.2.1 - Indoor Exit & Collision-Aligned Fallback" \
+              --notes "v2.2.1: Indoor exit button walks the selected resident to the actual doorway and then returns to the village; fallback fountain geometry matches the village collision map; 17 interactive venue maps and resident 4-direction/3-original-pose atlas retained. Same app ID and signing certificate; study data is not reset." \
               --prerelease
           fi
