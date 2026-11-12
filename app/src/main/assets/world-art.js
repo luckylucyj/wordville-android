@@ -333,7 +333,7 @@ function isoroom(c,theme,p){
  if(p==='night'){rect(c,0,0,512,420,'#16263518');}
 }
 function sceneDecor(c,id){
- const indoor=['gym','burger','icecream','pub','museum','cafe','bookstore','clinic','library','studio','market','workshop'].includes(id);
+ const indoor=['home','gym','burger','icecream','pub','museum','cafe','bookstore','clinic','library','studio','market','workshop'].includes(id);
  if(indoor){isoroom(c,'wood','day');}
  else{
   rect(c,0,0,512,420,'#9bb9a3');
@@ -342,7 +342,18 @@ function sceneDecor(c,id){
  }
  const plant=(x,y)=>pot(c,x,y,1.15);
  const stool=(x,y)=>{isoBox(c,x,y,24,9,18,'#77523d','#c5996a');rect(c,x+4,y+1,3,8,'#5e493a');};
- if(id==='library'||id==='bookstore'){
+ if(id==='home'){
+  // Custom simple bedroom artwork; a real interior for scheduled sleeping.
+  ovalRug(c,258,346,'#af8c86');
+  for(const x of [70,270]){
+   isoBox(c,x,298,145,69,24,'#755746','#b38c69');
+   isoBox(c,x+9,274,126,42,13,'#c8b5a0','#ead8b5');
+   rect(c,x+16,253,34,13,'#f1e8c8');
+  }
+  bookcase(c,24,212,73,97);
+  isoBox(c,195,353,105,43,19,'#79553e','#bd946a');
+  stool(238,379);pot(c,443,320,1.1);
+ }else if(id==='library'||id==='bookstore'){
   bookcase(c,18,229,86,135);bookcase(c,119,266,73,130);bookcase(c,397,250,78,127);
   isoBox(c,264,320,115,35,19,'#82614c','#bb966a');
   rect(c,295,291,49,6,'#d6c9a5');rect(c,306,285,25,7,'#d7dfca');
