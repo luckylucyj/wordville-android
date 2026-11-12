@@ -39,7 +39,7 @@ const line=(c,x,y,x2,y2,color,width=1)=>{c.strokeStyle=color;c.lineWidth=width;c
 const seed=(x,y,s=0)=>{let v=((Math.floor(x)*73856093)^(Math.floor(y)*19349663)^(s*83492791))>>>0;v=Math.imul(v^(v>>>13),1274126177);return ((v^(v>>>16))>>>0)/4294967295;};
 const phaseFor=(period,minute)=>{
  const hour=((Math.floor((Number.isFinite(minute)?minute:720)/60)%24)+24)%24;
- if(period==='night'||hour>=21||hour<5)return 'night';
+ if(period==='night')return 'night';
  if(period==='dusk'||(hour>=17&&hour<20))return 'sunset';
  if(hour>=5&&hour<8)return 'dawn';
  return 'day';
@@ -314,6 +314,14 @@ const api={W,H,themes,phaseFor,skyFor,weathers,get weather(){return weather;},se
 }};
 root.WordvillePixelStyle=api;
 if(oldArt){oldArt.town=(c,p,t)=>paintTown(c,p,t)||baseTown?.(c,p,t);oldArt.place=(c,p)=>paintVenue(c,p);}
-if(root.document)mountWeather();
+if(root.document){
+ mountWeather();
+ root.document.addEventListener('wordville-time-changed',()=>{
+  const view=root.document.getElementById('wv-places-view');
+  if(view&&!view.hidden&&root.WordvillePlaces?.active){
+   root.WordvillePlaces.pick(root.WordvillePlaces.active);
+  }
+ });
+}
 if(typeof module!=='undefined')module.exports=api;
 })(globalThis);
