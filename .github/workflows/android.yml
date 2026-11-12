@@ -24,6 +24,19 @@ jobs:
         run: npm ci
       - name: Bundle cloud client
         run: npm run build:web
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate the 14 audited 32x32 sprite sheets
+        run: |
+          python -m pip install Pillow==11.3.0
+          python scripts/build-audited-sprites.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wordville-audited-32x32-sprites
+          path: app/src/main/assets/sprites32/*.png
+          if-no-files-found: error
+          retention-days: 30
       - name: Test learning logic
         run: npm test
       - name: Test mobile web interactions
@@ -186,19 +199,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_WholePose_NoBleed_v2.6.2.apk
+          cp release/wordville-debug.apk release/Wordville_HighSensitivity_32x32_v2.7.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.6.2-whole-pose-no-bleed"
-          ASSET="release/Wordville_WholePose_NoBleed_v2.6.2.apk"
+          TAG="v2.7.0-high-sensitivity-32x32"
+          ASSET="release/Wordville_HighSensitivity_32x32_v2.7.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.6.2 - Corrected Intact Resident Sprite Source" \
-              --notes "v2.5.1: User-design-derived native 32x48 cat and dog pixel sprites, 4 directions x 4 walking phases per pet. Pixel-perfect x/y cell anchors and y=44 ground alignment, pixel uniqueness browser tests, village/indoor animation and in-app two-pet preview. Prior resident sprites, study data, application ID and signing identity unchanged." \
+              --title "Wordville v2.7.0 - Audited 32x32 Walking Sprites" \
+              --notes "v2.7.0: Includes fourteen independently rebuilt 32x32 high-sensitivity resident/pet sheets (448 whole-body cells), 8FPS animation, preserved source palette, 30px foot anchor, and edge clipping validation. Original source images retained. Existing 600x800 village map retained; new 320x192 map and eight unique authored poses not supplied." \
               --prerelease
           fi

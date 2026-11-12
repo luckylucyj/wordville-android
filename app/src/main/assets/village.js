@@ -46,7 +46,7 @@ function sprite(p){
  const x=p.x,y=p.y,walking=!p.chat&&p.wait<=0&&p.route.length>0;
  const assets=globalThis.WordvillePortraits,img=assets?.spriteImage,index=assets?.order?.[p.id];
  // A compact atlas silhouette matches the background pedestrians and keeps walkways readable.
- const width=32,height=48;
+ const width=32,height=32;
  if(globalThis.WordvilleWalk?.paint(ctx,p,x,y,{width,height,walking})){}else if(index!==undefined&&img?.complete&&img.naturalWidth===2560&&img.naturalHeight===768){
   const col=index%4,row=Math.floor(index/4),time=p.steps*7.5+index*.19;
   // Two source-identical poses + two clean transitional variants = four animation slots.

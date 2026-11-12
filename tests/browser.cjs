@@ -53,7 +53,25 @@ const assert = require('node:assert/strict');
     assert.deepEqual(petAudit[id].bottoms,Array(16).fill(44),id+' ground anchors must match');
   }
 
-  await page.waitForFunction(()=>WordvilleWalk.walkAtlas?.width===256&&WordvilleWalk.walkAtlas.height===2304);
+  await page.waitForFunction(()=>Object.values(WordvilleWalk.auditedSheets).length===14&&Object.values(WordvilleWalk.auditedSheets).every(im=>im.complete&&im.naturalWidth===256&&im.naturalHeight===128));
+   const sheetQA=await page.evaluate(()=>{
+    const W=WordvilleWalk,c=document.createElement('canvas'),errors=[];c.width=32;c.height=32;
+    const ctx=c.getContext('2d',{willReadFrequently:true});
+    for(const name of Object.keys(W.auditedSheets))for(const dir of ['down','right','left','up'])for(let f=0;f<8;f++){
+     const loc=W.auditedCell(name,dir,f);
+     if(!loc||loc.x<0||loc.x+32>256||loc.y<0||loc.y+32>128){errors.push(name+':bad bounds');continue;}
+     ctx.clearRect(0,0,32,32);ctx.drawImage(W.auditedSheets[name],loc.x,loc.y,32,32,0,0,32,32);
+     const p=ctx.getImageData(0,0,32,32).data;const a=(x,y)=>p[4*(y*32+x)+3];
+     for(let i=0;i<32;i++)if(a(i,0)>160||a(i,31)>160||a(0,i)>160||a(31,i)>160)errors.push(name+':clip');
+     let bottom=-1;for(let y=0;y<32;y++)for(let x=0;x<32;x++)if(a(x,y)>160)bottom=Math.max(bottom,y);
+     if(bottom!==30)errors.push(name+':anchor');
+    }
+    return {errors,count:Object.keys(W.auditedSheets).length,fps:W.auditedFPS};
+   });
+   assert.equal(sheetQA.count,14);
+   assert.deepEqual(sheetQA.errors,[]);
+   assert.equal(sheetQA.fps,8);
+   await page.waitForFunction(()=>WordvilleWalk.walkAtlas?.width===256&&WordvilleWalk.walkAtlas.height===2304);
   // Verify actual image pixels: 8 distinct frames for each of 12 residents in all 4 directions.
   const duplicateWalkFrames=await page.evaluate(()=>{
    const c=WordvilleWalk.walkAtlas.getContext('2d',{willReadFrequently:true}),bad=[];

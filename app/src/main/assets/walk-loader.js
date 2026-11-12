@@ -18,6 +18,31 @@ const referenceAtlas=new Image();referenceAtlas.decoding='async';
 referenceAtlas.src='portraits/wordville-reference-walk.png';
 const isReady=im=>!!(im&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0);
 const indices=Object.fromEntries(ids.map((id,i)=>[id,i]));
+// Explicit per-character high-sensitivity source-preserving 32x32 PNG atlas.
+const auditedSheets={};
+for(const id of [...ids,'cat','dog']){
+ const i=new Image();i.decoding='async';i.src='sprites32/'+id+'.png';auditedSheets[id]=i;
+}
+function auditedCell(id,dir,k){
+ if(!(id in auditedSheets)||!(dir in dirs)||!Number.isInteger(k)||k<0||k>7)return null;
+ return {x:k*32,y:dirs[dir]*32,width:32,height:32,groundY:30};
+}
+function auditedFrame(p,moving,ms){
+ if(!moving)return 0;
+ const time=Number.isFinite(ms)?ms:(typeof performance!=='undefined'?performance.now():Date.now());
+ return Math.floor(Math.max(0,time)/125)%8;
+}
+function paintAudited(c,p,x,y,o={}){
+ const id=p?.id||p,img=auditedSheets[id];
+ if(!isReady(img)||img.naturalWidth!==256||img.naturalHeight!==128)return false;
+ const dir=p?.direction in dirs?p.direction:(p?.heading<0?'left':'right');
+ const beat=Number.isInteger(o.phase)?((o.phase%8)+8)%8:auditedFrame(p,o.walking===true,o.timestampMs);
+ const cell=auditedCell(id,dir,beat),ww=Math.round(o.width||32),hh=Math.round(o.height||32);
+ c.save();c.imageSmoothingEnabled=false;
+ c.drawImage(img,cell.x,cell.y,32,32,Math.round(x-ww/2),Math.round(y-30*hh/32),ww,hh);
+ c.restore();return true;
+}
+
 const petSheets={cat:new Image(),dog:new Image()};
 petSheets.cat.decoding='async';petSheets.dog.decoding='async';
 // High-resolution, reference-derived sprites: four directions (columns) and
@@ -35,6 +60,7 @@ function petCell(id,direction,phase){
  return {x:dirs[direction]*PET_W,y:phase*PET_H,width:PET_W,height:PET_H,groundY:PET_GROUND_Y};
 }
 function paintPet(c,p,x,y,opt={}){
+ if(paintAudited(c,p,x,y,opt))return true;
  const id=p?.id||p,img=petSheets[id];
  if(!img||!isReady(img)||img.naturalWidth!==PET_W*4||img.naturalHeight!==PET_H*4)return false;
  const direction=dirs[p?.direction]!==undefined?p.direction:'down';
@@ -120,6 +146,7 @@ function frameFor(p,moving){
  return Math.floor((Math.max(0,distance)+1e-7)/STEP_DISTANCE)%FRAME_COUNT;
 }
 function paint(c,p,x,y,opt={}){
+ if(paintAudited(c,p,x,y,opt))return true;
  const id=p.id||p,index=indices[id],direction=dirs[p.direction]!==undefined?p.direction:(p.heading<0?'left':'right');
  const w=Math.round(opt.width||32),h=Math.round(opt.height||48),moving=opt.walking===true;
  if(id==='cat'||id==='dog')return paintPet(c,p,x,y,{width:w,height:h,walking:moving});
@@ -153,7 +180,7 @@ function paint(c,p,x,y,opt={}){
 }
 function drawPets(c,t){
  for(const pet of [{id:'cat',x:250+Math.sin(t*.25)*18,y:548+Math.cos(t*.25)*5,direction:Math.cos(t*.25)>=0?'right':'left',walkDistance:t*3.6},{id:'dog',x:448+Math.sin(t*.2)*18,y:545+Math.cos(t*.2)*5,direction:Math.cos(t*.2)>=0?'right':'left',walkDistance:t*3.2}])
-  paintPet(c,pet,Math.round(pet.x),Math.round(pet.y),{width:32,height:48,walking:true});
+  paintPet(c,pet,Math.round(pet.x),Math.round(pet.y),{width:32,height:32,walking:true});
 }
 // This preview runs the same paint() renderer used in the village itself.
 function installWalkPreview(){
@@ -172,7 +199,7 @@ function installWalkPreview(){
  const canvas=document.createElement('canvas');canvas.width=240;canvas.height=160;
  canvas.setAttribute('role','img');canvas.setAttribute('aria-label','선택한 주민이 8프레임으로 걷는 확대 미리보기');
  canvas.style.cssText='display:block;width:240px;max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
- const status=document.createElement('p');status.style.cssText='font-size:12px;margin:8px 0 0';status.textContent='32×48 원본 픽셀 · 8 FPS · 발 접지 기준 고정';
+ const status=document.createElement('p');status.style.cssText='font-size:12px;margin:8px 0 0';status.textContent='32×32 고감도 수정 픽셀 · 8 FPS · 발 접지 기준 고정';
  // All-resident view uses the very same renderer (not a separate GIF).
  const showAll=document.createElement('button');showAll.type='button';showAll.textContent='12명 한꺼번에 보기';
  showAll.style.cssText='margin:8px 0;padding:6px 10px;border:1px solid #85694a;border-radius:8px;background:#f0dbb6;color:#46372a';
@@ -193,15 +220,15 @@ function installWalkPreview(){
    c.fillStyle='#b7c5a2';c.fillRect(0,131,240,29);
    c.fillStyle='#a8b69c';c.fillRect(0,128,240,3);
    const beat=Math.floor(ms/125)%FRAME_COUNT;
-   paint(c,{id:person.value,direction:direction.value,walkDistance:beat*STEP_DISTANCE},120,126,{width:64,height:96,walking:true});
-   status.textContent='32×48 원본 픽셀 · 8 FPS · '+stride[beat].phase+' · 프레임 '+(beat+1)+'/8';
+   paint(c,{id:person.value,direction:direction.value,walkDistance:beat*STEP_DISTANCE},120,126,{width:64,height:64,walking:true});
+   status.textContent='32×32 고감도 수정 픽셀 · 8 FPS · '+stride[beat].phase+' · 프레임 '+(beat+1)+'/8';
    const petCtx=petPreview.getContext('2d');
    if(petCtx){
     petCtx.imageSmoothingEnabled=false;petCtx.fillStyle='#e1ead7';petCtx.fillRect(0,0,240,128);
     petCtx.fillStyle='#9baf8f';petCtx.fillRect(0,108,240,2);
     const petBeat=Math.floor(ms/175)%4;
     for(const [id,x,label] of [['cat',62,'고양이'],['dog',180,'강아지']]){
-     paintPet(petCtx,{id,direction:direction.value,walkDistance:petBeat*3.5},x,107,{width:64,height:96,walking:true});
+     paintPet(petCtx,{id,direction:direction.value,walkDistance:petBeat*3.5},x,107,{width:64,height:64,walking:true});
      petCtx.fillStyle='#47392f';petCtx.font='12px sans-serif';petCtx.textAlign='center';petCtx.fillText(label,x,122);
     }
    }
@@ -209,7 +236,7 @@ function installWalkPreview(){
     const g=gallery.getContext('2d');if(g){g.imageSmoothingEnabled=false;g.fillStyle='#e1ead7';g.fillRect(0,0,320,288);
      for(let i=0;i<ids.length;i++){
       const col=i%4,row=Math.floor(i/4),gx=col*80+40,gy=row*96+63;
-      paint(g,{id:ids[i],direction:direction.value,walkDistance:beat*STEP_DISTANCE},gx,gy,{width:32,height:48,walking:true});
+      paint(g,{id:ids[i],direction:direction.value,walkDistance:beat*STEP_DISTANCE},gx,gy,{width:32,height:32,walking:true});
       g.textAlign='center';g.font='12px sans-serif';g.fillStyle='#47392f';
       g.fillText(['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'][i],gx,row*96+85);
      }
@@ -224,5 +251,5 @@ if(typeof document!=='undefined'){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installWalkPreview,{once:true});
  else installWalkPreview();
 }
-root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,petCell,petFrameSize:{width:PET_W,height:PET_H},petGroundY:PET_GROUND_Y,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,residentSheets,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
+root.WordvilleWalk={auditedSheets,auditedCell,auditedFrame,paintAudited,auditedFrameSize:{width:32,height:32},auditedFPS:8,auditedGroundY:30,images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,petCell,petFrameSize:{width:PET_W,height:PET_H},petGroundY:PET_GROUND_Y,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,residentSheets,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
 })(globalThis);
