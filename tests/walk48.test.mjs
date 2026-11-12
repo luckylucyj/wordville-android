@@ -21,7 +21,7 @@ test('12 sprites have 8 directions x 6 separate 48x48 frames',()=>{
    assert.equal(c.anchorY,43);
    coords.add(c.x+','+c.y);
   }
-  assert.equal(coords.size,64);
+  assert.equal(coords.size,48);
  }
 });
 test('two support-foot halves: contact, down, passing, up, 8FPS',()=>{
