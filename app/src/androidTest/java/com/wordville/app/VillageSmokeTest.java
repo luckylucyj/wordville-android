@@ -65,9 +65,19 @@ public class VillageSmokeTest {
   }
   assertTrue("4-direction reference walk atlas is available in the APK",walkAtlasReady);
   assertEquals("3",eval(web,"WordvilleWalk.sourceFrameCount"));
-  assertEquals("8",eval(web,"WordvilleWalk.frameCount"));
+  // Pre-generated walking sheets have 6 different poses; standing sheets have 4.
+  assertEquals("6",eval(web,"WordvilleWalk.frameCount"));
+  assertEquals("4",eval(web,"WordvilleWalk.idle48FrameCount"));
+  assertEquals("43",eval(web,"WordvilleWalk.anchorY"));
   assertEquals("true",eval(web,"WordvilleWalk.walkAtlas.width===256&&WordvilleWalk.walkAtlas.height===2304"));
-  assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:50,width:32});})()"));
+  boolean idleSpritesReady=false;
+  for(int i=0;i<60;i++){
+   if("true".equals(eval(web,"Object.values(WordvilleWalk.idle48Sheets).length===12&&Object.values(WordvilleWalk.idle48Sheets).every(im=>im.complete&&im.naturalWidth===192&&im.naturalHeight===384)"))){idleSpritesReady=true;break;}
+   Thread.sleep(150);
+  }
+  assertTrue("All 12 anchored idle sprite sheets decode in Android WebView",idleSpritesReady);
+  assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:48,width:48,walking:false,idlePhase:2});})()"));
+  assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:48,width:48,walking:true,phase:2});})()"));
   // Open a real indoor venue and verify that the route avoids modeled furniture.
   assertEquals("true",eval(web,"WordvillePlaces.show('places');WordvillePlaces.pick('bookstore');WordvilleVenueSpec.isBlocked('bookstore',2,2)&&!WordvilleVenueSpec.isBlocked('bookstore',8,10)"));
   boolean venueReady=false;
