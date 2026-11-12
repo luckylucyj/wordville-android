@@ -31,10 +31,17 @@ jobs:
         run: |
           python -m pip install Pillow==11.3.0
           python scripts/build-audited-sprites.py
+          python scripts/build-walk48.py
       - uses: actions/upload-artifact@v4
         with:
           name: wordville-audited-32x32-sprites
           path: app/src/main/assets/sprites32/*.png
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wordville-walk48-resident-sheets
+          path: app/src/main/assets/walk48/*.png
           if-no-files-found: error
           retention-days: 30
       - name: Test learning logic
