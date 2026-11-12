@@ -78,6 +78,8 @@ public class VillageSmokeTest {
   assertTrue("All 12 anchored idle sprite sheets decode in Android WebView",idleSpritesReady);
   assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:48,width:48,walking:false,idlePhase:2});})()"));
   assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:48,width:48,walking:true,phase:2});})()"));
+  // Freeze the schedule at 13:00: Penny is working in the bookstore then.
+  assertEquals("true",eval(web,"(function(){var s=document.getElementById('wv-schedule-hour');s.value='13';s.dispatchEvent(new Event('change'));return WordvilleVillage.schedulePreview==='13' && WordvilleSchedule.at('penny',13*60).place==='bookstore';})()"));
   // Open a real indoor venue and verify that the route avoids modeled furniture.
   assertEquals("true",eval(web,"WordvillePlaces.show('places');WordvillePlaces.pick('bookstore');WordvilleVenueSpec.isBlocked('bookstore',2,2)&&!WordvilleVenueSpec.isBlocked('bookstore',8,10)"));
   boolean venueReady=false;
@@ -86,6 +88,12 @@ public class VillageSmokeTest {
    Thread.sleep(150);
   }
   assertTrue("Indoor resident scene starts",venueReady);
+  assertEquals("true",eval(web,"WordvilleVillage.visitResident('penny')&&WordvillePlaces.active==='bookstore'&&WordvilleVenueRuntime.focusedResident==='penny'"));
+  assertEquals("true",eval(web,"WordvilleVenueRuntime.actors.some(a=>a.id==='penny')"));
+  assertEquals("true",eval(web,"(function(){var s=document.getElementById('wv-schedule-hour');s.value='23';s.dispatchEvent(new Event('change'));return WordvilleVillage.visitResident('harvey')&&WordvillePlaces.active==='home'&&WordvilleVenueRuntime.focusedResident==='harvey';})()"));
+  assertEquals("true",eval(web,"WordvilleVenueRuntime.actors.some(a=>a.id==='harvey')"));
+  assertEquals("true",eval(web,"WordvillePlaces.pick('bookstore');WordvillePlaces.active==='bookstore'"));
+
   assertEquals("true",eval(web,"(function(){var a=WordvilleVenueRuntime.actors[0],q=WordvilleVenueSpec.nearest('bookstore',1,1);return WordvilleVenueRuntime.moveTo(a,q.x,q.y)&&a.route.length>0&&a.route.every(t=>!WordvilleVenueSpec.isBlocked('bookstore',t.x,t.y));})()"));
   assertEquals("true",eval(web,"WordvillePlaces.show('map');document.getElementById('wv-places-view').hidden"));
 
