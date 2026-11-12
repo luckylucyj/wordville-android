@@ -57,7 +57,12 @@ function installPreview(){
  inputs.append(person,facing);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=168;canvas.style.cssText='width:256px;max-width:100%;height:auto;image-rendering:pixelated;background:#dce9db;border-radius:8px';
  const caption=document.createElement('p');caption.style.cssText='font-size:12px;margin:6px 0 0';
- panel.append(title,inputs,canvas,caption);zones.after(panel);
+ const galleryButton=document.createElement('button');galleryButton.type='button';galleryButton.textContent='12명 한꺼번에 보기';
+ galleryButton.style.cssText='margin:10px 0;padding:6px 10px;border:1px solid #85694a;border-radius:8px;background:#f0dbb6;color:#46372a';
+ const gallery=document.createElement('canvas');gallery.width=320;gallery.height=288;gallery.hidden=true;
+ gallery.setAttribute('aria-label','12명 주민 걷기 프레임 비교');gallery.style.cssText='max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
+ galleryButton.addEventListener('click',()=>{gallery.hidden=!gallery.hidden;galleryButton.textContent=gallery.hidden?'12명 한꺼번에 보기':'12명 보기 닫기';});
+ panel.append(title,inputs,canvas,caption,galleryButton,gallery);zones.after(panel);
  const c=canvas.getContext('2d');if(!c)return;
  function animate(ms){
   if(!panel.isConnected)return;
@@ -70,6 +75,17 @@ function installPreview(){
     paint(c,{id,direction:facing.value,walkDistance:beat*stepDistance},128,142,{width:96,height:96,walking:true,phase:beat});
     caption.textContent='PNG 시트에서 재생 · '+phases[beat]+' · '+(beat+1)+'/8 · 8 FPS · y=44 발 접지';
    }else caption.textContent='스프라이트시트 불러오는 중. 자산 누락 시 APK 빌드 결과를 확인하세요.';
+   if(!gallery.hidden){
+    const g=gallery.getContext('2d');
+    if(g){g.imageSmoothingEnabled=false;g.fillStyle='#e1ead7';g.fillRect(0,0,320,288);
+      for(let i=0;i<residentIds.length;i++){
+       const gx=i%4*80+40,gy=Math.floor(i/4)*96+64;
+       paint(g,{id:residentIds[i],direction:facing.value,walkDistance:beat*stepDistance},gx,gy,{width:48,height:48,walking:true,phase:beat});
+       g.textAlign='center';g.font='12px sans-serif';g.fillStyle='#47392f';
+       g.fillText(labels[i],gx,Math.floor(i/4)*96+85);
+      }
+    }
+   }
   }
   root.requestAnimationFrame(animate);
  }
