@@ -213,20 +213,20 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_UnifiedFacing_NoFigureEight_v2.9.4.apk
+          cp release/wordville-debug.apk release/Wordville_24Hour_Resident_Routines_v2.9.5.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.9.4-unified-facing-no-figure-eight"
-          ASSET="release/Wordville_UnifiedFacing_NoFigureEight_v2.9.4.apk"
+          TAG="v2.9.5-24hour-resident-routines"
+          ASSET="release/Wordville_24Hour_Resident_Routines_v2.9.5.apk"
           test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.9.4 - Unified Face and Feet Direction, No Figure-Eight Gait" \
-              --notes "v2.9.4: Walking feet stay in fixed x lanes without the figure-eight motion. Source perspective is shared by face, torso and feet for all 8 direction rows. NPC movement, facing and feet use the same direction value and each turn resets gait phase. Static idle unchanged; 12 characters x 8 directions x 8 frames, x24 center, foot ground y43. Diagonal three-quarter views approximate the direction using existing original front/back source art, not separately hand-drawn 45-degree portraits. Signing certificate and learning data preserved." \
+              --title "Wordville v2.9.5 - 12 Residents With Editable 24-Hour Daily Routines" \
+              --notes "v2.9.5: Every resident has a concrete personalized 00:00–24:00 daily routine with place and activity per hour. Residents route to destinations along the existing graph, disappear from the outdoor map when inside buildings or asleep, and appear in interior venues only while scheduled there. Venue NPCs walk to suitable objects to perform tasks. Touch-friendly resident editor, 24-hour clock preview, saved on device. 12 characters, 17 venues plus home, same signature and existing learning records. Automated schedule, routing, browser UI and Android emulator tests. Other visual limitations, including original diagonal sprite source approximations, are unchanged." \
               --prerelease
           fi
