@@ -8,7 +8,7 @@ const residentIds=['alex','elliott','harvey','sam','sebastian','shane','haley','
 const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'];
 const directions=['down','down-right','right','up-right','up','up-left','left','down-left'];
 const cell=48,anchorY=43,frames=8,stepDistance=2.25,fps=8;
-const phases=['contact-left','down-left','passing-cross-left','up-left','contact-right','down-right','passing-cross-right','up-right'];
+const phases=['contact-left','down-left','passing-left','up-left','contact-right','down-right','passing-right','up-right'];
 const sheets={}, idleSheets={};
 const idlePhases=['neutral','neutral','neutral','neutral'];
 const idleFrameCount=4,idleFrameDurationMs=400;
