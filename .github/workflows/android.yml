@@ -177,19 +177,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Interactive_Venues_v2.1.0.apk
+          cp release/wordville-debug.apk release/Wordville_Unified_Village_v2.2.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.1.0-interactive-venues"
-          ASSET="release/Wordville_Interactive_Venues_v2.1.0.apk"
+          TAG="v2.2.0-unified-village"
+          ASSET="release/Wordville_Unified_Village_v2.2.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.1.0 - Indoor Walk Navigation" \
-              --notes "v2.1.0: Fix resident animation using bundled 2560x768 atlas; avoid nonexistent walk and venue image paths; add 17 collision-aware venue tile maps, furniture-aware tap and keyboard navigation, resident spacing and collision inspection. Background photos remain visual references, not pixel-accurate collision geometry. Existing package ID, signing and local study data retained." \
+              --title "Wordville v2.2.0 - Unified Village & Directional Residents" \
+              --notes "v2.2.0: Rebuilt compact main hub without baked crowd imagery, matched foot coordinates to a world map, bundled user-provided resident 4-direction/3-original-pose atlas and mapped it to an anchored 4-beat walking cycle, and kept 17 destinations available from Places. Same app ID and signing certificate; no study data migration." \
               --prerelease
           fi

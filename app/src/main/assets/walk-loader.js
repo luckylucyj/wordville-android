@@ -1,5 +1,5 @@
 /* Direction-aware resident walking. The user 4-direction reference atlas (12 rows,
- * 3 source poses per heading, 32x48 pixels per frame) is optional until installed.
+ * 3 source poses per heading, 32x48 pixels per frame) is bundled with the APK.
  * A 4-beat 0,1,0,2 cycle reuses the 3 authentic poses without fabricating a fourth.
  * All residents keep exactly the same ground anchor; no rotation or body bobbing.
  */
@@ -14,7 +14,7 @@ for(const [id,url] of Object.entries(directionalManifest)){
  const im=new Image();im.decoding='async';im.src=url;images[id]=im;
 }
 const referenceAtlas=new Image();referenceAtlas.decoding='async';
-if(root.WordvilleReferenceWalkAsset?.path)referenceAtlas.src=root.WordvilleReferenceWalkAsset.path;
+referenceAtlas.src='portraits/wordville-reference-walk.png';
 const isReady=im=>!!(im&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0);
 const indices=Object.fromEntries(ids.map((id,i)=>[id,i]));
 const cycle=[0,1,0,2];
@@ -38,8 +38,7 @@ function paint(c,p,x,y,opt={}){
   const sourceY=(dirReady?dirs[direction]:index)*48;
   c.drawImage(source,sourceX,sourceY,32,48,Math.round(x-w/2),Math.round(y-h+3),w,h);
  }else{
-  // Four original source poses remain a compatibility fallback until the
-  // direction-specific atlas is present in the project.
+  // Four original source poses remain a compatibility fallback while loading the new atlas.
   const phase=[0,1,2,3][beat],sx=(index%4*4+phase)*160,sy=Math.floor(index/4)*256;
   if(direction==='left'){c.translate(Math.round(x),0);c.scale(-1,1);c.drawImage(perResidentAtlas,sx,sy,160,256,-Math.round(w/2),Math.round(y-h+3),w,h);}
   else c.drawImage(perResidentAtlas,sx,sy,160,256,Math.round(x-w/2),Math.round(y-h+3),w,h);

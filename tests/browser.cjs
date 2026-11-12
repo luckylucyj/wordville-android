@@ -22,7 +22,10 @@ const assert = require('node:assert/strict');
     sprites:[WordvillePortraits.spriteImage.naturalWidth,WordvillePortraits.spriteImage.naturalHeight]
   })),{portrait:[1536,1152],sprites:[2560,768]});
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='auto'),true);
+  await page.waitForFunction(()=>WordvilleWalk?.referenceAtlas?.naturalWidth===384&&WordvilleWalk.referenceAtlas.naturalHeight===576);
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
+  assert.equal(await page.evaluate(()=>WordvilleWalk.sourceFrameCount),3);
+  assert.equal(await page.evaluate(()=>WordvilleHubMap.humanDecorations),0);
   assert.equal(await page.evaluate(()=>VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))),true);
   assert.equal(await page.evaluate(()=>VillageModel.links.filter(([a,b])=>VillageModel.isStairEdge(a,b)).length),2);
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
