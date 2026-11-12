@@ -57,8 +57,14 @@ public class VillageSmokeTest {
    Thread.sleep(150);
   }
   assertTrue("Original high resolution portraits and sprite atlas must decode on Android",residentArtReady);
-  // The on-device actor renderer must use the existing high-resolution atlas.
-  assertEquals("true",eval(web,"WordvilleWalk.atlas.naturalWidth===2560&&WordvilleWalk.sourceFrameCount===4"));
+  // The on-device renderer must decode the user-supplied 12×4-direction atlas.
+  boolean walkAtlasReady=false;
+  for(int i=0;i<70;i++){
+   if("true".equals(eval(web,"WordvilleWalk.referenceAtlas.complete&&WordvilleWalk.referenceAtlas.naturalWidth===384&&WordvilleWalk.referenceAtlas.naturalHeight===576"))){walkAtlasReady=true;break;}
+   Thread.sleep(150);
+  }
+  assertTrue("4-direction reference walk atlas is available in the APK",walkAtlasReady);
+  assertEquals("3",eval(web,"WordvilleWalk.sourceFrameCount"));
   assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:50,width:32});})()"));
   // Open a real indoor venue and verify that the route avoids modeled furniture.
   assertEquals("true",eval(web,"WordvillePlaces.show('places');WordvillePlaces.pick('bookstore');WordvilleVenueSpec.isBlocked('bookstore',2,2)&&!WordvilleVenueSpec.isBlocked('bookstore',8,10)"));
