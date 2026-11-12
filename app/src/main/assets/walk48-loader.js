@@ -1,5 +1,5 @@
 /* Wordville 48x48 pre-generated sprite-sheet playback.
- * Asset layout: 8 rows (directions) x 6 distinct frames (contact/down/passing-up for each support foot).
+ * Asset layout: 8 rows (directions) x 8 distinct frames (contact/down/passing/up for each support foot).
  * The sheet is built by scripts/build-walk48.py before packaging the APK.
  */
 (function(root){'use strict';
@@ -7,28 +7,28 @@ const W=root.WordvilleWalk;if(!W)return;
 const residentIds=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily'];
 const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'];
 const directions=['down','down-right','right','up-right','up','up-left','left','down-left'];
-const cell=48,anchorY=43,frames=6,stepDistance=2.2,fps=8;
-const phases=['contact-left','down-left','passing-up-left','contact-right','down-right','passing-up-right'];
+const cell=48,anchorY=43,frames=8,stepDistance=2.2,fps=8;
+const phases=['contact-left','down-left','passing-left','up-left','contact-right','down-right','passing-right','up-right'];
 const sheets={};
 for(const id of residentIds){
  const im=new Image();im.decoding='async';im.src='walk48/'+id+'.png';sheets[id]=im;
 }
 const existingPaint=W.paint;
-function ready(im){return Boolean(im?.complete&&im.naturalWidth===288&&im.naturalHeight===384);}
+function ready(im){return Boolean(im?.complete&&im.naturalWidth===384&&im.naturalHeight===384);}
 function getFrame(p,moving,ms){
  if(!moving)return 0;
  const time=Number.isFinite(ms)?ms:(typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now());
  return Math.floor((Math.max(0,time)+1e-6)/125)%frames;
 }
 function getCell(id,direction,frame){
- if(!sheets[id]||!directions.includes(direction)||!Number.isInteger(frame)||frame<0||frame>=6)return null;
+ if(!sheets[id]||!directions.includes(direction)||!Number.isInteger(frame)||frame<0||frame>=8)return null;
  return {x:frame*cell,y:directions.indexOf(direction)*cell,width:cell,height:cell,anchorX:24,anchorY};
 }
 function paint(c,p,x,y,o={}){
  const id=p?.id||p,img=sheets[id];
  if(!ready(img))return existingPaint(c,p,x,y,o);
  const direction=directions.includes(p?.direction)?p.direction:(p?.heading<0?'left':'right');
- const k=Number.isInteger(o.phase)?((o.phase%6)+6)%6:getFrame(p,o.walking===true,o.timestampMs);
+ const k=Number.isInteger(o.phase)?((o.phase%8)+8)%8:getFrame(p,o.walking===true,o.timestampMs);
  const source=getCell(id,direction,k),width=Math.round(o.width||48),height=Math.round(o.height||48);
  c.save();c.imageSmoothingEnabled=false;
  c.fillStyle='#26343838';c.beginPath();c.ellipse(Math.round(x),Math.round(y+1),Math.round(width*.21),2,0,0,Math.PI*2);c.fill();
@@ -48,7 +48,7 @@ function installPreview(){
  const old=document.getElementById('wv-walk-preview');if(old)old.remove();
  const panel=document.createElement('details');panel.id='wv-walk-preview';
  panel.style.cssText='margin:12px 0;padding:12px;border:2px solid #957c5b;border-radius:12px;background:#f7eed9;color:#45382e';
- const title=document.createElement('summary');title.textContent='주민 걷기 확인 · 48×48 스프라이트시트 · 8방향×6프레임';title.style.cssText='font-weight:700;cursor:pointer';
+ const title=document.createElement('summary');title.textContent='주민 걷기 확인 · 48×48 스프라이트시트 · 8방향×8프레임';title.style.cssText='font-weight:700;cursor:pointer';
  const inputs=document.createElement('div');inputs.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
  const person=document.createElement('select');person.setAttribute('aria-label','주민 선택');
  residentIds.forEach((id,i)=>{const opt=document.createElement('option');opt.value=id;opt.textContent=labels[i];person.add(opt);});
@@ -69,11 +69,11 @@ function installPreview(){
   if(panel.open&&!document.hidden){
    c.imageSmoothingEnabled=false;c.fillStyle='#dce9db';c.fillRect(0,0,256,168);
    c.fillStyle='#98aF92';c.fillRect(0,143,256,25);
-   const beat=Math.floor(ms/125)%6;
+   const beat=Math.floor(ms/125)%8;
    const id=person.value,im=sheets[id];
    if(ready(im)){
     paint(c,{id,direction:facing.value,walkDistance:beat*stepDistance},128,142,{width:96,height:96,walking:true,phase:beat});
-    caption.textContent='PNG 시트에서 재생 · '+phases[beat]+' · '+(beat+1)+'/6 · 8 FPS · y=43 발 접지';
+    caption.textContent='PNG 시트에서 재생 · '+phases[beat]+' · '+(beat+1)+'/8 · 8 FPS · y=43 발 접지';
    }else caption.textContent='스프라이트시트 불러오는 중. 자산 누락 시 APK 빌드 결과를 확인하세요.';
    if(!gallery.hidden){
     const g=gallery.getContext('2d');
