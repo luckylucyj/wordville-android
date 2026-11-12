@@ -13,11 +13,12 @@ IDS=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','
 DIRS=['down','down-right','right','up-right','up','up-left','left','down-left']
 MIRROR={'up-left':'up-right','left':'right','down-left':'down-right'}
 # Stable vertical symmetry axis x=24 in each 48x48 cell; floor y=43.
-# A diagonal may not combine a front/rear face with side-facing feet.
-FACE_SOURCE={'down':'down','down-right':'down','right':'right',
-             'up-right':'up','up':'up'}
-LEG_AXIS={'down':'front','down-right':'front','right':'side',
-          'up-right':'front','up':'front'}
+# Diagonal characters use their actual horizontal profile (right/left), not
+# a frontal or rear head that points against the travel vector.
+FACE_SOURCE={'down':'down','down-right':'right','right':'right',
+             'up-right':'right','up':'up'}
+LEG_AXIS={'down':'front','down-right':'side','right':'side',
+          'up-right':'side','up':'front'}
 # Fixed foot x-lanes, no figure-eight paths or crossovers.
 FRONT=[((20,43),(28,43)),((20,43),(28,42)),((20,43),(28,41)),((20,43),(28,42)),
        ((20,43),(28,43)),((20,42),(28,43)),((20,41),(28,43)),((20,42),(28,43))]
@@ -103,7 +104,9 @@ def animate(im,k,direction):
   if k%4==3 and leg!=support_leg:toe-=1
   draw.rectangle((fx-3,fy-2,fx+toe,fy),fill=ink)
   draw.line((fx-2,fy-2,fx+min(1,toe),fy-2),fill=shoes,width=1)
- out.alpha_composite(im.crop((0,0,48,hip+3)),(0,0))
+ # Remove every legacy shoe and shin from the portrait source. The previous
+ # +3 pixel overlay restored the source's crossed knees in the rear view.
+ out.alpha_composite(im.crop((0,0,48,hip)),(0,0))
  # Counter-swing only the outermost sleeve pixels; shoulders remain still.
  original=im.load()
  for arm,region in enumerate((range(11,19),range(29,38))):
@@ -175,7 +178,7 @@ assert len(audit)==768
  'foot_anchor_y':43,'fps':8,'unique_per_direction':8,'no_crossing_feet':True,
  'mirrored_directions':['up-left','left','down-left'],'phases':PHASE_NAMES,
  'front_foot_points':FRONT,'side_foot_points':SIDE,'arm_swing':ARM_SWING,
- 'face_source':FACE_SOURCE,'leg_axis':LEG_AXIS,'no_lateral_figure_eight':True,
- 'limitations':'Diagonal artwork uses coherent cardinal source approximations; dedicated 45-degree portraits still needed for exact diagonal facial angle.',
+ 'face_source':FACE_SOURCE,'leg_axis':LEG_AXIS,'no_lateral_figure_eight':True,'old_source_lower_legs_removed':True,
+ 'limitations':'Diagonal art uses direction-consistent right/left source profiles. Dedicated 45-degree portraits are not supplied; the original 8-way gait is a cardinal approximation.',
  'frame_stats':audit},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 print('WORDVILLE_NOCROSS_GAIT_PASS 12 x 8 x 8 = 768; center x24, y24, planted y43')
