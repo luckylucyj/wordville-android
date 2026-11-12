@@ -51,7 +51,7 @@ wrap.append(toolButton);
 const exploreButton=document.createElement('button');
 exploreButton.id='wv-visit-places';exploreButton.type='button';
 exploreButton.textContent='🏠 장소 둘러보기';
-exploreButton.setAttribute('aria-label','마을의 장소 17곳 선택하기');
+exploreButton.setAttribute('aria-label','마을의 장소 17곳과 주민의 집 선택하기');
 exploreButton.addEventListener('click',()=>activate('places'));
 wrap.append(exploreButton);
 const toolPanel=document.createElement('div');
