@@ -1,0 +1,8 @@
+/* Render the same nearest-neighbor pixels on Android WebView and browsers. */
+#village-canvas,
+#wv-place-canvas,
+#wv-venue-actors{
+  image-rendering:crisp-edges;
+  image-rendering:pixelated;
+}
+#wv-pixel-weather{max-width:112px}
