@@ -17,8 +17,19 @@
      const id=button.dataset.person;if(!position(id))continue;
      button.querySelector('.wv-portrait')?.remove();
      const dot=button.querySelector('.resident-dot');dot?.remove();
-     button.prepend(portrait(id,'wv-portrait-small'));
-     button.title=labels[order[id]]+' 주민 만나기';
+     const art=portrait(id,'wv-portrait-small');
+     art.title='자화상을 누르면 현재 위치로 이동';
+     art.setAttribute('role','button');art.setAttribute('tabindex','0');
+     art.removeAttribute('aria-hidden');
+     art.setAttribute('aria-label',labels[order[id]]+' 현재 장소로 이동');
+     const navigate=e=>{
+      e.stopPropagation();e.preventDefault();
+      globalThis.WordvilleVillage?.visitResident?.(id);
+     };
+     art.addEventListener('click',navigate);
+     art.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){navigate(e);}});
+     button.prepend(art);
+     button.title=labels[order[id]]+' 주민 선택 · 자화상 터치 시 위치 이동';
    }
    const neighbors=document.querySelector('.neighbors');
    if(neighbors)neighbors.open=true;
@@ -28,8 +39,15 @@
    let last='';
    function sync(){
      const id=ids[labels.indexOf(speaker.textContent.trim())];if(id===last)return;last=id;
-     panel.querySelector('.wv-dialog-portrait')?.remove();
-     if(id)panel.prepend(portrait(id,'wv-dialog-portrait'));
+     panel.querySelector('.wv-dialog-portrait-jump')?.remove();
+     if(id){
+      const jump=document.createElement('button');
+      jump.type='button';jump.className='wv-dialog-portrait-jump';
+      jump.setAttribute('aria-label',labels[order[id]]+' 현재 장소로 이동');
+      jump.append(portrait(id,'wv-dialog-portrait'));
+      jump.addEventListener('click',()=>globalThis.WordvilleVillage?.visitResident?.(id));
+      panel.prepend(jump);
+     }
    }
    new MutationObserver(sync).observe(speaker,{characterData:true,childList:true,subtree:true});
    sync();
