@@ -51,7 +51,7 @@ function directionFromDelta(dx,dy,previous='down'){
  const degrees=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
  return directions[Math.round(degrees/45)%8];
 }
-function freshResidents(){return people.map((p,i)=>{const ni=[0,1,2,3,4,5,6,7,10,11,12,13][i];const n=nodes[ni];return {...p,x:n.x,y:n.y,node:ni,route:[],wait:i*.6,chat:0,partner:null,cooldown:0,steps:i*.18,walkDistance:0,stairPhase:0,onStairs:false,heading:1,direction:'down',isMoving:false,visits:0};});}
+function freshResidents(){return people.map((p,i)=>{const ni=[0,1,2,3,4,5,6,7,10,11,12,13][i];const n=nodes[ni];return {...p,x:n.x,y:n.y,node:ni,route:[],wait:i*.6,chat:0,partner:null,cooldown:0,steps:i*.18,walkDistance:0,stairPhase:0,onStairs:false,heading:1,direction:'down',facing:'down',movementDirection:'down',isMoving:false,visits:0};});}
 function tick(residents,dt,onMeet){
  dt=Math.min(.1,Math.max(0,dt));
  for(const p of residents){
@@ -69,11 +69,14 @@ function tick(residents,dt,onMeet){
   const speed=p.onStairs?12:18,step=speed*dt;
   if(d<=step&&d>0){
    p.x=n.x;p.y=n.y;p.node=p.route.shift();p.wait=.16;p.onStairs=false;
-   p.direction=facing;p.isMoving=true;p.walkDistance+=d;p.steps+=dt;
+   if(p.direction!==facing)p.walkDistance=0;
+   p.direction=p.facing=p.movementDirection=facing;p.isMoving=true;p.walkDistance+=d;p.steps+=dt;
   }else if(step>0&&d>0){
    const nx=p.x+dx/d*step,ny=p.y+dy/d*step;
    if(residents.some(other=>other!==p&&Math.hypot(other.x-nx,other.y-ny)<23)){p.wait=.16;continue;}
-   p.x=nx;p.y=ny;p.direction=facing;p.isMoving=true;
+   p.x=nx;p.y=ny;
+   if(p.direction!==facing)p.walkDistance=0;
+   p.direction=p.facing=p.movementDirection=facing;p.isMoving=true;
    p.steps+=dt;p.walkDistance+=step;
    p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;
   }
