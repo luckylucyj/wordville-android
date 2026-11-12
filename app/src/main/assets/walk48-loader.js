@@ -41,7 +41,7 @@ function directionFromDelta(dx,dy){
  const degrees=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
  return directions[Math.round(degrees/45)%8];
 }
-Object.assign(W,{paint,frameFor:getFrame,frameSize:{width:48,height:48},anchorY,groundY:anchorY,frameCount:6,stepDistance,fps,walk48Sheets:sheets,walk48Directions:directions,walk48Cell:getCell,walk48Phases:phases,directionFromDelta});
+Object.assign(W,{paint,frameFor:getFrame,frameSize:{width:48,height:48},anchorY,groundY:anchorY,frameCount:8,stepDistance,fps,walk48Sheets:sheets,walk48Directions:directions,walk48Cell:getCell,walk48Phases:phases,directionFromDelta});
 root.WordvilleWalk48={ids:residentIds,labels,directions,sheets,getFrame,getCell,directionFromDelta,paint,frameSize:{width:48,height:48},anchorY,fps};
 function installPreview(){
  const zones=document.querySelector('.village-controls')||document.querySelector('.wv-map-zones');if(!zones)return;
