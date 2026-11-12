@@ -43,7 +43,7 @@ function ground(p){
  for(const [x,y] of [[527,370],[556,389]]){r(x-9,y-9,18,3,'#a88e67');r(x-1,y-6,2,10,'#665e55');r(x-15,y-4,5,3,'#778c70');r(x+10,y-4,5,3,'#778c70');}
 }
 function sprite(p){
- const x=p.x,y=p.y,walking=p.isMoving===true;
+ const x=p.x,y=p.y,walking=!paused&&p.chat<=0&&p.isMoving===true;
  const assets=globalThis.WordvillePortraits,img=assets?.spriteImage,index=assets?.order?.[p.id];
  // 48px frame with an approximately 40px tall resident; fixed ground anchor.
  const width=48,height=48;
