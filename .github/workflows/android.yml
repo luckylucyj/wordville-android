@@ -32,6 +32,7 @@ jobs:
           python -m pip install Pillow==11.3.0
           python scripts/build-audited-sprites.py
           python scripts/build-walk48.py
+          python scripts/build-idle48.py
       - uses: actions/upload-artifact@v4
         with:
           name: wordville-audited-32x32-sprites
@@ -42,6 +43,12 @@ jobs:
         with:
           name: wordville-8way6-crossing-feet-resident-sheets
           path: app/src/main/assets/walk48/*.png
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wordville-8way4-stationary-idle-sheets
+          path: app/src/main/assets/idle48/*.png
           if-no-files-found: error
           retention-days: 30
       - name: Test learning logic
