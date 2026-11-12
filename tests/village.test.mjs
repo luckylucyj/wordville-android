@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import '../app/src/main/assets/resident-schedule.js';
 import '../app/src/main/assets/village-model.js';
+const S=globalThis.WordvilleSchedule;
 const M=globalThis.VillageModel;
 test('twelve named unique residents',()=>{assert.equal(M.people.length,12);assert.equal(new Set(M.people.map(p=>p.id)).size,12);assert.deepEqual(M.people.map(p=>p.name),['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리']);});
 test('device clock phase boundaries',()=>{for(const [hour,phase] of [[0,'night'],[5,'night'],[6,'day'],[17,'day'],[18,'dusk'],[19,'dusk'],[20,'night'],[23,'night']])assert.equal(M.period(hour),phase);});
@@ -92,4 +94,95 @@ test('heading, face and actual walking vector stay identical for every moving re
  }
  assert.ok(verified>50,'walking positions must be exercised');
  assert.ok(turns>2,'turning between path segments must be exercised');
+});
+
+
+test('all 12 villagers have complete 00:00–24:00 schedules at 1-hour resolution',()=>{
+ const ids=M.people.map(p=>p.id);
+ assert.deepEqual(Object.keys(S.BLOCKS).sort(),ids.slice().sort());
+ const coveredPlaces=new Set();
+ for(const id of ids){
+  const all=S.day(id);
+  assert.equal(all.length,24,id);
+  assert.equal(all[0].hour,0);
+  assert.equal(all[23].hour,23);
+  assert.deepEqual(S.at(id,24*60),S.at(id,0),'24:00 rolls over to 00:00');
+  const distinctActions=new Set(),distinctPlaces=new Set();
+  for(let hour=0;hour<24;hour++){
+   const row=all[hour];assert.equal(row.hour,hour);
+   assert.ok(S.PLACE_NAMES[row.place],id+' '+hour+' place is known');
+   assert.ok(row.activity.length>=2&&row.activity.length<=36,id+' '+hour+' actionable label');
+   distinctPlaces.add(row.place);coveredPlaces.add(row.place);
+   distinctActions.add(row.activity);
+  }
+  assert.ok(distinctPlaces.size>=4,id+' visits multiple distinct venues');
+  assert.ok(distinctActions.size>=6,id+' has concrete varied behaviors');
+ }
+ for(const place of Object.keys(S.PLACE_NAMES))assert.ok(coveredPlaces.has(place),place+' never receives a visit');
+ assert.equal(S.hourOf(1439),23);
+ assert.equal(S.hourOf(1440),0);
+ assert.equal(S.hourOf(-1),23);
+ assert.equal(S.formatHour(24),'24:00');
+});
+test('time-dependent residents travel to destination node and perform the right task',()=>{
+ const minute=7*60;
+ const ps=M.freshResidents();
+ M.syncSchedule(ps,minute,{teleport:true});
+ const alex=ps.find(p=>p.id==='alex'),eli=ps.find(p=>p.id==='elliott');
+ assert.equal(alex.schedulePlace,'gym');
+ assert.equal(alex.activity,'근력 운동');
+ assert.equal(alex.node,M.entranceNode.gym);
+ assert.equal(alex.atVenue,true);
+ assert.equal(alex.activityState,'doing');
+ assert.equal(eli.schedulePlace,'cafe');
+ const p=alex;
+ M.syncSchedule([p],10*60);
+ assert.equal(p.schedulePlace,'park');assert.equal(p.atVenue,false);
+ assert.ok(p.route.length>0,'should actually walk rather than teleport');
+ let movements=0;
+ for(let frame=0;frame<4000&&p.route.length;frame++){
+  const x=p.x,y=p.y;
+  M.tick([p],.1,undefined,{minuteOfDay:10*60});
+  if(p.x!==x||p.y!==y)movements++;
+  assert.ok(!M.inFountain(p.x,p.y),'route must avoid fountain');
+  if(p.isMoving){
+   assert.equal(p.facing,p.movementDirection);
+   assert.equal(p.direction,p.movementDirection);
+  }
+ }
+ assert.ok(movements>0);
+ assert.equal(p.node,M.entranceNode.park);
+ assert.equal(p.atVenue,true);assert.equal(p.activityState,'doing');
+});
+test('residents are at home when sleeping and in the correct venue when clock is previewed',()=>{
+ for(const person of M.people){
+  const p=M.freshResidents().find(x=>x.id===person.id);
+  for(let hour=0;hour<24;hour++){
+   M.syncSchedule([p],hour*60,{teleport:true});
+   const slot=S.at(person.id,hour*60);
+   assert.equal(p.activity,slot.activity);
+   assert.equal(p.schedulePlace,slot.place);
+   assert.equal(p.node,M.destinationFor(p,slot.place));
+   assert.equal(p.route.length,0);
+   assert.equal(p.atVenue,true);
+  }
+ }
+ assert.equal(S.at('alex',23*60).place,'home');
+ assert.equal(S.at('sam',17*60).place,'square');
+ assert.equal(S.at('harvey',14*60).place,'clinic');
+});
+test('editing any one hour updates the timetable and can be restored without changing others',()=>{
+ const id='alex',hour=8,original=S.at(id,hour*60),adjacent=S.at(id,9*60);
+ const saved=S.setHour(id,hour,'museum','전시 관찰');
+ assert.equal(typeof saved,'boolean');
+ assert.equal(S.at(id,hour*60).place,'museum');
+ assert.equal(S.at(id,hour*60).activity,'전시 관찰');
+ assert.equal(S.at(id,9*60).activity,adjacent.activity);
+ assert.ok(S.occupants('museum',hour*60).includes(id));
+ S.resetHour(id,hour);
+ assert.equal(S.at(id,hour*60).activity,original.activity);
+ assert.equal(S.at(id,hour*60).place,original.place);
+ assert.throws(()=>S.setHour(id,24,'home','잠자기'));
+ assert.throws(()=>S.setHour(id,8,'invalid','잠자기'));
+ assert.throws(()=>S.setHour(id,8,'home',''));
 });
