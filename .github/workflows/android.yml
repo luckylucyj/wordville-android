@@ -213,20 +213,20 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_UnifiedFacing_NoFigureEight_v2.9.4.apk
+          cp release/wordville-debug.apk release/Wordville_Residents_Routines_Location_DayStudy_v2.9.6.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.9.4-unified-facing-no-figure-eight"
-          ASSET="release/Wordville_UnifiedFacing_NoFigureEight_v2.9.4.apk"
+          TAG="v2.9.6-resident-routines-location-study"
+          ASSET="release/Wordville_Residents_Routines_Location_DayStudy_v2.9.6.apk"
           test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.9.4 - Unified Face and Feet Direction, No Figure-Eight Gait" \
-              --notes "v2.9.4: Walking feet stay in fixed x lanes without the figure-eight motion. Source perspective is shared by face, torso and feet for all 8 direction rows. NPC movement, facing and feet use the same direction value and each turn resets gait phase. Static idle unchanged; 12 characters x 8 directions x 8 frames, x24 center, foot ground y43. Diagonal three-quarter views approximate the direction using existing original front/back source art, not separately hand-drawn 45-degree portraits. Signing certificate and learning data preserved." \
+              --title "Wordville v2.9.6 - Scheduled Resident Behaviors, Portrait Location Links and Day/PDF Learning" \
+              --notes "v2.9.6: Complete hourly 24-hour schedules for all 12 characters, editable on device; room behaviors and furniture routines for 17 venues plus homes; tapping resident portraits navigates to their current indoor room or outdoor position; resident learning now allows any selected Day, 60-word page, original PDF page and word rather than a fixed assigned word. Corrected diagonal face-source orientation and stripped old rear-leg pixels that caused apparent eight-shaped gait; fixed NPC face and foot directions share movement vector. 48x48 8-direction sprites retain y43 floor anchor. Existing app signing certificate and stored vocabulary progress unchanged. Unit, browser and Android emulator smoke tests." \
               --prerelease
           fi

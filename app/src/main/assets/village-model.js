@@ -51,17 +51,59 @@ function directionFromDelta(dx,dy,previous='down'){
  const degrees=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
  return directions[Math.round(degrees/45)%8];
 }
-function freshResidents(){return people.map((p,i)=>{const ni=[0,1,2,3,4,5,6,7,10,11,12,13][i];const n=nodes[ni];return {...p,x:n.x,y:n.y,node:ni,route:[],wait:i*.6,chat:0,partner:null,cooldown:0,steps:i*.18,walkDistance:0,stairPhase:0,onStairs:false,heading:1,direction:'down',facing:'down',movementDirection:'down',isMoving:false,visits:0};});}
-function tick(residents,dt,onMeet){
+// All interiors share physical entrance nodes on the existing collision-safe road graph.
+// The detailed interiors themselves are separate scenes in the Places tab.
+const schedule=root.WordvilleSchedule;
+const entranceNode=Object.freeze({
+ home:null, pool:11,ranch:3,gym:10,burger:2,icecream:18,pub:4,museum:7,
+ greenhouse:17,cafe:18,bookstore:6,clinic:7,library:9,studio:6,
+ market:4,square:0,workshop:5,park:1
+});
+const outdoorPlaces=new Set(['square','park']);
+function destinationFor(p,place){
+ const node=place==='home'?p.homeNode:entranceNode[place];
+ if(!Number.isInteger(node)||!nodes[node])throw Error('Unknown destination: '+place);
+ return node;
+}
+function syncSchedule(residents,minute,{teleport=false}={}){
+ if(!schedule||!Number.isFinite(minute))return;
+ for(const p of residents){
+  if(!schedule.BLOCKS[p.id])continue;
+  const slot=schedule.at(p.id,minute);
+  const key=slot.hour+'|'+slot.place+'|'+slot.activity;
+  if(key===p.scheduleKey&&!teleport)continue;
+  const goal=destinationFor(p,slot.place);
+  p.scheduleKey=key;p.scheduleHour=slot.hour;p.schedulePlace=slot.place;
+  p.activity=slot.activity;p.targetNode=goal;
+  p.chat=0;p.partner=null;p.wait=0;p.onStairs=false;
+  p.isMoving=false;p.activityState='travel';
+  if(teleport){
+   p.node=goal;p.x=nodes[goal].x;p.y=nodes[goal].y;
+   p.route=[];p.atVenue=true;p.activityState='doing';
+   continue;
+  }
+  p.route=path(p.node,goal).slice(1);
+  p.atVenue=!p.route.length;
+  if(p.atVenue)p.activityState='doing';
+ }
+}
+function freshResidents(){return people.map((p,i)=>{const ni=[0,1,2,3,4,5,6,7,10,11,12,13][i];const n=nodes[ni];return {...p,x:n.x,y:n.y,node:ni,homeNode:[3,4,15,16,3,4,15,16,3,4,15,16][i],schedulePlace:null,scheduleHour:null,scheduleKey:'',targetNode:null,atVenue:false,activity:'',activityState:'travel',route:[],wait:i*.6,chat:0,partner:null,cooldown:0,steps:i*.18,walkDistance:0,stairPhase:0,onStairs:false,heading:1,direction:'down',facing:'down',movementDirection:'down',isMoving:false,visits:0};});}
+function tick(residents,dt,onMeet,options={}){
+ const scheduled=Boolean(schedule&&Number.isFinite(options?.minuteOfDay));
+ if(scheduled)syncSchedule(residents,options.minuteOfDay,{teleport:options.teleport===true});
  dt=Math.min(.1,Math.max(0,dt));
  for(const p of residents){
   // Reset on EVERY tick: a blocked, waiting or chatting NPC is not walking.
   p.isMoving=false;
   if(p.chat>0){p.chat=Math.max(0,p.chat-dt);p.onStairs=false;continue;}
   if(p.wait>0){p.wait=Math.max(0,p.wait-dt);p.onStairs=false;continue;}
-  if(!p.route.length){const goal=(p.node+5+p.id.length+(p.visits++*7))%nodes.length;p.route=path(p.node,goal).slice(1);p.wait=.25;continue;}
+  if(!p.route.length){
+   if(scheduled){p.atVenue=true;p.activityState='doing';continue;}
+   const goal=(p.node+5+p.id.length+(p.visits++*7))%nodes.length;p.route=path(p.node,goal).slice(1);p.wait=.25;continue;
+  }
   const nextIndex=p.route[0],n=nodes[nextIndex],dx=n.x-p.x,dy=n.y-p.y,d=Math.hypot(dx,dy);
   p.onStairs=isStairEdge(p.node,nextIndex);
+  if(d<1e-6){p.node=p.route.shift();if(scheduled&&!p.route.length){p.atVenue=true;p.activityState='doing';}continue;}
   // Node-to-node direction remains identical for the whole leg. A new leg
   // may turn only after arriving at its node; blocked legs keep last facing.
   const from=nodes[p.node];
@@ -69,11 +111,12 @@ function tick(residents,dt,onMeet){
   const speed=p.onStairs?12:18,step=speed*dt;
   if(d<=step&&d>0){
    p.x=n.x;p.y=n.y;p.node=p.route.shift();p.wait=.16;p.onStairs=false;
+   if(scheduled&&!p.route.length){p.atVenue=true;p.activityState='doing';}
    if(p.direction!==facing)p.walkDistance=0;
    p.direction=p.facing=p.movementDirection=facing;p.isMoving=true;p.walkDistance+=d;p.steps+=dt;
   }else if(step>0&&d>0){
    const nx=p.x+dx/d*step,ny=p.y+dy/d*step;
-   if(residents.some(other=>other!==p&&Math.hypot(other.x-nx,other.y-ny)<23)){p.wait=.16;continue;}
+   if(residents.some(other=>other!==p&&(!scheduled||!other.atVenue)&&Math.hypot(other.x-nx,other.y-ny)<23)){p.wait=.16;continue;}
    p.x=nx;p.y=ny;
    if(p.direction!==facing)p.walkDistance=0;
    p.direction=p.facing=p.movementDirection=facing;p.isMoving=true;
@@ -81,9 +124,10 @@ function tick(residents,dt,onMeet){
    p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;
   }
  }
- for(let i=0;i<residents.length;i++){const a=residents[i];if(a.chat||a.cooldown>0||a.onStairs)continue;for(let j=i+1;j<residents.length;j++){const b=residents[j];if(b.chat||b.cooldown>0||b.onStairs)continue;if(Math.hypot(a.x-b.x,a.y-b.y)<29){a.chat=b.chat=3.5;a.cooldown=b.cooldown=15;a.partner=b.id;b.partner=a.id;onMeet?.(a,b);break;}}}
+ for(let i=0;i<residents.length;i++){const a=residents[i];if(a.chat||a.cooldown>0||a.onStairs)continue;for(let j=i+1;j<residents.length;j++){const b=residents[j];if(b.chat||b.cooldown>0||b.onStairs)continue;
+  if(scheduled&&(!a.atVenue||!b.atVenue||!outdoorPlaces.has(a.schedulePlace)||a.schedulePlace!==b.schedulePlace))continue;if(Math.hypot(a.x-b.x,a.y-b.y)<29){a.chat=b.chat=3.5;a.cooldown=b.cooldown=15;a.partner=b.id;b.partner=a.id;onMeet?.(a,b);break;}}}
  for(const p of residents)p.cooldown=Math.max(0,(p.cooldown||0)-dt);
 }
-const api={people,nodes,edges,links,fountain,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick};
+const api={people,nodes,edges,links,fountain,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,destinationFor,syncSchedule};
 root.VillageModel=api;
 })(globalThis);

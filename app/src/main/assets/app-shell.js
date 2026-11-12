@@ -28,6 +28,12 @@ const oldFeed=document.querySelector('.conversation-feed');
 if(oldNeighbors){oldNeighbors.open=true;residents.append(oldNeighbors);}
 if(oldDialogue)residents.append(oldDialogue);
 if(oldFeed)residents.append(oldFeed);
+// The town map is a full-screen canvas; the full-day editor belongs to the
+// scrollable Residents tab, not clipped below the canvas.
+const scheduleDetails=get('wv-resident-schedule');
+if(scheduleDetails)residents.append(scheduleDetails);
+const studyPicker=get('wv-resident-study-picker');if(studyPicker)residents.append(studyPicker);
+const jumpStatus=get('wv-visit-feedback');if(jumpStatus)residents.append(jumpStatus);
 village.append(residents);
 const wrap=document.querySelector('.canvas-wrap');
 const timeBadge=document.querySelector('.time-badge');
@@ -45,7 +51,7 @@ wrap.append(toolButton);
 const exploreButton=document.createElement('button');
 exploreButton.id='wv-visit-places';exploreButton.type='button';
 exploreButton.textContent='🏠 장소 둘러보기';
-exploreButton.setAttribute('aria-label','마을의 장소 17곳 선택하기');
+exploreButton.setAttribute('aria-label','마을의 장소 17곳과 주민의 집 선택하기');
 exploreButton.addEventListener('click',()=>activate('places'));
 wrap.append(exploreButton);
 const toolPanel=document.createElement('div');

@@ -2,6 +2,7 @@
 (() => {
 'use strict';
 const places=[
+ {id:'home',name:'주민의 집',en:'Resident Home',type:'life',people:[],word:'home',desc:'주민의 휴식·수면·개인 생활 공간입니다.',lines:[['I am resting at home.','집에서 쉬고 있어요.'],['I will be home tonight.','오늘 밤 집에 있을 거예요.']]},
  {id:'pool',name:'수영장',en:'Swimming Pool',type:'leisure',people:['alex','haley'],word:'attend',desc:'수영 레인을 예약하고 친구와 연습해요.',lines:[['Can I attend the swimming class?','수영 수업에 참여할 수 있나요?'],['The pool is available this afternoon.','오늘 오후에는 수영장을 이용할 수 있어요.']]},
  {id:'ranch',name:'목장',en:'Ranch',type:'nature',people:['leah','shane'],word:'shipment',desc:'동물을 돌보고 목장 생활을 체험해요.',lines:[['The feed shipment arrived this morning.','사료 배송이 오늘 아침 도착했어요.'],['Would you like to help feed the animals?','동물 먹이 주는 일을 도와줄래요?']]},
  {id:'gym',name:'헬스장',en:'Fitness Center',type:'leisure',people:['alex','sebastian'],word:'equipment',desc:'운동 기구를 살펴보고 함께 운동해요.',lines:[['Is this equipment available?','이 운동 기구를 사용할 수 있나요?'],['Let’s check our workout schedule.','운동 일정을 확인해요.']]},
@@ -43,7 +44,12 @@ function appendPortrait(parent,id,small=false){
  const p=people[id];if(!p)return;
  const b=button(p.name,'wv-place-person',()=>{speakerIndex=current().people.indexOf(id);lineIndex=0;renderConversation();});
  b.setAttribute('aria-pressed',String(current().people[speakerIndex]===id));
- if(portraits?.portrait)b.prepend(portraits.portrait(id,small?'wv-venue-mini':'wv-venue-portrait'));
+ if(portraits?.portrait){
+  const picture=portraits.portrait(id,small?'wv-venue-mini':'wv-venue-portrait');
+  picture.title='이 주민의 현재 장소로 이동';
+  picture.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();globalThis.WordvilleVillage?.visitResident?.(id);});
+  b.prepend(picture);
+ }
  parent.append(b);
 }
 function renderConversation(){
@@ -53,7 +59,10 @@ function renderConversation(){
  ids('wv-place-dialogue-ko').textContent=p.lines[lineIndex][1];
  ids('wv-place-study').textContent='관련 단어 배우기 · '+p.word;
  ids('wv-place-people').replaceChildren();
- p.people.forEach(id=>appendPortrait(ids('wv-place-people'),id));
+ const roster=globalThis.WordvilleSchedule?.occupants(p.id,globalThis.WordvilleVillage?.clockMinute??globalThis.WordvilleSchedule.minuteNow())||[];
+ if(p.id==='home'||p.id===globalThis.WordvilleVillage?.visitingPlace){
+  roster.forEach(id=>appendPortrait(ids('wv-place-people'),id));
+ }else p.people.forEach(id=>appendPortrait(ids('wv-place-people'),id));
 }
 function render(){
  const items=listed();if(!items.find(p=>p.id===active))active=items[0].id;
