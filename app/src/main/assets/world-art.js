@@ -199,6 +199,7 @@ function venueLabel(c,s){
  rect(c,x-4,y+3,8,5,'#a8784c');
 }
 function drawCreature(c,kind,x,y,phase=0){
+ if((kind==='cat'||kind==='dog')&&root.WordvilleWalk?.paintPet(c,{id:kind,direction:'right'},x,y,{width:32,height:48,phase:Math.floor(phase)}))return;
  // Tiny original pixel animals: no interpolation or image enlargement artifacts.
  const u=kind==='horse'||kind==='bear'?2:1;
  const bob=Math.floor(phase)%2;

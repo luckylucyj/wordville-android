@@ -18,6 +18,20 @@ const referenceAtlas=new Image();referenceAtlas.decoding='async';
 referenceAtlas.src='portraits/wordville-reference-walk.png';
 const isReady=im=>!!(im&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0);
 const indices=Object.fromEntries(ids.map((id,i)=>[id,i]));
+const petSheets={cat:new Image(),dog:new Image()};
+petSheets.cat.src='pets/wordville-cat-source.png';
+petSheets.dog.src='pets/wordville-dog-source.png';
+// 16x24 native source cells, 2x nearest-neighbor display at 32x48.
+function petFrame(p,moving){if(!moving)return 0;const d=Number.isFinite(p.walkDistance)?p.walkDistance:(p.steps||0)*18;return Math.floor((Math.max(0,d)+1e-7)/3.5)%4;}
+function paintPet(c,p,x,y,opt={}){
+ const id=p.id||p,img=petSheets[id];
+ if(!img||!isReady(img)||img.naturalWidth!==64||img.naturalHeight!==96)return false;
+ const dir=dirs[p.direction]===undefined?0:dirs[p.direction],phase=Number.isInteger(opt.phase)?((opt.phase%4)+4)%4:petFrame(p,opt.walking===true);
+ const w=opt.width||32,h=opt.height||48;
+ c.save();c.imageSmoothingEnabled=false;
+ c.drawImage(img,dir*16,phase*24,16,24,Math.round(x-w/2),Math.round(y-h),w,h);
+ c.restore();return true;
+}
 
 /* Eight ordered phases per direction and character. Every rendered cell is
  * exactly 32x48 and is sampled from the corresponding resident's three
@@ -103,6 +117,7 @@ function frameFor(p,moving){
 function paint(c,p,x,y,opt={}){
  const id=p.id||p,index=indices[id],direction=dirs[p.direction]!==undefined?p.direction:(p.heading<0?'left':'right');
  const w=Math.round(opt.width||32),h=Math.round(opt.height||48),moving=opt.walking===true;
+ if(id==='cat'||id==='dog')return paintPet(c,p,x,y,{width:w,height:h,walking:moving});
  const beat=frameFor(p,moving),dir=dirs[direction];
  const custom=images[id],dirReady=isReady(custom)&&custom.naturalWidth===32*3&&custom.naturalHeight===48*4;
  const generatedReady=!!walkAtlas&&index!==undefined;
@@ -131,12 +146,8 @@ function paint(c,p,x,y,opt={}){
  c.restore();return true;
 }
 function drawPets(c,t){
- const pets=[{id:'cat',x:250+Math.sin(t*.25)*18,y:548+Math.cos(t*.25)*5},{id:'dog',x:448+Math.sin(t*.2)*18,y:545+Math.cos(t*.2)*5}];
- for(const pet of pets){
-  c.fillStyle=pet.id==='cat'?'#c89a6b':'#dbc5a0';const x=Math.round(pet.x),y=Math.round(pet.y);
-  c.fillRect(x-8,y-12,16,9);c.fillRect(x-4,y-19,9,8);
-  c.fillStyle='#453b37';c.fillRect(x+2,y-17,2,2);
- }
+ for(const pet of [{id:'cat',x:250+Math.sin(t*.25)*18,y:548+Math.cos(t*.25)*5,direction:Math.cos(t*.25)>=0?'right':'left',walkDistance:t*3.6},{id:'dog',x:448+Math.sin(t*.2)*18,y:545+Math.cos(t*.2)*5,direction:Math.cos(t*.2)>=0?'right':'left',walkDistance:t*3.2}])
+  paintPet(c,pet,Math.round(pet.x),Math.round(pet.y),{width:32,height:48,walking:true});
 }
 // This preview runs the same paint() renderer used in the village itself.
 function installWalkPreview(){
@@ -192,5 +203,5 @@ if(typeof document!=='undefined'){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installWalkPreview,{once:true});
  else installWalkPreview();
 }
-root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
+root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
 })(globalThis);

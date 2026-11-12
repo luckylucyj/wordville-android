@@ -177,19 +177,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Anchored_Gait_12Residents_v2.4.0.apk
+          cp release/wordville-debug.apk release/Wordville_Pet_Sprites_v2.5.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.4.0-anchored-gait"
-          ASSET="release/Wordville_Anchored_Gait_12Residents_v2.4.0.apk"
+          TAG="v2.5.0-pet-sprites"
+          ASSET="release/Wordville_Pet_Sprites_v2.5.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.4.0 - Anchored Eight-Frame Walk for 12 Residents" \
-              --notes "v2.4.0: All 12 residents have 8 pixel-accurate 32x48 walking frames in four directions (384 cells). Contact/down/passing/up cycle, alternate grounded foot, integer-pixel source foot alignment, opposite-arm source poses, and in-app 12-resident preview. The village and indoor venues share the gait renderer. Keeps original portraits, app identity, signing key, and learning records." \
+              --title "Wordville v2.5.0 - Cat and Dog Pixel Walk Sprites" \
+              --notes "v2.5.0: Reference-derived 4-direction 4-frame pixel sprites for cats and dogs; 32x48 fixed-ground rendering in village, world art and indoor venues. Preserves the resident animation, app identity and learning records." \
               --prerelease
           fi
