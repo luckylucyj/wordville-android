@@ -264,6 +264,8 @@ const assert = require('node:assert/strict');
   assert.equal(venueLayout.residentOverlap,false,JSON.stringify(venueLayout));
   assert.equal(venueLayout.outside,false,JSON.stringify(venueLayout));
   await page.locator('#wv-place-next').click();
+  assert.equal(await page.locator('#wv-place-name').innerText(),'수영장');
+  await page.locator('#wv-place-next').click();
   assert.equal(await page.locator('#wv-place-name').innerText(),'목장');
   await page.locator('#wv-place-filters [data-place-filter="leisure"]').click();
   assert.equal(await page.locator('#wv-place-rail .wv-place-chip').count(),2);
