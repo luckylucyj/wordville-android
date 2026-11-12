@@ -66,7 +66,7 @@ function frameFor(p,moving){
  if(!moving)return 0;
  const traveled=p.walkDistance;
  const distance=Number.isFinite(traveled)?traveled:Math.max(0,p.steps||0)*18;
- return Math.floor(Math.max(0,distance)/STEP_DISTANCE)%FRAME_COUNT;
+ return Math.floor((Math.max(0,distance)+1e-7)/STEP_DISTANCE)%FRAME_COUNT;
 }
 function paint(c,p,x,y,opt={}){
  const id=p.id||p,index=indices[id],direction=dirs[p.direction]!==undefined?p.direction:(p.heading<0?'left':'right');
