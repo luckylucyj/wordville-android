@@ -5,8 +5,8 @@ import '../app/src/main/assets/venue-config.js';
 const spec=globalThis.WordvilleVenueSpec;
 const ids=Object.keys(spec.SIZES);
 
-test('all 17 locations have a real tile collision map and usable entrance',()=>{
- assert.equal(ids.length,17);
+test('all 17 venues plus residents home have a real collision map and entrance',()=>{
+ assert.equal(ids.length,18);
  for(const id of ids){
   const m=spec.getMap(id);
   assert.equal(m.tiles.length,m.rows,id);
