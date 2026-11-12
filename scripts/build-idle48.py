@@ -22,8 +22,8 @@ DIRECTIONS = ["down", "down-right", "right", "up-right",
 SIZE = 48
 ANCHOR = (24, 43)
 # Neutral -> inhale -> small sway -> exhale. Both feet remain planted.
-POSTURES = [(0, 0), (0, -1), (1, -1), (-1, 0)]
-POSTURE_NAMES = ["neutral", "inhale", "sway", "exhale"]
+POSTURES = [(0, 0)] * 4
+POSTURE_NAMES = ["neutral"] * 4
 FOOT_CENTERS = (19, 29)
 PANT_HIP_Y = 33
 
@@ -59,9 +59,9 @@ def standing_pose(base, posture):
         hipx = 24 + sign * 3 + dx
         knee = 24 + sign * 4
         d.line([(hipx, PANT_HIP_Y+dy), (knee, 38),
-                (foot, 41)], fill=ink, width=6)
+                (foot, 41)], fill=ink, width=5)
         d.line([(hipx, PANT_HIP_Y+dy), (knee, 38),
-                (foot, 41)], fill=pants, width=4)
+                (foot, 41)], fill=pants, width=3)
         d.rectangle((foot-3, 41, foot+3, 43), fill=ink)
         d.line([(foot-2, 42), (foot+2, 42)], fill=shoes, width=1)
     # Preserve authentic source face, hair and clothing. Do not move shoes.
@@ -93,7 +93,7 @@ for resident in IDS:
                           "frame": k, "posture": POSTURE_NAMES[k],
                           "anchor": list(ANCHOR), "bbox": list(b),
                           "feet": [[x, ANCHOR[1]] for x in FOOT_CENTERS]})
-        assert len(set(hashes)) == len(POSTURES), (resident, direction, "duplicate idle posture")
+        assert len(set(hashes)) == 1, (resident, direction, "idle sprite must never move")
     atlas.save(OUT / (resident + ".png"), optimize=True)
 
 assert len(audit) == 12*8*4
@@ -103,7 +103,8 @@ assert len(audit) == 12*8*4
     "sheet_size": [SIZE*4, SIZE*8], "anchor": list(ANCHOR),
     "fps": 2.5, "postures": POSTURE_NAMES,
     "foot_centers": [[x, ANCHOR[1]] for x in FOOT_CENTERS],
-    "feet_fixed": True, "source": "walk48 first frame, with new neutral planted legs",
+    "feet_fixed": True, "no_sway": True, "frames_identical_per_direction": True, "center_x": 24, "center_y": 24,
+    "source": "walk48 first frame, with new neutral planted legs",
     "frames": audit
 }, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
-print("WORDVILLE_IDLE_PASS 12 residents x 8 directions x 4 poses = 384; 48px cell, y43 feet planted")
+print("WORDVILLE_IDLE_PASS: stationary 12 x 8 x 4; x=24 center, feet y43")
