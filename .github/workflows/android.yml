@@ -40,7 +40,7 @@ jobs:
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:
-          name: wordville-walk48-resident-sheets
+          name: wordville-8way6-unique-frame-resident-sheets
           path: app/src/main/assets/walk48/*.png
           if-no-files-found: error
           retention-days: 30
@@ -219,6 +219,6 @@ jobs:
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
               --title "Wordville v2.8.0 - 48px Eight-Direction Walking Sheets" \
-              --notes "v2.8.0: Creates 12 transparent 384x384 prebuilt resident sprite sheets (48x48 cells, eight directions, eight contact/down/passing/up phases, y=44 ground anchor). Loads frame cells directly rather than repeating three original poses. Uses identical resident hair/face pixels within each direction and preserves the original source art. Gallery preview and device test included. Four diagonal views are mechanically derived from cardinal artwork, not independent hand-painted diagonal art." \
+              --notes "v2.9.0: Twelve original Wordville residents have 8 directional walking cycles with 6 distinct frames per direction in 48x48 pixel cells (576 frames total), roughly 40 pixel-tall characters, foot baseline y=43, 8FPS. Contact/down/passing-up phases alternate support legs; arms counter-swing. Three opposite directions are mirrored. Diagonal orientations and motion are derived by pixel-level processing of intact original character art, not individually hand-drawn. Preserves original images, pets, vocabulary and app identity." \
               --prerelease
           fi

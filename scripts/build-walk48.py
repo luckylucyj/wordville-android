@@ -1,137 +1,140 @@
-"""Build transparent 48x48/8-direction/8-frame walk sheets for every resident.
-Keeps each resident's original hair, face and garment pixels in the upper body.
-Synthesizes alternating grounded lower limbs and opposite-swing cuffs.
+#!/usr/bin/env python3
+"""Wordville: generate 12 separate 288x384 sheets, 8 directions x 6 NEW poses.
+Native frame 48x48, original character height ~40px, foot anchor y=43.
+No screenshot cell cropping. Original source faces/hair and clothing are kept;
+new arm and leg poses are pixel-art transformations of intact original bodies.
 """
 from pathlib import Path
-from PIL import Image, ImageDraw
-from collections import Counter
-import hashlib
-
-ROOT=Path(__file__).resolve().parents[1]/'app/src/main/assets'
-INPUT=ROOT/'portraits/wordville-reference-walk.png'
-OUT=ROOT/'walk48'
-NAMES=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily']
-DIRECTIONS=['down','down-right','right','up-right','up','up-left','left','down-left']
-POSES=['contact','down','passing','up']*2
-CELL=48
-GROUND_Y=44
-TARGET_H=40
-POSE_INPUT=(0,0,0,0,0,0,0,0)
-SOURCE_DIR=(0,1,1,3,3,3,2,2)
-
-def dominant(im, lo, hi, default):
-    pixels=[]
-    for y in range(max(0,lo),min(im.height,hi)):
-        for x in range(im.width):
-            r,g,b,a=im.getpixel((x,y))
-            if a>=192:pixels.append((r,g,b,255))
-    return Counter(pixels).most_common(1)[0][0] if pixels else default
-
-def normalize(im):
-    box=im.getchannel('A').getbbox()
-    if box is None:raise ValueError('Source pose has no nontransparent pixels')
-    im=im.crop(box)
-    w=min(40,max(1,round(im.width*TARGET_H/im.height)))
-    return im.resize((w,TARGET_H),Image.Resampling.NEAREST)
-
-def author_frame(src, row, direction, frame):
-    k=frame%4
-    active=0 if frame<4 else 1
-    base_index=SOURCE_DIR[direction]
-    pose=POSE_INPUT[frame]
-    cut=src.crop(((base_index*3+pose)*32,row*48,
-                  (base_index*3+pose+1)*32,(row+1)*48))
-    shape=normalize(cut)
-    out=Image.new('RGBA',(CELL,CELL))
-    ytop=GROUND_Y-TARGET_H+1  # top 5, ground 44
-    # down/up bob affects upper body only, planted sole never moves.
-    bob=(0,1,0,-1)[k]
-    xcenter=24
-    xpos=xcenter-shape.width//2
-    raw=Image.new('RGBA',(CELL,CELL))
-    raw.alpha_composite(shape,(xpos,ytop+bob))
-    # Source atlas has only four cardinal directions. Diagonals use an
-    # authored two-pixel upper-body shear; these are derived, not painted
-    # from independent 3/4-view references.
-    if direction in (1,3,5,7):
-        shear=Image.new('RGBA',(CELL,CELL))
-        for y in range(0,36):
-            shift=1 if y<21 else -1
-            if direction in (5,7):shift=-shift
-            for x in range(CELL):
-                col=raw.getpixel((x,y))
-                if col[3]:shear.putpixel((x+shift,y),col)
-        raw.paste((0,0,0,0),(0,0,CELL,36))
-        raw.alpha_composite(shear)
-    hip=34
-    # Remove existing leg pixels, retain original face, hair, torso and coat.
-    d=ImageDraw.Draw(raw)
-    d.rectangle((0,hip,CELL-1,CELL-1),fill=(0,0,0,0))
-    # Strip original static hanging arms; authored arms below move in counterphase.
-    d.rectangle((0,22+bob,18,hip-1),fill=(0,0,0,0))
-    d.rectangle((30,22+bob,CELL-1,hip-1),fill=(0,0,0,0))
-    out.alpha_composite(raw)
-    # Colors sourced from this resident's original clothing/boots.
-    pants=dominant(shape,shape.height*3//4,shape.height*9//10,(57,67,88,255))
-    boots=dominant(shape,shape.height*9//10,shape.height,(59,42,46,255))
-    sleeve=dominant(shape,shape.height//2,shape.height*3//4,(93,107,121,255))
-    SKINS=((237,190,152,255),(209,155,120,255),(240,200,162,255),(185,128,94,255))
-    skin=SKINS[row%4]
-    ink=(35,36,45,255)
-    d=ImageDraw.Draw(out)
-    # Two separately articulated legs, half-cycle swaps the lead foot.
-    # Contact -> Down -> Passing -> Up then opposite foot contacts.
-    stance_x=[-3,3][active]
-    swing_x=-stance_x
-    step=(6,3,0,4)[k]
-    rise=(0,0,2,3)[k]
-    forward=1 if direction in (1,2,3) else (-1 if direction in (5,6,7) else 0)
-    # Side walking has larger horizontal stride; front/back has foot split.
-    for leg,planted in ((1-active,False),(active,True)):
-        side=(-3 if leg==0 else 3)
-        offset=step*(1 if planted else -1)
-        fx=24+side+(forward*offset if forward else offset//3)
-        # stationary support always ends on same y=44
-        fy=GROUND_Y if planted else GROUND_Y-rise
-        hx=24+side
-        bend=(fx+hx)//2 + (1 if k==1 else (-1 if k==3 else 0))
-        d.line([(hx,32+bob),(bend,38),(fx,fy-1)],fill=ink,width=5)
-        d.line([(hx,32+bob),(bend,38),(fx,fy-2)],fill=pants,width=3)
-        d.rectangle((fx-3,fy-2,fx+3,fy),fill=ink)
-        d.rectangle((fx-2,fy-2,fx+2,fy-1),fill=boots)
-    # Hand position is the reverse phase of that side's leg.
-    arm=(3,1,-2,-4,-3,-1,2,4)[frame]
-    for side in (-1,1):
-        shoulder=24+side*7
-        cuffx=shoulder+side*2+round(arm*side/3)
-        yhand=29+bob+round(arm*side/4)
-        d.line([(shoulder,23+bob),(cuffx,yhand)],fill=ink,width=5)
-        d.line([(shoulder,23+bob),(cuffx,yhand-1)],fill=sleeve,width=3)
-        d.rectangle((cuffx-1,yhand,cuffx+1,yhand+2),fill=skin)
-    # Preserve fixed foot anchor, transparent padding and art size.
-    box=out.getchannel('A').getbbox()
-    assert box and box[0]>=0 and box[2]<=48 and box[3]==45,(row,direction,frame,box)
-    assert 3<=box[1]<=8,(row,direction,frame,box)
-    return out
-
-def main():
-    src=Image.open(INPUT).convert('RGBA')
-    assert src.size==(384,576),src.size
-    OUT.mkdir(parents=True,exist_ok=True)
-    count=0
-    for row,name in enumerate(NAMES):
-        sheet=Image.new('RGBA',(CELL*8,CELL*8))
-        for direction in range(8):
-            signatures=[]
-            for frame in range(8):
-                cell=author_frame(src,row,direction,frame)
-                signatures.append(hashlib.sha256(cell.tobytes()).hexdigest())
-                sheet.alpha_composite(cell,(frame*CELL,direction*CELL))
-                count+=1
-            assert len(set(signatures))==8,(name,direction,'walk motion contains a duplicate pose')
-        filename=OUT/(name+'.png')
-        sheet.save(filename,optimize=True)
-        assert Image.open(filename).size==(384,384)
-    print('walk48 PASS',len(NAMES),'residents',count,'cells; 48x48, 8 directions, 8 frames, ground y=44')
-
-if __name__=='__main__':main()
+from PIL import Image
+import hashlib, json
+ASSETS=Path(__file__).resolve().parents[1]/'app/src/main/assets'
+OUT=ASSETS/'walk48';OUT.mkdir(parents=True,exist_ok=True)
+IDS=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily']
+DIRS=['down','down-right','right','up-right','up','up-left','left','down-left']
+MIRROR={'up-left':'up-right','left':'right','down-left':'down-right'}
+SOURCE={'down':'down','down-right':'down','right':'right','up-right':'right','up':'up'}
+GAIT=[
+ ('contact-left',(-2,2),(0,0),0,(2,-2)),
+ ('down-left',(-1,1),(0,1),1,(1,-1)),
+ ('passing-up-left',(1,-1),(0,2),-1,(-1,1)),
+ ('contact-right',(2,-2),(0,0),0,(-2,2)),
+ ('down-right',(1,-1),(1,0),1,(-1,1)),
+ ('passing-up-right',(-1,1),(2,0),-1,(1,-1))
+]
+HI=Image.open(ASSETS/'portraits/wordville-walk-4phase.png').convert('RGBA')
+BACK=Image.open(ASSETS/'portraits/wordville-reference-walk.png').convert('RGBA')
+assert HI.size==(2560,768) and BACK.size==(384,576)
+def bbox(im):
+ return im.getchannel('A').point(lambda a:255 if a>=140 else 0).getbbox()
+def scaled(im,scale):
+ b=bbox(im)
+ if not b:raise ValueError('empty source')
+ crop=im.crop(b)
+ w=max(1,round(crop.width*scale));h=max(1,round(crop.height*scale))
+ assert w<=43 and h<=40,(w,h)
+ out=Image.new('RGBA',(48,48))
+ out.alpha_composite(crop.resize((w,h),Image.Resampling.NEAREST),((48-w)//2,44-h))
+ return out
+def character_sources(i):
+ row,col=divmod(i,4)
+ a=HI.crop((col*4*160,row*256,(col*4+1)*160,(row+1)*256))
+ b=HI.crop(((col*4+1)*160,row*256,(col*4+2)*160,(row+1)*256))
+ rear=BACK.crop((9*32,i*48,10*32,(i+1)*48))
+ boxes=[bbox(a),bbox(b)]
+ scale=min(40/max(q[3]-q[1] for q in boxes),43/max(q[2]-q[0] for q in boxes))
+ rb=bbox(rear)
+ scale_back=min(40/(rb[3]-rb[1]),43/(rb[2]-rb[0]))
+ return {'down':scaled(a,scale),'right':scaled(b,scale),'up':scaled(rear,scale_back)}
+def waist_center(im,hip):
+ cols=[x for y in range(max(0,hip-4),hip+1) for x in range(48) if im.getpixel((x,y))[3]>140]
+ return round(sum(cols)/len(cols)) if cols else 24
+def animate(im,k):
+ name,moves,lifts,bob,arms=GAIT[k]
+ bounds=bbox(im)
+ if not bounds:raise ValueError('empty animation base')
+ l,t,r,b=bounds
+ hip=max(t+15,min(36,t+round((b-t)*.76)))
+ mid=waist_center(im,hip)
+ upper=Image.new('RGBA',(48,48));lower=Image.new('RGBA',(48,48))
+ source=im.load();up=upper.load();low=lower.load()
+ for y in range(48):
+  for x in range(48):
+   if y<=hip+1:up[x,y]=source[x,y]
+   if y>=hip-1:low[x,y]=source[x,y]
+ result=Image.new('RGBA',(48,48))
+ result.alpha_composite(upper,(0,bob))
+ arm_start=max(t+20,hip-9);arm_end=hip-1
+ if arm_start<arm_end:
+  for side,(lo,hi) in enumerate(((max(0,l-1),max(0,mid-6)),(min(48,mid+6),min(48,r+1)))):
+   for y in range(arm_start,arm_end+1):
+    for x in range(lo,hi):
+     p=source[x,y]
+     if p[3]<=100:continue
+     delta=round(arms[side]*(y-arm_start+1)/(arm_end-arm_start+1))
+     nx=max(0,min(47,x+delta));ny=y+bob
+     if 0<=ny<48:result.putpixel((nx,ny),p)
+ for leg in (0,1):
+  lo,hi=(0,mid+1) if leg==0 else (mid,48)
+  for y in range(hip-1,44):
+   t=(y-hip+1)/max(1,44-hip+1)
+   dx=round(moves[leg]*t);dy=-round(lifts[leg]*t)
+   for x in range(lo,hi):
+    p=low[x,y]
+    if p[3]==0:continue
+    xx=x+dx;yy=y+dy
+    if 0<=xx<48 and 0<=yy<48:result.putpixel((xx,yy),p)
+ for y in range(hip-1,hip+3):
+  for x in range(max(0,mid-4),min(48,mid+5)):
+   p=source[x,y];yy=y+bob
+   if p[3] and 0<=yy<48:result.putpixel((x,yy),p)
+ return result
+def directional(src,di,k):
+ im=src[SOURCE[di]]
+ if di in ('down-right','up-right'):
+  sheared=Image.new('RGBA',(48,48))
+  for y in range(48):
+   shift=(0 if y<18 else 1 if y<31 else 2) if di=='down-right' else (-1 if y<20 else 0 if y<31 else 1)
+   sheared.alpha_composite(im.crop((0,y,48,y+1)),(shift,y))
+  im=sheared
+ return animate(im,k)
+def main_fraction(im):
+ pix=im.load();visited=set();components=[]
+ for y in range(48):
+  for x in range(48):
+   if (x,y) in visited or pix[x,y][3]<=160:continue
+   visited.add((x,y));stack=[(x,y)];size=0
+   while stack:
+    xx,yy=stack.pop();size+=1
+    for a,b in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+     if 0<=a<48 and 0<=b<48 and (a,b) not in visited and pix[a,b][3]>160:
+      visited.add((a,b));stack.append((a,b))
+   components.append(size)
+ return max(components)/sum(components) if components else 0
+audit=[]
+for i,id in enumerate(IDS):
+ src=character_sources(i);sheet=Image.new('RGBA',(288,384))
+ for d,di in enumerate(DIRS):
+  frame_hashes=[]
+  for f in range(6):
+   im=directional(src,MIRROR[di],f).transpose(Image.Transpose.FLIP_LEFT_RIGHT) if di in MIRROR else directional(src,di,f)
+   b=bbox(im)
+   assert b and b[0]>=1 and b[1]>=1 and b[2]<=47 and b[3]<=47,(id,di,f,'clipped',b)
+   assert b[3]-1==43,(id,di,f,'anchor',b)
+   assert 37<=b[3]-b[1]<=42,(id,di,f,'height',b)
+   connected=main_fraction(im)
+   assert connected>=.85,(id,di,f,'disconnected',connected)
+   h=hashlib.sha256(im.tobytes()).hexdigest();frame_hashes.append(h)
+   sheet.alpha_composite(im,(f*48,d*48))
+   audit.append({'character':id,'direction':di,'frame':f+1,'height':b[3]-b[1],'anchor':43,'connected_fraction':round(connected,4)})
+  assert len(set(frame_hashes))==6,(id,di,'duplicate frames')
+ sheet.save(OUT/(id+'.png'),optimize=True)
+ assert Image.open(OUT/(id+'.png')).size==(288,384)
+assert len(audit)==576
+(OUT/'audit.json').write_text(json.dumps({
+ 'resident_count':12,'direction_count':8,'frames_per_direction':6,'total_frames':576,
+ 'cell_size':[48,48],'sheet_size':[288,384],'foot_anchor_y':43,'fps':8,
+ 'unique_per_direction':6,'mirrored_directions':['up-left','left','down-left'],
+ 'phases':['contact-left','down-left','passing-up-left','contact-right','down-right','passing-up-right'],
+ 'limitations':'New motions are procedural pixel edits to original whole bodies; diagonals are adapted from cardinal source views rather than individually hand-drawn.',
+ 'frame_stats':audit},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+print('WORDVILLE_GAIT_PASS 12 residents x 8 directions x 6 new frames = 576; 48px cell, y43 anchor')
