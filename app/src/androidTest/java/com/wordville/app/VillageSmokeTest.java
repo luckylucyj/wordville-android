@@ -96,7 +96,7 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"WordvillePlaces.pick('bookstore');WordvillePlaces.active==='bookstore'"));
 
   assertEquals("true",eval(web,"(function(){var a=WordvilleVenueRuntime.actors[0],q=WordvilleVenueSpec.nearest('bookstore',1,1);return WordvilleVenueRuntime.moveTo(a,q.x,q.y)&&a.route.length>0&&a.route.every(t=>!WordvilleVenueSpec.isBlocked('bookstore',t.x,t.y));})()"));
-  assertEquals("true",eval(web,"WordvillePlaces.show('map');document.getElementById('wv-places-view').hidden"));
+  assertEquals("true",eval(web,"WordvilleShell.activate('town');document.getElementById('wv-map-view').hidden===false&&document.getElementById('wv-places-view').hidden"));
 
   assertEquals("true",eval(web,"VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))"));
   assertEquals("true",eval(web,"VillageModel.isStairEdge(7,8)&&VillageModel.isStairEdge(8,9)"));
