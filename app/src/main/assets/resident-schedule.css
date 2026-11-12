@@ -1,0 +1,23 @@
+/* Compact, touch-friendly resident clock and daily-schedule editor. */
+.wv-resident-schedule{margin:12px 0;border:2px solid #92795b;border-radius:12px;padding:10px;background:#f7edda;color:#45382e}
+.wv-resident-schedule summary{font-weight:800;cursor:pointer;min-height:36px;line-height:36px}
+.wv-schedule-head{display:flex;flex-wrap:wrap;gap:10px;align-items:end;justify-content:space-between}
+.wv-schedule-head label,.wv-schedule-editor label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700}
+.wv-schedule-head select,.wv-schedule-editor select,.wv-schedule-editor input{font:inherit;min-height:38px;border:1px solid #aa9475;border-radius:7px;background:#fffdfa;color:#382c25;padding:6px}
+.wv-schedule-head select{min-width:135px}
+.wv-schedule-help{margin:8px 0;color:#665444;font-size:12px}
+.wv-schedule-rows{max-height:325px;overflow-y:auto;overscroll-behavior:contain;border:1px solid #c6ae8d;border-radius:9px}
+.wv-schedule-row{display:grid;grid-template-columns:86px 1fr auto;gap:6px;align-items:center;padding:7px 9px;border-bottom:1px solid #e7d9bf;font-size:12px;min-height:42px}
+.wv-schedule-row:last-child{border-bottom:0}
+.wv-schedule-row:nth-child(even){background:#fff7e9}
+.wv-schedule-row[data-current="true"]{box-shadow:inset 4px 0 #4c8f69;background:#e6f1df}
+.wv-schedule-row .when{font-variant-numeric:tabular-nums;font-weight:800}
+.wv-schedule-row .what{display:block;min-width:0;overflow-wrap:anywhere}
+.wv-schedule-row .what strong{font-weight:800;margin-right:5px}
+.wv-schedule-row button,.wv-schedule-actions button{padding:6px 8px;min-height:34px;background:#efe0c5;color:#49362b;border:1px solid #9e805a;border-radius:7px;cursor:pointer}
+.wv-schedule-editor{margin-top:12px;border-top:1px solid #c8b393;padding-top:10px;display:grid;gap:8px}
+.wv-schedule-editor[hidden]{display:none}
+.wv-schedule-actions{display:flex;flex-wrap:wrap;gap:6px}
+#wv-sched-status{min-height:18px;font-size:12px;margin:7px 0}
+#wv-sched-now{font-size:12px;color:#5c6247;font-weight:700}
+@media(max-width:420px){.wv-schedule-row{grid-template-columns:73px minmax(0,1fr) 42px;padding:6px;gap:4px}.wv-schedule-row button{padding:4px}.wv-schedule-head select{min-width:100px}}
