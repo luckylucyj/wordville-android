@@ -186,3 +186,15 @@ test('editing any one hour updates the timetable and can be restored without cha
  assert.throws(()=>S.setHour(id,8,'invalid','잠자기'));
  assert.throws(()=>S.setHour(id,8,'home',''));
 });
+
+test('every indoor and outdoor venue has a meaningful three-phase action cycle',()=>{
+ for(const [place] of Object.entries(S.PLACE_NAMES)){
+  const phases=S.behaviorStages(place,'주민 활동');
+  assert.equal(phases.length,3,place);
+  assert.ok(phases.every(p=>typeof p==='string'&&p.length>=2),place);
+  assert.ok(phases[1]==='주민 활동',place+' retains the resident-specific assigned action');
+ }
+ assert.deepEqual(S.behaviorStages('home','잠자기'),['잠자기','잠자기','잠자기']);
+ assert.deepEqual(S.behaviorStages('home','취침 준비'),['잠자기','잠자기','잠자기']);
+ assert.ok(S.behaviorStages('clinic','환자 진료').includes('환자 진료'));
+});
