@@ -213,20 +213,20 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Residents_Routines_Location_DayStudy_v2.9.6.apk
+          cp release/wordville-debug.apk release/Wordville_Pixel_Maps_All_Venues_v2.9.7.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.9.6-resident-routines-location-study"
-          ASSET="release/Wordville_Residents_Routines_Location_DayStudy_v2.9.6.apk"
+          TAG="v2.9.7-pixel-maps-all-venues"
+          ASSET="release/Wordville_Pixel_Maps_All_Venues_v2.9.7.apk"
           test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.9.6 - Scheduled Resident Behaviors, Portrait Location Links and Day/PDF Learning" \
-              --notes "v2.9.6: Complete hourly 24-hour schedules for all 12 characters, editable on device; room behaviors and furniture routines for 17 venues plus homes; tapping resident portraits navigates to their current indoor room or outdoor position; resident learning now allows any selected Day, 60-word page, original PDF page and word rather than a fixed assigned word. Corrected diagonal face-source orientation and stripped old rear-leg pixels that caused apparent eight-shaped gait; fixed NPC face and foot directions share movement vector. 48x48 8-direction sprites retain y43 floor anchor. Existing app signing certificate and stored vocabulary progress unchanged. Unit, browser and Android emulator smoke tests." \
+              --title "Wordville v2.9.7 - Unified Pixel Art Maps for All 18 Destinations" \
+              --notes "v2.9.7: Unified original pixel art for town and all 17 public venues plus residents home, crisp nearest-neighbor canvas drawing, furniture aligned to authored collision fixtures, sunrise/day/sunset/night colors and clear/cloudy/overcast/rain previews. Prior v2.9.6 resident schedules, portraits, vocabulary, walking sprites, persistent app signature and learning data are retained. Automated JavaScript, mobile browser, and Android emulator tests." \
               --prerelease
           fi
