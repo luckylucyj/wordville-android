@@ -358,6 +358,8 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvillePlaces.active),'clinic');
   assert.equal(await page.evaluate(()=>WordvilleVenueRuntime.focusedResident),'harvey');
   assert.ok(await page.evaluate(()=>WordvilleVenueRuntime.actors.some(a=>a.id==='harvey')));
+  assert.deepEqual(await page.evaluate(()=>WordvilleVenueRuntime.actors.filter(a=>!a.player).map(a=>a.id)),['harvey']);
+  assert.equal(await page.locator('#wv-place-name').innerText(),'하비의 집');
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
   await page.locator('[data-person="sam"] .wv-portrait').click();
   assert.equal(await page.evaluate(()=>WordvilleShell.screen),'town');
