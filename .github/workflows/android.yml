@@ -213,20 +213,20 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Walk48_NaturalGait_8by8_v2.9.2.apk
+          cp release/wordville-debug.apk release/Wordville_Centered_StaticIdle_NoCross_v2.9.3.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.9.2-natural-gait-8by8"
-          ASSET="release/Wordville_Walk48_NaturalGait_8by8_v2.9.2.apk"
+          TAG="v2.9.3-centered-static-nocross"
+          ASSET="release/Wordville_Centered_StaticIdle_NoCross_v2.9.3.apk"
           test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.9.2 - 48px Natural Gait 8 Directions x 8 Frames" \
-              --notes "v2.9.2: 12 residents, each with 8 directions and 8 walking phases: left contact/down/passing/up then right contact/down/passing/up. 768 48x48 cells in total, fixed y=43 foot anchor, chunky legs using source-palette pixels, moving opposing arms, and traveled-distance synchronized playback to reduce foot sliding. Idle 4-phase sheets remain separate. Existing original faces and data preserved; diagonal views remain cardinal-source adaptations." \
+              --title "Wordville v2.9.3 - Centered 48px Sprites, Stable Idle and Non-Crossing Gait" \
+              --notes "v2.9.3: Fixes unstable standing and X-shaped legs. All 12 residents are anchored to x=24 vertical sprite centerline, 48x48 cells and foot line y=43. Idle remains completely motionless, while walking uses 8 distinct, non-crossing lane-based frames in 8 directions. Tested with sprite generator audits, Android WebView browser tests and emulator instrumentation. Original face, clothing and learning data preserved. Diagonal views are still adapted from cardinal source art." \
               --prerelease
           fi
