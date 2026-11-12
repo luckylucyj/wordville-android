@@ -1,0 +1,29 @@
+/* Mobile-first venue vocabulary chooser, separate from the Residents picker. */
+#wv-venue-study[hidden],#wv-vstudy-practice[hidden],#wv-vstudy-example-text[hidden]{display:none!important}
+.wv-venue-study{
+ margin:16px 0 34px;padding:16px;
+ background:#fff5dc;color:#543b2d;
+ border:4px solid #99704e;box-shadow:5px 5px 0 #563e2e;
+ box-sizing:border-box;max-width:100%;
+}
+.wv-venue-study h3{font-size:20px;margin:0 0 8px;color:#523d2a}
+.wv-venue-study>p{line-height:1.55;margin:6px 0 12px}
+.wv-vstudy-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.wv-vstudy-fields label,.wv-vstudy-practice label{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:13px;min-width:0}
+.wv-vstudy-fields select,.wv-vstudy-fields input,.wv-vstudy-practice textarea{
+ box-sizing:border-box;min-width:0;width:100%;height:auto;min-height:44px;
+ padding:8px 9px;background:#fffefa;color:#3f352e;
+ border:2px solid #9c8062;border-radius:5px;font-size:16px;
+}
+.wv-vstudy-practice textarea{min-height:90px;resize:vertical}
+.wv-vstudy-fields option{font-size:14px}
+.wv-vstudy-actions{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0}
+.wv-vstudy-actions button{min-height:45px;flex:1 1 135px;padding:9px 12px;border:2px solid #876a4b;border-radius:4px;background:#f7e3be;color:#4c3e31;font-weight:700}
+.wv-vstudy-actions button.primary{background:#527b59;color:#fff;border-color:#3a6044}
+.wv-vstudy-actions button:disabled{opacity:.5}
+.wv-vstudy-practice{padding:14px;background:#f9ebd5;border:2px solid #b79a76;margin-top:13px}
+.wv-vstudy-practice h4{font-size:18px;margin:0 0 8px}
+#wv-vstudy-prompt{font-size:17px;line-height:1.55;white-space:pre-line;color:#294e43;font-weight:700}
+#wv-vstudy-example-text{background:#ecf3df;padding:10px;line-height:1.5}
+.wv-vstudy-note{font-size:12px;line-height:1.45;color:#69594a}
+@media(max-width:480px){.wv-venue-study{margin:11px 1px 28px;padding:12px}.wv-vstudy-fields{grid-template-columns:minmax(0,1fr)}}
