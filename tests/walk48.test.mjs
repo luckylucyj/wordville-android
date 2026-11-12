@@ -44,6 +44,7 @@ test('directions include diagonals and mirrors',()=>{
 test('feet never cross the body centerline in any walk pose',()=>{
  const report=JSON.parse(readFileSync(new URL('../app/src/main/assets/walk48/audit.json',import.meta.url),'utf8'));
  assert.equal(report.no_crossing_feet,true);
+ assert.equal(report.no_lateral_figure_eight,true);
  assert.equal(report.body_center_x,24);
  assert.equal(report.vertical_center_y,24);
  assert.equal(report.foot_anchor_y,43);
@@ -54,6 +55,7 @@ test('feet never cross the body centerline in any walk pose',()=>{
    const [left,right]=lane[i];
    assert.ok(left[0]<right[0],'left foot must stay left of right');
    assert.equal((i<4?left:right)[1],43,'stance foot must be planted');
+   if(i>0){assert.equal(left[0],lane[0][0][0]);assert.equal(right[0],lane[0][1][0]);}
   }
  }
  for(const frame of report.frame_stats){
@@ -62,4 +64,22 @@ test('feet never cross the body centerline in any walk pose',()=>{
   assert.ok(Math.abs((y1+y2-1)/2-24)<=3);
   assert.equal(y2,44);
  }
+});
+
+test('face source and lower-body gait agree for all eight directions',()=>{
+ const report=JSON.parse(readFileSync(new URL('../app/src/main/assets/walk48/audit.json',import.meta.url),'utf8'));
+ const mirrored={'up-left':'up-right',left:'right','down-left':'down-right'};
+ const expectedSource={down:'down','down-right':'down',right:'right','up-right':'up',up:'up'};
+ const expectedAxis={down:'front','down-right':'front',right:'side','up-right':'front',up:'front'};
+ for(const frame of report.frame_stats){
+  const orientation=mirrored[frame.direction]||frame.direction;
+  assert.equal(frame.face_source,expectedSource[orientation]);
+  assert.equal(frame.leg_axis,expectedAxis[orientation]);
+ }
+ assert.equal(report.frame_stats.length,768);
+});
+test('one direction determines the head, torso and shoe atlas row',()=>{
+ assert.equal(W.directionForSprite({direction:'up',movementDirection:'down-right'},true),'down-right');
+ assert.equal(W.directionForSprite({direction:'up',movementDirection:'down-right'},false),'up');
+ assert.equal(W.walk48Cell('alex',W.directionForSprite({direction:'up',movementDirection:'down-right'},true),0).y,48);
 });

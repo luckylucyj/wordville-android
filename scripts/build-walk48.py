@@ -12,20 +12,25 @@ OUT=ASSETS/'walk48';OUT.mkdir(parents=True,exist_ok=True)
 IDS=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily']
 DIRS=['down','down-right','right','up-right','up','up-left','left','down-left']
 MIRROR={'up-left':'up-right','left':'right','down-left':'down-right'}
-SOURCE={'down':'down','down-right':'down','right':'right','up-right':'up','up':'up'}
-# The sprite's vertical centerline is x=24. All poses keep heads fixed.
-# Two independent foot lanes; the left foot never crosses right.
-FRONT=[((19,43),(29,42)),((19,43),(29,41)),((21,43),(27,40)),((20,43),(28,41)),
-       ((19,42),(29,43)),((19,41),(29,43)),((21,40),(27,43)),((20,41),(28,43))]
-SIDE=[((23,43),(30,42)),((23,43),(29,41)),((24,43),(27,40)),((24,43),(28,41)),
-      ((19,42),(26,43)),((20,41),(26,43)),((22,40),(26,43)),((21,41),(26,43))]
-SUPPORT=['left']*4+['right']*4
+# Stable vertical symmetry axis x=24 in each 48x48 cell; floor y=43.
+# A diagonal may not combine a front/rear face with side-facing feet.
+FACE_SOURCE={'down':'down','down-right':'down','right':'right',
+             'up-right':'up','up':'up'}
+LEG_AXIS={'down':'front','down-right':'front','right':'side',
+          'up-right':'front','up':'front'}
+# Fixed foot x-lanes, no figure-eight paths or crossovers.
+FRONT=[((20,43),(28,43)),((20,43),(28,42)),((20,43),(28,41)),((20,43),(28,42)),
+       ((20,43),(28,43)),((20,42),(28,43)),((20,41),(28,43)),((20,42),(28,43))]
+SIDE=[((22,43),(28,43)),((22,43),(28,42)),((22,43),(28,41)),((22,43),(28,42)),
+      ((22,43),(28,43)),((22,42),(28,43)),((22,41),(28,43)),((22,42),(28,43))]
 ARM_SWING=[(-1,1),(-1,1),(0,0),(1,-1),(1,-1),(1,-1),(0,0),(-1,1)]
 PHASE_NAMES=['contact-left','down-left','passing-left','up-left',
              'contact-right','down-right','passing-right','up-right']
 assert all(a[0]<b[0] for data in (FRONT,SIDE) for a,b in data)
 assert all(feet[0 if k<4 else 1][1]==43
            for data in (FRONT,SIDE) for k,feet in enumerate(data))
+assert all(len({pair[side][0] for pair in data})==1
+           for data in (FRONT,SIDE) for side in (0,1))
 HI=Image.open(ASSETS/'portraits/wordville-walk-4phase.png').convert('RGBA')
 BACK=Image.open(ASSETS/'portraits/wordville-reference-walk.png').convert('RGBA')
 assert HI.size==(2560,768) and BACK.size==(384,576)
@@ -70,9 +75,9 @@ def animate(im,k,direction):
  if not bounds:raise ValueError('source blank')
  left,top,right,bottom=bounds
  hip=max(31,min(34,top+round((bottom-top)*.74)))
- front=direction in ('down','up')
+ front=LEG_AXIS[direction]=='front'
  points=(FRONT if front else SIDE)[k]
- roots=(21,27) if front else (22,26)
+ roots=(21,27) if front else (22,27)
  pants,shoes,ink=select_original_palette(im,24,hip)
  from PIL import ImageDraw
  out=Image.new('RGBA',(48,48))
@@ -89,8 +94,15 @@ def animate(im,k,direction):
   spine=[(hx,hip),(knee_x,knee_y),(fx,fy-2)]
   draw.line(spine,fill=ink,width=5,joint='curve')
   draw.line(spine,fill=pants,width=3,joint='curve')
-  draw.rectangle((fx-3,fy-2,fx+2,fy),fill=ink)
-  draw.line((fx-2,fy-2,fx+1,fy-2),fill=shoes,width=1)
+  # Shoes rotate their toes 0-2 pixels *within the fixed foot lane*.
+  # Contact pose 0 vs 4 and repeated down/up heights stay visibly distinct
+  # even if this character's original sleeves contain no movable pixels.
+  support_leg=0 if k<4 else 1
+  toe=2 if leg==support_leg else 1
+  if k%4==1 and leg!=support_leg:toe+=1
+  if k%4==3 and leg!=support_leg:toe-=1
+  draw.rectangle((fx-3,fy-2,fx+toe,fy),fill=ink)
+  draw.line((fx-2,fy-2,fx+min(1,toe),fy-2),fill=shoes,width=1)
  out.alpha_composite(im.crop((0,0,48,hip+3)),(0,0))
  # Counter-swing only the outermost sleeve pixels; shoulders remain still.
  original=im.load()
@@ -110,13 +122,15 @@ def animate(im,k,direction):
  return out
 
 def directional(src,di,k):
- im=src[SOURCE[di]]
+ # Draw face/body/feet using a single coherent cardinal-source viewpoint.
+ # A slight upper-body turn for diagonals stays identical in all 8 frames.
+ im=src[FACE_SOURCE[di]]
  if di in ('down-right','up-right'):
-  sheared=Image.new('RGBA',(48,48))
+  slanted=Image.new('RGBA',(48,48))
   for y in range(48):
-   shift=(0 if y<19 else 1 if y<31 else 0)
-   sheared.alpha_composite(im.crop((0,y,48,y+1)),(shift,y))
-  im=sheared
+   dx=1 if 12<=y<32 else 0
+   slanted.alpha_composite(im.crop((0,y,48,y+1)),(dx,y))
+  im=slanted
  return animate(im,k,di)
 def main_fraction(im):
  pix=im.load();visited=set();components=[]
@@ -136,7 +150,7 @@ for i,id in enumerate(IDS):
  src=character_sources(i);sheet=Image.new('RGBA',(384,384))
  for d,di in enumerate(DIRS):
   frame_hashes=[]
-  base=src[SOURCE[MIRROR.get(di,di)]]
+  base=src[FACE_SOURCE[MIRROR.get(di,di)]]
   head=bbox(base.crop((0,0,48,20)))
   assert head and abs((head[0]+head[2]-1)/2-24)<=3,(id,di,'head center',head)
   for f in range(8):
@@ -150,7 +164,7 @@ for i,id in enumerate(IDS):
    h=hashlib.sha256(im.tobytes()).hexdigest();frame_hashes.append(h)
    sheet.alpha_composite(im,(f*48,d*48))
    audit.append({'character':id,'direction':di,'frame':f+1,'phase':PHASE_NAMES[f],
-                 'bbox':b,'center_x':24,'center_y':24,'anchor':43,'connected_fraction':round(connected,4)})
+                 'bbox':b,'center_x':24,'center_y':24,'anchor':43,'face_source':FACE_SOURCE[MIRROR.get(di,di)],'leg_axis':LEG_AXIS[MIRROR.get(di,di)],'connected_fraction':round(connected,4)})
   assert len(set(frame_hashes))==8,(id,di,'duplicate frames')
  sheet.save(OUT/(id+'.png'),optimize=True)
  assert Image.open(OUT/(id+'.png')).size==(384,384)
@@ -161,6 +175,7 @@ assert len(audit)==768
  'foot_anchor_y':43,'fps':8,'unique_per_direction':8,'no_crossing_feet':True,
  'mirrored_directions':['up-left','left','down-left'],'phases':PHASE_NAMES,
  'front_foot_points':FRONT,'side_foot_points':SIDE,'arm_swing':ARM_SWING,
- 'limitations':'Diagonal artwork adapts cardinal sprites; feet rendered from palette colors without crossing.',
+ 'face_source':FACE_SOURCE,'leg_axis':LEG_AXIS,'no_lateral_figure_eight':True,
+ 'limitations':'Diagonal artwork uses coherent cardinal source approximations; dedicated 45-degree portraits still needed for exact diagonal facial angle.',
  'frame_stats':audit},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 print('WORDVILLE_NOCROSS_GAIT_PASS 12 x 8 x 8 = 768; center x24, y24, planted y43')

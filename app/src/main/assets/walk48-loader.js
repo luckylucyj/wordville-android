@@ -39,12 +39,20 @@ function getIdleCell(id,direction,frame){
  if(!idleSheets[id]||!directions.includes(direction)||!Number.isInteger(frame)||frame<0||frame>=idleFrameCount)return null;
  return {x:frame*cell,y:directions.indexOf(direction)*cell,width:cell,height:cell,anchorX:24,anchorY};
 }
+function directionForSprite(p,walking=false){
+ const move=p?.movementDirection;
+ if(walking&&directions.includes(move))return move;
+ const facing=p?.direction||p?.facing;
+ return directions.includes(facing)?facing:(p?.heading<0?'left':'right');
+}
 function paint(c,p,x,y,o={}){
  const id=p?.id||p,walking=o.walking===true;
  const img=walking?sheets[id]:idleSheets[id];
  // Neutral reference-frame fallback: never show a walking contact pose at rest.
  if(!(walking?ready(img):idleReady(img)))return existingPaint(c,p,x,y,o);
- const direction=directions.includes(p?.direction)?p.direction:(p?.heading<0?'left':'right');
+ // A walking actor has exactly ONE direction for face, torso and feet.
+ // The model records movementDirection from the same physical movement vector.
+ const direction=directionForSprite(p,walking);
  const k=walking
   ?(Number.isInteger(o.phase)?((o.phase%frames)+frames)%frames:getFrame(p,true,o.timestampMs))
   :(Number.isInteger(o.idlePhase)?((o.idlePhase%idleFrameCount)+idleFrameCount)%idleFrameCount:idleFrameFor(o.timestampMs,id));
@@ -61,14 +69,14 @@ function directionFromDelta(dx,dy){
  const degrees=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
  return directions[Math.round(degrees/45)%8];
 }
-Object.assign(W,{paint,frameFor:getFrame,frameSize:{width:48,height:48},anchorY,groundY:anchorY,frameCount:frames,stepDistance,fps,walk48Sheets:sheets,walk48Directions:directions,walk48Cell:getCell,walk48Phases:phases,idle48Sheets:idleSheets,idle48Cell:getIdleCell,idle48Frame:idleFrameFor,idle48Phases:idlePhases,idle48FrameCount:idleFrameCount,directionFromDelta});
-root.WordvilleWalk48={ids:residentIds,labels,directions,sheets,idleSheets,getFrame,getCell,getIdleCell,idleFrameFor,directionFromDelta,paint,frameSize:{width:48,height:48},anchorY,fps};
+Object.assign(W,{paint,frameFor:getFrame,frameSize:{width:48,height:48},anchorY,groundY:anchorY,frameCount:frames,stepDistance,fps,walk48Sheets:sheets,walk48Directions:directions,walk48Cell:getCell,walk48Phases:phases,idle48Sheets:idleSheets,idle48Cell:getIdleCell,idle48Frame:idleFrameFor,idle48Phases:idlePhases,idle48FrameCount:idleFrameCount,directionForSprite,directionFromDelta});
+root.WordvilleWalk48={ids:residentIds,labels,directions,sheets,idleSheets,getFrame,getCell,getIdleCell,idleFrameFor,directionForSprite,directionFromDelta,paint,frameSize:{width:48,height:48},anchorY,fps};
 function installPreview(){
  const zones=document.querySelector('.village-controls')||document.querySelector('.wv-map-zones');if(!zones)return;
  const old=document.getElementById('wv-walk-preview');if(old)old.remove();
  const panel=document.createElement('details');panel.id='wv-walk-preview';
  panel.style.cssText='margin:12px 0;padding:12px;border:2px solid #957c5b;border-radius:12px;background:#f7eed9;color:#45382e';
- const title=document.createElement('summary');title.textContent='주민 걷기·정지 확인 · 중앙 정렬 · 다리 교차 없음';title.style.cssText='font-weight:700;cursor:pointer';
+ const title=document.createElement('summary');title.textContent='주민 보행 검사 · 얼굴·발 동일 방향 · 8자 걸음 제거';title.style.cssText='font-weight:700;cursor:pointer';
  const inputs=document.createElement('div');inputs.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
  const person=document.createElement('select');person.setAttribute('aria-label','주민 선택');
  residentIds.forEach((id,i)=>{const opt=document.createElement('option');opt.value=id;opt.textContent=labels[i];person.add(opt);});
