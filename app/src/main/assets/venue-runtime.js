@@ -39,7 +39,7 @@ function reset(){
  for(let i=0;i<Math.min(4,roster.length);i++){
   const target=spots[i],q=spec.nearest(scene,Math.floor(target[0]*s.cols),Math.floor(target[1]*s.rows),actors);
   if(!q)continue;
-  actors.push({...person(roster[i]),id:roster[i],x:q.x,y:q.y,route:[],target:null,steps:0,walkDistance:0,direction:'down',next:1+i*1.2,wait:0,player:i===0});
+  actors.push({...person(roster[i]),id:roster[i],x:q.x,y:q.y,route:[],target:null,steps:0,walkDistance:0,direction:'down',facingStep:null,isMoving:false,next:1+i*1.2,wait:0,player:i===0});
  }
 }
 function moveTo(a,x,y){
@@ -47,13 +47,13 @@ function moveTo(a,x,y){
  const occupied=occupiedExcept(a),start={x:Math.round(a.x),y:Math.round(a.y)};
  const dest=spec.nearest(scene,Math.round(x),Math.round(y),occupied);
  if(!dest)return false;
- if(dest.x===start.x&&dest.y===start.y){a.route=[];a.target=dest;return true;}
+ if(dest.x===start.x&&dest.y===start.y){a.route=[];a.target=dest;a.isMoving=false;a.facingStep=null;return true;}
  let path=spec.route(scene,start,dest,occupied);
  // A moving resident may temporarily block the only corridor. Try that route,
  // but do not ever walk through another resident: update() still blocks overlap.
  if(!path.length)path=spec.route(scene,start,dest);
  if(!path.length)return false;
- a.target=dest;a.route=path;a.wait=0;return true;
+ a.target=dest;a.route=path;a.wait=0;a.isMoving=false;a.facingStep=null;return true;
 }
 exitButton.addEventListener('click',()=>{
  if(!actors.length||!scene)return;
@@ -62,6 +62,7 @@ exitButton.addEventListener('click',()=>{
 });
 function update(dt){
  for(const a of actors){
+  a.isMoving=false;
   const step=a.route[0];
   if(!step){
    if(!a.player){a.next-=dt;if(a.next<=0){
@@ -71,7 +72,7 @@ function update(dt){
    continue;
   }
   const dx=step.x-a.x,dy=step.y-a.y,d=Math.hypot(dx,dy);
-  if(d<.035){a.x=step.x;a.y=step.y;a.route.shift();a.wait=0;
+  if(d<.035){a.x=step.x;a.y=step.y;a.route.shift();a.wait=0;a.facingStep=null;
    if(a.player&&!a.route.length&&a.target&&a.target.x===a.x&&a.target.y===a.y){
     if(spec.tile(scene,a.x,a.y)==='exit'){
      announce('마을로 돌아갑니다.');
@@ -80,18 +81,26 @@ function update(dt){
    }
    continue;
   }
-  a.direction=['down','down-right','right','up-right','up','up-left','left','down-left'][Math.round(((Math.atan2(dx,dy)*180/Math.PI+360)%360)/45)%8];
   const delta=Math.min(d,2.1*dt),nx=a.x+(dx/d)*delta,ny=a.y+(dy/d)*delta;
+  if(delta<=0)continue;
   if(actors.some(b=>b!==a&&Math.hypot(b.x-nx,b.y-ny)<1.1)){
    a.wait+=dt;
    if(a.wait>.45&&a.target){
     const alternative=spec.route(scene,{x:Math.round(a.x),y:Math.round(a.y)},a.target,occupiedExcept(a));
-    if(alternative.length)a.route=alternative;
+    if(alternative.length){a.route=alternative;a.facingStep=null;}
     a.wait=0;
    }
    continue;
   }
-  a.wait=0;a.walkDistance+=Math.hypot(nx-a.x,ny-a.y)*8.5;a.x=nx;a.y=ny;a.steps+=dt;
+  // Only turn if the actor actually moved. Hold direction through the
+  // current tile leg, across all six walk-animation frames.
+  const segment=step.x+','+step.y;
+  if(a.facingStep!==segment){
+   a.direction=root.VillageModel?.directionFromDelta(dx,dy,a.direction) || a.direction;
+   a.facingStep=segment;
+  }
+  a.isMoving=true;a.wait=0;
+  a.walkDistance+=Math.hypot(nx-a.x,ny-a.y)*8.5;a.x=nx;a.y=ny;a.steps+=dt;
  }
 }
 function pixelCreature(a,x,y,scale){ctx.fillStyle=a.id==='cat'?'#db9b62':'#ead4af';
@@ -108,7 +117,7 @@ function draw(){
   ctx.fillStyle='#f8d447bb';ctx.fillRect(m.door.x*tw,m.door.y*th,tw,th);ctx.restore();
  }
  for(const a of [...actors].sort((a,b)=>a.y-b.y)){
-  const x=Math.round((a.x+.5)/s.cols*overlay.width),y=Math.round((a.y+.5)/s.rows*overlay.height),moving=a.route.length>0;
+  const x=Math.round((a.x+.5)/s.cols*overlay.width),y=Math.round((a.y+.5)/s.rows*overlay.height),moving=a.isMoving===true;
   const height=(a.id==='cat'||a.id==='dog')?32:48,width=height;
   if(!walk?.paint(ctx,a,x,y,{height,width,walking:moving})){
    if(a.id==='cat'||a.id==='dog')pixelCreature(a,x,y,Math.min(28,height));
