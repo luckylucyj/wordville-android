@@ -41,7 +41,7 @@ jobs:
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:
-          name: wordville-8way6-crossing-feet-resident-sheets
+          name: wordville-8way8-cohesive-leg-resident-sheets
           path: app/src/main/assets/walk48/*.png
           if-no-files-found: error
           retention-days: 30
@@ -213,19 +213,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Walk48_Crossing_8by6_v2.9.1.apk
+          cp release/wordville-debug.apk release/Wordville_Walk48_NaturalGait_8by8_v2.9.2.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.9.1-crossing-feet-8by6"
+          TAG="v2.9.2-natural-gait-8by8"
           ASSET="release/Wordville_Walk48_Crossing_8by6_v2.9.1.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.9.1 - 48px Crossing-Feet 8 Directions x 6 Frames" \
-              --notes "v2.9.1: 12 resident characters each get 8 directions x 6 unique frames at 48x48 px (576 total), true left-right shoe crossover in passing frames 3 and 6, stable planted foot row y=43 and counter-swinging arms. Generated from existing original whole-body art with exact separate frame cells, 8FPS. Original characters, learning data and animal sprites preserved. Diagonal views remain derived from cardinal poses." \
+              --title "Wordville v2.9.2 - 48px Natural Gait 8 Directions x 8 Frames" \
+              --notes "v2.9.2: 12 residents, each with 8 directions and 8 walking phases: left contact/down/passing/up then right contact/down/passing/up. 768 48x48 cells in total, fixed y=43 foot anchor, chunky legs using source-palette pixels, moving opposing arms, and traveled-distance synchronized playback to reduce foot sliding. Idle 4-phase sheets remain separate. Existing original faces and data preserved; diagonal views remain cardinal-source adaptations." \
               --prerelease
           fi
