@@ -80,7 +80,7 @@ function update(dt){
    }
    continue;
   }
-  a.direction=Math.abs(dx)>=Math.abs(dy)?(dx>=0?'right':'left'):(dy>=0?'down':'up');
+  a.direction=['down','down-right','right','up-right','up','up-left','left','down-left'][Math.round(((Math.atan2(dx,dy)*180/Math.PI+360)%360)/45)%8];
   const delta=Math.min(d,2.1*dt),nx=a.x+(dx/d)*delta,ny=a.y+(dy/d)*delta;
   if(actors.some(b=>b!==a&&Math.hypot(b.x-nx,b.y-ny)<1.1)){
    a.wait+=dt;
