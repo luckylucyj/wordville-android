@@ -1,8 +1,8 @@
-/* Render the same nearest-neighbor pixels on Android WebView and browsers. */
+/* Deliberately replace the old fullscreen anti-aliasing exception. */
+body[data-screen="town"] #village-canvas,
 #village-canvas,
 #wv-place-canvas,
 #wv-venue-actors{
-  image-rendering:crisp-edges;
-  image-rendering:pixelated;
+ image-rendering:pixelated!important;
 }
 #wv-pixel-weather{max-width:112px}
