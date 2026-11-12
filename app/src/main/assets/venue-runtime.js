@@ -55,7 +55,9 @@ function reset(){
   actors.push({...person(id),id,x:q.x,y:q.y,route:[],target:null,steps:0,
    walkDistance:0,direction:'down',facing:'down',movementDirection:'down',
    facingStep:null,isMoving:false,wait:0,player:!npc,
-   schedulePlace:scene,activity:slot?.activity||'장소 방문',activityState:npc?'travel':'visiting'});
+   schedulePlace:scene,activity:slot?.activity||'장소 방문',activityState:npc?'travel':'visiting',
+   behaviorPhases:npc?schedule.behaviorStages(scene,slot.activity):[],behaviorPhase:0,behaviorTimer:0,
+   behaviorText:npc?schedule.behaviorStages(scene,slot.activity)[0]:'장소 방문'});
  }
  for(const a of actors){
   if(!a.player)walkToActivity(a);
@@ -69,15 +71,16 @@ function walkToActivity(a){
  const m=spec.getMap(scene),fx=m.fixtures;
  // Route to a fixture suited to the resident's concrete scheduled action.
  const typePref={
-  library:['shelf','table'],bookstore:['shelf','table'],cafe:['table','counter'],
+  home:['bed','table'],library:['shelf','table'],bookstore:['shelf','table'],cafe:['table','counter'],
   burger:['table','counter'],icecream:['table','counter'],pub:['table','counter'],
   clinic:['bed','counter'],gym:['equipment','bench'],pool:['water','bench'],
   ranch:['hay','stable'],workshop:['table','shelf'],studio:['equipment','table'],
   museum:['exhibit','bench'],greenhouse:['planter','table'],market:['stall','counter'],
   square:['bench'],park:['bench']
  };
- const prefs=typePref[scene]||[];
- const byActivity=(a.activity.includes('정리')||a.activity.includes('장비')||a.activity.includes('수리'))?
+ const prefs=(typePref[scene]||[]).slice();
+ if(a.behaviorPhase===2&&scene!=='home')prefs.reverse();
+ const byActivity=(a.behaviorText.includes('정리')||a.behaviorText.includes('장비')||a.behaviorText.includes('수리'))?
   ['counter','shelf','table','equipment',...prefs]:prefs;
  let goal=null;
  for(const kind of byActivity){
@@ -113,7 +116,17 @@ function update(dt){
   a.isMoving=false;
   const step=a.route[0];
   if(!step){
-   if(!a.player)a.activityState='doing';
+   if(!a.player){
+    a.activityState='doing';
+    a.behaviorTimer+=dt;
+    const sleeping=scene==='home'&&/잠|취침|수면/.test(a.activity);
+    if(!sleeping&&a.behaviorTimer>=5){
+     a.behaviorTimer=0;
+     a.behaviorPhase=(a.behaviorPhase+1)%a.behaviorPhases.length;
+     a.behaviorText=a.behaviorPhases[a.behaviorPhase];
+     if(a.behaviorPhase!==1)walkToActivity(a);
+    }
+   }
    continue;
   }
   const dx=step.x-a.x,dy=step.y-a.y,d=Math.hypot(dx,dy);
@@ -185,7 +198,7 @@ function draw(){
   }
   if(!a.player&&!moving&&a.activityState==='doing'){
    ctx.fillStyle='#fff6dfed';
-   const label=a.activity.length>11?a.activity.slice(0,11)+'…':a.activity;
+   const label=a.behaviorText.length>11?a.behaviorText.slice(0,11)+'…':a.behaviorText;
    ctx.font='bold 10px sans-serif';ctx.textAlign='center';
    const w=Math.min(145,Math.max(55,ctx.measureText(label).width+12));
    ctx.fillRect(x-w/2,y-height-17,w,15);
