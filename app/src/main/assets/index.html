@@ -15,15 +15,34 @@
   <h3 id="wv-rstudy-title">주민과 공부할 단어 선택</h3>
   <p>기존 주민 전용 단어 대신 해커스 VOCA의 Day, 60개 단위 페이지, PDF 원본 쪽을 직접 선택할 수 있습니다.</p>
   <div class="wv-rstudy-controls">
+   <label>함께 공부할 주민<select id="wv-rstudy-resident" aria-label="대화할 주민 선택"></select></label>
    <label>Day 선택<select id="wv-rstudy-day" aria-label="학습 Day 선택"></select></label>
-   <label>단어장 페이지 (60개씩)<select id="wv-rstudy-page" aria-label="Day 단어장 페이지 선택"></select></label>
+   <label>원하는 단어 검색<input id="wv-rstudy-search" type="search" autocomplete="off" placeholder="영어 또는 한국어 뜻"></label>
    <label>PDF 원본 쪽<select id="wv-rstudy-pdf-page" aria-label="원본 PDF 페이지 선택"></select></label>
+   <label>단어장 페이지 (60개씩)<select id="wv-rstudy-page" aria-label="Day 단어장 페이지 선택"></select></label>
    <label>선택한 범위의 단어<select id="wv-rstudy-word" aria-label="학습할 단어 선택"></select></label>
   </div>
-  <p id="wv-rstudy-count" role="status"></p>
-  <div class="wv-schedule-actions"><button id="wv-rstudy-study-page" type="button" class="primary">이 범위 단어장 열기</button>
-  <button id="wv-rstudy-open-word" type="button">선택한 단어 카드 열기</button>
-  <button id="wv-rstudy-close" type="button">선택창 닫기</button></div>
+  <p id="wv-rstudy-count" role="status" aria-live="polite"></p>
+  <div class="wv-schedule-actions">
+   <button id="wv-rstudy-practice-start" type="button" class="primary">선택한 단어로 주민과 대화하기</button>
+   <button id="wv-rstudy-open-word" type="button">선택한 단어 카드 열기</button>
+   <button id="wv-rstudy-study-page" type="button">이 범위 단어장 열기</button>
+   <button id="wv-rstudy-close" type="button">선택창 닫기</button>
+  </div>
+  <section id="wv-rstudy-practice" class="wv-rstudy-practice" hidden aria-label="선택한 단어로 주민과 대화 연습">
+   <h4 id="wv-rstudy-practice-title">주민과 단어 대화</h4>
+   <p id="wv-rstudy-practice-progress" class="wv-rstudy-practice-progress"></p>
+   <p id="wv-rstudy-practice-prompt" lang="en" class="wv-rstudy-practice-prompt"></p>
+   <label>영어로 답변해 보세요<textarea id="wv-rstudy-reply" rows="3" maxlength="320" placeholder="영어 답변을 직접 입력하세요"></textarea></label>
+   <div class="wv-schedule-actions">
+    <button id="wv-rstudy-send-reply" type="button" class="primary">내 답변 보내기</button>
+    <button id="wv-rstudy-show-example" type="button">답변 예시 보기</button>
+    <button id="wv-rstudy-next-question" type="button">다음 대화</button>
+   </div>
+   <p id="wv-rstudy-practice-feedback" role="status" aria-live="polite"></p>
+   <p id="wv-rstudy-practice-example" lang="en" hidden></p>
+   <p class="wv-rstudy-practice-note">대화는 저장된 학습 예시입니다. 자유 입력 답변은 AI가 채점하지 않으며, 예시와 직접 비교할 수 있습니다.</p>
+  </section>
  </section>
  <details class="neighbors"><summary>마을 주민 12명 만나기</summary><div id="resident-list" class="resident-list"></div></details>
  <details id="wv-resident-schedule" class="wv-resident-schedule">
@@ -62,7 +81,7 @@
     <div class="wv-place-dialogue">
      <strong id="wv-place-speaker">알렉스의 이야기</strong>
      <p id="wv-place-dialogue-en" lang="en">Can I attend the swimming class?</p><p id="wv-place-dialogue-ko">수영 수업에 참여할 수 있나요?</p>
-     <div class="wv-place-actions"><button id="wv-place-talk" type="button">다른 대화 보기</button><button id="wv-place-study" type="button" class="primary">관련 단어 배우기</button></div>
+     <div class="wv-place-actions"><button id="wv-place-talk" type="button">다른 대화 보기</button><button id="wv-place-study" type="button" class="primary">원하는 단어 선택해 주민과 대화</button></div>
     </div>
    </div>
   </article>
