@@ -77,6 +77,24 @@ const BLOCKS={
   [18,'square','주민 행사 준비'],[20,'pub','친구들과 저녁'],
   [22,'home','옷 정리 후 취침']]
 };
+// Visible three-step behavior loops while NPCs remain at each venue.
+const TASK_STEPS=Object.freeze({
+ home:['개인 정리','휴식','하루 기록'],pool:['준비 운동','수영 연습','수건 정리'],
+ ranch:['동물 상태 확인','먹이와 물 관리','우리 정리'],gym:['스트레칭','운동 기구 사용','회복 운동'],
+ burger:['메뉴 고르기','주문과 식사','식탁 정리'],icecream:['메뉴 고르기','디저트 먹기','친구와 이야기'],
+ pub:['테이블 찾기','저녁 식사','동행과 대화'],museum:['전시 관람','작품 감상','관람 기록'],
+ greenhouse:['화분 확인','식물 관찰','물과 환경 점검'],cafe:['주문하기','음료 마시기','일정 정리'],
+ bookstore:['서가 둘러보기','책 선택하기','책 정리'],clinic:['진료 준비','진찰·점검','진료 기록'],
+ library:['책 고르기','읽기·필기','도서 정리'],studio:['장비 점검','녹음·연습','음원 확인'],
+ market:['상품 확인','판매·구매','재고 정리'],square:['주민 만나기','행사·놀이','주변 정리'],
+ workshop:['작업 재료 준비','제작·수선','작업 도구 정리'],park:['산책','운동·관찰','쉬기']
+});
+function behaviorStages(place,activity){
+ if(!Object.hasOwn(TASK_STEPS,place))return [activity,activity,activity];
+ if(place==='home'&&/잠|취침|수면/.test(activity))return ['잠자기','잠자기','잠자기'];
+ const stages=TASK_STEPS[place];
+ return [stages[0],activity,stages[2]];
+}
 const STORAGE_KEY='wordville:resident-schedules:v1';
 const overrides=Object.create(null);
 function hourOf(minute){
@@ -144,7 +162,7 @@ for(const [id,blocks] of Object.entries(BLOCKS)){
  }
 }
 load();
-const api={PLACE_NAMES,BLOCKS,STORAGE_KEY,at,day,setHour,resetHour,occupants,
+const api={PLACE_NAMES,BLOCKS,TASK_STEPS,behaviorStages,STORAGE_KEY,at,day,setHour,resetHour,occupants,
  hourOf,formatHour,minuteNow};
 root.WordvilleSchedule=api;
 if(typeof module!=='undefined')module.exports=api;
