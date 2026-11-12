@@ -359,7 +359,7 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleVenueRuntime.focusedResident),'harvey');
   assert.ok(await page.evaluate(()=>WordvilleVenueRuntime.actors.some(a=>a.id==='harvey')));
   assert.deepEqual(await page.evaluate(()=>WordvilleVenueRuntime.actors.filter(a=>!a.player).map(a=>a.id)),['harvey']);
-  assert.equal(await page.locator('#wv-place-name').innerText(),'하비의 집');
+  assert.equal(await page.locator('#wv-place-name').innerText(),'진료소','17:00에는 하비가 진료소에서 근무해야 합니다.');
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
   await page.locator('[data-person="sam"] .wv-portrait').click();
   assert.equal(await page.evaluate(()=>WordvilleShell.screen),'town');
@@ -370,6 +370,7 @@ const assert = require('node:assert/strict');
   await page.locator('[data-person="harvey"] .wv-portrait').click();
   assert.equal(await page.evaluate(()=>WordvillePlaces.active),'home');
   assert.equal(await page.evaluate(()=>WordvilleVenueRuntime.focusedResident),'harvey');
+  assert.equal(await page.locator('#wv-place-name').innerText(),'하비의 집','23:00에는 하비의 개인 집을 방문해야 합니다.');
   assert.ok(await page.evaluate(()=>WordvilleVenueRuntime.actors.some(a=>a.id==='harvey')));
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   for(const width of [360,390,768,1280]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow at ${width}`);}
