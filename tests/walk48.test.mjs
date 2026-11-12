@@ -45,6 +45,7 @@ test('feet never cross the body centerline in any walk pose',()=>{
  const report=JSON.parse(readFileSync(new URL('../app/src/main/assets/walk48/audit.json',import.meta.url),'utf8'));
  assert.equal(report.no_crossing_feet,true);
  assert.equal(report.no_lateral_figure_eight,true);
+ assert.equal(report.old_source_lower_legs_removed,true);
  assert.equal(report.body_center_x,24);
  assert.equal(report.vertical_center_y,24);
  assert.equal(report.foot_anchor_y,43);
@@ -69,8 +70,8 @@ test('feet never cross the body centerline in any walk pose',()=>{
 test('face source and lower-body gait agree for all eight directions',()=>{
  const report=JSON.parse(readFileSync(new URL('../app/src/main/assets/walk48/audit.json',import.meta.url),'utf8'));
  const mirrored={'up-left':'up-right',left:'right','down-left':'down-right'};
- const expectedSource={down:'down','down-right':'down',right:'right','up-right':'up',up:'up'};
- const expectedAxis={down:'front','down-right':'front',right:'side','up-right':'front',up:'front'};
+ const expectedSource={down:'down','down-right':'right',right:'right','up-right':'right',up:'up'};
+ const expectedAxis={down:'front','down-right':'side',right:'side','up-right':'side',up:'front'};
  for(const frame of report.frame_stats){
   const orientation=mirrored[frame.direction]||frame.direction;
   assert.equal(frame.face_source,expectedSource[orientation]);
