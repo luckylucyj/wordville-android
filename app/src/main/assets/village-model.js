@@ -43,25 +43,44 @@ const edgeKey=(a,b)=>[Math.min(a,b),Math.max(a,b)].join('-');
 function isStairEdge(a,b){return stairEdges.has(edgeKey(a,b));}
 function period(hour){return hour>=6&&hour<18?'day':hour>=18&&hour<20?'dusk':'night';}
 function path(from,to){const q=[[from]],visited=new Set([from]);while(q.length){const p=q.shift(),last=p.at(-1);if(last===to)return p;for(const next of edges[last])if(!visited.has(next)){visited.add(next);q.push([...p,next]);}}return [from];}
-function freshResidents(){return people.map((p,i)=>{const ni=[0,1,2,3,4,5,6,7,10,11,12,13][i];const n=nodes[ni];return {...p,x:n.x,y:n.y,node:ni,route:[],wait:i*.6,chat:0,partner:null,cooldown:0,steps:i*.18,stairPhase:0,onStairs:false,heading:1,visits:0};});}
+// Facing follows the direction of the CURRENT PATH SEGMENT, not a fluctuating
+// position-to-target vector or the character's walk-animation frame.
+const directions=['down','down-right','right','up-right','up','up-left','left','down-left'];
+function directionFromDelta(dx,dy,previous='down'){
+ if(!Number.isFinite(dx)||!Number.isFinite(dy)||Math.hypot(dx,dy)<1e-6)return previous;
+ const degrees=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
+ return directions[Math.round(degrees/45)%8];
+}
+function freshResidents(){return people.map((p,i)=>{const ni=[0,1,2,3,4,5,6,7,10,11,12,13][i];const n=nodes[ni];return {...p,x:n.x,y:n.y,node:ni,route:[],wait:i*.6,chat:0,partner:null,cooldown:0,steps:i*.18,walkDistance:0,stairPhase:0,onStairs:false,heading:1,direction:'down',isMoving:false,visits:0};});}
 function tick(residents,dt,onMeet){
  dt=Math.min(.1,Math.max(0,dt));
  for(const p of residents){
+  // Reset on EVERY tick: a blocked, waiting or chatting NPC is not walking.
+  p.isMoving=false;
   if(p.chat>0){p.chat=Math.max(0,p.chat-dt);p.onStairs=false;continue;}
   if(p.wait>0){p.wait=Math.max(0,p.wait-dt);p.onStairs=false;continue;}
   if(!p.route.length){const goal=(p.node+5+p.id.length+(p.visits++*7))%nodes.length;p.route=path(p.node,goal).slice(1);p.wait=.25;continue;}
   const nextIndex=p.route[0],n=nodes[nextIndex],dx=n.x-p.x,dy=n.y-p.y,d=Math.hypot(dx,dy);
   p.onStairs=isStairEdge(p.node,nextIndex);
-  p.heading=dx<-.5?-1:dx>.5?1:p.heading;
-  const angle=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
-  p.direction=['down','down-right','right','up-right','up','up-left','left','down-left'][Math.round(angle/45)%8];
+  // Node-to-node direction remains identical for the whole leg. A new leg
+  // may turn only after arriving at its node; blocked legs keep last facing.
+  const from=nodes[p.node];
+  const facing=directionFromDelta(n.x-from.x,n.y-from.y,p.direction);
   const speed=p.onStairs?12:18,step=speed*dt;
-  if(d<=step){p.x=n.x;p.y=n.y;p.node=p.route.shift();p.wait=.16;p.onStairs=false;}
-  else{const nx=p.x+dx/d*step,ny=p.y+dy/d*step;if(residents.some(other=>other!==p&&Math.hypot(other.x-nx,other.y-ny)<23)){p.wait=.16;continue;}p.x=nx;p.y=ny;p.steps+=dt;p.walkDistance=(p.walkDistance||0)+step;p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;}
+  if(d<=step&&d>0){
+   p.x=n.x;p.y=n.y;p.node=p.route.shift();p.wait=.16;p.onStairs=false;
+   p.direction=facing;p.isMoving=true;p.walkDistance+=d;p.steps+=dt;
+  }else if(step>0&&d>0){
+   const nx=p.x+dx/d*step,ny=p.y+dy/d*step;
+   if(residents.some(other=>other!==p&&Math.hypot(other.x-nx,other.y-ny)<23)){p.wait=.16;continue;}
+   p.x=nx;p.y=ny;p.direction=facing;p.isMoving=true;
+   p.steps+=dt;p.walkDistance+=step;
+   p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;
+  }
  }
  for(let i=0;i<residents.length;i++){const a=residents[i];if(a.chat||a.cooldown>0||a.onStairs)continue;for(let j=i+1;j<residents.length;j++){const b=residents[j];if(b.chat||b.cooldown>0||b.onStairs)continue;if(Math.hypot(a.x-b.x,a.y-b.y)<29){a.chat=b.chat=3.5;a.cooldown=b.cooldown=15;a.partner=b.id;b.partner=a.id;onMeet?.(a,b);break;}}}
  for(const p of residents)p.cooldown=Math.max(0,(p.cooldown||0)-dt);
 }
-const api={people,nodes,edges,links,fountain,inFountain,segmentHitsFountain,isStairEdge,period,path,freshResidents,tick};
+const api={people,nodes,edges,links,fountain,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick};
 root.VillageModel=api;
 })(globalThis);
