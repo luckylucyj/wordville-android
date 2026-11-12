@@ -43,6 +43,18 @@ const assert = require('node:assert/strict');
    return bad;
   });
   assert.deepEqual(duplicateWalkFrames,[],'Every resident and direction must have 8 visually distinct pixel frames');
+  // Check user-facing preview, including the 12-resident comparison view.
+  const walkPreview=page.locator('#wv-walk-preview');
+  assert.equal(await walkPreview.count(),1);
+  await walkPreview.locator('summary').click();
+  assert.equal(await walkPreview.locator('select').count(),2);
+  await walkPreview.locator('select').first().selectOption('emily');
+  await walkPreview.locator('select').nth(1).selectOption('left');
+  await walkPreview.getByRole('button',{name:'12명 한꺼번에 보기'}).click();
+  assert.equal(await walkPreview.locator('canvas').nth(1).isVisible(),true);
+  assert.equal(await walkPreview.locator('canvas').nth(1).getAttribute('width'),'320');
+  await walkPreview.locator('summary').click();
+
   assert.equal(await page.evaluate(()=>WordvilleHubMap.humanDecorations),0);
   await page.waitForFunction(()=>WordvilleHubMap.image.naturalWidth===600&&WordvilleHubMap.image.naturalHeight===800);
   assert.equal(await page.evaluate(()=>VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))),true);
