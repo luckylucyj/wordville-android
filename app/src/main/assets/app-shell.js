@@ -32,6 +32,8 @@ if(oldFeed)residents.append(oldFeed);
 // scrollable Residents tab, not clipped below the canvas.
 const scheduleDetails=get('wv-resident-schedule');
 if(scheduleDetails)residents.append(scheduleDetails);
+const studyPicker=get('wv-resident-study-picker');if(studyPicker)residents.append(studyPicker);
+const jumpStatus=get('wv-visit-feedback');if(jumpStatus)residents.append(jumpStatus);
 village.append(residents);
 const wrap=document.querySelector('.canvas-wrap');
 const timeBadge=document.querySelector('.time-badge');
