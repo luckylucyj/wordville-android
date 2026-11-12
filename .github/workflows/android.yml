@@ -219,7 +219,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v2.9.2-natural-gait-8by8"
-          ASSET="release/Wordville_Walk48_Crossing_8by6_v2.9.1.apk"
+          ASSET="release/Wordville_Walk48_NaturalGait_8by8_v2.9.2.apk"
+          test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
