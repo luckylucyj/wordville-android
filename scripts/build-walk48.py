@@ -94,8 +94,15 @@ def animate(im,k,direction):
   spine=[(hx,hip),(knee_x,knee_y),(fx,fy-2)]
   draw.line(spine,fill=ink,width=5,joint='curve')
   draw.line(spine,fill=pants,width=3,joint='curve')
-  draw.rectangle((fx-3,fy-2,fx+2,fy),fill=ink)
-  draw.line((fx-2,fy-2,fx+1,fy-2),fill=shoes,width=1)
+  # Shoes rotate their toes 0-2 pixels *within the fixed foot lane*.
+  # Contact pose 0 vs 4 and repeated down/up heights stay visibly distinct
+  # even if this character's original sleeves contain no movable pixels.
+  support_leg=0 if k<4 else 1
+  toe=2 if leg==support_leg else 1
+  if k%4==1 and leg!=support_leg:toe+=1
+  if k%4==3 and leg!=support_leg:toe-=1
+  draw.rectangle((fx-3,fy-2,fx+toe,fy),fill=ink)
+  draw.line((fx-2,fy-2,fx+min(1,toe),fy-2),fill=shoes,width=1)
  out.alpha_composite(im.crop((0,0,48,hip+3)),(0,0))
  # Counter-swing only the outermost sleeve pixels; shoulders remain still.
  original=im.load()
