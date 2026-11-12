@@ -21,7 +21,27 @@ const assert = require('node:assert/strict');
     portrait:[WordvillePortraits.image.naturalWidth,WordvillePortraits.image.naturalHeight],
     sprites:[WordvillePortraits.spriteImage.naturalWidth,WordvillePortraits.spriteImage.naturalHeight]
   })),{portrait:[1536,1152],sprites:[2560,768]});
-  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='auto'),true);
+  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#village-canvas')).imageRendering==='pixelated'),true,'Main town must render crisp pixel art');
+  const pixelVenueQA=await page.evaluate(()=>{
+   const style=globalThis.WordvillePixelStyle;
+   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=240;
+   const c=canvas.getContext('2d',{willReadFrequently:true});
+   const results=[];
+   for(const id of Object.keys(style.themes)){
+    const ok=style.paintVenue(c,{id});
+    const d=c.getImageData(0,0,512,240).data;
+    let painted=0,signature=2166136261;
+    for(let n=0;n<d.length;n+=128){
+     painted+=(d[n+3]===255?1:0);
+     signature=Math.imul(signature^d[n],16777619)>>>0;
+    }
+    results.push({id,ok,painted,signature});
+   }
+   return results;
+  });
+  assert.equal(pixelVenueQA.length,18,'17 public venues and 1 resident home');
+  assert.ok(pixelVenueQA.every(x=>x.ok&&x.painted>100&&Number.isInteger(x.signature)),'Every venue needs visible pixel-art artwork');
+  assert.ok(new Set(pixelVenueQA.map(x=>x.signature)).size>=14,'Distinct venues require distinct scenery');
   await page.waitForFunction(()=>WordvilleWalk?.referenceAtlas?.naturalWidth===384&&WordvilleWalk.referenceAtlas.naturalHeight===576);
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
   assert.equal(await page.evaluate(()=>WordvilleWalk.sourceFrameCount),3);
