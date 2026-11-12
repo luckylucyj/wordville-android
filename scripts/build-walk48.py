@@ -16,7 +16,7 @@ POSES=['contact','down','passing','up']*2
 CELL=48
 GROUND_Y=44
 TARGET_H=40
-POSE_INPUT=(1,1,0,2,2,2,0,1)
+POSE_INPUT=(0,0,0,0,0,0,0,0)
 SOURCE_DIR=(0,1,1,3,3,3,2,2)
 
 def dominant(im, lo, hi, default):
@@ -67,12 +67,16 @@ def author_frame(src, row, direction, frame):
     # Remove existing leg pixels, retain original face, hair, torso and coat.
     d=ImageDraw.Draw(raw)
     d.rectangle((0,hip,CELL-1,CELL-1),fill=(0,0,0,0))
+    # Strip original static hanging arms; authored arms below move in counterphase.
+    d.rectangle((0,22+bob,18,hip-1),fill=(0,0,0,0))
+    d.rectangle((30,22+bob,CELL-1,hip-1),fill=(0,0,0,0))
     out.alpha_composite(raw)
     # Colors sourced from this resident's original clothing/boots.
     pants=dominant(shape,shape.height*3//4,shape.height*9//10,(57,67,88,255))
     boots=dominant(shape,shape.height*9//10,shape.height,(59,42,46,255))
     sleeve=dominant(shape,shape.height//2,shape.height*3//4,(93,107,121,255))
-    skin=(230,174,137,255)
+    SKINS=((237,190,152,255),(209,155,120,255),(240,200,162,255),(185,128,94,255))
+    skin=SKINS[row%4]
     ink=(35,36,45,255)
     d=ImageDraw.Draw(out)
     # Two separately articulated legs, half-cycle swaps the lead foot.
@@ -98,8 +102,8 @@ def author_frame(src, row, direction, frame):
     # Hand position is the reverse phase of that side's leg.
     arm=(3,1,-2,-4,-3,-1,2,4)[frame]
     for side in (-1,1):
-        shoulder=24+side*10
-        cuffx=shoulder+round(arm*side/3)
+        shoulder=24+side*7
+        cuffx=shoulder+side*2+round(arm*side/3)
         yhand=29+bob+round(arm*side/4)
         d.line([(shoulder,23+bob),(cuffx,yhand)],fill=ink,width=5)
         d.line([(shoulder,23+bob),(cuffx,yhand-1)],fill=sleeve,width=3)
@@ -124,7 +128,7 @@ def main():
                 signatures.append(hashlib.sha256(cell.tobytes()).hexdigest())
                 sheet.alpha_composite(cell,(frame*CELL,direction*CELL))
                 count+=1
-            assert len(set(signatures))>=6,(name,direction,'too few distinct poses')
+            assert len(set(signatures))==8,(name,direction,'walk motion contains a duplicate pose')
         filename=OUT/(name+'.png')
         sheet.save(filename,optimize=True)
         assert Image.open(filename).size==(384,384)
