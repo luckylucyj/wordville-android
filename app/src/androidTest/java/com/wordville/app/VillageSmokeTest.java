@@ -65,8 +65,8 @@ public class VillageSmokeTest {
   }
   assertTrue("4-direction reference walk atlas is available in the APK",walkAtlasReady);
   assertEquals("3",eval(web,"WordvilleWalk.sourceFrameCount"));
-  // Pre-generated walking sheets have 6 different poses; standing sheets have 4.
-  assertEquals("6",eval(web,"WordvilleWalk.frameCount"));
+  // Pre-generated walking sheets have 8 distinct four-phase alternate-foot poses; standing sheets have 4.
+  assertEquals("8",eval(web,"WordvilleWalk.frameCount"));
   assertEquals("4",eval(web,"WordvilleWalk.idle48FrameCount"));
   assertEquals("43",eval(web,"WordvilleWalk.anchorY"));
   assertEquals("true",eval(web,"WordvilleWalk.walkAtlas.width===256&&WordvilleWalk.walkAtlas.height===2304"));
