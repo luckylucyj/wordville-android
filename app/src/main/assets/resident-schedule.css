@@ -21,3 +21,19 @@
 #wv-sched-status{min-height:18px;font-size:12px;margin:7px 0}
 #wv-sched-now{font-size:12px;color:#5c6247;font-weight:700}
 @media(max-width:420px){.wv-schedule-row{grid-template-columns:73px minmax(0,1fr) 42px;padding:6px;gap:4px}.wv-schedule-row button{padding:4px}.wv-schedule-head select{min-width:100px}}
+
+/* Resident portrait navigation, custom Day and PDF-page learning */
+.wv-dialog-portrait-jump{display:block;background:transparent;border:0;padding:0;width:max-content;min-height:0;margin:0 auto 8px;cursor:pointer}
+.wv-dialog-portrait-jump .wv-dialog-portrait{display:block}
+.wv-resident-jump-status{font-size:12px;color:#4b6d54;min-height:20px;padding:0 12px}
+.wv-resident-study-picker{border:2px solid #b59a71;border-radius:12px;background:#fff3db;color:#43372c;padding:14px;margin:14px 0}
+.wv-resident-study-picker[hidden]{display:none!important}
+.wv-resident-study-picker h3{font-size:17px;margin:0 0 6px}
+.wv-resident-study-picker p{font-size:12px;margin:4px 0 10px}
+.wv-rstudy-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.wv-rstudy-controls label{font-size:12px;margin:0;min-width:0;font-weight:700}
+.wv-rstudy-controls select{margin-top:4px;min-height:40px;font-size:13px;padding:6px;background:#fffbf4;color:#3e3428;width:100%;max-width:100%}
+.wv-study-pdf-scope{padding:8px;border-radius:7px;background:#f7ebd4}
+.wv-study-pdf-scope button{padding:4px 9px;min-height:30px;margin-left:8px}
+.wv-portrait[role=button]:focus-visible{outline:3px solid #e6c762;outline-offset:2px}
+@media(max-width:450px){.wv-rstudy-controls{grid-template-columns:1fr}}
