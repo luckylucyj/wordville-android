@@ -44,7 +44,12 @@ function appendPortrait(parent,id,small=false){
  const p=people[id];if(!p)return;
  const b=button(p.name,'wv-place-person',()=>{speakerIndex=current().people.indexOf(id);lineIndex=0;renderConversation();});
  b.setAttribute('aria-pressed',String(current().people[speakerIndex]===id));
- if(portraits?.portrait)b.prepend(portraits.portrait(id,small?'wv-venue-mini':'wv-venue-portrait'));
+ if(portraits?.portrait){
+  const picture=portraits.portrait(id,small?'wv-venue-mini':'wv-venue-portrait');
+  picture.title='이 주민의 현재 장소로 이동';
+  picture.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();globalThis.WordvilleVillage?.visitResident?.(id);});
+  b.prepend(picture);
+ }
  parent.append(b);
 }
 function renderConversation(){
