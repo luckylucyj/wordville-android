@@ -26,6 +26,33 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
   assert.equal(await page.evaluate(()=>WordvilleWalk.sourceFrameCount),3);
   assert.equal(await page.evaluate(()=>WordvilleWalk.frameCount),8);
+  await page.waitForFunction(()=>WordvilleWalk.petSheets.cat.naturalWidth===128&&WordvilleWalk.petSheets.dog.naturalWidth===128&&WordvilleWalk.petSheets.cat.naturalHeight===192&&WordvilleWalk.petSheets.dog.naturalHeight===192);
+  // Read every actual source cell, not just its declared layout. The cat and
+  // dog must each provide sixteen distinct frames and a shared ground row.
+  const petAudit=await page.evaluate(()=>{
+    const report={};
+    for(const id of ['cat','dog']){
+      const img=WordvilleWalk.petSheets[id],can=document.createElement('canvas');
+      can.width=128;can.height=192;
+      const ctx=can.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0);
+      const hashes=[],bottoms=[];
+      for(const dir of ['down','right','left','up'])for(let f=0;f<4;f++){
+        const cell=WordvilleWalk.petCell(id,dir,f);
+        const pixels=ctx.getImageData(cell.x,cell.y,32,48).data;
+        let hash=2166136261,last=-1;
+        for(let k=0;k<pixels.length;k++)hash=Math.imul(hash^pixels[k],16777619)>>>0;
+        for(let y=0;y<48;y++)for(let x=0;x<32;x++)if(pixels[(y*32+x)*4+3]>128)last=Math.max(last,y);
+        hashes.push(hash);bottoms.push(last);
+      }
+      report[id]={unique:new Set(hashes).size,bottoms};
+    }
+    return report;
+  });
+  for(const id of ['cat','dog']){
+    assert.equal(petAudit[id].unique,16,id+' should have 16 distinct images');
+    assert.deepEqual(petAudit[id].bottoms,Array(16).fill(44),id+' ground anchors must match');
+  }
+
   await page.waitForFunction(()=>WordvilleWalk.walkAtlas?.width===256&&WordvilleWalk.walkAtlas.height===2304);
   // Verify actual image pixels: 8 distinct frames for each of 12 residents in all 4 directions.
   const duplicateWalkFrames=await page.evaluate(()=>{

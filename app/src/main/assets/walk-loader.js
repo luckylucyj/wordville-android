@@ -19,20 +19,35 @@ referenceAtlas.src='portraits/wordville-reference-walk.png';
 const isReady=im=>!!(im&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0);
 const indices=Object.fromEntries(ids.map((id,i)=>[id,i]));
 const petSheets={cat:new Image(),dog:new Image()};
+petSheets.cat.decoding='async';petSheets.dog.decoding='async';
+// High-resolution, reference-derived sprites: four directions (columns) and
+// four independent walking phases (rows), native cell size 32×48.
 petSheets.cat.src='pets/wordville-cat-source.png';
 petSheets.dog.src='pets/wordville-dog-source.png';
-// 16x24 native source cells, 2x nearest-neighbor display at 32x48.
-function petFrame(p,moving){if(!moving)return 0;const d=Number.isFinite(p.walkDistance)?p.walkDistance:(p.steps||0)*18;return Math.floor((Math.max(0,d)+1e-7)/3.5)%4;}
+const PET_W=32,PET_H=48,PET_PHASES=4,PET_GROUND_Y=44;
+function petFrame(p,moving){
+ if(!moving)return 0;
+ const d=Number.isFinite(p.walkDistance)?p.walkDistance:(p.steps||0)*18;
+ return Math.floor((Math.max(0,d)+1e-7)/3.5)%PET_PHASES;
+}
+function petCell(id,direction,phase){
+ if(!(id in petSheets)||!(direction in dirs)||!Number.isInteger(phase)||phase<0||phase>=PET_PHASES)return null;
+ return {x:dirs[direction]*PET_W,y:phase*PET_H,width:PET_W,height:PET_H,groundY:PET_GROUND_Y};
+}
 function paintPet(c,p,x,y,opt={}){
- const id=p.id||p,img=petSheets[id];
- if(!img||!isReady(img)||img.naturalWidth!==64||img.naturalHeight!==96)return false;
- const dir=dirs[p.direction]===undefined?0:dirs[p.direction],phase=Number.isInteger(opt.phase)?((opt.phase%4)+4)%4:petFrame(p,opt.walking===true);
- const w=opt.width||32,h=opt.height||48;
+ const id=p?.id||p,img=petSheets[id];
+ if(!img||!isReady(img)||img.naturalWidth!==PET_W*4||img.naturalHeight!==PET_H*4)return false;
+ const direction=dirs[p?.direction]!==undefined?p.direction:'down';
+ const phase=Number.isInteger(opt.phase)?((opt.phase%4)+4)%4:petFrame(p,opt.walking===true);
+ const cell=petCell(id,direction,phase);
+ const w=Math.round(opt.width||PET_W),h=Math.round(opt.height||PET_H);
+ // Every cell has the same paw/shadow baseline (source y=44). Keep its
+ // world-space anchor stable even in contact/down/passing/up transitions.
+ const left=Math.round(x-w/2),top=Math.round(y-PET_GROUND_Y*h/PET_H);
  c.save();c.imageSmoothingEnabled=false;
- c.drawImage(img,dir*16,phase*24,16,24,Math.round(x-w/2),Math.round(y-h),w,h);
+ c.drawImage(img,cell.x,cell.y,cell.width,cell.height,left,top,w,h);
  c.restore();return true;
 }
-
 /* Eight ordered phases per direction and character. Every rendered cell is
  * exactly 32x48 and is sampled from the corresponding resident's three
  * original poses. The stance foot remains on one shared pixel baseline.
@@ -174,7 +189,12 @@ function installWalkPreview(){
  gallery.setAttribute('aria-label','주민 12명의 현재 걷기 프레임 비교');
  gallery.style.cssText='max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
  showAll.addEventListener('click',()=>{gallery.hidden=!gallery.hidden;showAll.textContent=gallery.hidden?'12명 한꺼번에 보기':'12명 보기 닫기';});
- details.append(summary,controls,canvas,status,showAll,gallery);zones.after(details);
+ const petLabel=document.createElement('p');petLabel.textContent='고양이 · 강아지 걷기 미리보기 (32×48px 원본 셀)';
+ petLabel.style.cssText='font-size:12px;font-weight:bold;margin:12px 0 6px';
+ const petPreview=document.createElement('canvas');petPreview.width=240;petPreview.height=128;
+ petPreview.setAttribute('role','img');petPreview.setAttribute('aria-label','실제 게임 도트 스프라이트 고양이와 강아지 4방향 걷기');
+ petPreview.style.cssText='display:block;width:240px;max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
+ details.append(summary,controls,canvas,status,showAll,gallery,petLabel,petPreview);zones.after(details);
  const c=canvas.getContext('2d');if(!c)return;
  function animate(ms){
   if(details.isConnected&&details.open&&!document.hidden){
@@ -184,6 +204,16 @@ function installWalkPreview(){
    const beat=Math.floor(ms/125)%FRAME_COUNT;
    paint(c,{id:person.value,direction:direction.value,walkDistance:beat*STEP_DISTANCE},120,126,{width:64,height:96,walking:true});
    status.textContent='32×48 원본 픽셀 · 8 FPS · '+stride[beat].phase+' · 프레임 '+(beat+1)+'/8';
+   const petCtx=petPreview.getContext('2d');
+   if(petCtx){
+    petCtx.imageSmoothingEnabled=false;petCtx.fillStyle='#e1ead7';petCtx.fillRect(0,0,240,128);
+    petCtx.fillStyle='#9baf8f';petCtx.fillRect(0,108,240,2);
+    const petBeat=Math.floor(ms/175)%4;
+    for(const [id,x,label] of [['cat',62,'고양이'],['dog',180,'강아지']]){
+     paintPet(petCtx,{id,direction:direction.value,walkDistance:petBeat*3.5},x,107,{width:64,height:96,walking:true});
+     petCtx.fillStyle='#47392f';petCtx.font='12px sans-serif';petCtx.textAlign='center';petCtx.fillText(label,x,122);
+    }
+   }
    if(!gallery.hidden){
     const g=gallery.getContext('2d');if(g){g.imageSmoothingEnabled=false;g.fillStyle='#e1ead7';g.fillRect(0,0,320,288);
      for(let i=0;i<ids.length;i++){
@@ -203,5 +233,5 @@ if(typeof document!=='undefined'){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installWalkPreview,{once:true});
  else installWalkPreview();
 }
-root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
+root.WordvilleWalk={images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,petCell,petFrameSize:{width:PET_W,height:PET_H},petGroundY:PET_GROUND_Y,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
 })(globalThis);
