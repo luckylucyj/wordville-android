@@ -1,0 +1,8 @@
+/* Deliberately replace the old fullscreen anti-aliasing exception. */
+body[data-screen="town"] #village-canvas,
+#village-canvas,
+#wv-place-canvas,
+#wv-venue-actors{
+ image-rendering:pixelated!important;
+}
+#wv-pixel-weather{max-width:112px}
