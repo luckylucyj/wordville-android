@@ -38,7 +38,13 @@ function reset(){
  scene=places.active;
  rosterKey=scheduleRosterKey();
  const s=spec.forPlace(scene);
- const guests=schedule.occupants(scene,clockMinute());
+ const scheduled=schedule.occupants(scene,clockMinute());
+ // Each villager lives in their own home; never show all sleepers in one room.
+ const guests=scene==='home'&&focusedResidentId&&scheduled.includes(focusedResidentId)?[focusedResidentId]:scheduled;
+ if(scene==='home'&&focusedResidentId){
+  const title=document.getElementById('wv-place-name');
+  if(title)title.textContent=person(focusedResidentId).name+'의 집';
+ }
  // The visitor is not a scheduled villager. Resident NPCs show up here ONLY
  // during their actual scheduled activity; no default always-present NPC.
  const prioritized=focusedResidentId&&guests.includes(focusedResidentId)?[focusedResidentId,...guests.filter(id=>id!==focusedResidentId)]:guests;
