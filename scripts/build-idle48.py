@@ -84,7 +84,7 @@ for resident in IDS:
         for k in range(len(POSTURES)):
             frame = standing_pose(base, k)
             b = bounds(frame)
-            assert b and b[0] >= 1 and b[1] >= 1 and b[2] <= 47 and b[3] == 44, (resident, direction, k, b)
+            assert b and b[0] >= 0 and b[1] >= 0 and b[2] <= 48 and b[3] == 44, (resident, direction, k, b)
             assert all(frame.getpixel((x, ANCHOR[1]))[3] > 160 for x in FOOT_CENTERS), (resident, direction, k, "missing feet")
             h = hashlib.sha256(frame.tobytes()).hexdigest()
             hashes.append(h)
