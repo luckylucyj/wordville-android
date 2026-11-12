@@ -25,7 +25,7 @@ test('12 sprites have 8 directions x 8 separate 48x48 frames',()=>{
  }
 });
 test('two four-phase support-foot halves: contact, down, passing, up, 8FPS',()=>{
- assert.deepEqual(W.walk48Phases,['contact-left','down-left','passing-cross-left','up-left','contact-right','down-right','passing-cross-right','up-right']);
+ assert.deepEqual(W.walk48Phases,['contact-left','down-left','passing-left','up-left','contact-right','down-right','passing-right','up-right']);
  for(let f=0;f<30;f++)assert.equal(W.frameFor({},true,f*125),f%8);
  assert.equal(W.frameFor({},false,10000),0);
 });
@@ -41,15 +41,25 @@ test('directions include diagonals and mirrors',()=>{
  assert.equal(W.directionFromDelta(0,-1),'up');
 });
 
-test('passing frames genuinely cross both shoes and swap support foot',()=>{
+test('feet never cross the body centerline in any walk pose',()=>{
  const report=JSON.parse(readFileSync(new URL('../app/src/main/assets/walk48/audit.json',import.meta.url),'utf8'));
- const p=report.crossing_keypoints;
- assert.equal(p.length,8);
- assert.deepEqual(p.map(x=>x.support),['left','left','left','left','right','right','right','right']);
- assert.ok(p[0].left[0]<p[0].right[0]);
- assert.ok(p[2].left[0]>p[2].right[0]);
- assert.ok(p[6].left[0]>p[6].right[0]);
- assert.ok(p[4].left[0]<p[4].right[0]);
- assert.equal(p[2].left[1],43);assert.ok(p[2].right[1]<43);
- assert.equal(p[6].right[1],43);assert.ok(p[6].left[1]<43);
+ assert.equal(report.no_crossing_feet,true);
+ assert.equal(report.body_center_x,24);
+ assert.equal(report.vertical_center_y,24);
+ assert.equal(report.foot_anchor_y,43);
+ assert.equal(report.total_frames,768);
+ for(const lane of [report.front_foot_points,report.side_foot_points]){
+  assert.equal(lane.length,8);
+  for(let i=0;i<8;i++){
+   const [left,right]=lane[i];
+   assert.ok(left[0]<right[0],'left foot must stay left of right');
+   assert.equal((i<4?left:right)[1],43,'stance foot must be planted');
+  }
+ }
+ for(const frame of report.frame_stats){
+  const [x1,y1,x2,y2]=frame.bbox;
+  assert.ok(Math.abs((x1+x2-1)/2-24)<=3);
+  assert.ok(Math.abs((y1+y2-1)/2-24)<=3);
+  assert.equal(y2,44);
+ }
 });
