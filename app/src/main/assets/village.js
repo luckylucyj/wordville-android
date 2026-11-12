@@ -226,7 +226,7 @@ M.syncSchedule(residents,scheduleMinute(),{teleport:true});
 document.getElementById('village-time-mode').addEventListener('change',e=>{mode=e.target.value;syncTime();});
 document.getElementById('zoom-in').addEventListener('click',()=>{zoom=Math.min(2,zoom+.25);});document.getElementById('zoom-out').addEventListener('click',()=>{zoom=Math.max(1,zoom-.25);});
 document.getElementById('pause-village').addEventListener('click',e=>{paused=!paused;e.currentTarget.textContent=paused?'주민 움직이기':'잠시 멈추기';e.currentTarget.setAttribute('aria-pressed',String(paused));});
-document.getElementById('resident-study').addEventListener('click',()=>{const p=residents.find(r=>r.id===selected);if(p)document.dispatchEvent(new CustomEvent('village-study',{detail:{word:p.word}}));});
+document.getElementById('resident-study').addEventListener('click',()=>{if(selected)document.dispatchEvent(new CustomEvent('village-study',{detail:{residentId:selected,choose:true}}));});
 document.addEventListener('visibilitychange',()=>{last=0;syncTime();});
 globalThis.WordvilleVillage={residents,select,visitResident,get visitingPlace(){return selectedPlace();},get clockMinute(){return scheduleMinute();},get schedulePreview(){return schedulePreview;},get period(){return period;},get conversations(){return chatCount;},get zoom(){return zoom;},get zone(){return viewZone;},setZone:setMapZone,resize:syncCanvasResolution,mapView:currentMapView,visibleResidents:[...VISIBLE_RESIDENTS]};
 syncTime();requestAnimationFrame(frame);
