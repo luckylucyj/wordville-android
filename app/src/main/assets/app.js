@@ -10,15 +10,17 @@ function save(next){try{localStorage.setItem(storageKey,JSON.stringify(next));st
 function renderStats(){$('balance').textContent=`${state.xp} XP · ${state.coins} 코인`;renderDue();}
 function renderDue(){$('due').textContent=`복습할 단어 ${words.filter(w=>!state.reviews[w.id]||state.reviews[w.id].due<=Date.now()).length}개 · 정답은 1·3·7·14·30일, 오답은 10분 뒤 복습` ;}
 function make(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
-let wordPage=0;
+let wordPage=0,studyPdfPage=null;
 const PAGE_SIZE=60;
-function filteredWords(){const query=$('search').value.trim().toLowerCase(),day=$('day-filter').value,flag=$('wv-status-filter')?.value||'all';const list=words.filter(w=>(day===''||(w.days||[]).includes(Number(day)))&&(!query||w.word.toLowerCase().includes(query)||w.meaning.toLowerCase().includes(query))&&(flag==='all'||(globalThis.WordvilleStudy?.statusFor(w,day)||'new')===flag));return globalThis.WordvilleBookOrder?.sort(list,day)||list;}
+function filteredWords(){const query=$('search').value.trim().toLowerCase(),day=$('day-filter').value,flag=$('wv-status-filter')?.value||'all';const list=words.filter(w=>(day===''||(w.days||[]).includes(Number(day)))&&(!query||w.word.toLowerCase().includes(query)||w.meaning.toLowerCase().includes(query))&&(flag==='all'||(globalThis.WordvilleStudy?.statusFor(w,day)||'new')===flag)&&(studyPdfPage===null||(w.pdfPages||[]).some(n=>Number(n)===studyPdfPage)));return globalThis.WordvilleBookOrder?.sort(list,day)||list;}
 function renderScope(){const list=filteredWords(),day=$('day-filter').value,query=$('search').value.trim();$('review-scope').textContent=`복습 범위: ${day==='0'?'이디엄':day?'Day '+day:'전체 Day'}${query?' · 검색: '+query:''} · ${list.length}개 중 복습할 단어`;}
-function renderWords(){const filtered=filteredWords(),pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));wordPage=Math.min(wordPage,pages-1);$('words').replaceChildren();const fragment=document.createDocumentFragment();for(const w of filtered.slice(wordPage*PAGE_SIZE,(wordPage+1)*PAGE_SIZE)){const button=make('button',undefined,'word');button.append(make('strong',w.word),make('span',w.meaning));button.addEventListener('click',()=>openWord(w));const row=make('div',undefined,'wv-word-item');row.append(button);globalThis.WordvilleStudy?.attachCard(row,w,$('day-filter').value);fragment.append(row);}$('words').append(fragment);if(!filtered.length)$('words').append(make('p','검색 결과가 없습니다.'));$('filter-count').textContent=`검색 결과 ${filtered.length}개 · PDF 수록 순서 · 한 페이지 60개`;$('page-info').textContent=`${wordPage+1} / ${pages} 쪽`;$('prev-page').disabled=wordPage===0;$('next-page').disabled=wordPage>=pages-1;renderScope();globalThis.WordvilleStudy?.renderSummary();}
+function renderWords(){const scope=$('wv-study-pdf-scope');if(scope){scope.hidden=studyPdfPage===null;$('wv-study-pdf-label').textContent=studyPdfPage===null?'':'PDF 원본 '+studyPdfPage+'쪽 단어만 표시 중';}
+ const filtered=filteredWords(),pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));wordPage=Math.min(wordPage,pages-1);$('words').replaceChildren();const fragment=document.createDocumentFragment();for(const w of filtered.slice(wordPage*PAGE_SIZE,(wordPage+1)*PAGE_SIZE)){const button=make('button',undefined,'word');button.append(make('strong',w.word),make('span',w.meaning));button.addEventListener('click',()=>openWord(w));const row=make('div',undefined,'wv-word-item');row.append(button);globalThis.WordvilleStudy?.attachCard(row,w,$('day-filter').value);fragment.append(row);}$('words').append(fragment);if(!filtered.length)$('words').append(make('p','검색 결과가 없습니다.'));$('filter-count').textContent=`검색 결과 ${filtered.length}개 · PDF 수록 순서 · 한 페이지 60개`;$('page-info').textContent=`${wordPage+1} / ${pages} 쪽`;$('prev-page').disabled=wordPage===0;$('next-page').disabled=wordPage>=pages-1;renderScope();globalThis.WordvilleStudy?.renderSummary();}
 $('prev-page').addEventListener('click',()=>{wordPage--;renderWords();$('filter-count').scrollIntoView({block:'start'});});
 $('next-page').addEventListener('click',()=>{wordPage++;renderWords();$('filter-count').scrollIntoView({block:'start'});});
-$('day-filter').addEventListener('change',()=>{wordPage=0;renderWords();});
+$('day-filter').addEventListener('change',()=>{wordPage=0;studyPdfPage=null;renderWords();});
 $('wv-status-filter').addEventListener('change',()=>{wordPage=0;renderWords();});
+$('wv-study-pdf-clear').addEventListener('click',()=>{studyPdfPage=null;wordPage=0;renderWords();});
 function openDatabase(){return new Promise((resolve,reject)=>{const req=indexedDB.open('wordville-memory',1);req.onupgradeneeded=()=>req.result.createObjectStore('images');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
 function imageAction(mode,key,value){return new Promise((resolve,reject)=>{if(!db)return reject(Error('이미지 저장소를 사용할 수 없습니다.'));const tx=db.transaction('images',mode==='get'?'readonly':'readwrite');const store=tx.objectStore('images');let request=mode==='get'?store.get(key):mode==='put'?store.put(value,key):store.delete(key);let result;request.onsuccess=()=>result=request.result;tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
 let imageUrl=null;
@@ -90,7 +92,86 @@ $('combine-form').addEventListener('submit',event=>{event.preventDefault();try{i
 $('word-a').addEventListener('change',connection);$('word-b').addEventListener('change',connection);
 $('random').addEventListener('click',()=>{let a=Math.floor(Math.random()*words.length),b=(a+1+Math.floor(Math.random()*(words.length-1)))%words.length;$('word-a').selectedIndex=a;$('word-b').selectedIndex=b;connection();});
 function migrateLearningAliases(){const next=E.migrateAliases(state,words);if(next!==state){localStorage.setItem('wordville.learning.before-vocabulary-audit',JSON.stringify(state));save(next);}}
-async function init(){try{db=await openDatabase();}catch{notify('기억용 이미지 저장을 사용할 수 없습니다.');}try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option',`${w.word} · ${w.meaning}`);option.value=w.id;$(id).append(option);}}$('word-b').selectedIndex=1;connection();renderWords();renderStats();}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
+// The resident's fixed conversation word does not restrict studying.
+const studyPicker=$('wv-resident-study-picker');
+const chooser={day:$('wv-rstudy-day'),page:$('wv-rstudy-page'),pdf:$('wv-rstudy-pdf-page'),word:$('wv-rstudy-word')};
+function residentWords(day,pdf='all'){
+ const set=words.filter(w=>(day===''||(w.days||[]).includes(Number(day)))&&
+ (pdf==='all'||(w.pdfPages||[]).some(n=>Number(n)===Number(pdf))));
+ return globalThis.WordvilleBookOrder?.sort(set,day)||set;
+}
+function chooseOption(select,value,label){
+ const opt=document.createElement('option');opt.value=String(value);opt.textContent=String(label);select.add(opt);
+}
+function residentWordSlice(){
+ const list=residentWords(chooser.day.value,chooser.pdf.value);
+ const index=Math.max(0,Number(chooser.page.value)||0);
+ return list.slice(index*PAGE_SIZE,(index+1)*PAGE_SIZE);
+}
+function populateResidentWords(){
+ const current=chooser.word.value;
+ chooser.word.replaceChildren();
+ const entries=residentWordSlice();
+ for(const w of entries)chooseOption(chooser.word,w.id,w.word+' · '+w.meaning);
+ if(entries.some(w=>w.id===current))chooser.word.value=current;
+ $('wv-rstudy-count').textContent='선택 범위 '+entries.length+'개 · 원본 Day 순서 기준';
+ $('wv-rstudy-open-word').disabled=!entries.length;
+ $('wv-rstudy-study-page').disabled=!entries.length;
+}
+function populateResidentPages(){
+ const list=residentWords(chooser.day.value,chooser.pdf.value);
+ const chosen=Number(chooser.page.value)||0;
+ const count=Math.max(1,Math.ceil(list.length/PAGE_SIZE));
+ chooser.page.replaceChildren();
+ for(let i=0;i<count;i++)chooseOption(chooser.page,i,(i+1)+'페이지 · '+(i*PAGE_SIZE+1)+'~'+Math.min((i+1)*PAGE_SIZE,list.length)+' / '+list.length+'개');
+ chooser.page.value=String(Math.min(chosen,count-1));
+ populateResidentWords();
+}
+function populateResidentPdf(){
+ const prev=chooser.pdf.value||'all';
+ const pages=[...new Set(residentWords(chooser.day.value).flatMap(w=>(w.pdfPages||[]).map(Number)))]
+  .filter(n=>Number.isInteger(n)&&n>0).sort((a,b)=>a-b);
+ chooser.pdf.replaceChildren();
+ chooseOption(chooser.pdf,'all','원본 PDF 모든 쪽');
+ for(const n of pages)chooseOption(chooser.pdf,n,'원본 PDF '+n+'쪽');
+ chooser.pdf.value=pages.includes(Number(prev))&&prev!=='all'?prev:'all';
+ populateResidentPages();
+}
+function initResidentDayOptions(){
+ chooser.day.replaceChildren();
+ for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){
+  chooseOption(chooser.day,day,day===0?'이디엄':'Day '+String(day).padStart(2,'0'));
+ }
+ chooser.day.value=chooser.day.querySelector('option[value="1"]')?'1':chooser.day.options[0]?.value||'';
+ populateResidentPdf();
+}
+function openResidentStudyPicker(residentId){
+ if(!words.length){notify('단어장을 불러오는 중입니다. 다시 선택해 주세요.');return;}
+ if(chooser.day.options.length===0)initResidentDayOptions();
+ const resident=globalThis.VillageModel?.people.find(p=>p.id===residentId);
+ $('wv-rstudy-title').textContent=(resident?.name||'주민')+'과 공부할 단어 선택';
+ studyPicker.hidden=false;
+ globalThis.WordvilleShell?.activate('residents');
+ studyPicker.scrollIntoView({block:'start',behavior:'instant'});
+}
+chooser.day.addEventListener('change',populateResidentPdf);
+chooser.pdf.addEventListener('change',populateResidentPages);
+chooser.page.addEventListener('change',populateResidentWords);
+$('wv-rstudy-close').addEventListener('click',()=>studyPicker.hidden=true);
+$('wv-rstudy-open-word').addEventListener('click',()=>{
+ const w=residentWordSlice().find(w=>w.id===chooser.word.value);
+ if(w)openWord(w);
+});
+$('wv-rstudy-study-page').addEventListener('click',()=>{
+ const day=chooser.day.value,pdf=chooser.pdf.value,requestedPage=Number(chooser.page.value)||0;
+ $('day-filter').value=day;
+ $('search').value='';$('wv-status-filter').value='all';
+ studyPdfPage=pdf==='all'?null:Number(pdf);
+ wordPage=requestedPage;renderWords();
+ globalThis.WordvilleShell?.activate('learn');
+});
+
+async function init(){try{db=await openDatabase();}catch{notify('기억용 이미지 저장을 사용할 수 없습니다.');}try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option',`${w.word} · ${w.meaning}`);option.value=w.id;$(id).append(option);}}$('word-b').selectedIndex=1;connection();renderWords();renderStats();initResidentDayOptions();}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
 init();
 
 function authState(user){
@@ -123,7 +204,7 @@ $('upload-local-images').addEventListener('click',async e=>{
  }catch{authMessage(`${count}개 저장 후 중단됐습니다. 연결을 확인하고 다시 시도해 주세요.`);}finally{e.currentTarget.disabled=false;}
 });
 if(cloud){cloud.auth.onAuthStateChange((_event,session)=>{authState(session?.user||null);});cloud.auth.getSession().then(({data,error})=>{if(error)authMessage('로그인 정보를 확인하지 못했습니다. 다시 로그인해 주세요.');else authState(data.session?.user||null);});}else{$('cloud-status').textContent='서버 모듈 로드 실패';}
-document.addEventListener('village-study',e=>{const w=words.find(w=>E.wordIds(w).includes(e.detail.word));if(w)openWord(w);});
+document.addEventListener('village-study',e=>{if(e.detail?.choose||e.detail?.residentId){openResidentStudyPicker(e.detail.residentId);return;}const w=words.find(w=>E.wordIds(w).includes(e.detail?.word));if(w)openWord(w);});
 
 /* Explicit learning snapshot sync; existing device records stay untouched until chosen. */
 (function(){
