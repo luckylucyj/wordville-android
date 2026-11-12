@@ -25,6 +25,24 @@ const assert = require('node:assert/strict');
   await page.waitForFunction(()=>WordvilleWalk?.referenceAtlas?.naturalWidth===384&&WordvilleWalk.referenceAtlas.naturalHeight===576);
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
   assert.equal(await page.evaluate(()=>WordvilleWalk.sourceFrameCount),3);
+  assert.equal(await page.evaluate(()=>WordvilleWalk.frameCount),8);
+  await page.waitForFunction(()=>WordvilleWalk.walkAtlas?.width===256&&WordvilleWalk.walkAtlas.height===2304);
+  // Verify actual image pixels: 8 distinct frames for each of 12 residents in all 4 directions.
+  const duplicateWalkFrames=await page.evaluate(()=>{
+   const c=WordvilleWalk.walkAtlas.getContext('2d',{willReadFrequently:true}),bad=[];
+   for(let resident=0;resident<12;resident++)for(let dir=0;dir<4;dir++){
+    const signatures=[];
+    for(let frame=0;frame<8;frame++){
+     const pixels=c.getImageData(frame*32,(resident*4+dir)*48,32,48).data;
+     let hash=2166136261;
+     for(let i=0;i<pixels.length;i++)hash=Math.imul(hash^pixels[i],16777619)>>>0;
+     signatures.push(hash);
+    }
+    if(new Set(signatures).size!==8)bad.push({resident,dir,unique:new Set(signatures).size});
+   }
+   return bad;
+  });
+  assert.deepEqual(duplicateWalkFrames,[],'Every resident and direction must have 8 visually distinct pixel frames');
   assert.equal(await page.evaluate(()=>WordvilleHubMap.humanDecorations),0);
   await page.waitForFunction(()=>WordvilleHubMap.image.naturalWidth===600&&WordvilleHubMap.image.naturalHeight===800);
   assert.equal(await page.evaluate(()=>VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))),true);

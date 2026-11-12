@@ -65,6 +65,8 @@ public class VillageSmokeTest {
   }
   assertTrue("4-direction reference walk atlas is available in the APK",walkAtlasReady);
   assertEquals("3",eval(web,"WordvilleWalk.sourceFrameCount"));
+  assertEquals("8",eval(web,"WordvilleWalk.frameCount"));
+  assertEquals("true",eval(web,"WordvilleWalk.walkAtlas.width===256&&WordvilleWalk.walkAtlas.height===2304"));
   assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:50,width:32});})()"));
   // Open a real indoor venue and verify that the route avoids modeled furniture.
   assertEquals("true",eval(web,"WordvillePlaces.show('places');WordvillePlaces.pick('bookstore');WordvilleVenueSpec.isBlocked('bookstore',2,2)&&!WordvilleVenueSpec.isBlocked('bookstore',8,10)"));
