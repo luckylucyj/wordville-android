@@ -32,7 +32,7 @@ const guestStatus=document.createElement('div');guestStatus.id='wv-venue-schedul
 
 function person(id){return people.find(p=>p.id===id)||{id,name:id,shirt:'#765ca6',hair:'#443452'};}
 const occupiedExcept=a=>actors.filter(b=>b!==a).map(b=>({x:Math.round(b.x),y:Math.round(b.y)}));
-let actors=[],scene='',last=0,rosterKey='';
+let actors=[],scene='',last=0,rosterKey='',focusedResidentId=null;
 function scheduleRosterKey(){const m=clockMinute();return places.active+'|'+schedule.hourOf(m)+'|'+schedule.occupants(places.active,m).map(id=>id+':'+schedule.at(id,m).activity).join('|');}
 function reset(){
  scene=places.active;
@@ -41,7 +41,8 @@ function reset(){
  const guests=schedule.occupants(scene,clockMinute());
  // The visitor is not a scheduled villager. Resident NPCs show up here ONLY
  // during their actual scheduled activity; no default always-present NPC.
- const roster=['visitor',...guests];
+ const prioritized=focusedResidentId&&guests.includes(focusedResidentId)?[focusedResidentId,...guests.filter(id=>id!==focusedResidentId)]:guests;
+ const roster=['visitor',...prioritized];
  const spots=[[.12,.80],[.84,.81],[.19,.89],[.78,.87],[.38,.80],
               [.65,.78],[.30,.65],[.7,.65],[.47,.87],[.53,.65]];
  actors=[];announce('');
@@ -149,6 +150,12 @@ function update(dt){
   a.walkDistance+=Math.hypot(nx-a.x,ny-a.y)*8.5;a.x=nx;a.y=ny;a.steps+=dt;
  }
 }
+function focusResident(id){
+ const guests=schedule.occupants(places.active,clockMinute());
+ if(!guests.includes(id))return false;
+ focusedResidentId=id;reset();
+ return actors.some(a=>a.id===id);
+}
 function pixelCreature(a,x,y,scale){ctx.fillStyle=a.id==='cat'?'#db9b62':'#ead4af';
  ctx.fillRect(Math.round(x-scale*.25),Math.round(y-scale*.4),Math.round(scale*.5),Math.round(scale*.3));
  ctx.fillRect(Math.round(x-scale*.15),Math.round(y-scale*.6),Math.round(scale*.28),Math.round(scale*.25));
@@ -168,6 +175,13 @@ function draw(){
   if(!walk?.paint(ctx,a,x,y,{height,width,walking:moving})){
    if(a.id==='cat'||a.id==='dog')pixelCreature(a,x,y,Math.min(28,height));
    else{ctx.fillStyle=a.shirt||'#675f9a';ctx.fillRect(x-6,y-20,12,16);ctx.fillStyle=a.hair||'#4a3542';ctx.fillRect(x-7,y-30,14,11);ctx.fillStyle='#e9bca0';ctx.fillRect(x-5,y-24,10,8);}
+  }
+  if(a.id===focusedResidentId){
+   ctx.strokeStyle='#ffdf67';ctx.lineWidth=2;
+   ctx.beginPath();ctx.ellipse(x,y+2,12,4,0,0,Math.PI*2);ctx.stroke();
+   ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+   ctx.fillStyle='#fff3c9';ctx.fillRect(x-35,y-height-30,70,14);
+   ctx.fillStyle='#59412e';ctx.fillText('현재 위치',x,y-height-20);
   }
   if(!a.player&&!moving&&a.activityState==='doing'){
    ctx.fillStyle='#fff6dfed';
@@ -210,5 +224,5 @@ function frame(ms){
  requestAnimationFrame(frame);
 }
 reset();requestAnimationFrame(frame);
-root.WordvilleVenueRuntime={get actors(){return actors;},get scene(){return scene;},moveTo,get dimensions(){return spec.forPlace(scene);},get showCollision(){return showCollision;}};
+root.WordvilleVenueRuntime={get actors(){return actors;},get scene(){return scene;},get focusedResident(){return focusedResidentId;},focusResident,moveTo,get dimensions(){return spec.forPlace(scene);},get showCollision(){return showCollision;}};
 })(globalThis);
