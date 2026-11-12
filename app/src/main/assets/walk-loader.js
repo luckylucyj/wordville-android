@@ -140,7 +140,7 @@ function drawPets(c,t){
 }
 // This preview runs the same paint() renderer used in the village itself.
 function installWalkPreview(){
- const zones=document.querySelector('.wv-map-zones');
+ const zones=document.querySelector('.village-controls')||document.querySelector('.wv-map-zones');
  if(!zones||document.getElementById('wv-walk-preview'))return;
  const details=document.createElement('details');details.id='wv-walk-preview';
  details.style.cssText='margin:12px 0;padding:12px;border:2px solid #957c5b;border-radius:12px;background:#f7eed9;color:#45382e';
