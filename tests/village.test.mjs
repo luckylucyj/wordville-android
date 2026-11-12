@@ -68,3 +68,28 @@ test('standing, chatting and blocked residents retain their last facing and stop
  assert.equal(p.direction,'up','collision must not rotate a stationary resident');
  assert.equal(p.wait,.16);
 });
+
+
+test('heading, face and actual walking vector stay identical for every moving resident',()=>{
+ const ps=M.freshResidents();
+ let verified=0,turns=0;
+ const history=new Map(ps.map(p=>[p.id,p.direction]));
+ for(let i=0;i<1800;i++){
+  const old=ps.map(p=>({x:p.x,y:p.y,direction:p.direction}));
+  M.tick(ps,.1);
+  ps.forEach((p,j)=>{
+   if(!p.isMoving)return;
+   const dx=p.x-old[j].x,dy=p.y-old[j].y;
+   assert.ok(Math.hypot(dx,dy)>0,p.id+' must move to animate');
+   const expected=M.directionFromDelta(dx,dy,p.direction);
+   assert.equal(p.direction,expected,p.id+' facing vs movement vector');
+   assert.equal(p.facing,p.direction,p.id+' head direction');
+   assert.equal(p.movementDirection,p.direction,p.id+' foot direction');
+   if(history.get(p.id)!==p.direction)turns++;
+   history.set(p.id,p.direction);
+   verified++;
+  });
+ }
+ assert.ok(verified>50,'walking positions must be exercised');
+ assert.ok(turns>2,'turning between path segments must be exercised');
+});
