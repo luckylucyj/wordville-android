@@ -52,7 +52,9 @@ function tick(residents,dt,onMeet){
   if(!p.route.length){const goal=(p.node+5+p.id.length+(p.visits++*7))%nodes.length;p.route=path(p.node,goal).slice(1);p.wait=.25;continue;}
   const nextIndex=p.route[0],n=nodes[nextIndex],dx=n.x-p.x,dy=n.y-p.y,d=Math.hypot(dx,dy);
   p.onStairs=isStairEdge(p.node,nextIndex);
-  p.heading=dx<-.5?-1:dx>.5?1:p.heading;p.direction=Math.abs(dx)>=Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
+  p.heading=dx<-.5?-1:dx>.5?1:p.heading;
+  const angle=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
+  p.direction=['down','down-right','right','up-right','up','up-left','left','down-left'][Math.round(angle/45)%8];
   const speed=p.onStairs?12:18,step=speed*dt;
   if(d<=step){p.x=n.x;p.y=n.y;p.node=p.route.shift();p.wait=.16;p.onStairs=false;}
   else{const nx=p.x+dx/d*step,ny=p.y+dy/d*step;if(residents.some(other=>other!==p&&Math.hypot(other.x-nx,other.y-ny)<23)){p.wait=.16;continue;}p.x=nx;p.y=ny;p.steps+=dt;p.walkDistance=(p.walkDistance||0)+step;p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;}
