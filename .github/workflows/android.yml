@@ -40,7 +40,7 @@ jobs:
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:
-          name: wordville-8way6-unique-frame-resident-sheets
+          name: wordville-8way8-fourphase-resident-sheets
           path: app/src/main/assets/walk48/*.png
           if-no-files-found: error
           retention-days: 30
@@ -206,19 +206,19 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Walk48_8Direction_v2.8.0.apk
+          cp release/wordville-debug.apk release/Wordville_Walk48_8Direction_8Phase_v2.9.0.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.8.0-walk48-8direction"
-          ASSET="release/Wordville_Walk48_8Direction_v2.8.0.apk"
+          TAG="v2.9.0-walk48-8phase"
+          ASSET="release/Wordville_Walk48_8Direction_8Phase_v2.9.0.apk"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.8.0 - 48px Eight-Direction Walking Sheets" \
-              --notes "v2.9.0: Twelve original Wordville residents have 8 directional walking cycles with 6 distinct frames per direction in 48x48 pixel cells (576 frames total), roughly 40 pixel-tall characters, foot baseline y=43, 8FPS. Contact/down/passing-up phases alternate support legs; arms counter-swing. Three opposite directions are mirrored. Diagonal orientations and motion are derived by pixel-level processing of intact original character art, not individually hand-drawn. Preserves original images, pets, vocabulary and app identity." \
+              --title "Wordville v2.9.0 - 48px Eight-Phase Eight-Direction Walk" \
+              --notes "v2.9.0: Twelve original Wordville residents have 8 directional walking cycles with 8 distinct frames per direction in 48x48 pixel cells (768 frames total), roughly 40 pixel-tall characters, foot baseline y=43, 8FPS. Contact/down/passing/up phases alternate support legs; arms counter-swing. Three opposite directions are mirrored. Diagonal orientations and motion are derived by pixel-level processing of intact original character art, not individually hand-drawn. Preserves original images, pets, vocabulary and app identity." \
               --prerelease
           fi
