@@ -30,3 +30,6 @@ test('hub map has limited landmark density and no painted background people',()=
  assert.equal(globalThis.WordvilleHubMap.humanDecorations,0);
  assert.ok(globalThis.WordvilleHubMap.landmarks.length<=5);
 });
+
+// Background used for the compact hub is rendered as one 600x800 scene.
+test('compact garden hub artwork is bundled',()=>{assert.ok(statSync(new URL('../app/src/main/assets/art/hub-garden.webp',import.meta.url)).size>100000);});

@@ -149,7 +149,7 @@ document.addEventListener('keydown',e=>{
 });
 globalThis.WordvilleShell={activate,get screen(){return current;},resizeVillage};
 activate('town');
-const loadingCover=get('wv-loading-cover'),townReference=globalThis.WordvilleWorldArt?.reference;
+const loadingCover=get('wv-loading-cover'),townReference=globalThis.WordvilleHubMap?.image||globalThis.WordvilleWorldArt?.reference;
 const finishStartup=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{if(loadingCover)loadingCover.hidden=true;}));
 if(!townReference||townReference.complete)finishStartup();
 else{

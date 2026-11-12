@@ -26,6 +26,7 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
   assert.equal(await page.evaluate(()=>WordvilleWalk.sourceFrameCount),3);
   assert.equal(await page.evaluate(()=>WordvilleHubMap.humanDecorations),0);
+  await page.waitForFunction(()=>WordvilleHubMap.image.naturalWidth===600&&WordvilleHubMap.image.naturalHeight===800);
   assert.equal(await page.evaluate(()=>VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))),true);
   assert.equal(await page.evaluate(()=>VillageModel.links.filter(([a,b])=>VillageModel.isStairEdge(a,b)).length),2);
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();

@@ -1,15 +1,15 @@
 /* Wordville authored hub: one coherent, collision-aligned 600×800 map.
- * All scenery is original canvas drawing; decorative humans are never baked in.
+ * The reference garden artwork and fallback canvas art have no baked-in humans.
  * The 17 detailed venue interiors remain available in the Places screen.
  */
 (function(root){'use strict';
 const W=600,H=800;
 const LANDMARKS=[
- {id:'library',name:'도서관',x:300,y:164},
- {id:'cafe',name:'카페',x:105,y:292},
- {id:'bookstore',name:'서점',x:498,y:292},
- {id:'square',name:'광장',x:300,y:391},
- {id:'park',name:'공원',x:432,y:521}
+ {id:'library',name:'도서관',x:300,y:290},
+ {id:'greenhouse',name:'식물원',x:78,y:345},
+ {id:'cafe',name:'카페',x:520,y:358},
+ {id:'square',name:'광장',x:303,y:583},
+ {id:'park',name:'공원',x:144,y:586}
 ];
 const palette={
  day:{sky:'#9bd5d3',hill:'#759f85',grass:'#80a96c',grass2:'#679660',stone:'#d5c8ad',stone2:'#e5dabd',shade:'#ac9f83',water:'#70b7c3',roof:'#566d8d',wall:'#e8d6ae',light:'#ffe7a1'},
@@ -95,11 +95,19 @@ function draw(ctx,period){
  if(period==='night')rect(c,0,0,W,H,'#14233835');
  else if(period==='dusk')rect(c,0,0,W,H,'#76536b18');
 }
+const hubImage=typeof Image==='undefined'?{complete:false,naturalWidth:0}:new Image();
+if(typeof Image!=='undefined'){hubImage.decoding='async';hubImage.src='art/hub-garden.webp';}
 const cached=new Map();
 function paint(ctx,period){
+ if(hubImage.complete&&hubImage.naturalWidth===W&&hubImage.naturalHeight===H){
+   ctx.imageSmoothingEnabled=false;ctx.drawImage(hubImage,0,0,W,H);
+   if(period==='night')rect(ctx,0,0,W,H,'#17294272');
+   else if(period==='dusk')rect(ctx,0,0,W,H,'#78546b36');
+   return;
+ }
  let img=cached.get(period);
  if(!img){img=document.createElement('canvas');img.width=W;img.height=H;draw(img.getContext('2d'),period);cached.set(period,img);}
  ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0);
 }
-root.WordvilleHubMap={paint,landmarks:LANDMARKS,scale:{width:W,height:H},humanDecorations:0};
+root.WordvilleHubMap={paint,landmarks:LANDMARKS,image:hubImage,scale:{width:W,height:H},humanDecorations:0};
 })(globalThis);

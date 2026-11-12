@@ -9,29 +9,28 @@ const people=[
  ['abigail','애비게일','광장','reservation','#836aa1','#895995'],['emily','에밀리','재봉실','customer','#b96463','#4d74ab']
 ].map(([id,name,home,word,shirt,hair],i)=>({id,name,home,word,shirt,hair,skin:['#edbe98','#d19b78','#f0c8a2','#b9805e'][i%4]}));
 // Coordinates are the 600×800 authored hub scene. Routes and the fountain share world units.
-const fountain={"x":300,"y":252,"rx":79,"ry":49};
+const fountain={x:303,y:470,rx:112,ry:73};
 const nodes=[
- {x:300,y:377}, // 0
- {x:222,y:376}, // 1
- {x:379,y:377}, // 2
- {x:160,y:423}, // 3
- {x:439,y:421}, // 4
- {x:194,y:237}, // 5
- {x:407,y:236}, // 6
- {x:426,y:266,stair:true}, // 7
- {x:442,y:289,stair:true}, // 8
- {x:451,y:312,stair:true}, // 9
- {x:184,y:309}, // 10
- {x:415,y:327}, // 11
- {x:214,y:344}, // 12
- {x:386,y:349}, // 13
- {x:296,y:425}, // 14
- {x:259,y:458}, // 15
- {x:315,y:479}, // 16
- {x:176,y:270}, // 17
- {x:414,y:256}, // 18
+ {x:300,y:615},
+ {x:178,y:601},
+ {x:420,y:603},
+ {x:146,y:667},
+ {x:455,y:666},
+ {x:190,y:335},
+ {x:413,y:337},
+ {x:420,y:306,stair:true},
+ {x:400,y:289,stair:true},
+ {x:354,y:310,stair:true},
+ {x:165,y:433},
+ {x:438,y:430},
+ {x:181,y:544},
+ {x:422,y:545},
+ {x:301,y:692},
+ {x:278,y:725},
+ {x:309,y:765},
+ {x:168,y:353},
+ {x:437,y:350}
 ];
-// Only vetted walkway segments are traversable. No straight-line shortcut through water.
 const links=[
  [0,1],[0,2],[0,14],[1,12],[1,3],[2,13],[2,4],[5,17],[6,18],[17,10],[18,7],[10,12],[11,13],[6,7],[7,8],[8,9],[9,11],[14,15],[15,16],[5,10]
 ];
