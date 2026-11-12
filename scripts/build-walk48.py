@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wordville: generate 12 separate 288x384 sheets, 8 directions x 6 NEW poses.
+"""Wordville: generate 12 separate 384x384 sheets, 8 directions x 8 unique poses.
 Native frame 48x48, original character height ~40px, foot anchor y=43.
 No screenshot cell cropping. Original source faces/hair and clothing are kept;
 new arm and leg poses are pixel-art transformations of intact original bodies.
@@ -14,12 +14,14 @@ DIRS=['down','down-right','right','up-right','up','up-left','left','down-left']
 MIRROR={'up-left':'up-right','left':'right','down-left':'down-right'}
 SOURCE={'down':'down','down-right':'down','right':'right','up-right':'right','up':'up'}
 GAIT=[
- ('contact-left',(-2,2),(0,0),0,(2,-2)),
- ('down-left',(-1,1),(0,1),1,(1,-1)),
- ('passing-up-left',(1,-1),(0,2),-1,(-1,1)),
- ('contact-right',(2,-2),(0,0),0,(-2,2)),
- ('down-right',(1,-1),(1,0),1,(-1,1)),
- ('passing-up-right',(-1,1),(2,0),-1,(1,-1))
+ ('contact-left',(-3,3),(0,0),0,(3,-3)),
+ ('down-left',(-2,2),(0,1),1,(2,-2)),
+ ('passing-left',(0,0),(0,2),0,(0,0)),
+ ('up-left',(2,-2),(0,2),-1,(-2,2)),
+ ('contact-right',(3,-3),(0,0),0,(-3,3)),
+ ('down-right',(2,-2),(1,0),1,(-2,2)),
+ ('passing-right',(0,0),(2,0),0,(0,0)),
+ ('up-right',(-2,2),(2,0),-1,(2,-2))
 ]
 HI=Image.open(ASSETS/'portraits/wordville-walk-4phase.png').convert('RGBA')
 BACK=Image.open(ASSETS/'portraits/wordville-reference-walk.png').convert('RGBA')
@@ -112,10 +114,10 @@ def main_fraction(im):
  return max(components)/sum(components) if components else 0
 audit=[]
 for i,id in enumerate(IDS):
- src=character_sources(i);sheet=Image.new('RGBA',(288,384))
+ src=character_sources(i);sheet=Image.new('RGBA',(384,384))
  for d,di in enumerate(DIRS):
   frame_hashes=[]
-  for f in range(6):
+  for f in range(8):
    im=directional(src,MIRROR[di],f).transpose(Image.Transpose.FLIP_LEFT_RIGHT) if di in MIRROR else directional(src,di,f)
    b=bbox(im)
    assert b and b[0]>=1 and b[1]>=1 and b[2]<=47 and b[3]<=47,(id,di,f,'clipped',b)
@@ -126,15 +128,15 @@ for i,id in enumerate(IDS):
    h=hashlib.sha256(im.tobytes()).hexdigest();frame_hashes.append(h)
    sheet.alpha_composite(im,(f*48,d*48))
    audit.append({'character':id,'direction':di,'frame':f+1,'height':b[3]-b[1],'anchor':43,'connected_fraction':round(connected,4)})
-  assert len(set(frame_hashes))==6,(id,di,'duplicate frames')
+  assert len(set(frame_hashes))==8,(id,di,'duplicate frames')
  sheet.save(OUT/(id+'.png'),optimize=True)
- assert Image.open(OUT/(id+'.png')).size==(288,384)
-assert len(audit)==576
+ assert Image.open(OUT/(id+'.png')).size==(384,384)
+assert len(audit)==768
 (OUT/'audit.json').write_text(json.dumps({
- 'resident_count':12,'direction_count':8,'frames_per_direction':6,'total_frames':576,
+ 'resident_count':12,'direction_count':8,'frames_per_direction':8,'total_frames':768,
  'cell_size':[48,48],'sheet_size':[288,384],'foot_anchor_y':43,'fps':8,
- 'unique_per_direction':6,'mirrored_directions':['up-left','left','down-left'],
- 'phases':['contact-left','down-left','passing-up-left','contact-right','down-right','passing-up-right'],
+ 'unique_per_direction':8,'mirrored_directions':['up-left','left','down-left'],
+ 'phases':['contact-left','down-left','passing-left','up-left','contact-right','down-right','passing-right','up-right'],
  'limitations':'New motions are procedural pixel edits to original whole bodies; diagonals are adapted from cardinal source views rather than individually hand-drawn.',
  'frame_stats':audit},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-print('WORDVILLE_GAIT_PASS 12 residents x 8 directions x 6 new frames = 576; 48px cell, y43 anchor')
+print('WORDVILLE_GAIT_PASS 12 residents x 8 directions x 8 new frames = 768; 48px cell, y43 anchor')
