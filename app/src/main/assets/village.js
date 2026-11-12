@@ -2,7 +2,7 @@
 (() => {
 const M=VillageModel,S=globalThis.WordvilleSchedule,canvas=document.getElementById('village-canvas'),ctx=canvas.getContext('2d');
 const panel=document.getElementById('village-dialogue'),feed=document.getElementById('village-feed');
-const residents=M.freshResidents();let mode='auto',schedulePreview='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day',viewZone='all';
+const residents=M.freshResidents();let mode='auto',schedulePreview='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day',viewZone='all',followId=null;
 const scheduleMinute=()=>schedulePreview==='auto'?S.minuteNow():Number(schedulePreview)*60;
 
 const paints={day:{sky:'#9ccdda',ground:'#93b078',stone:'#d8ceb3',shade:'#b3a58b',roof:'#536a82',wall:'#e1d3b8',side:'#b5ac98',leaf:'#5c8b59',leaf2:'#83a15e',window:'#668396',path:'#c9c4b2'},dusk:{sky:'#b5a1b3',ground:'#718064',stone:'#b9a695',shade:'#94887e',roof:'#4c566c',wall:'#cbb7a8',side:'#9a8e8b',leaf:'#526e56',leaf2:'#71825a',window:'#e8c482',path:'#aaa199'},night:{sky:'#172b48',ground:'#344a43',stone:'#667078',shade:'#4c5766',roof:'#2d405a',wall:'#839096',side:'#616e7c',leaf:'#324f48',leaf2:'#436459',window:'#eed598',path:'#657480'}};
@@ -96,15 +96,44 @@ function syncTime(){
 function select(id){selected=id;const p=residents.find(r=>r.id===id);const partner=residents.find(r=>r.id===p.partner);document.getElementById('speaker').textContent=p.name;const slot=S.at(id,scheduleMinute());document.getElementById('resident-home').textContent='📍 '+slot.placeName+' · '+slot.activity;document.getElementById('resident-line').textContent=p.chat>0&&partner?`${partner.name}와 대화 중이에요.`:p.atVenue?`${slot.placeName}에서 ${slot.activity} 중이에요.`:`${slot.placeName}(으)로 이동하고 있어요.`;document.getElementById('resident-english').textContent=p.chat>0?'Would you like to study together?':'Let’s learn a new word together.';document.getElementById('resident-korean').textContent=p.chat>0?'함께 공부할래요?':'새로운 단어를 함께 배워요.';panel.hidden=false;document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id}}));}
 function meet(a,b){chatCount++;const messages=[['Let’s meet at the cafe.','카페에서 만나요.'],['Can you confirm the reservation?','예약을 확인해 줄 수 있나요?'],['The shipment will arrive tomorrow.','배송 물품은 내일 도착해요.'],['The appointment is at ten.','약속은 10시예요.'],['Let’s review our schedule.','우리 일정을 확인해요.']];const [en,ko]=messages[(chatCount-1)%messages.length];const li=document.createElement('li');li.textContent=`${a.name} ↔ ${b.name} · ${ko}`;feed.prepend(li);while(feed.children.length>5)feed.lastChild.remove();document.getElementById('conversation-count').textContent=chatCount+'번의 대화';if(selected===a.id||selected===b.id){const p=selected===a.id?a:b;document.getElementById('speaker').textContent=p.name;document.getElementById('resident-line').textContent=`${a.name}와 ${b.name}의 대화`;document.getElementById('resident-english').textContent=en;document.getElementById('resident-korean').textContent=ko;panel.hidden=false;}}
 
+// Clicking a portrait is navigation, not just selection of a canned word.
+function visitResident(id){
+ const p=residents.find(p=>p.id===id);
+ if(!p)return false;
+ selected=id;
+ document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));
+ const slot=S.at(id,scheduleMinute());
+ const here=p.atVenue?p.schedulePlace:null;
+ const indoor=here&&!M.outdoorPlaces.has(here);
+ if(indoor&&globalThis.WordvillePlaces?.places?.some(place=>place.id===here)){
+  followId=null;
+  globalThis.WordvilleShell?.activate('places');
+  globalThis.WordvillePlaces.pick(here);
+  globalThis.WordvilleVenueRuntime?.focusResident?.(id);
+ }else{
+  followId=id;viewZone='all';zoom=1.5;
+  globalThis.WordvilleShell?.activate('town');
+  const controls=document.querySelectorAll('[data-map-zone]');
+  controls.forEach(button=>button.setAttribute('aria-pressed','false'));
+  // Walking NPCs are focused at their actual interpolated position.
+ }
+ document.getElementById('wv-visit-feedback').textContent=
+  p.atVenue?S.PLACE_NAMES[slot.place]+' · '+slot.activity:'이동 중 · '+S.PLACE_NAMES[slot.place]+'(으)로 가는 길';
+ return true;
+}
+function selectedPlace(){return selected?residents.find(p=>p.id===selected)?.schedulePlace:null;}
 const VISIBLE_RESIDENTS=new Set(M.people.map(person=>person.id));
 const MAP_ZONES={all:400,north:160,central:405,south:645};
 function currentMapView(){
  const scale=(viewZone==='all'?Math.max(canvas.width/600,canvas.height/800):Math.max(canvas.width/600,canvas.height/800)*1.25)*zoom;
+ const follow=followId?residents.find(p=>p.id===followId):null;
+ if(follow&&!follow.atVenue)return {scale,offsetX:canvas.width/2-follow.x*scale,offsetY:canvas.height/2-(follow.y-42)*scale};
+ if(follow&&M.outdoorPlaces.has(follow.schedulePlace))return {scale,offsetX:canvas.width/2-follow.x*scale,offsetY:canvas.height/2-(follow.y-42)*scale};
  return {scale,offsetX:canvas.width/2-300*scale,offsetY:canvas.height/2-MAP_ZONES[viewZone]*scale};
 }
 function setMapZone(zone){
  if(!Object.hasOwn(MAP_ZONES,zone))return;
- viewZone=zone;zoom=1;
+ viewZone=zone;zoom=1;followId=null;
  document.querySelectorAll('[data-map-zone]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mapZone===zone)));
 }
 function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>a.y-b.y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();requestAnimationFrame(frame);}
@@ -199,6 +228,6 @@ document.getElementById('zoom-in').addEventListener('click',()=>{zoom=Math.min(2
 document.getElementById('pause-village').addEventListener('click',e=>{paused=!paused;e.currentTarget.textContent=paused?'주민 움직이기':'잠시 멈추기';e.currentTarget.setAttribute('aria-pressed',String(paused));});
 document.getElementById('resident-study').addEventListener('click',()=>{const p=residents.find(r=>r.id===selected);if(p)document.dispatchEvent(new CustomEvent('village-study',{detail:{word:p.word}}));});
 document.addEventListener('visibilitychange',()=>{last=0;syncTime();});
-globalThis.WordvilleVillage={residents,select,get clockMinute(){return scheduleMinute();},get schedulePreview(){return schedulePreview;},get period(){return period;},get conversations(){return chatCount;},get zoom(){return zoom;},get zone(){return viewZone;},setZone:setMapZone,resize:syncCanvasResolution,mapView:currentMapView,visibleResidents:[...VISIBLE_RESIDENTS]};
+globalThis.WordvilleVillage={residents,select,visitResident,get visitingPlace(){return selectedPlace();},get clockMinute(){return scheduleMinute();},get schedulePreview(){return schedulePreview;},get period(){return period;},get conversations(){return chatCount;},get zoom(){return zoom;},get zone(){return viewZone;},setZone:setMapZone,resize:syncCanvasResolution,mapView:currentMapView,visibleResidents:[...VISIBLE_RESIDENTS]};
 syncTime();requestAnimationFrame(frame);
 })();
