@@ -109,7 +109,7 @@ function draw(){
  }
  for(const a of [...actors].sort((a,b)=>a.y-b.y)){
   const x=Math.round((a.x+.5)/s.cols*overlay.width),y=Math.round((a.y+.5)/s.rows*overlay.height),moving=a.route.length>0;
-  const height=Math.round(Math.max(28,Math.min(60,overlay.height/s.rows*1.75))),width=Math.round(height*.68);
+  const height=48,width=32;
   if(!walk?.paint(ctx,a,x,y,{height,width,walking:moving})){
    if(a.id==='cat'||a.id==='dog')pixelCreature(a,x,y,Math.min(28,height));
    else{ctx.fillStyle=a.shirt||'#675f9a';ctx.fillRect(x-6,y-20,12,16);ctx.fillStyle=a.hair||'#4a3542';ctx.fillRect(x-7,y-30,14,11);ctx.fillStyle='#e9bca0';ctx.fillRect(x-5,y-24,10,8);}

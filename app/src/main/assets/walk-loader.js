@@ -102,7 +102,7 @@ function frameFor(p,moving){
 }
 function paint(c,p,x,y,opt={}){
  const id=p.id||p,index=indices[id],direction=dirs[p.direction]!==undefined?p.direction:(p.heading<0?'left':'right');
- const w=Math.round(opt.width||32),h=Math.round(opt.height||50),moving=opt.walking===true;
+ const w=Math.round(opt.width||32),h=Math.round(opt.height||48),moving=opt.walking===true;
  const beat=frameFor(p,moving),dir=dirs[direction];
  const custom=images[id],dirReady=isReady(custom)&&custom.naturalWidth===32*3&&custom.naturalHeight===48*4;
  const generatedReady=!!walkAtlas&&index!==undefined;
@@ -161,7 +161,7 @@ function installWalkPreview(){
  showAll.style.cssText='margin:8px 0;padding:6px 10px;border:1px solid #85694a;border-radius:8px;background:#f0dbb6;color:#46372a';
  const gallery=document.createElement('canvas');gallery.width=320;gallery.height=288;gallery.hidden=true;
  gallery.setAttribute('aria-label','주민 12명의 현재 걷기 프레임 비교');
- gallery.style.cssText='display:block;max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
+ gallery.style.cssText='max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
  showAll.addEventListener('click',()=>{gallery.hidden=!gallery.hidden;showAll.textContent=gallery.hidden?'12명 한꺼번에 보기':'12명 보기 닫기';});
  details.append(summary,controls,canvas,status,showAll,gallery);zones.after(details);
  const c=canvas.getContext('2d');if(!c)return;
