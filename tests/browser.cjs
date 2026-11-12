@@ -305,7 +305,8 @@ const assert = require('node:assert/strict');
   await page.locator('#village-time-mode').selectOption('auto');assert.equal(await page.evaluate(()=>WordvilleVillage.period===VillageModel.period(new Date().getHours())),true);
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
   if(!(await page.locator('.neighbors').evaluate(el=>el.open)))await page.locator('.neighbors').evaluate(el=>el.open=true);
-  await page.locator('[data-person="alex"]').click();
+  // Portrait pixels are a location shortcut, so choose the resident by name.
+  await page.evaluate(()=>WordvilleVillage.select('alex'));
   assert.equal(await page.locator('#speaker').innerText(),'알렉스');
   assert.equal(await page.locator('.village-dialogue .wv-dialog-portrait').count(),1);
   await page.locator('#resident-study').click();
