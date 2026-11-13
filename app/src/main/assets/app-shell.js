@@ -14,6 +14,10 @@ const tabDefs=[
  ['more','☰','더보기']
 ];
 let current='town',lastScreen='town';
+const lastTabKey='wordville.last-learning-tab.v1';
+let resumeLearningTab=false;
+try{resumeLearningTab=localStorage.getItem(lastTabKey)==='learn';}
+catch{/* Continue with the village if local storage is unavailable. */}
 const residents=document.createElement('section');
 residents.id='wv-residents-view';
 residents.className='wv-residents-screen';
@@ -104,6 +108,10 @@ function toggleMore(){
 function activate(screen){
  if(!['town','places','residents','learn','review','lab','book','notes','account'].includes(screen))return;
  current=screen;lastScreen=screen;
+ // Restore the Word tab only when it was the last active screen. Other tabs
+ // still use their normal startup behavior without resuming unfinished quizzes.
+ try{localStorage.setItem(lastTabKey,screen==='learn'?'learn':'town');}
+ catch{/* A storage permission error must never block tab navigation. */}
  if(screen!=='town'){toolPanel.hidden=true;toolButton.setAttribute('aria-expanded','false');}
  more.hidden=true;buttons.get('more').setAttribute('aria-expanded','false');
  document.body.dataset.screen=screen;
@@ -159,7 +167,7 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&!more.hidden){more.hidden=true;buttons.get('more').setAttribute('aria-expanded','false');}
 });
 globalThis.WordvilleShell={activate,get screen(){return current;},resizeVillage};
-activate('town');
+activate(resumeLearningTab?'learn':'town');
 const loadingCover=get('wv-loading-cover'),townReference=globalThis.WordvilleHubMap?.image||globalThis.WordvilleWorldArt?.reference;
 let startupFinished=false;
 const finishStartup=()=>{
