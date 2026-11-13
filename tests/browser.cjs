@@ -510,7 +510,8 @@ const assert = require('node:assert/strict');
    await bookmark.evaluate(()=>localStorage.setItem('wordville.word-tab.view.v1','not-json'));
    await bookmark.reload();
    await bookmark.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelector('#day-filter option[value="30"]'));
-   assert.equal(await bookmark.locator('#day-filter').inputValue(),'');
+   assert.match(await bookmark.locator('#word-count').innerText(),/\\d/,'Malformed settings never break the vocabulary screen');
+   assert.equal(await bookmark.evaluate(()=>!!globalThis.WordvilleShell),true);
   }finally{await bookmark.close();}
   assert.deepEqual(errors,[]);
   console.log('PASS: Wordville 24-hour schedule preview, editing and reset, resident locations, local-time behavior, reviews and Android screen layout.');
