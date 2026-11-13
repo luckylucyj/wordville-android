@@ -132,7 +132,12 @@ function activate(screen){
   b.setAttribute('aria-current',active?'page':'false');
   b.setAttribute('aria-selected',String(active));
  }
- document.querySelector('.brand').textContent='▦ WORDVILLE';
+ const brand=document.querySelector('.brand');
+ if(brand&&!brand.querySelector('.wv-logo')){
+  const logo=document.createElement('img');
+  logo.src='favicon.png';logo.alt='';logo.className='wv-logo';
+  brand.replaceChildren(logo,document.createTextNode('WORDVILLE'));
+ }
  window.scrollTo({top:0,behavior:'instant'});
  if(screen==='town'){
    requestAnimationFrame(resizeVillage);
