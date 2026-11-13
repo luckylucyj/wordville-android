@@ -137,7 +137,30 @@ function setMapZone(zone){
  viewZone=zone;zoom=1;followId=null;
  document.querySelectorAll('[data-map-zone]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mapZone===zone)));
 }
-function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>a.y-b.y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();frameHandle=requestAnimationFrame(frame);}
+let showMapCollision=false;
+const mapCollisionButton=document.createElement('button');
+mapCollisionButton.type='button';
+mapCollisionButton.textContent='충돌';
+mapCollisionButton.setAttribute('aria-label','장식물과 건물의 충돌 범위 표시');
+mapCollisionButton.setAttribute('aria-pressed','false');
+mapCollisionButton.style.cssText='width:auto;min-width:48px;font-size:12px;padding:4px 6px';
+mapCollisionButton.addEventListener('click',()=>{
+ showMapCollision=!showMapCollision;
+ mapCollisionButton.setAttribute('aria-pressed',String(showMapCollision));
+});
+document.querySelector('.zoom-controls')?.prepend(mapCollisionButton);
+function drawMapCollision(){
+ if(!showMapCollision)return;
+ ctx.save();ctx.lineWidth=1.5;ctx.fillStyle='#e34b4248';ctx.strokeStyle='#f7d4a9';
+ for(const d of M.decorations){
+  const r=M.FOOT_RADIUS;ctx.beginPath();
+  if(d.kind==='rect')ctx.rect(d.x-r,d.y-r,d.w+2*r,d.h+2*r);
+  else ctx.ellipse(d.x,d.y,d.rx+r,d.ry+r,0,0,Math.PI*2);
+  ctx.fill();ctx.stroke();
+ }
+ ctx.restore();
+}
+function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));drawMapCollision();for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>a.y-b.y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();frameHandle=requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>select(p.id));document.getElementById('resident-list').append(b);}
 canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=[...residents].filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 // The reference painting has different entrances from the generated fallback map.

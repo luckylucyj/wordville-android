@@ -109,5 +109,5 @@ function paint(ctx,period){
  if(!img){img=document.createElement('canvas');img.width=W;img.height=H;draw(img.getContext('2d'),period);cached.set(period,img);}
  ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0);
 }
-root.WordvilleHubMap={paint,landmarks:LANDMARKS,image:hubImage,scale:{width:W,height:H},fountain:{x:303,y:470,rx:112,ry:73},humanDecorations:0};
+root.WordvilleHubMap={paint,landmarks:LANDMARKS,image:hubImage,scale:{width:W,height:H},fountain:{x:303,y:470,rx:112,ry:73},collision:root.VillageModel?.decorations||[],humanDecorations:0};
 })(globalThis);
