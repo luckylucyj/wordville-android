@@ -513,6 +513,41 @@ const assert = require('node:assert/strict');
    assert.match(await bookmark.locator('#word-count').innerText(),/\d/,'Malformed settings never break the vocabulary screen');
    assert.equal(await bookmark.evaluate(()=>!!globalThis.WordvilleShell),true);
   }finally{await bookmark.close();}
+  // Browser simulation of the Android native preference bridge. Delete the
+  // WebView localStorage preferences before every navigation so restoring Day
+  // 30 can only succeed through the independent native backup.
+  const nativeFallback=await browser.newPage({viewport:{width:390,height:844}});
+  try{
+   await nativeFallback.addInitScript(()=>{
+    const read=()=>{try{return JSON.parse(window.name||'{}');}catch{return {};}};
+    const write=value=>{window.name=JSON.stringify(value);};
+    globalThis.WordvilleSettings={
+     saveWordView(json){const data=read();data.view=json;write(data);return true;},
+     getWordView(){return read().view||'';},
+     saveLastTab(tab){const data=read();data.tab=tab;write(data);return true;},
+     getLastTab(){return read().tab||'';}
+    };
+    localStorage.removeItem('wordville.word-tab.view.v1');
+    localStorage.removeItem('wordville.last-learning-tab.v1');
+   });
+   await nativeFallback.goto('http://127.0.0.1:4173');
+   await nativeFallback.waitForFunction(()=>!!globalThis.WordvilleShell&&
+     document.querySelector('#day-filter option[value="30"]'));
+   await nativeFallback.locator('#wv-bottom-dock [data-screen="learn"]').click();
+   await nativeFallback.locator('#day-filter').selectOption('30');
+   await nativeFallback.locator('#search').fill('fatigue');
+   assert.equal(await nativeFallback.evaluate(()=>
+    JSON.parse(WordvilleSettings.getWordView()).day),'30');
+   assert.equal(await nativeFallback.evaluate(()=>
+    WordvilleSettings.getLastTab()),'learn');
+   await nativeFallback.reload();
+   await nativeFallback.waitForFunction(()=>globalThis.WordvilleShell?.screen==='learn'&&
+     document.querySelector('#day-filter')?.value==='30'&&
+     document.querySelector('#search')?.value==='fatigue'&&
+     document.querySelector('.word strong')?.textContent==='fatigue');
+   assert.equal(await nativeFallback.locator('#day-filter').inputValue(),'30',
+    'Native backup restores Day 30 with lost WebView localStorage');
+  }finally{await nativeFallback.close();}
   assert.deepEqual(errors,[]);
   console.log('PASS: Wordville 24-hour schedule preview, editing and reset, resident locations, local-time behavior, reviews and Android screen layout.');
  } finally {await browser.close();}
