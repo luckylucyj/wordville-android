@@ -163,4 +163,32 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"WordvilleShell.activate('places');WordvilleShell.screen==='places'&&document.getElementById('wv-places-view').hidden===false"));
   inst.runOnMainSync(activity::finish);
  }
+
+ @Test public void wordTabRestoresDayThirtyAfterWebViewReload() throws Exception {
+  android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
+  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class)
+   .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  WebView web=findWebView(activity.findViewById(android.R.id.content));
+  assertNotNull("Wordville WebView present",web);
+  boolean initialized=false;
+  for(int i=0;i<110;i++){
+   if("true".equals(eval(web,"!!globalThis.WordvilleShell&&!!document.querySelector('#day-filter option[value=\\\"30\\\"]')&&document.querySelectorAll('.word').length>0"))){
+    initialized=true;break;
+   }
+   Thread.sleep(150);
+  }
+  assertTrue("Day 30 vocabulary loaded",initialized);
+  assertEquals("true",eval(web,"(function(){WordvilleShell.activate('learn');var d=document.getElementById('day-filter');d.value='30';d.dispatchEvent(new Event('change'));var q=document.getElementById('search');q.value='fatigue';q.dispatchEvent(new Event('input'));return d.value==='30'&&q.value==='fatigue';})()"));
+  assertEquals("true",eval(web,"JSON.parse(localStorage.getItem('wordville.word-tab.view.v1')).day==='30'"));
+  inst.runOnMainSync(web::reload);
+  boolean restored=false;
+  for(int i=0;i<110;i++){
+   if("true".equals(eval(web,"!!globalThis.WordvilleShell&&WordvilleShell.screen==='learn'&&document.getElementById('day-filter').value==='30'&&document.getElementById('search').value==='fatigue'&&document.querySelector('.word strong')?.textContent==='fatigue'"))){
+    restored=true;break;
+   }
+   Thread.sleep(150);
+  }
+  assertTrue("Android WebView reload restores the last Word tab, Day 30, and search",restored);
+  inst.runOnMainSync(activity::finish);
+ }
 }
