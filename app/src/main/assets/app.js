@@ -23,16 +23,35 @@ function rememberWordView(){
   search:$('search').value.slice(0,200),
   status:$('wv-status-filter').value,
   page:wordPage,
-  pdf:studyPdfPage
+  pdf:studyPdfPage,
+  savedAt:Date.now()
  };
- try{localStorage.setItem(wordViewKey,JSON.stringify(snapshot));}
- catch{/* Browser storage may be disabled. Learning is still usable. */}
+ const json=JSON.stringify(snapshot);
+ // Persist immediately on every selection in both independent stores. Do not
+ // rely only on onPause/visibilitychange: Android may kill the web renderer.
+ try{localStorage.setItem(wordViewKey,json);}
+ catch{/* Native preferences may still succeed. */}
+ try{globalThis.WordvilleSettings?.saveWordView(json);}
+ catch{/* Native bridge absent in a normal browser or temporarily unavailable. */}
+}
+function parseWordView(raw){
+ try{
+  const value=JSON.parse(raw||'null');
+  return value&&value.version===1&&typeof value.day==='string'&&
+   Number.isSafeInteger(value.page)&&value.page>=0&&value.page<=10000&&
+   typeof value.search==='string'&&value.search.length<=200&&
+   typeof value.status==='string' ? value : null;
+ }catch{return null;}
 }
 function restoreWordView(){
- let saved;
- try{saved=JSON.parse(localStorage.getItem(wordViewKey)||'null');}
- catch{return;}
- if(!saved||saved.version!==1||typeof saved!=='object')return;
+ let local=null,native=null;
+ try{local=parseWordView(localStorage.getItem(wordViewKey));}catch{}
+ try{native=parseWordView(globalThis.WordvilleSettings?.getWordView());}catch{}
+ // Pick the latest valid snapshot, including versions saved by the older
+ // v2.10.0 localStorage-only implementation (which have no savedAt).
+ const newest=x=>Number.isFinite(x?.savedAt)?x.savedAt:0;
+ const saved=local&&native?(newest(native)>newest(local)?native:local):native||local;
+ if(!saved)return;
  const day=$('day-filter');
  // Restore only values that exist in the freshly loaded vocabulary and UI.
  if(typeof saved.day==='string'&&[...day.options].some(o=>o.value===saved.day))

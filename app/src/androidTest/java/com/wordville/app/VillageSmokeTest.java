@@ -180,6 +180,8 @@ public class VillageSmokeTest {
   assertTrue("Day 30 vocabulary loaded",initialized);
   assertEquals("true",eval(web,"(function(){WordvilleShell.activate('learn');var d=document.getElementById('day-filter');d.value='30';d.dispatchEvent(new Event('change'));var q=document.getElementById('search');q.value='fatigue';q.dispatchEvent(new Event('input'));return d.value==='30'&&q.value==='fatigue';})()"));
   assertEquals("true",eval(web,"JSON.parse(localStorage.getItem('wordville.word-tab.view.v1')).day==='30'"));
+  assertEquals("true",eval(web,"JSON.parse(WordvilleSettings.getWordView()).day==='30'"));
+  assertEquals("true",eval(web,"WordvilleSettings.getLastTab()==='learn'"));
   inst.runOnMainSync(web::reload);
   boolean restored=false;
   for(int i=0;i<110;i++){
@@ -189,9 +191,22 @@ public class VillageSmokeTest {
    Thread.sleep(150);
   }
   assertTrue("Android WebView reload restores the last Word tab, Day 30, and search",restored);
-  // The state-retention assertions above have passed. Clear only the
-  // emulator's test preferences; do not alter real user learning records.
-  inst.runOnMainSync(()->web.evaluateJavascript("(function(){localStorage.removeItem('wordville.last-learning-tab.v1');localStorage.removeItem('wordville.word-tab.view.v1');})()",null));
+  // Reproduce a WebView storage loss: native SharedPreferences must still
+  // restore Day 30 and the last tab without relying on browser autofill.
+  assertEquals("true",eval(web,"(function(){localStorage.removeItem('wordville.last-learning-tab.v1');localStorage.removeItem('wordville.word-tab.view.v1');return !localStorage.getItem('wordville.word-tab.view.v1');})()"));
+  inst.runOnMainSync(web::reload);
+  boolean recoveredFromNative=false;
+  for(int i=0;i<110;i++){
+   if("true".equals(eval(web,"!!globalThis.WordvilleShell&&WordvilleShell.screen==='learn'&&document.getElementById('day-filter').value==='30'&&document.getElementById('search').value==='fatigue'&&document.querySelector('.word strong')?.textContent==='fatigue'"))){
+    recoveredFromNative=true;break;
+   }
+   Thread.sleep(150);
+  }
+  assertTrue("Native Android backup restores Day 30 after localStorage loss",recoveredFromNative);
+  inst.runOnMainSync(()->{
+   activity.getSharedPreferences("wordville_wordview_preferences",android.content.Context.MODE_PRIVATE).edit().clear().commit();
+   web.evaluateJavascript("(function(){localStorage.removeItem('wordville.last-learning-tab.v1');localStorage.removeItem('wordville.word-tab.view.v1');})()",null);
+  });
   inst.runOnMainSync(activity::finish);
  }
 }
