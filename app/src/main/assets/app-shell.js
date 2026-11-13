@@ -16,8 +16,13 @@ const tabDefs=[
 let current='town',lastScreen='town';
 const lastTabKey='wordville.last-learning-tab.v1';
 let resumeLearningTab=false;
-try{resumeLearningTab=localStorage.getItem(lastTabKey)==='learn';}
-catch{/* Continue with the village if local storage is unavailable. */}
+let lastOpened=null;
+try{lastOpened=localStorage.getItem(lastTabKey);}catch{}
+try{
+ const native=globalThis.WordvilleSettings?.getLastTab();
+ if(native==='learn'||native==='town')lastOpened=native;
+}catch{}
+resumeLearningTab=lastOpened==='learn';
 const residents=document.createElement('section');
 residents.id='wv-residents-view';
 residents.className='wv-residents-screen';
@@ -110,8 +115,9 @@ function activate(screen){
  current=screen;lastScreen=screen;
  // Restore the Word tab only when it was the last active screen. Other tabs
  // still use their normal startup behavior without resuming unfinished quizzes.
- try{localStorage.setItem(lastTabKey,screen==='learn'?'learn':'town');}
- catch{/* A storage permission error must never block tab navigation. */}
+ const rememberedTab=screen==='learn'?'learn':'town';
+ try{localStorage.setItem(lastTabKey,rememberedTab);}catch{}
+ try{globalThis.WordvilleSettings?.saveLastTab(rememberedTab);}catch{}
  if(screen!=='town'){toolPanel.hidden=true;toolButton.setAttribute('aria-expanded','false');}
  more.hidden=true;buttons.get('more').setAttribute('aria-expanded','false');
  document.body.dataset.screen=screen;
