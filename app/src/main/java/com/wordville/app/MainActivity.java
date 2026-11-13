@@ -17,6 +17,9 @@ import android.widget.Button;
 import android.webkit.*;
 import androidx.webkit.WebViewAssetLoader;
 import java.io.ByteArrayInputStream;
+import android.webkit.JavascriptInterface;
+import android.content.SharedPreferences;
+import org.json.JSONObject;
 
 public class MainActivity extends Activity {
  private static final String CLOUD_HOST="tvqzgyxsyuxiesplfyyg.supabase.co";
@@ -27,6 +30,52 @@ public class MainActivity extends Activity {
  private ValueCallback<Uri[]> chooser;
  private long previousRendererRecovery=0L;
  private boolean pageReady=false;
+ // Native backup is independent of WebView's localStorage and survives WebView
+ // renderer recreation, app process restarts, and compatible APK upgrades.
+ private static final String SETTINGS_FILE="wordville_wordview_preferences";
+ private static final String NATIVE_VIEW_KEY="last_word_view";
+ private static final String NATIVE_TAB_KEY="last_active_tab";
+ private final class WordvilleSettingsBridge {
+  private SharedPreferences prefs(){
+   return getApplicationContext().getSharedPreferences(SETTINGS_FILE,MODE_PRIVATE);
+  }
+  @JavascriptInterface public String getWordView(){
+   return prefs().getString(NATIVE_VIEW_KEY,"");
+  }
+  @JavascriptInterface public boolean saveWordView(String json){
+   if(json==null||json.length()>1500)return false;
+   try{
+    JSONObject o=new JSONObject(json);
+    if(o.optInt("version",-1)!=1)return false;
+    String day=o.optString("day","");
+    if(day.length()>2)return false;
+    if(!day.isEmpty()){
+     int d=Integer.parseInt(day);
+     if(d<0||d>90)return false;
+    }
+    String status=o.optString("status","all");
+    if(!("all".equals(status)||"N".equals(status)||"R".equals(status)||
+      "F".equals(status)||"X".equals(status)||"U".equals(status)||
+      "C".equals(status)||"✓".equals(status)))return false;
+    if(o.optString("search","").length()>200)return false;
+    int page=o.optInt("page",-1);
+    if(page<0||page>10000)return false;
+    if(!o.isNull("pdf")){
+     int pdf=o.optInt("pdf",-1);
+     if(pdf<1||pdf>10000)return false;
+    }
+    return prefs().edit().putString(NATIVE_VIEW_KEY,json).commit();
+   }catch(Exception ex){return false;}
+  }
+  @JavascriptInterface public String getLastTab(){
+   return prefs().getString(NATIVE_TAB_KEY,"");
+  }
+  @JavascriptInterface public boolean saveLastTab(String screen){
+   if(!("learn".equals(screen)||"town".equals(screen)))return false;
+   return prefs().edit().putString(NATIVE_TAB_KEY,screen).commit();
+  }
+ }
+
 
  @Override public void onCreate(Bundle saved) {
   super.onCreate(saved);
@@ -70,6 +119,9 @@ public class MainActivity extends Activity {
   settings.setAllowContentAccess(false);
   settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
   settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+  // The bridge exposes only validated display preferences, never credentials
+  // or progress, and the WebView restricts page navigation to bundled assets.
+  view.addJavascriptInterface(new WordvilleSettingsBridge(),"WordvilleSettings");
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder()
     .addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
   view.setWebViewClient(new WebViewClient(){
