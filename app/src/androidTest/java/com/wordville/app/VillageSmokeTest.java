@@ -172,7 +172,7 @@ public class VillageSmokeTest {
   assertNotNull("Wordville WebView present",web);
   boolean initialized=false;
   for(int i=0;i<110;i++){
-   if("true".equals(eval(web,"!!globalThis.WordvilleShell&&!!document.querySelector('#day-filter option[value=\\\"30\\\"]')&&document.querySelectorAll('.word').length>0"))){
+   if("true".equals(eval(web,"!!globalThis.WordvilleShell&&!!document.querySelector('#day-filter option[value=\"30\"]')&&document.querySelectorAll('.word').length>0"))){
     initialized=true;break;
    }
    Thread.sleep(150);
@@ -189,6 +189,8 @@ public class VillageSmokeTest {
    Thread.sleep(150);
   }
   assertTrue("Android WebView reload restores the last Word tab, Day 30, and search",restored);
+  // Avoid carrying this test fixture into the other emulator smoke tests.
+  assertEquals("true",eval(web,"WordvilleShell.activate('town');var d=document.getElementById('day-filter');d.value='';d.dispatchEvent(new Event('change'));var q=document.getElementById('search');q.value='';q.dispatchEvent(new Event('input'));true"));
   inst.runOnMainSync(activity::finish);
  }
 }
