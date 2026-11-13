@@ -35,7 +35,7 @@ const decorations=Object.freeze([
  {id:'north-east-lamp',kind:'ellipse',x:436,y:330,rx:4,ry:4},
  {id:'south-west-lamp',kind:'ellipse',x:142,y:521,rx:4,ry:4},
  {id:'south-east-lamp',kind:'ellipse',x:462,y:520,rx:4,ry:4}
-].map(item=>Object.freeze(item))));
+].map(item=>Object.freeze(item)));
 function collidesDecoration(x,y,radius=FOOT_RADIUS){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(radius)||radius<0)return true;
  return decorations.some(d=>{
