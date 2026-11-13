@@ -13,6 +13,24 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleWorldArt.landmarks.length),17);
   await page.waitForFunction(()=>document.getElementById('wv-loading-cover')?.hidden===true);
   assert.equal(await page.locator('#wv-loading-cover').isVisible(),false);
+  // Android resume and icon smoke checks. Use a synthetic app resume event
+  // to verify state is not reset when WebView is only suspended.
+  assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),'favicon.svg');
+  const faviconResponse=await page.request.get('http://127.0.0.1:4173/favicon.svg');
+  assert.equal(faviconResponse.status(),200);
+  assert.match(await faviconResponse.text(),/Wordville pixel house icon/);
+  assert.equal(await page.locator('.brand .wv-logo').getAttribute('src'),'favicon.svg');
+  assert.equal(await page.locator('.wv-loading-logo').getAttribute('src'),'favicon.svg');
+  await page.evaluate(()=>{
+   const cover=document.getElementById('wv-loading-cover');
+   cover.hidden=false;
+   document.dispatchEvent(new Event('wordville-app-resume'));
+  });
+  await page.waitForFunction(()=>document.getElementById('wv-loading-cover')?.hidden===true);
+  assert.equal(await page.evaluate(()=>WordvilleShell.screen),'town');
+  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
+  assert.ok(await page.evaluate(()=>document.getElementById('village-canvas').width>20));
+
 
   assert.equal(await page.evaluate(()=>document.querySelector('#village-canvas').getBoundingClientRect().height>innerHeight*.68),true);
   assert.equal(await page.evaluate(()=>!!globalThis.WordvilleWorldArt?.town),true);
@@ -218,6 +236,19 @@ const assert = require('node:assert/strict');
    localStorage.setItem('wordville.rebuilt.v1',JSON.stringify({...Wordville.fresh(),reviews:{[alias]:{attempts:4,streak:2,due:123}}}));
    await imageAction('put',alias,new Blob(['legacy-image'],{type:'image/png'}));
   });
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+  const beforeResume=await page.evaluate(()=>({
+   balance:document.getElementById('balance').textContent,
+   center:document.getElementById('village-canvas').getBoundingClientRect().height,
+   screen:WordvilleShell.screen
+  }));
+  await page.evaluate(()=>document.dispatchEvent(new Event('wordville-app-resume')));
+  const afterResume=await page.evaluate(()=>({
+   balance:document.getElementById('balance').textContent,
+   center:document.getElementById('village-canvas').getBoundingClientRect().height,
+   screen:WordvilleShell.screen
+  }));
+  assert.deepEqual(afterResume,beforeResume,'App resume keeps the screen and stored progress');
   await page.reload();await page.waitForFunction(()=>globalThis.WordvilleShell?.screen==='town');await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   assert.equal(await page.evaluate(()=>state.reviews['voca-effect'].attempts),4);
   assert.ok(await page.evaluate(()=>localStorage.getItem('wordville.learning.before-vocabulary-audit')));
