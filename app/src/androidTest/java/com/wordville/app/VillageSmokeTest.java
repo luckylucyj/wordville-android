@@ -189,8 +189,9 @@ public class VillageSmokeTest {
    Thread.sleep(150);
   }
   assertTrue("Android WebView reload restores the last Word tab, Day 30, and search",restored);
-  // Avoid carrying this test fixture into the other emulator smoke tests.
-  assertEquals("true",eval(web,"(function(){WordvilleShell.activate('town');var d=document.getElementById('day-filter');d.value='';d.dispatchEvent(new Event('change'));var q=document.getElementById('search');q.value='';q.dispatchEvent(new Event('input'));return true;})()"));
+  // The state-retention assertions above have passed. Clear only the
+  // emulator's test preferences; do not alter real user learning records.
+  inst.runOnMainSync(()->web.evaluateJavascript("(function(){localStorage.removeItem('wordville.last-learning-tab.v1');localStorage.removeItem('wordville.word-tab.view.v1');})()",null));
   inst.runOnMainSync(activity::finish);
  }
 }
