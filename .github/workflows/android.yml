@@ -213,20 +213,20 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Remember_Day_Page_v2.10.0.apk
+          cp release/wordville-debug.apk release/Wordville_Day30_Native_Backup_v2.10.1.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.10.0-remember-word-tab"
-          ASSET="release/Wordville_Remember_Day_Page_v2.10.0.apk"
+          TAG="v2.10.1-native-day-backup"
+          ASSET="release/Wordville_Day30_Native_Backup_v2.10.1.apk"
           test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.10.0 - Restore Word Tab Day, Search and Page" \
-              --notes "v2.10.0: Saves and restores the last selected vocabulary Day (e.g. Day 30), 60-word page, Korean-English search, learning status filter and PDF source page on the device. If the Word tab was active, it reopens after Android WebView restart; switching tabs no longer resets filters. Preferences use a separate storage key and preserve all existing XP, reviews, progress, imagery, villagers and prior v2.9.9 background resume recovery. Browser and Android emulator regression tests included." \
+              --title "Wordville v2.10.1 - Android Native Day and Search Persistence" \
+              --notes "v2.10.1: Fixes Day selection resetting when reopening Wordville on Android. Selection, search, status filter, PDF page and word-list page now save to both Android SharedPreferences and WebView localStorage, with latest valid snapshot restored at startup. Last active Word tab uses a native fallback. Includes emulator regression for WebView localStorage loss with Day 30. Does not delete XP, reviews or existing saved word images." \
               --prerelease
           fi
