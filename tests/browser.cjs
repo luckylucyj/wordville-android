@@ -249,7 +249,7 @@ const assert = require('node:assert/strict');
    screen:WordvilleShell.screen
   }));
   assert.deepEqual(afterResume,beforeResume,'App resume keeps the screen and stored progress');
-  await page.reload();await page.waitForFunction(()=>globalThis.WordvilleShell?.screen==='town');await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
+  await page.reload();await page.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelectorAll('.word').length>0);await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   assert.equal(await page.evaluate(()=>state.reviews['voca-effect'].attempts),4);
   assert.ok(await page.evaluate(()=>localStorage.getItem('wordville.learning.before-vocabulary-audit')));
   await page.locator('#search').fill('effect');await page.locator('.word').filter({has:page.locator('strong',{hasText:/^effect$/})}).click();
@@ -266,7 +266,7 @@ const assert = require('node:assert/strict');
   assert.equal(fallback.text,'cloud-alias');assert.equal(fallback.other,false);
   assert.deepEqual(fallback.calls,['audit-user/voca-effect','audit-user/voca-l-effect','other-user/voca-effect','other-user/voca-l-effect']);
   await page.evaluate(()=>{localStorage.setItem('wordville.rebuilt.v1',JSON.stringify(Wordville.fresh()));});
-  await page.reload();await page.waitForFunction(()=>globalThis.WordvilleShell?.screen==='town');await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
+  await page.reload();await page.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelectorAll('.word').length>0);await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   const first=await page.locator('.word strong').first().innerText();await page.locator('#next-page').click();assert.notEqual(await page.locator('.word strong').first().innerText(),first);await page.locator('#day-filter').selectOption('2');assert.equal(await page.locator('#page-info').innerText().then(t=>t.startsWith('1 /')),true);await page.locator('#day-filter').selectOption('');
   assert.equal(await page.locator('[data-person]').count(),12);
   await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.naturalWidth>0);
@@ -385,7 +385,7 @@ const assert = require('node:assert/strict');
   await page.locator('#learned').click();await page.locator('#close-dialog').click();
   await page.locator('#wv-bottom-dock [data-screen="review"]').click();await page.locator('#start-review').click();const correctAnswer=await page.evaluate(()=>reviewWord.meaning.split(/[;,/]/)[0].trim());await page.locator('#answer').fill(correctAnswer);await page.locator('#answer-form button').click();assert.match(await page.locator('#balance').innerText(),/10 XP/);
   await page.locator('#wv-bottom-dock [data-screen="more"]').click();await page.locator('[data-more="lab"]').click();await page.locator('#concept-name').fill('호텔 청구');await page.locator('#combine-form .primary').click();await page.locator('#wv-bottom-dock [data-screen="more"]').click();await page.locator('[data-more="book"]').click();assert.match(await page.locator('#concepts').innerText(),/호텔 청구/);
-  await page.reload();await page.waitForFunction(()=>globalThis.WordvilleShell?.screen==='town');await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');assert.match(await page.locator('#balance').innerText(),/25 XP/);
+  await page.reload();await page.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelectorAll('.word').length>0);await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');assert.match(await page.locator('#balance').innerText(),/25 XP/);
   await page.locator('#search').fill('reservation');await page.locator('.word').filter({has:page.locator('strong',{hasText:/^reservation$/})}).click();await page.waitForFunction(()=>!document.querySelector('#memory-image').hidden);await page.locator('#remove-image').click();await page.waitForFunction(()=>document.querySelector('#memory-image').hidden);await page.locator('#close-dialog').click();await page.locator('#search').fill('');
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();await page.locator('#wv-map-tools').click();
   await page.locator('#village-time-mode').selectOption('night');assert.equal(await page.evaluate(()=>WordvilleVillage.period),'night');
@@ -464,7 +464,55 @@ const assert = require('node:assert/strict');
   for(const width of [360,390,768,1280]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow at ${width}`);}
   await page.setViewportSize({width:1280,height:1000});await page.locator('#wv-bottom-dock [data-screen="town"]').click();if(await page.locator('#wv-map-tool-panel').isHidden())await page.locator('#wv-map-tools').click();await page.locator('#village-time-mode').selectOption('day');await page.screenshot({path:process.env.WORDVILLE_SCREENSHOT_DIR?`${process.env.WORDVILLE_SCREENSHOT_DIR}/wordville-day.png`:'/tmp/wordville-day.png',fullPage:true});
   await page.locator('#village-time-mode').selectOption('night');await page.screenshot({path:process.env.WORDVILLE_SCREENSHOT_DIR?`${process.env.WORDVILLE_SCREENSHOT_DIR}/wordville-night.png`:'/tmp/wordville-night.png',fullPage:true});
-  await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.locator('#day-filter').selectOption('30');await page.locator('#search').fill('zzzz-no-result');assert.equal(await page.locator('.word').count(),0);assert.equal(await page.locator('#next-page').isDisabled(),true);await page.locator('#wv-bottom-dock [data-screen="review"]').click();await page.locator('#start-review').click();assert.match(await page.locator('#question').innerText(),/마쳤/);await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.locator('#search').fill('');await page.locator('#day-filter').selectOption('1');await page.locator('.word').first().click();assert.match(await page.locator('#detail-source').innerText(),/Day 1.*PDF/);await page.locator('#close-dialog').click();await page.locator('#wv-bottom-dock [data-screen="review"]').click();await page.locator('#review-limit').selectOption('40');await page.locator('#start-review').click();assert.equal(await page.evaluate(()=>queue.length),39);assert.ok(await page.evaluate(()=>queue.every(w=>w.days.includes(1))));assert.deepEqual(errors,[]);
+  await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.locator('#day-filter').selectOption('30');await page.locator('#search').fill('zzzz-no-result');assert.equal(await page.locator('.word').count(),0);assert.equal(await page.locator('#next-page').isDisabled(),true);await page.locator('#wv-bottom-dock [data-screen="review"]').click();await page.locator('#start-review').click();assert.match(await page.locator('#question').innerText(),/마쳤/);await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.locator('#search').fill('');await page.locator('#day-filter').selectOption('1');await page.locator('.word').first().click();assert.match(await page.locator('#detail-source').innerText(),/Day 1.*PDF/);await page.locator('#close-dialog').click();await page.locator('#wv-bottom-dock [data-screen="review"]').click();await page.locator('#review-limit').selectOption('40');await page.locator('#start-review').click();assert.equal(await page.evaluate(()=>queue.length),39);assert.ok(await page.evaluate(()=>queue.every(w=>w.days.includes(1))));// New isolated browser context reproduces Android WebView being restarted
+  // after Day 30 was selected. Filters are independent from XP/review storage.
+  const bookmark=await browser.newPage({viewport:{width:390,height:844}});
+  try{
+   await bookmark.goto('http://127.0.0.1:4173');
+   await bookmark.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelectorAll('.word').length===60);
+   await bookmark.locator('#wv-bottom-dock [data-screen="learn"]').click();
+   await bookmark.locator('#day-filter').selectOption('30');
+   assert.equal(await bookmark.locator('.word strong').first().innerText(),'fatigue');
+   await bookmark.locator('#search').fill('fatigue');
+   await bookmark.reload();
+   await bookmark.waitForFunction(()=>globalThis.WordvilleShell?.screen==='learn'&&
+     document.querySelector('#day-filter')?.value==='30'&&document.querySelector('#search')?.value==='fatigue'&&
+     document.querySelector('.word strong')?.textContent==='fatigue');
+   assert.equal(await bookmark.locator('#day-filter').inputValue(),'30','Day 30 is restored');
+   assert.equal(await bookmark.locator('#search').inputValue(),'fatigue','Query is restored');
+   assert.equal(await bookmark.locator('.word strong').first().innerText(),'fatigue');
+   assert.equal(await bookmark.evaluate(()=>JSON.parse(localStorage.getItem('wordville.word-tab.view.v1')).day),'30');
+   await bookmark.locator('#search').fill('');
+   await bookmark.locator('#day-filter').selectOption('');
+   await bookmark.locator('#next-page').click();
+   assert.match(await bookmark.locator('#page-info').innerText(),/^2 \/ /);
+   await bookmark.reload();
+   await bookmark.waitForFunction(()=>globalThis.WordvilleShell?.screen==='learn'&&
+     document.querySelector('#page-info')?.textContent?.startsWith('2 /'));
+   assert.equal(await bookmark.locator('#day-filter').inputValue(),'');
+   assert.match(await bookmark.locator('#page-info').innerText(),/^2 \/ /,'60-word pagination is restored');
+   await bookmark.locator('#day-filter').selectOption('30');
+   await bookmark.locator('#wv-status-filter').selectOption('N');
+   await bookmark.reload();
+   await bookmark.waitForFunction(()=>globalThis.WordvilleShell?.screen==='learn'&&
+     document.querySelector('#day-filter')?.value==='30'&&document.querySelector('#wv-status-filter')?.value==='N'&&
+     !document.querySelector('#word-count')?.textContent.includes('불러오는 중'));
+   assert.equal(await bookmark.locator('#day-filter').inputValue(),'30');
+   assert.equal(await bookmark.locator('#wv-status-filter').inputValue(),'N');
+   await bookmark.locator('#wv-bottom-dock [data-screen="town"]').click();
+   await bookmark.reload();
+   await bookmark.waitForFunction(()=>globalThis.WordvilleShell?.screen==='town'&&
+     document.querySelector('#day-filter option[value="30"]'));
+   await bookmark.locator('#wv-bottom-dock [data-screen="learn"]').click();
+   assert.equal(await bookmark.locator('#day-filter').inputValue(),'30','Day 30 survives switching tabs');
+   assert.equal(await bookmark.locator('#wv-status-filter').inputValue(),'N');
+   // Malformed preferences must never erase the separate learning progress.
+   await bookmark.evaluate(()=>localStorage.setItem('wordville.word-tab.view.v1','not-json'));
+   await bookmark.reload();
+   await bookmark.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelector('#day-filter option[value="30"]'));
+   assert.equal(await bookmark.locator('#day-filter').inputValue(),'');
+  }finally{await bookmark.close();}
+  assert.deepEqual(errors,[]);
   console.log('PASS: Wordville 24-hour schedule preview, editing and reset, resident locations, local-time behavior, reviews and Android screen layout.');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
