@@ -2,7 +2,7 @@
 (() => {
 const M=VillageModel,S=globalThis.WordvilleSchedule,canvas=document.getElementById('village-canvas'),ctx=canvas.getContext('2d');
 const panel=document.getElementById('village-dialogue'),feed=document.getElementById('village-feed');
-const residents=M.freshResidents();let mode='auto',schedulePreview='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day',viewZone='all',followId=null;
+const residents=M.freshResidents();let mode='auto',schedulePreview='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day',viewZone='all',followId=null,frameHandle=null;
 const scheduleMinute=()=>schedulePreview==='auto'?S.minuteNow():Number(schedulePreview)*60;
 
 const paints={day:{sky:'#9ccdda',ground:'#93b078',stone:'#d8ceb3',shade:'#b3a58b',roof:'#536a82',wall:'#e1d3b8',side:'#b5ac98',leaf:'#5c8b59',leaf2:'#83a15e',window:'#668396',path:'#c9c4b2'},dusk:{sky:'#b5a1b3',ground:'#718064',stone:'#b9a695',shade:'#94887e',roof:'#4c566c',wall:'#cbb7a8',side:'#9a8e8b',leaf:'#526e56',leaf2:'#71825a',window:'#e8c482',path:'#aaa199'},night:{sky:'#172b48',ground:'#344a43',stone:'#667078',shade:'#4c5766',roof:'#2d405a',wall:'#839096',side:'#616e7c',leaf:'#324f48',leaf2:'#436459',window:'#eed598',path:'#657480'}};
@@ -137,7 +137,7 @@ function setMapZone(zone){
  viewZone=zone;zoom=1;followId=null;
  document.querySelectorAll('[data-map-zone]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mapZone===zone)));
 }
-function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>a.y-b.y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();requestAnimationFrame(frame);}
+function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>a.y-b.y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();frameHandle=requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>select(p.id));document.getElementById('resident-list').append(b);}
 canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=[...residents].filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 // The reference painting has different entrances from the generated fallback map.
@@ -228,7 +228,16 @@ document.getElementById('village-time-mode').addEventListener('change',e=>{mode=
 document.getElementById('zoom-in').addEventListener('click',()=>{zoom=Math.min(2,zoom+.25);});document.getElementById('zoom-out').addEventListener('click',()=>{zoom=Math.max(1,zoom-.25);});
 document.getElementById('pause-village').addEventListener('click',e=>{paused=!paused;e.currentTarget.textContent=paused?'주민 움직이기':'잠시 멈추기';e.currentTarget.setAttribute('aria-pressed',String(paused));});
 document.getElementById('resident-study').addEventListener('click',()=>{if(selected)document.dispatchEvent(new CustomEvent('village-study',{detail:{residentId:selected,choose:true}}));});
-document.addEventListener('visibilitychange',()=>{last=0;syncTime();});
+function resumeVillage(){
+ last=0;
+ syncCanvasResolution();
+ syncTime();
+ // Reset any animation frame queued while Android WebView was suspended.
+ if(frameHandle!==null)cancelAnimationFrame(frameHandle);
+ frameHandle=requestAnimationFrame(frame);
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeVillage();else last=0;});
+document.addEventListener('wordville-app-resume',resumeVillage);
 globalThis.WordvilleVillage={residents,select,visitResident,get visitingPlace(){return selectedPlace();},get clockMinute(){return scheduleMinute();},get schedulePreview(){return schedulePreview;},get period(){return period;},get conversations(){return chatCount;},get zoom(){return zoom;},get zone(){return viewZone;},setZone:setMapZone,resize:syncCanvasResolution,mapView:currentMapView,visibleResidents:[...VISIBLE_RESIDENTS]};
-syncTime();requestAnimationFrame(frame);
+syncTime();frameHandle=requestAnimationFrame(frame);
 })();

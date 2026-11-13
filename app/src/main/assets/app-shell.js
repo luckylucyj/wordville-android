@@ -132,7 +132,12 @@ function activate(screen){
   b.setAttribute('aria-current',active?'page':'false');
   b.setAttribute('aria-selected',String(active));
  }
- document.querySelector('.brand').textContent='▦ WORDVILLE';
+ const brand=document.querySelector('.brand');
+ if(brand&&!brand.querySelector('.wv-logo')){
+  const logo=document.createElement('img');
+  logo.src='favicon.svg';logo.alt='';logo.className='wv-logo';
+  brand.replaceChildren(logo,document.createTextNode('WORDVILLE'));
+ }
  window.scrollTo({top:0,behavior:'instant'});
  if(screen==='town'){
    requestAnimationFrame(resizeVillage);
@@ -156,7 +161,21 @@ document.addEventListener('keydown',e=>{
 globalThis.WordvilleShell={activate,get screen(){return current;},resizeVillage};
 activate('town');
 const loadingCover=get('wv-loading-cover'),townReference=globalThis.WordvilleHubMap?.image||globalThis.WordvilleWorldArt?.reference;
-const finishStartup=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{if(loadingCover)loadingCover.hidden=true;}));
+let startupFinished=false;
+const finishStartup=()=>{
+ if(startupFinished)return;
+ startupFinished=true;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{if(loadingCover)loadingCover.hidden=true;}));
+};
+// Never keep the user behind the loading overlay when an image resource hangs.
+// Android's native WebView recovery separately handles a destroyed renderer.
+setTimeout(()=>{if(loadingCover&&!loadingCover.hidden)finishStartup();},6500);
+document.addEventListener('wordville-app-resume',()=>{
+ resizeVillage();
+ if(!startupFinished)finishStartup();
+ else if(loadingCover)loadingCover.hidden=true;
+});
+
 if(!townReference||townReference.complete)finishStartup();
 else{
  townReference.addEventListener('load',finishStartup,{once:true});

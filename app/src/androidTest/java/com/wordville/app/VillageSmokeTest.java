@@ -130,4 +130,37 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"WordvilleVillage.select('alex');!document.getElementById('village-dialogue').hidden"));
   inst.runOnMainSync(activity::finish);
  }
+ @Test public void resumesWithoutBrownScreenAndHasLauncherIcon() throws Exception {
+  android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
+  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class)
+   .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  WebView web=findWebView(activity.findViewById(android.R.id.content));
+  assertNotNull("WebView exists after cold start",web);
+  assertTrue("Wordville has a custom launcher icon",activity.getPackageManager()
+    .getApplicationIcon(activity.getApplicationInfo())!=null);
+  boolean ready=false;
+  for(int i=0;i<100;i++){
+   if("true".equals(eval(web,"!!globalThis.WordvilleShell&&document.getElementById('wv-loading-cover').hidden"))){
+    ready=true;break;
+   }
+   Thread.sleep(180);
+  }
+  assertTrue("Initial loading screen finishes",ready);
+  // Exercise the same onPause/onResume callbacks used when switching Android apps.
+  inst.runOnMainSync(()->{
+   ((MainActivity)activity).onPause();
+   ((MainActivity)activity).onResume();
+  });
+  boolean recovered=false;
+  for(int i=0;i<50;i++){
+   if("true".equals(eval(web,"document.getElementById('wv-loading-cover').hidden&&WordvilleShell.screen==='town'&&document.querySelector('#village-canvas').width>20"))){
+    recovered=true;break;
+   }
+   Thread.sleep(180);
+  }
+  assertTrue("Returning to Wordville keeps a visible usable village",recovered);
+  assertEquals("true",eval(web,"document.querySelector('.brand .wv-logo').getAttribute('src')==='favicon.svg'"));
+  assertEquals("true",eval(web,"WordvilleShell.activate('places');WordvilleShell.screen==='places'&&document.getElementById('wv-places-view').hidden===false"));
+  inst.runOnMainSync(activity::finish);
+ }
 }

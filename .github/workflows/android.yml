@@ -213,20 +213,20 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Resident_Any_Word_Conversation_v2.9.8.apk
+          cp release/wordville-debug.apk release/Wordville_Resume_Recovery_Icon_v2.9.9.apk
       - name: Publish download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.9.8-resident-any-word"
-          ASSET="release/Wordville_Resident_Any_Word_Conversation_v2.9.8.apk"
+          TAG="v2.9.9-resume-fix-icons"
+          ASSET="release/Wordville_Resume_Recovery_Icon_v2.9.9.apk"
           test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.9.8 - Choose Any Word and Practice With Any Resident" \
-              --notes "v2.9.8: The Places tab no longer locks related-word learning to a single venue keyword. Select any of the shipped vocabulary words by Day, Korean/English search, PDF source page and 60-word pagination; choose any resident and work through ten prepared conversational exchanges with free-text replies and example comparisons. Opens the existing Word Card without losing learning records. Preserves v2.9.7 pixel maps, residents schedules and walking sprites. Browser and Android tests." \
+              --title "Wordville v2.9.9 - Android Resume Recovery and Pixel-House App Icon" \
+              --notes "v2.9.9: Handles Android WebView background suspension and renderer termination without blank brown screens; adds an on-device retry panel and resumes a single rendering loop. Adds original pixel-house app launcher icon, web favicon, startup branding and icon QA. Keeps all v2.9.8 vocabulary practice, residents and learning progress." \
               --prerelease
           fi
