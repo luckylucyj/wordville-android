@@ -12,10 +12,48 @@ function renderDue(){$('due').textContent=`복습할 단어 ${words.filter(w=>!s
 function make(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
 let wordPage=0,studyPdfPage=null;
 const PAGE_SIZE=60;
+const wordViewKey='wordville.word-tab.view.v1';
+// Save only display preferences here. XP, review answers, and saved memory
+// images remain under their existing independent storage keys.
+function rememberWordView(){
+ if(!words.length)return;
+ const snapshot={
+  version:1,
+  day:$('day-filter').value,
+  search:$('search').value.slice(0,200),
+  status:$('wv-status-filter').value,
+  page:wordPage,
+  pdf:studyPdfPage
+ };
+ try{localStorage.setItem(wordViewKey,JSON.stringify(snapshot));}
+ catch{/* Browser storage may be disabled. Learning is still usable. */}
+}
+function restoreWordView(){
+ let saved;
+ try{saved=JSON.parse(localStorage.getItem(wordViewKey)||'null');}
+ catch{return;}
+ if(!saved||saved.version!==1||typeof saved!=='object')return;
+ const day=$('day-filter');
+ // Restore only values that exist in the freshly loaded vocabulary and UI.
+ if(typeof saved.day==='string'&&[...day.options].some(o=>o.value===saved.day))
+  day.value=saved.day;
+ const status=$('wv-status-filter');
+ if(typeof saved.status==='string'&&[...status.options].some(o=>o.value===saved.status))
+  status.value=saved.status;
+ if(typeof saved.search==='string')$('search').value=saved.search.slice(0,200);
+ if(saved.pdf!==null&&Number.isInteger(saved.pdf)&&saved.pdf>0&&words.some(w=>
+   (day.value===''||(w.days||[]).includes(Number(day.value)))&&
+   (w.pdfPages||[]).some(n=>Number(n)===saved.pdf)))
+  studyPdfPage=saved.pdf;
+ if(Number.isSafeInteger(saved.page)&&saved.page>=0)wordPage=Math.min(saved.page,10000);
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberWordView();});
+window.addEventListener('pagehide',rememberWordView);
+
 function filteredWords(){const query=$('search').value.trim().toLowerCase(),day=$('day-filter').value,flag=$('wv-status-filter')?.value||'all';const list=words.filter(w=>(day===''||(w.days||[]).includes(Number(day)))&&(!query||w.word.toLowerCase().includes(query)||w.meaning.toLowerCase().includes(query))&&(flag==='all'||(globalThis.WordvilleStudy?.statusFor(w,day)||'new')===flag)&&(studyPdfPage===null||(w.pdfPages||[]).some(n=>Number(n)===studyPdfPage)));return globalThis.WordvilleBookOrder?.sort(list,day)||list;}
 function renderScope(){const list=filteredWords(),day=$('day-filter').value,query=$('search').value.trim();$('review-scope').textContent=`복습 범위: ${day==='0'?'이디엄':day?'Day '+day:'전체 Day'}${query?' · 검색: '+query:''} · ${list.length}개 중 복습할 단어`;}
 function renderWords(){const scope=$('wv-study-pdf-scope');if(scope){scope.hidden=studyPdfPage===null;$('wv-study-pdf-label').textContent=studyPdfPage===null?'':'PDF 원본 '+studyPdfPage+'쪽 단어만 표시 중';}
- const filtered=filteredWords(),pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));wordPage=Math.min(wordPage,pages-1);$('words').replaceChildren();const fragment=document.createDocumentFragment();for(const w of filtered.slice(wordPage*PAGE_SIZE,(wordPage+1)*PAGE_SIZE)){const button=make('button',undefined,'word');button.append(make('strong',w.word),make('span',w.meaning));button.addEventListener('click',()=>openWord(w));const row=make('div',undefined,'wv-word-item');row.append(button);globalThis.WordvilleStudy?.attachCard(row,w,$('day-filter').value);fragment.append(row);}$('words').append(fragment);if(!filtered.length)$('words').append(make('p','검색 결과가 없습니다.'));$('filter-count').textContent=`검색 결과 ${filtered.length}개 · PDF 수록 순서 · 한 페이지 60개`;$('page-info').textContent=`${wordPage+1} / ${pages} 쪽`;$('prev-page').disabled=wordPage===0;$('next-page').disabled=wordPage>=pages-1;renderScope();globalThis.WordvilleStudy?.renderSummary();}
+ const filtered=filteredWords(),pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));wordPage=Math.min(wordPage,pages-1);$('words').replaceChildren();const fragment=document.createDocumentFragment();for(const w of filtered.slice(wordPage*PAGE_SIZE,(wordPage+1)*PAGE_SIZE)){const button=make('button',undefined,'word');button.append(make('strong',w.word),make('span',w.meaning));button.addEventListener('click',()=>openWord(w));const row=make('div',undefined,'wv-word-item');row.append(button);globalThis.WordvilleStudy?.attachCard(row,w,$('day-filter').value);fragment.append(row);}$('words').append(fragment);if(!filtered.length)$('words').append(make('p','검색 결과가 없습니다.'));$('filter-count').textContent=`검색 결과 ${filtered.length}개 · PDF 수록 순서 · 한 페이지 60개`;$('page-info').textContent=`${wordPage+1} / ${pages} 쪽`;$('prev-page').disabled=wordPage===0;$('next-page').disabled=wordPage>=pages-1;renderScope();globalThis.WordvilleStudy?.renderSummary();rememberWordView();}
 $('prev-page').addEventListener('click',()=>{wordPage--;renderWords();$('filter-count').scrollIntoView({block:'start'});});
 $('next-page').addEventListener('click',()=>{wordPage++;renderWords();$('filter-count').scrollIntoView({block:'start'});});
 $('day-filter').addEventListener('change',()=>{wordPage=0;studyPdfPage=null;renderWords();});
@@ -171,7 +209,7 @@ $('wv-rstudy-study-page').addEventListener('click',()=>{
  globalThis.WordvilleShell?.activate('learn');
 });
 
-async function init(){try{db=await openDatabase();}catch{notify('기억용 이미지 저장을 사용할 수 없습니다.');}try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option',`${w.word} · ${w.meaning}`);option.value=w.id;$(id).append(option);}}$('word-b').selectedIndex=1;connection();renderWords();renderStats();initResidentDayOptions();}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
+async function init(){try{db=await openDatabase();}catch{notify('기억용 이미지 저장을 사용할 수 없습니다.');}try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option',`${w.word} · ${w.meaning}`);option.value=w.id;$(id).append(option);}}$('word-b').selectedIndex=1;connection();restoreWordView();renderWords();renderStats();initResidentDayOptions();}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
 init();
 
 function authState(user){
