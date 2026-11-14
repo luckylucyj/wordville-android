@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
      WebResourceResponse response=loader.shouldInterceptRequest(url);
      if(response!=null)return response;
     }
-    if("https".equals(url.getScheme())&&(CLOUD_HOST.equals(url.getHost())||"commons.wikimedia.org".equals(url.getHost())||"upload.wikimedia.org".equals(url.getHost())))return null;
+    if("https".equals(url.getScheme())&&(CLOUD_HOST.equals(url.getHost())||"commons.wikimedia.org".equals(url.getHost())||"upload.wikimedia.org".equals(url.getHost())||"thumb.wikimedia.org".equals(url.getHost())))return null;
     return new WebResourceResponse("text/plain","UTF-8",new ByteArrayInputStream(new byte[0]));
    }
    @Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest request){
