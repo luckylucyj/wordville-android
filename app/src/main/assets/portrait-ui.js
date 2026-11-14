@@ -38,7 +38,7 @@
    if(!panel||!speaker)return;
    let last='';
    function sync(){
-     const id=ids[labels.indexOf(speaker.textContent.trim())];if(id===last)return;last=id;
+     const shown=speaker.textContent.trim();const id=ids.find((candidate,i)=>shown===labels[i]||shown===globalThis.WordvilleI18n?.translate(labels[i]));if(id===last)return;last=id;
      panel.querySelector('.wv-dialog-portrait-jump')?.remove();
      if(id){
       const jump=document.createElement('button');
