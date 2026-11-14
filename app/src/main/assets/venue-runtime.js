@@ -33,14 +33,16 @@ const guestStatus=document.createElement('div');guestStatus.id='wv-venue-schedul
 function person(id){return people.find(p=>p.id===id)||{id,name:id,shirt:'#765ca6',hair:'#443452'};}
 const occupiedExcept=a=>actors.filter(b=>b!==a).map(b=>({x:Math.round(b.x),y:Math.round(b.y)}));
 let actors=[],scene='',last=0,rosterKey='',focusedResidentId=null;
+function mapId(){return scene==='home'&&focusedResidentId==='penny'?'pennyHome':scene;}
 function scheduleRosterKey(){const m=clockMinute();return places.active+'|'+schedule.hourOf(m)+'|'+schedule.occupants(places.active,m).map(id=>id+':'+schedule.at(id,m).activity).join('|');}
 function reset(){
- scene=places.active;
+ const next=places.active;
+ scene=next;
  rosterKey=scheduleRosterKey();
- const s=spec.forPlace(scene);
+ const s=spec.forPlace(mapId());
  const scheduled=schedule.occupants(scene,clockMinute());
  // Each villager lives in their own home; never show all sleepers in one room.
- const guests=scene==='home'&&focusedResidentId&&scheduled.includes(focusedResidentId)?[focusedResidentId]:scheduled;
+ const guests=scene==='home'&&focusedResidentId?(scheduled.includes(focusedResidentId)?[focusedResidentId]:[]):scheduled;
  if(scene==='home'&&focusedResidentId){
   const title=document.getElementById('wv-place-name');
   if(title)title.textContent=person(focusedResidentId).name+'의 집';
@@ -54,7 +56,7 @@ function reset(){
  actors=[];announce('');
  for(let i=0;i<Math.min(spots.length,roster.length);i++){
   const id=roster[i],npc=id!=='visitor';
-  const target=spots[i],q=spec.nearest(scene,Math.floor(target[0]*s.cols),
+  const target=spots[i],q=spec.nearest(mapId(),Math.floor(target[0]*s.cols),
     Math.floor(target[1]*s.rows),actors);
   if(!q)continue;
   const slot=npc?schedule.at(id,clockMinute()):null;
@@ -74,7 +76,7 @@ function reset(){
   '현재 예약된 활동이 없습니다.');
 }
 function walkToActivity(a){
- const m=spec.getMap(scene),fx=m.fixtures;
+ const m=spec.getMap(mapId()),fx=m.fixtures;
  // Route to a fixture suited to the resident's concrete scheduled action.
  const typePref={
   home:['bed','table'],library:['shelf','table'],bookstore:['shelf','table'],cafe:['table','counter'],
@@ -91,7 +93,7 @@ function walkToActivity(a){
  let goal=null;
  for(const kind of byActivity){
   for(const fixture of fx.filter(item=>item.kind===kind)){
-   goal=spec.adjacentSpot(scene,fixture,{x:a.x,y:a.y},occupiedExcept(a));
+   goal=spec.adjacentSpot(mapId(),fixture,{x:a.x,y:a.y},occupiedExcept(a));
    if(goal)break;
   }
   if(goal)break;
@@ -102,19 +104,19 @@ function walkToActivity(a){
 function moveTo(a,x,y){
  if(!a||!scene)return false;
  const occupied=occupiedExcept(a),start={x:Math.round(a.x),y:Math.round(a.y)};
- const dest=spec.nearest(scene,Math.round(x),Math.round(y),occupied);
+ const dest=spec.nearest(mapId(),Math.round(x),Math.round(y),occupied);
  if(!dest)return false;
  if(dest.x===start.x&&dest.y===start.y){a.route=[];a.target=dest;a.isMoving=false;a.facingStep=null;return true;}
- let path=spec.route(scene,start,dest,occupied);
+ let path=spec.route(mapId(),start,dest,occupied);
  // A moving resident may temporarily block the only corridor. Try that route,
  // but do not ever walk through another resident: update() still blocks overlap.
- if(!path.length)path=spec.route(scene,start,dest);
+ if(!path.length)path=spec.route(mapId(),start,dest);
  if(!path.length)return false;
  a.target=dest;a.route=path;a.wait=0;a.isMoving=false;a.facingStep=null;return true;
 }
 exitButton.addEventListener('click',()=>{
  if(!actors.length||!scene)return;
- const door=spec.getMap(scene).door;
+ const door=spec.getMap(mapId()).door;
  announce(moveTo(actors[0],door.x,door.y)?'출입구까지 걸어갑니다.':'출입구로 이동할 수 없습니다.');
 });
 function update(dt){
@@ -139,7 +141,7 @@ function update(dt){
   if(d<.035){a.x=step.x;a.y=step.y;a.route.shift();a.wait=0;a.facingStep=null;
    if(!a.route.length&&!a.player)a.activityState='doing';
    if(a.player&&!a.route.length&&a.target&&a.target.x===a.x&&a.target.y===a.y){
-    if(spec.tile(scene,a.x,a.y)==='exit'){
+    if(spec.tile(mapId(),a.x,a.y)==='exit'){
      announce('마을로 돌아갑니다.');
      root.WordvilleShell?.activate('town');
     }else announce('목적지에 도착했습니다.');
@@ -151,7 +153,7 @@ function update(dt){
   if(actors.some(b=>b!==a&&Math.hypot(b.x-nx,b.y-ny)<1.1)){
    a.wait+=dt;
    if(a.wait>.45&&a.target){
-    const alternative=spec.route(scene,{x:Math.round(a.x),y:Math.round(a.y)},a.target,occupiedExcept(a));
+    const alternative=spec.route(mapId(),{x:Math.round(a.x),y:Math.round(a.y)},a.target,occupiedExcept(a));
     if(alternative.length){a.route=alternative;a.facingStep=null;}
     a.wait=0;
    }
@@ -171,19 +173,21 @@ function update(dt){
 }
 function focusResident(id){
  const guests=schedule.occupants(places.active,clockMinute());
- if(!guests.includes(id))return false;
- focusedResidentId=id;reset();
- return actors.some(a=>a.id===id);
+ const pennyHome=places.active==='home'&&id==='penny';
+ if(!guests.includes(id)&&!pennyHome)return false;
+ focusedResidentId=id;reset();places.redraw?.();
+ return pennyHome||actors.some(a=>a.id===id);
 }
+function clearFocus(){focusedResidentId=null;reset();places.redraw?.();}
 function pixelCreature(a,x,y,scale){ctx.fillStyle=a.id==='cat'?'#db9b62':'#ead4af';
  ctx.fillRect(Math.round(x-scale*.25),Math.round(y-scale*.4),Math.round(scale*.5),Math.round(scale*.3));
  ctx.fillRect(Math.round(x-scale*.15),Math.round(y-scale*.6),Math.round(scale*.28),Math.round(scale*.25));
  ctx.fillStyle='#4d403d';ctx.fillRect(Math.round(x),Math.round(y-scale*.5),2,2);
 }
 function draw(){
- const s=spec.forPlace(scene);ctx.clearRect(0,0,overlay.width,overlay.height);
+ const s=spec.forPlace(mapId());ctx.clearRect(0,0,overlay.width,overlay.height);
  if(showCollision){
-  const m=spec.getMap(scene),tw=overlay.width/m.cols,th=overlay.height/m.rows;
+  const m=spec.getMap(mapId()),tw=overlay.width/m.cols,th=overlay.height/m.rows;
   ctx.save();ctx.fillStyle='#9e2e2780';ctx.strokeStyle='#f9d87a';ctx.lineWidth=.7;
   for(const f of m.fixtures){ctx.fillRect(f.x*tw,f.y*th,f.w*tw,f.h*th);ctx.strokeRect(f.x*tw,f.y*th,f.w*tw,f.h*th);}
   ctx.fillStyle='#f8d447bb';ctx.fillRect(m.door.x*tw,m.door.y*th,tw,th);ctx.restore();
@@ -217,12 +221,12 @@ function draw(){
 }
 canvas.addEventListener('click',e=>{
  if(document.getElementById('wv-places-view')?.hidden||!actors.length)return;
- const rect=canvas.getBoundingClientRect(),s=spec.forPlace(scene);
+ const rect=canvas.getBoundingClientRect(),s=spec.forPlace(mapId());
  const x=Math.max(0,Math.min(s.cols-1,Math.floor((e.clientX-rect.left)/rect.width*s.cols)));
  const y=Math.max(0,Math.min(s.rows-1,Math.floor((e.clientY-rect.top)/rect.height*s.rows)));
- const fixture=spec.getMap(scene).fixtures.find(f=>x>=f.x&&x<f.x+f.w&&y>=f.y&&y<f.y+f.h);
+ const fixture=spec.getMap(mapId()).fixtures.find(f=>x>=f.x&&x<f.x+f.w&&y>=f.y&&y<f.y+f.h);
  if(fixture){
-  const q=spec.adjacentSpot(scene,fixture,actors[0],occupiedExcept(actors[0]));
+  const q=spec.adjacentSpot(mapId(),fixture,actors[0],occupiedExcept(actors[0]));
   announce(q&&moveTo(actors[0],q.x,q.y)?fixture.label+' 근처로 이동합니다.':'이 가구에는 접근할 수 없습니다.');
  }else{
   announce(moveTo(actors[0],x,y)?'선택한 위치로 이동합니다.':'이 위치로 이동할 수 없습니다.');
@@ -233,7 +237,7 @@ canvas.addEventListener('keydown',e=>{
  if(!dir||document.getElementById('wv-places-view')?.hidden||!actors.length)return;
  e.preventDefault();const p=actors[0],pos=p.target&&p.route.length?p.target:{x:Math.round(p.x),y:Math.round(p.y)};
  const x=pos.x+dir[0],y=pos.y+dir[1];
- if(!spec.isBlocked(scene,x,y)){if(!moveTo(p,x,y))announce('지금은 이동할 수 없습니다.');}
+ if(!spec.isBlocked(mapId(),x,y)){if(!moveTo(p,x,y))announce('지금은 이동할 수 없습니다.');}
  else announce('벽이나 가구가 있어 이동할 수 없습니다.');
 });
 function frame(ms){
@@ -243,5 +247,5 @@ function frame(ms){
  requestAnimationFrame(frame);
 }
 reset();requestAnimationFrame(frame);
-root.WordvilleVenueRuntime={get actors(){return actors;},get scene(){return scene;},get focusedResident(){return focusedResidentId;},focusResident,moveTo,get dimensions(){return spec.forPlace(scene);},get showCollision(){return showCollision;}};
+root.WordvilleVenueRuntime={get actors(){return actors;},get scene(){return scene;},get focusedResident(){return focusedResidentId;},focusResident,clearFocus,moveTo,get dimensions(){return spec.forPlace(mapId());},get showCollision(){return showCollision;}};
 })(globalThis);

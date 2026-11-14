@@ -75,17 +75,24 @@ function render(){
  ids('wv-place-canvas').setAttribute('aria-label',p.name+' 픽셀아트 장소 풍경');
  ids('wv-place-rail').replaceChildren();
  for(const place of items){
-   const b=button(place.name,'wv-place-chip',()=>pick(place.id));
+   const b=button(place.name,'wv-place-chip',()=>{if(place.id==='home')globalThis.WordvilleVenueRuntime?.clearFocus?.();pick(place.id);});
    b.dataset.place=place.id;
    b.setAttribute('aria-pressed',String(place.id===p.id));
    ids('wv-place-rail').append(b);
  }
+ const pennyButton=button('🏠 페니의 집','wv-place-chip wv-penny-home-shortcut',()=>{
+  filter='all';pick('home');globalThis.WordvilleVenueRuntime?.focusResident?.('penny');
+ });
+ pennyButton.setAttribute('aria-label','페니의 집 방문하기');
+ document.querySelector('.wv-penny-home-shortcut')?.remove();
+ Object.assign(pennyButton.style,{display:'block',width:'100%',margin:'-5px 0 12px'});
+ ids('wv-place-rail').parentElement.after(pennyButton);
  const rail=ids('wv-place-rail');
  const activeButton=rail.querySelector('[aria-pressed="true"]');
  // Scroll only the horizontal venue strip; do not move the entire page.
  if(activeButton)rail.scrollLeft=Math.max(0,activeButton.offsetLeft-rail.offsetLeft-12);
  ids('wv-place-filters').querySelectorAll('[data-place-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.placeFilter===filter)));
- renderConversation();draw(p);
+ renderConversation();redraw();
 }
 function step(d){const items=listed(),i=items.findIndex(p=>p.id===active);pick(items[(i+d+items.length)%items.length].id);}
 function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
@@ -104,6 +111,9 @@ function scenery(p){
  }
 }
 function draw(p){
+ if(p.id==='home'&&globalThis.WordvilleVenueRuntime?.focusedResident==='penny'&&globalThis.WordvillePennyHome?.paint){
+  globalThis.WordvillePennyHome.paint(ctx);return;
+ }
  if(globalThis.WordvilleWorldArt?.place){globalThis.WordvilleWorldArt.place(ctx,p);return;}
  ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,512,240);scenery(p);
  const i=p.id;
@@ -124,6 +134,18 @@ function draw(p){
  else if(i==='workshop'){outlined(66,134,380,77,'#9a6b4d');for(let n=0;n<4;n++){outlined(106+n*83,87,45,42,'#7b8870');rect(120+n*83,62,14,29,'#d7b79d');}rect(95,219,324,14,'#715239');}
  else if(i==='park'){rect(64,171,384,28,'#b6a07a');for(let n=0;n<4;n++){const x=102+n*106;rect(x,94,12,93,'#6c6340');rect(x-27,52,65,65,'#4c8059');rect(x-20,40,51,62,'#649d60');}outlined(223,176,68,30,'#c69b63');}
  rect(0,224,512,16,'#705943');for(let n=0;n<512;n+=32)rect(n,225,20,3,'#b68a57');
+}
+function redraw(){
+ const p=current();
+ if(p.id==='home'){
+  const residentId=globalThis.WordvilleVenueRuntime?.focusedResident;
+  const penny=residentId==='penny';
+  ids('wv-place-name').textContent=residentId&&people[residentId]?people[residentId].name+'의 집':p.name;
+  ids('wv-place-en').textContent=penny?"Penny's Home":p.en;
+  ids('wv-place-description').textContent=penny?'책상과 책장, 침대와 소파가 있는 페니의 개인 생활 공간입니다. 가구를 누르면 주변으로 이동합니다.':p.desc;
+  ids('wv-place-canvas').setAttribute('aria-label',penny?'페니의 집 내부, 실내 가구 10종을 배치한 픽셀아트':'주민의 집 내부');
+ }
+ draw(p);
 }
 ids('wv-map-tab').addEventListener('click',()=>show('map'));
 ids('wv-places-tab').addEventListener('click',()=>show('places'));
@@ -153,5 +175,5 @@ for(const tab of [ids('wv-map-tab'),ids('wv-places-tab')]){
 document.addEventListener('wordville-art-ready',e=>{if(e.detail?.id===active&&siteView&&!siteView.hidden)draw(current());});
 render();
 show('map');
-globalThis.WordvillePlaces={places,filters,show,pick,step,get active(){return active;},get filter(){return filter;}};
+globalThis.WordvillePlaces={places,filters,show,pick,step,redraw,get active(){return active;},get filter(){return filter;}};
 })();
