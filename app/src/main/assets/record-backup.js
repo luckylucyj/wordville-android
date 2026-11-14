@@ -7,7 +7,7 @@
  const $=id=>document.getElementById(id);
  const BUCKET='wordville-backups', MANIFEST='snapshot.json';
  const LEARNING='wordville.rebuilt.v1',WORD_TAB='wordville.word-tab.view.v1';
- const VISIBLE_FIELDS=['wordville.rebuilt.v1','wordville.word-tab.view.v1','wordville.last-learning-tab.v1'];
+ const VISIBLE_FIELDS=['wordville.rebuilt.v1','wordville.word-tab.view.v1','wordville.last-learning-tab.v1','wordville:resident-schedules:v1'];
  const MAX_IMAGE=5*1024*1024;
  const ALLOWED=new Set(['image/png','image/jpeg','image/webp','image/gif']);
  const client=globalThis.WordvilleCloud;
