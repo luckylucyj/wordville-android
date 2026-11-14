@@ -52,3 +52,11 @@
  #wv-place-name{font-size:23px}
  .wv-place-actions button{flex-basis:100%}
 }
+
+/* Dedicated, first-screen access to Penny's furnished home. */
+.wv-penny-entry{padding:8px 12px;background:#f4e3bd;}
+#wv-penny-home-entry{display:flex;align-items:center;gap:12px;width:100%;min-height:65px;text-align:left;padding:12px 15px;border:3px solid #46653d;background:#e2eed1;color:#2b492e;border-radius:8px;box-shadow:0 3px 0 #a9bc95;font-size:17px;font-weight:900;cursor:pointer}
+#wv-penny-home-entry .wv-penny-entry-icon{font-size:27px;flex:none}
+#wv-penny-home-entry small{display:block;margin-top:3px;font-size:12px;color:#456246;font-weight:700;line-height:1.4}
+#wv-penny-home-entry .wv-penny-entry-chevron{margin-left:auto;font-size:28px;flex:none}
+#wv-penny-home-entry:focus-visible{outline:3px solid #2d64bd;outline-offset:2px}
