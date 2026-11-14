@@ -58,6 +58,7 @@ jobs:
           python3 -m http.server 4173 --directory app/src/main/assets &
           CHROME_PATH="$(command -v google-chrome)" node tests/browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/notes-browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/memory-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
