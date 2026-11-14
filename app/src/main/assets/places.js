@@ -84,7 +84,7 @@ function render(){
   filter='all';pick('home');globalThis.WordvilleVenueRuntime?.focusResident?.('penny');
  });
  pennyButton.setAttribute('aria-label','페니의 집 방문하기');
- ids('wv-place-rail').append(pennyButton);
+ ids('wv-place-rail').prepend(pennyButton);
  const rail=ids('wv-place-rail');
  const activeButton=rail.querySelector('[aria-pressed="true"]');
  // Scroll only the horizontal venue strip; do not move the entire page.
