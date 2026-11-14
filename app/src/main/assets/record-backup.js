@@ -254,6 +254,8 @@
   timer=setTimeout(()=>{timer=null;backup(false);},12000);
  }
  async function identity(uid){
+  if(uid&&uid===ownerId&&initialized)return;
+  initialized=!!uid;
   const token=++sessionToken;
   if(timer)clearTimeout(timer);timer=null;
   ownerId=uid||'';remote=null;remoteVersion='';dirty=false;controls();present();
