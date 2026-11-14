@@ -26,6 +26,7 @@ const assert=require('node:assert/strict');
   await page.waitForFunction(()=>WordvilleShell.screen==='gallery');
   assert.equal(await page.locator('#wv-gallery-view').isVisible(),true);
   assert.match(await page.locator('#wv-gallery-total').innerText(),/2장/);
+  await page.waitForFunction(()=>document.querySelectorAll('#wv-gallery-archive-list .wv-photo-card').length===2);
   assert.equal(await page.locator('#wv-gallery-archive-list .wv-photo-card').count(),2);
   assert.notEqual(await page.locator('#wv-gallery-date option').count(),1);
   // Opening a saved image returns to its vocabulary card.
