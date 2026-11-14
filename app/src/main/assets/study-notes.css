@@ -64,6 +64,10 @@ body[data-screen="notes"] #wv-notes-view{display:block}
 .wv-paper-note .wv-note-cell textarea,.wv-paper-note .wv-note-cell input:not([type=checkbox]){margin-top:5px;font:inherit;font-weight:400;font-size:13px;line-height:27px;width:100%;min-width:0;max-width:100%;background:transparent;border:0;border-radius:0;resize:vertical;padding:2px;box-shadow:none;outline-offset:-1px;color:#3d4540}
 .wv-paper-note textarea{min-height:65px}
 .wv-paper-note #wv-note-body{min-height:260px}
+.wv-paper-note .wv-note-body-toolbar{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;min-width:0}
+.wv-paper-note .wv-note-body-toolbar label{margin:0;font:inherit;font-weight:850}
+.wv-paper-note #wv-note-insert-time{min-height:36px;max-width:100%;padding:5px 9px;border:2px solid #997346;border-radius:3px;background:#ffedc6;color:#5b3e28;font-size:11px;font-weight:850;line-height:1.35;white-space:normal;cursor:pointer}
+.wv-paper-note #wv-note-insert-time:focus-visible{outline:3px solid #4475a0;outline-offset:2px}
 .wv-paper-note .wv-note-cell input:not([type=checkbox]){min-height:64px}
 .wv-paper-note .wv-checks{display:flex;flex-wrap:wrap;flex-direction:row;gap:4px;align-content:flex-start;align-items:center;padding:5px 4px;background:#faf5e9}
 .wv-paper-note .wv-checks legend{font-weight:900;font-size:12px;padding:0 2px}
