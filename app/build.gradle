@@ -11,6 +11,7 @@ android {
 }
 dependencies {
  implementation 'androidx.webkit:webkit:1.12.1'
+ implementation 'com.google.mlkit:translate:17.0.3'
  androidTestImplementation 'androidx.test:runner:1.6.2'
  androidTestImplementation 'junit:junit:4.13.2'
 }
