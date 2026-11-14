@@ -248,11 +248,59 @@
   const temporary=document.createElement('div');
   temporary.textContent=String(text||'');return temporary.textContent.slice(0,150);
  }
+ function approvedMediaUrl(href){
+  try{
+   const u=new URL(href);
+   return u.protocol==='https:'&&['thumb.wikimedia.org','upload.wikimedia.org'].includes(u.hostname)&&
+    u.pathname.startsWith('/wikipedia/commons/')?u:null;
+  }catch{return null;}
+ }
+ function imageSources(result){
+  const original=approvedMediaUrl(result.thumbnail);
+  if(!original)return [];
+  const sources=[original.href];
+  if(original.pathname.includes('/thumb/')){
+   const backup=new URL(original.href);
+   backup.hostname=original.hostname==='thumb.wikimedia.org'?'upload.wikimedia.org':'thumb.wikimedia.org';
+   sources.push(backup.href);
+  }
+  return [...new Set(sources)];
+ }
+ async function fetchImage(result){
+  const urls=imageSources(result);
+  if(!urls.length)throw new Error('허용되지 않은 이미지 URL입니다.');
+  let errorMessage='';
+  for(const href of urls){
+   try{
+    const response=await fetch(href,{credentials:'omit',cache:'default'});
+    if(!response.ok){errorMessage='이미지 서버 응답 '+response.status;continue;}
+    const contentLength=Number(response.headers.get('content-length')||0);
+    if(contentLength>maximum)throw new Error('이미지가 5MB를 초과합니다.');
+    const blob=await response.blob();
+    if(!valid(blob)){errorMessage='파일 형식 또는 5MB 용량 제한을 확인하세요.';continue;}
+    return blob;
+   }catch(error){errorMessage=error.message||'이미지 네트워크 오류';}
+  }
+  throw new Error(errorMessage||'이미지 서버에서 파일을 가져올 수 없습니다.');
+ }
  function renderResults(w,results){
   const destination=$('wv-memory-search-results');destination.replaceChildren();
   for(const result of results){
    const article=document.createElement('article');article.className='wv-search-result';
-   const img=document.createElement('img');img.src=result.thumbnail;img.alt=result.title;img.loading='lazy';
+   const img=document.createElement('img');
+   const sources=imageSources(result);let index=0;
+   img.alt=result.title.replace(/^File:/,'');img.loading='lazy';
+   img.onerror=()=>{
+    if(index+1<sources.length){img.src=sources[++index];return;}
+    img.hidden=true;
+    const failure=document.createElement('small');
+    failure.className='wv-image-load-error';
+    failure.textContent='미리보기를 불러오지 못했습니다. 네트워크 연결을 확인하세요.';
+    article.insertBefore(failure,article.firstChild);
+   };
+   if(sources.length)img.src=sources[0];
+   else {img.hidden=true;const failure=document.createElement('small');failure.textContent='이미지 주소가 지원되지 않습니다.';article.append(failure);}
+
    const label=document.createElement('small');label.textContent=result.title.replace(/^File:/,'');
    const rights=document.createElement('small');rights.textContent=(result.license||'라이선스 정보 확인 필요')+(result.author?' · 업로더 '+result.author:'');
    const save=document.createElement('button');save.type='button';save.textContent='이 이미지 저장';
@@ -260,12 +308,7 @@
     if(!current(w)||imageBusy)return;
     save.disabled=true;$('wv-memory-search-status').textContent='이미지 파일을 가져오는 중…';
     try{
-     const url=new URL(result.thumbnail);
-     if(url.protocol!=='https:'||url.hostname!=='upload.wikimedia.org')throw new Error('허용되지 않은 이미지 주소입니다.');
-     const response=await fetch(url.href,{credentials:'omit'});
-     if(!response.ok)throw new Error('검색 사이트에서 이미지를 가져오지 못했습니다.');
-     const blob=await response.blob();
-     if(!valid(blob))throw new Error('이미지 크기 또는 형식이 지원 범위를 벗어났습니다.');
+     const blob=await fetchImage(result);
      const image=new File([blob],result.title.replace(/^File:/,'').slice(0,100),{type:blob.type});
      image.source='Wikimedia Commons';image.sourceUrl=result.sourceUrl;image.license=result.license;image.author=result.author;
      await addFiles([image],w);
@@ -287,7 +330,7 @@
    const params=new URLSearchParams({
     action:'query',format:'json',formatversion:'2',generator:'search',
     gsrsearch:searchText,gsrnamespace:'6',gsrlimit:'18',gsrsort:'relevance',
-    prop:'imageinfo',iiprop:'url|mime|extmetadata|user',iiurlwidth:'480',origin:'*'
+    prop:'imageinfo',iiprop:'url|mime|extmetadata|user',iiurlwidth:'330',origin:'*'
    });
    const response=await fetch('https://commons.wikimedia.org/w/api.php?'+params.toString(),{credentials:'omit'});
    if(!response.ok)throw new Error('검색 서비스 접속 실패 ('+response.status+')');
