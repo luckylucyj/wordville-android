@@ -78,9 +78,10 @@ function sprite(p){
  }
  if(p.chat>0){r(x-11,y-height-18,22,13,'#f8f1dc');text('···',x,y-height-9,8);}
  if(zoom>1.6||p.id===selected){
-  const w=p.name.length*7+8;
+  const shownName=globalThis.WordvilleI18n?.translate(p.name)||p.name;
+  const w=shownName.length*7+8;
   r(x-w/2,y+10,w,12,period==='night'?'#243849dd':'#fbf3dadd');
-  text(p.name,x,y+18,7,period==='night'?'#f4e7c8':'#35494a');
+  text(shownName,x,y+18,7,period==='night'?'#f4e7c8':'#35494a');
  }
 }
 function syncTime(){
