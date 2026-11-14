@@ -20,6 +20,17 @@ import java.io.ByteArrayInputStream;
 import android.webkit.JavascriptInterface;
 import android.content.SharedPreferences;
 import org.json.JSONObject;
+import com.google.mlkit.nl.translate.Translation;
+import com.google.mlkit.nl.translate.TranslateLanguage;
+import com.google.mlkit.nl.translate.Translator;
+import com.google.mlkit.nl.translate.TranslatorOptions;
+import com.google.mlkit.common.model.DownloadConditions;
+import com.google.android.gms.tasks.Task;
+import org.json.JSONArray;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 
 public class MainActivity extends Activity {
  private static final String CLOUD_HOST="tvqzgyxsyuxiesplfyyg.supabase.co";
@@ -77,6 +88,67 @@ public class MainActivity extends Activity {
  }
 
 
+
+ // Only Korean vocabulary glosses (not notes, search terms, or personal data)
+ // are translated. ML Kit runs the translation on device after a model download.
+ private final HashMap<String,Translator> wordTranslators=new HashMap<>();
+ private final class WordvilleTranslationBridge {
+  @JavascriptInterface public void translateBatch(String json,String locale,int requestId){
+   if(requestId<1||requestId>2147483000||json==null||json.length()>7000)return;
+   if(!("en".equals(locale)||"ja".equals(locale)||"zh-CN".equals(locale)))return;
+   runOnUiThread(()->{
+    try {
+     JSONArray items=new JSONArray(json);
+     if(items.length()<1||items.length()>16)return;
+     List<String> originals=new ArrayList<>();
+     for(int i=0;i<items.length();i++){
+      String v=items.optString(i,"");
+      if(v.length()<1||v.length()>220)return;
+      originals.add(v);
+     }
+     String target="en".equals(locale)?TranslateLanguage.ENGLISH:
+        "ja".equals(locale)?TranslateLanguage.JAPANESE:TranslateLanguage.CHINESE;
+     Translator translator=wordTranslators.get(locale);
+     if(translator==null){
+      TranslatorOptions options=new TranslatorOptions.Builder()
+        .setSourceLanguage(TranslateLanguage.KOREAN).setTargetLanguage(target).build();
+      translator=Translation.getClient(options);
+      wordTranslators.put(locale,translator);
+     }
+     final Translator client=translator;
+     DownloadConditions conditions=new DownloadConditions.Builder().build();
+     client.downloadModelIfNeeded(conditions).addOnSuccessListener(v->{
+      JSONArray output=new JSONArray();
+      String[] results=new String[originals.size()];
+      int[] finished={0};
+      for(int i=0;i<originals.size();i++){
+       final int index=i;
+       client.translate(originals.get(i)).addOnCompleteListener(task->{
+        results[index]=task.isSuccessful()?task.getResult():"";
+        finished[0]++;
+        if(finished[0]==originals.size()){
+         for(String value:results)output.put(value==null?"":value);
+         sendTranslations(requestId,locale,output,"");
+        }
+       });
+      }
+     }).addOnFailureListener(e->sendTranslations(requestId,locale,new JSONArray(),"model-download-failed"));
+    }catch(Exception e){sendTranslations(requestId,locale,new JSONArray(),"translation-error");}
+   });
+  }
+ }
+ private void sendTranslations(int requestId,String locale,JSONArray values,String error){
+  WebView current=web;
+  if(current==null||!pageReady)return;
+  JSONObject payload=new JSONObject();
+  try{
+   payload.put("id",requestId);payload.put("locale",locale);
+   payload.put("values",values);payload.put("error",error);
+  }catch(Exception ignored){return;}
+  String js="window.WordvilleVocabularyLocale&&window.WordvilleVocabularyLocale.onNativeResult("+JSONObject.quote(payload.toString())+");";
+  current.post(()->{if(current==web&&pageReady)current.evaluateJavascript(js,null);});
+ }
+
  @Override public void onCreate(Bundle saved) {
   super.onCreate(saved);
   // Keep the status and navigation bar insets outside of the WebView.
@@ -122,6 +194,7 @@ public class MainActivity extends Activity {
   // The bridge exposes only validated display preferences, never credentials
   // or progress, and the WebView restricts page navigation to bundled assets.
   view.addJavascriptInterface(new WordvilleSettingsBridge(),"WordvilleSettings");
+  view.addJavascriptInterface(new WordvilleTranslationBridge(),"WordvilleTranslate");
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder()
     .addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
   view.setWebViewClient(new WebViewClient(){
@@ -234,6 +307,8 @@ public class MainActivity extends Activity {
   }
  }
  @Override protected void onDestroy(){
+  for(Translator translator:wordTranslators.values())translator.close();
+  wordTranslators.clear();
   if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
   if(web!=null){root.removeView(web);web.destroy();web=null;}
   super.onDestroy();
