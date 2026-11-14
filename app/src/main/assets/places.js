@@ -138,8 +138,9 @@ function draw(p){
 function redraw(){
  const p=current();
  if(p.id==='home'){
-  const penny=globalThis.WordvilleVenueRuntime?.focusedResident==='penny';
-  ids('wv-place-name').textContent=penny?'페니의 집':p.name;
+  const residentId=globalThis.WordvilleVenueRuntime?.focusedResident;
+  const penny=residentId==='penny';
+  ids('wv-place-name').textContent=residentId&&people[residentId]?people[residentId].name+'의 집':p.name;
   ids('wv-place-en').textContent=penny?"Penny's Home":p.en;
   ids('wv-place-description').textContent=penny?'책상과 책장, 침대와 소파가 있는 페니의 개인 생활 공간입니다. 가구를 누르면 주변으로 이동합니다.':p.desc;
   ids('wv-place-canvas').setAttribute('aria-label',penny?'페니의 집 내부, 실내 가구 10종을 배치한 픽셀아트':'주민의 집 내부');
