@@ -11,11 +11,12 @@
  const MAX_IMAGE=5*1024*1024;
  const ALLOWED=new Set(['image/png','image/jpeg','image/webp','image/gif']);
  const client=globalThis.WordvilleCloud;
- let ownerId='',busy=false,initialized=false,remote=null,remoteVersion='',timer=null,revision=0,muted=false,sessionToken=0,dirty=false;
+ let ownerId='',busy=false,initialized=false,remote=null,remoteVersion='',timer=null,revision=0,muted=false,sessionToken=0,dirty=false,conflict=false;
  const message=$('wv-backup-message'),status=$('wv-backup-state'),backupButton=$('wv-backup-now'),restoreButton=$('wv-restore-now');
  const storage=()=>client.storage.from(BUCKET);
  const say=text=>{message.textContent=text;};
  const path=uid=>uid+'/'+MANIFEST;
+ const markerKey=uid=>'wordville.backup.lastSynced.'+uid;
  const safeISO=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
  const getLocal=key=>{try{return localStorage.getItem(key)||'';}catch{return '';}};
  function validateLearning(raw){
@@ -144,6 +145,11 @@
    if(manual&&latest&&latest.savedAt!==remoteVersion){
     throw new Error('서버 백업이 갱신되었습니다. 기록을 확인한 뒤 다시 백업하세요.');
    }
+   if(conflict&&!manual){
+    say('기기 기록과 서버 백업이 다릅니다. 덮어쓰지 않았습니다. 복원 또는 지금 전체 백업에서 선택하세요.');
+    return;
+   }
+   if(conflict&&manual&&!confirm('이 기기 전체 기록으로 이전 서버 백업을 교체할까요? 서버에만 있던 기록이 사라질 수 있습니다.'))return;
    if(!manual&&!dirty&&latest)return;
    const images=[];
    const convert=async(section,values,select)=>{
@@ -174,7 +180,8 @@
    if(blob.size>MAX_IMAGE)throw new Error('노트 백업 크기가 5MB를 초과했습니다. 서버 백업을 덮어쓰지 않았습니다.');
    // Publish the new snapshot only after every image has been safely uploaded.
    await upload(uid,blob,path(uid),'application/json');
-   remote=doc;remoteVersion=savedAt;dirty=revision!==startingRevision;present();
+   remote=doc;remoteVersion=savedAt;dirty=revision!==startingRevision;conflict=false;
+   localStorage.setItem(markerKey(uid),savedAt);present();
    say('클라우드 백업 완료 · '+new Date(savedAt).toLocaleString('ko-KR')+' · 노트 '+local.entries.length+'건 · 이미지 '+(photos.length+legacyImages.length)+'장');
   }catch(error){say('백업 실패 · '+error.message);}
   finally{
@@ -241,7 +248,8 @@
    try{
     if(server.learning[WORD_TAB])globalThis.WordvilleSettings?.saveWordView(server.learning[WORD_TAB]);
    }catch{}
-   remote=server;remoteVersion=server.savedAt;dirty=false;
+   remote=server;remoteVersion=server.savedAt;dirty=false;conflict=false;
+   localStorage.setItem(markerKey(uid),server.savedAt);
    say('복원 완료 · 앱 화면을 새로 불러옵니다.');
    location.reload();
   }catch(error){say('복원 실패 · '+error.message);}
@@ -258,7 +266,7 @@
   initialized=!!uid;
   const token=++sessionToken;
   if(timer)clearTimeout(timer);timer=null;
-  ownerId=uid||'';remote=null;remoteVersion='';dirty=false;controls();present();
+  ownerId=uid||'';remote=null;remoteVersion='';dirty=false;conflict=false;controls();present();
   if(!ownerId)return;
   const requested=ownerId;
   try{
@@ -272,7 +280,8 @@
     say('서버 백업을 발견했습니다. 비어 있는 기기에 기존 기록을 복원합니다.');
     await restore(true);
    }else if(server&&hasRecords(local)){
-    say('기존 기기 기록과 서버 백업이 모두 있습니다. 안전을 위해 자동 덮어쓰지 않습니다. 복원 버튼으로 선택할 수 있습니다.');
+    conflict=getLocal(markerKey(requested))!==server.savedAt;
+    say(conflict?'기기 기록과 이전 서버 백업이 모두 있습니다. 자동 덮어쓰기를 차단했습니다. 백업 또는 복원 버튼으로 어느 기록을 유지할지 선택하세요.':'클라우드 백업과 연결됐습니다. 기록 변경 시 자동 백업을 시도합니다.');
    }else if(!server&&hasRecords(local)){
     dirty=true;await backup(false);
    }else say('서버와 기기에 아직 저장된 기록이 없습니다.');
