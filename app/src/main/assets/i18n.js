@@ -6,6 +6,30 @@ const LANGS=['ko','en','zh-CN','ja'];
 const NAMES={ko:'한국어',en:'English','zh-CN':'简体中文',ja:'日本語'};
 const SHORT={ko:'한국어',en:'English','zh-CN':'中文',ja:'日本語'};
 const lines=[
+["알렉스","Alex","亚历克斯","アレックス"],
+["엘리엇","Elliott","艾略特","エリオット"],
+["하비","Harvey","哈维","ハーヴィー"],
+["샘","Sam","山姆","サム"],
+["세바스찬","Sebastian","塞巴斯蒂安","セバスチャン"],
+["셰인","Shane","谢恩","シェーン"],
+["헤일리","Haley","海莉","ヘイリー"],
+["레아","Leah","莉亚","リア"],
+["마루","Maru","玛鲁","マル"],
+["페니","Penny","佩妮","ペニー"],
+["애비게일","Abigail","阿比盖尔","アビゲイル"],
+["에밀리","Emily","艾米莉","エミリー"],
+["＋ 노트","＋ Notes","＋ 笔记","＋ ノート"],
+["📝 노트 보기","📝 View notes","📝 查看笔记","📝 ノートを見る"],
+["학습 진도","Learning progress","学习进度","学習進捗"],
+["0번의 대화","0 conversations","0 次对话","会話0回"],
+["영어·한국어","English/Korean","英语/韩语","英語/韓国語"],
+["예약","reservation","预约","予約"],
+["피로","fatigue","疲劳","疲労"],
+["건강 진단","health checkup","健康检查","健康診断"],
+["단어와 연결할 이미지를 직접 저장해 보세요.","Save an image to remember this word.","保存有助于记忆此词的图片。","単語の記憶に役立つ画像を保存しましょう。"],
+["기존 예시","Existing example","现有示例","既存の例"],
+["원본 한국어 뜻","original Korean meanings","原始韩语释义","元の韓国語の意味"],
+["단어의 뜻은 기기 내 번역으로 표시합니다. 처음 사용할 때 언어팩 다운로드가 필요할 수 있습니다. 원본 학습 데이터와 기록은 유지됩니다.","Word meanings use on-device translation. A language pack may download on first use. Original learning data and records stay unchanged.","单词释义使用设备端翻译。首次使用可能需要下载语言包，原始词库和学习记录保持不变。","単語の意味は端末内で翻訳します。初回は言語パックが必要な場合があります。元の学習データと記録は維持されます。"],
 ["언어 선택","Choose language","选择语言","言語を選択"],
 ["앱 메뉴와 안내 문구의 표시 언어를 변경합니다. 영어 단어와 원본 한국어 뜻은 유지됩니다.","Change the language of menus and guidance. English words and original Korean meanings stay unchanged.","更改菜单和提示的显示语言。英语单词与原始韩语释义保持不变。","メニューと案内の表示言語を変更します。英単語と元の韓国語の意味は変わりません。"],
 ["배경 그림에서 확인되는 일부 장소는 터치해 이동할 수 있습니다. 전체 장소 17곳과 주민의 집은 장소 둘러보기 버튼에서 선택하세요. 확대·축소와 구역 전환을 지원합니다.","Tap highlighted places on the map or explore all 17 places and residents' homes. Use zoom and map regions.","可点击地图上的地点移动。使用探索地点选择全部17个地点和居民住宅，并可缩放与切换区域。","地図上の一部の場所をタップすると移動できます。17か所と住民の家は「場所を探す」から選択でき、拡大・縮小も可能です。"],
@@ -281,6 +305,14 @@ for(const row of lines){
  dictionary.set(row[0],{en:row[1],'zh-CN':row[2],ja:row[3]});
 }
 const patterns=[
+ [/^총 ([\d,]+)개$/,m=>({en:'Total '+m[1]+' words','zh-CN':'共 '+m[1]+' 个单词',ja:'全 '+m[1]+' 語'})],
+ [/^(Day \d+|전체 Day) · (\d+)개 \| 체크 (\d+) · 미기록 (\d+) · ✓ (\d+)개$/,m=>({en:m[1].replace('전체 Day','All Days')+' · '+m[2]+' words | Checked '+m[3]+' · Unrecorded '+m[4]+' · ✓ '+m[5], 'zh-CN':m[1].replace('전체 Day','全部 Day')+' · '+m[2]+' 个词 | 已标记 '+m[3]+' · 未记录 '+m[4]+' · ✓ '+m[5], ja:m[1].replace('전체 Day','全 Day')+' · '+m[2]+' 語 | 記録 '+m[3]+' · 未記録 '+m[4]+' · ✓ '+m[5]})],
+ [/^(알렉스|엘리엇|하비|샘|세바스찬|셰인|헤일리|레아|마루|페니|애비게일|에밀리)의 이야기$/,m=>{const n=dictionary.get(m[1]);return {en:n.en+"'s story",'zh-CN':n['zh-CN']+'的故事',ja:n.ja+'の話'};}],
+ [/^(알렉스|엘리엇|하비|샘|세바스찬|셰인|헤일리|레아|마루|페니|애비게일|에밀리)의 집$/,m=>{const n=dictionary.get(m[1]);return {en:n.en+"'s home",'zh-CN':n['zh-CN']+'的家',ja:n.ja+'の家'};}],
+ [/^(알렉스|엘리엇|하비|샘|세바스찬|셰인|헤일리|레아|마루|페니|애비게일|에밀리) 현재 장소로 이동$/,m=>{const n=dictionary.get(m[1]);return {en:'Find '+n.en,'zh-CN':'前往'+n['zh-CN']+'的位置',ja:n.ja+'の現在地へ移動'};}],
+ [/^(알렉스|엘리엇|하비|샘|세바스찬|셰인|헤일리|레아|마루|페니|애비게일|에밀리) 주민 선택 · 자화상 터치 시 위치 이동$/,m=>{const n=dictionary.get(m[1]);return {en:'Select '+n.en+' · Tap portrait to find location','zh-CN':'选择'+n['zh-CN']+' · 点击头像查看位置',ja:n.ja+'を選択・肖像をタップして位置へ移動'};}],
+ [/^(\d+) XP · (\d+) coins$/,m=>({en:m[0],'zh-CN':m[1]+' XP · '+m[2]+' 金币',ja:m[1]+' XP · '+m[2]+' コイン'})],
+ [/^(\d+)개$/,m=>({en:m[1]+' items','zh-CN':m[1]+' 个',ja:m[1]+' 件'})],
  [/^(\d+) XP · (\d+) 코인$/,m=>({en:m[1]+' XP · '+m[2]+' coins','zh-CN':m[1]+' XP · '+m[2]+' 金币',ja:m[1]+' XP · '+m[2]+' コイン'})],
  [/^(\d+)번의 대화$/,m=>({en:m[1]+' conversations','zh-CN':m[1]+' 次对话',ja:m[1]+' 回の会話'})],
  [/^(\d+) \/ (\d+)곳$/,m=>({en:m[1]+' / '+m[2]+' places','zh-CN':m[1]+' / '+m[2]+' 个地点',ja:m[1]+' / '+m[2]+' か所'})],
@@ -378,7 +410,7 @@ function mount(){
  const dialog=document.createElement('dialog');dialog.id='wv-language-dialog';dialog.className='wv-language-dialog';
  dialog.setAttribute('aria-labelledby','wv-language-heading');
  const heading=document.createElement('h2');heading.id='wv-language-heading';heading.textContent='언어 선택';
- const hint=document.createElement('p');hint.textContent='앱 메뉴와 안내 문구의 표시 언어를 변경합니다. 영어 단어와 원본 한국어 뜻은 유지됩니다.';
+ const hint=document.createElement('p');hint.textContent='단어의 뜻은 기기 내 번역으로 표시합니다. 처음 사용할 때 언어팩 다운로드가 필요할 수 있습니다. 원본 학습 데이터와 기록은 유지됩니다.';
  const options=document.createElement('div');options.className='wv-language-options';options.setAttribute('role','radiogroup');
  for(const lang of LANGS){
   const b=document.createElement('button');b.type='button';b.dataset.wvLocale=lang;b.setAttribute('role','radio');
