@@ -6,7 +6,7 @@ const cloud=globalThis.WordvilleCloud, bucket=globalThis.WordvilleCloudConfig?.b
 const storageKey='wordville.rebuilt.v1';
 function notify(message){$('notice').textContent=message;}
 try{const raw=localStorage.getItem(storageKey);if(raw){const s=JSON.parse(raw);if(s.version!==1||!Number.isFinite(s.xp)||!Number.isFinite(s.coins)||!s.reviews||!Array.isArray(s.concepts))throw Error();state=s;}}catch{notify('기록을 읽지 못했습니다. 저장 공간 설정을 확인해 주세요.');}
-function save(next){try{localStorage.setItem(storageKey,JSON.stringify(next));state=next;renderStats();return true;}catch{notify('저장에 실패했습니다. 저장 공간을 확인해 주세요.');return false;}}
+function save(next){try{localStorage.setItem(storageKey,JSON.stringify(next));state=next;renderStats();document.dispatchEvent(new Event('wordville-record-changed'));return true;}catch{notify('저장에 실패했습니다. 저장 공간을 확인해 주세요.');return false;}}
 function renderStats(){$('balance').textContent=`${state.xp} XP · ${state.coins} 코인`;renderDue();}
 function renderDue(){$('due').textContent=`복습할 단어 ${words.filter(w=>!state.reviews[w.id]||state.reviews[w.id].due<=Date.now()).length}개 · 정답은 1·3·7·14·30일, 오답은 10분 뒤 복습` ;}
 function make(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
@@ -33,6 +33,7 @@ function rememberWordView(){
  catch{/* Native preferences may still succeed. */}
  try{globalThis.WordvilleSettings?.saveWordView(json);}
  catch{/* Native bridge absent in a normal browser or temporarily unavailable. */}
+ document.dispatchEvent(new Event('wordville-record-changed'));
 }
 function parseWordView(raw){
  try{
@@ -237,6 +238,7 @@ function authState(user){
  $('cloud-user').textContent=user?`${user.email} · 내 이미지만 표시됩니다.`:'';
  if(changed&&active){$('word-dialog').close();active=null;globalThis.WordvilleGallery?.clear();showImage(null);}globalThis.WordvilleGallery?.renderArchive();
  refreshImageButtons();
+ document.dispatchEvent(new CustomEvent('wordville-auth',{detail:{id:user?.id||''}}));
 }
 function credentials(){if(!$('cloud-auth').reportValidity())return null;return {email:$('cloud-email').value.trim(),password:$('cloud-password').value};}
 function authMessage(s){$('cloud-message').textContent=s;}
