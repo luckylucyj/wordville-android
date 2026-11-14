@@ -9,6 +9,7 @@ const assert=require('node:assert/strict');
  try{
   await page.goto('http://127.0.0.1:4173');
   await page.waitForFunction(()=>globalThis.WordvilleBackup&&globalThis.WordvilleStudy&&words.length>0&&db);
+  await page.evaluate(()=>WordvilleStudy.ready);
   await page.evaluate(async()=>{
    // A realistic pre-upgrade record: progress, note and legacy image.
    const memory=Wordville.fresh();memory.xp=142;memory.coins=17;
@@ -31,6 +32,7 @@ const assert=require('node:assert/strict');
    await imageAction('put','voca-resume',image);
    const album=await new Promise((resolve,reject)=>{
     const request=indexedDB.open('wordville-memory-album-v1',1);
+    request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('photos'))request.result.createObjectStore('photos',{keyPath:'id'});};
     request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
    });
    await new Promise((resolve,reject)=>{
