@@ -6,7 +6,7 @@
 const TIERS=Object.freeze({small:Object.freeze({cols:16,rows:12}),medium:Object.freeze({cols:24,rows:18}),large:Object.freeze({cols:40,rows:28})});
 const SIZES={home:'medium',pool:'large',library:'large',square:'large',park:'large',ranch:'large',burger:'medium',cafe:'medium',icecream:'medium',pub:'medium',gym:'medium',market:'medium',museum:'medium',greenhouse:'medium',bookstore:'small',clinic:'small',studio:'small',workshop:'small'};
 const cache=new Map();
-function forPlace(id){const tier=SIZES[id]||'small';return {id,tier,...TIERS[tier],tileWidth:64,tileHeight:32,npcSpacingTiles:1.5,walkFPS:10,renderFPS:60,walkingFrames:8};}
+function forPlace(id){const tier=id==='pennyHome'?'medium':SIZES[id]||'small';return {id,tier,...TIERS[tier],tileWidth:64,tileHeight:32,npcSpacingTiles:1.5,walkFPS:10,renderFPS:60,walkingFrames:8};}
 function build(id){
  const s=forPlace(id),{cols:w,rows:h}=s,tiles=Array.from({length:h},(_,y)=>Array.from({length:w},(_,x)=>x===0||y===0||x===w-1||y===h-1?'wall':'floor'));
  const fixtures=[],door={x:Math.floor(w/2),y:h-1},labels={pool:'온실 수영장',burger:'마법학교 햄버거 가게',bookstore:'마법서점',library:'중앙 도서관'};
@@ -15,7 +15,9 @@ function build(id){
   for(let cy=Math.max(1,y);cy<Math.min(h-1,y+height);cy++)for(let cx=Math.max(1,x);cx<Math.min(w-1,x+width);cx++)tiles[cy][cx]=kind;
  }
  // Each displayed prop has the same footprint as its collision rectangle.
- if(id==='home'){
+ if(id==='pennyHome'){
+  for(const f of root.WordvillePennyHome?.furniture||[])add(f.kind,f.x,f.y,f.w,f.h,f.label);
+ }else if(id==='home'){
   add('bed',3,3,5,3,'침대');add('bed',14,3,5,3,'침대');
   add('table',8,9,5,3,'식탁');add('shelf',19,8,2,5,'책장');
   add('counter',4,12,4,2,'수납장');
