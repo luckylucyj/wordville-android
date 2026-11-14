@@ -38,3 +38,24 @@
 .wv-gallery-day h3{font-size:16px;color:#684d35}
 .wv-gallery-day .wv-memory-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:480px){.wv-gallery-day .wv-memory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wv-memory-actions{grid-template-columns:1fr}.wv-memory-panel{padding:9px}}
+
+
+/* Enlarged Commons image choices and results pagination (mobile-first). */
+.wv-memory-search-results{grid-template-columns:minmax(0,1fr);gap:12px}
+.wv-memory-search-results .wv-search-result{padding:10px;gap:9px}
+.wv-memory-search-results .wv-search-result img{
+ display:block;width:100%;aspect-ratio:4/3;object-fit:contain;
+ background:#eee2ca;max-height:450px;
+}
+.wv-search-result .wv-search-license{font-size:11px;line-height:1.45}
+.wv-search-pagination{
+ grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;
+ gap:8px;min-width:0;padding:6px 0;
+}
+.wv-search-pagination button{flex:0 0 auto;min-width:65px;padding:10px 12px}
+.wv-search-pagination button:disabled{opacity:.4;cursor:not-allowed}
+.wv-search-page-number{font-weight:800;font-size:12px;white-space:nowrap}
+.wv-search-empty{grid-column:1/-1;font-size:13px}
+@media(min-width:720px){
+ .wv-memory-search-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
