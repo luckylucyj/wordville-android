@@ -91,8 +91,9 @@
   }
   return learning||!!s.entries.length||!!s.events.length||!!s.photos.length||!!s.legacyImages.length;
  }
- function mediaPath(uid,section,name,blob){
-  const nameHash=Array.from(new TextEncoder().encode(section+':'+name)).map(b=>b.toString(16).padStart(2,'0')).join('');
+ async function mediaPath(uid,section,name,blob){
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(section+':'+name));
+  const nameHash=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
   // All keys consist of owner-owned app data; hex path cannot traverse storage directories.
   const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image/gif':'gif'}[blob.type];
   return uid+'/photos/'+section+'/'+nameHash+'.'+ext;
@@ -147,11 +148,13 @@
      ensureOwner(uid);
      const id=select(item),blob=item.blob;
      if(!validImage(blob))throw new Error('이미지의 형식이나 크기가 맞지 않습니다: '+id);
-     const file=mediaPath(uid,section,id,blob);
+     const file=await mediaPath(uid,section,id,blob);
+     const digest=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());
+     const checksum=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
      const previous=(section==='album'?latest?.photos:latest?.legacyImages)?.find(v=>v.id===id);
-     if(!previous||previous.size!==blob.size||previous.type!==blob.type||previous.lastModified!==Number(blob.lastModified||0))
+     if(!previous||previous.size!==blob.size||previous.type!==blob.type||previous.checksum!==checksum)
       await upload(uid,blob,file,blob.type);
-     images.push({id,file,size:blob.size,type:blob.type,lastModified:Number(blob.lastModified||0),
+     images.push({id,file,size:blob.size,type:blob.type,checksum,lastModified:Number(blob.lastModified||0),
       ...(section==='album'?{
        ownerId:item.ownerId||'',wordId:item.wordId,word:item.word,meaning:item.meaning,savedAt:item.savedAt,
        source:item.source,sourceUrl:item.sourceUrl,license:item.license,author:item.author
@@ -179,6 +182,11 @@
   const {data,error}=await storage().download(entry.file);
   if(error)throw new Error('이미지 복원 실패: '+error.message);
   if(!validImage(data)||data.size!==entry.size||data.type!==entry.type)throw new Error('이미지 백업 파일이 손상되었거나 일치하지 않습니다.');
+  if(typeof entry.checksum==='string'){
+   const digest=await crypto.subtle.digest('SHA-256',await data.arrayBuffer());
+   const checksum=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+   if(checksum!==entry.checksum)throw new Error('이미지 백업 무결성 검증에 실패했습니다.');
+  }
   return data;
  }
  async function restore(automatic=false){
