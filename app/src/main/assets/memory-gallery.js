@@ -5,7 +5,8 @@
  const databaseName='wordville-memory-album-v1';
  const types=new Set(['image/png','image/jpeg','image/webp','image/gif']);
  const maximum=5*1024*1024;
- let connection=null,selectedId=null,wordUrls=[],archiveUrls=[],queryResults=[],searchSerial=0,archiveSerial=0;
+ const searchPageSize=10,searchResultLimit=200,searchBatchSize=50;
+ let connection=null,selectedId=null,wordUrls=[],archiveUrls=[],queryResults=[],searchSerial=0,searchPage=0,archiveSerial=0;
  function owner(){return cloudUser?.id||'';}
  function ownerKey(){return owner()||'local';}
  function key(w){return 'legacy:'+ownerKey()+':'+w.id;}
@@ -283,13 +284,43 @@
   }
   throw new Error(errorMessage||'이미지 서버에서 파일을 가져올 수 없습니다.');
  }
+
  function renderResults(w,results){
   const destination=$('wv-memory-search-results');destination.replaceChildren();
-  for(const result of results){
+  if(!results.length){
+   const message=document.createElement('p');
+   message.className='wv-search-empty';message.textContent='검색 결과가 없습니다. 다른 단어로 검색해 주세요.';
+   destination.append(message);return;
+  }
+  const pageCount=Math.ceil(results.length/searchPageSize);
+  searchPage=Math.max(0,Math.min(searchPage,pageCount-1));
+  const first=searchPage*searchPageSize;
+  const shown=results.slice(first,first+searchPageSize);
+  const turnPage=delta=>{
+   if(!current(w))return;
+   const next=Math.max(0,Math.min(pageCount-1,searchPage+delta));
+   if(next===searchPage)return;
+   searchPage=next;renderResults(w,queryResults);
+   destination.scrollIntoView({block:'start',behavior:'smooth'});
+  };
+  function pagination(){
+   const nav=document.createElement('nav');nav.className='wv-search-pagination';
+   nav.setAttribute('aria-label','이미지 검색 결과 페이지 이동');
+   const previous=document.createElement('button');previous.type='button';previous.textContent='← 이전';
+   previous.disabled=searchPage===0;previous.addEventListener('click',()=>turnPage(-1));
+   const indicator=document.createElement('span');indicator.className='wv-search-page-number';
+   indicator.textContent=(searchPage+1)+' / '+pageCount+' 페이지';
+   const next=document.createElement('button');next.type='button';next.textContent='다음 →';
+   next.disabled=searchPage===pageCount-1;next.addEventListener('click',()=>turnPage(1));
+   nav.append(previous,indicator,next);return nav;
+  }
+  $('wv-memory-search-status').textContent=results.length+'개 이미지 · '+(searchPage+1)+'/'+pageCount+' 페이지 · 각 이미지의 이용 허가를 확인하세요.';
+  destination.append(pagination());
+  for(const result of shown){
    const article=document.createElement('article');article.className='wv-search-result';
    const img=document.createElement('img');
    const sources=imageSources(result);let index=0;
-   img.alt=result.title.replace(/^File:/,'');img.loading='lazy';
+   img.alt='검색된 이미지 미리보기';img.loading='lazy';
    img.onerror=()=>{
     if(index+1<sources.length){img.src=sources[++index];return;}
     img.hidden=true;
@@ -299,10 +330,9 @@
     article.insertBefore(failure,article.firstChild);
    };
    if(sources.length)img.src=sources[0];
-   else {img.hidden=true;const failure=document.createElement('small');failure.textContent='이미지 주소가 지원되지 않습니다.';article.append(failure);}
-
-   const label=document.createElement('small');label.textContent=result.title.replace(/^File:/,'');
-   const rights=document.createElement('small');rights.textContent=(result.license||'라이선스 정보 확인 필요')+(result.author?' · 업로더 '+result.author:'');
+   else{img.hidden=true;const failure=document.createElement('small');failure.textContent='이미지 주소가 지원되지 않습니다.';article.append(failure);}
+   const rights=document.createElement('small');rights.className='wv-search-license';
+   rights.textContent=(result.license||'라이선스 정보 확인 필요')+(result.author?' · 업로더 '+result.author:'');
    const save=document.createElement('button');save.type='button';save.textContent='이 이미지 저장';
    save.addEventListener('click',async()=>{
     if(!current(w)||imageBusy)return;
@@ -316,38 +346,62 @@
     }catch(error){$('wv-memory-search-status').textContent='저장하지 못했습니다: '+error.message;}
     finally{save.disabled=false;}
    });
-   article.append(img,label,rights,save);destination.append(article);
+   article.append(img,rights,save);destination.append(article);
   }
+  destination.append(pagination());
  }
  async function search(w=active){
   if(!w)return;
   const searchText=$('wv-memory-search-query').value.trim().slice(0,120);
   if(!searchText){$('wv-memory-search-status').textContent='검색어를 입력하세요.';return;}
   const serial=++searchSerial,button=$('wv-memory-search-submit');
-  button.disabled=true;$('wv-memory-search-status').textContent='Wikimedia Commons에서 검색 중…';
+  button.disabled=true;searchPage=0;queryResults=[];
+  $('wv-memory-search-status').textContent='Wikimedia Commons에서 여러 이미지를 검색 중…';
   $('wv-memory-search-results').replaceChildren();
+  let incomplete=false,problem='';
+  const results=[],seen=new Set();
+  let continuation=null;
   try{
-   const params=new URLSearchParams({
-    action:'query',format:'json',formatversion:'2',generator:'search',
-    gsrsearch:searchText,gsrnamespace:'6',gsrlimit:'18',gsrsort:'relevance',
-    prop:'imageinfo',iiprop:'url|mime|extmetadata|user',iiurlwidth:'330',origin:'*'
-   });
-   const response=await fetch('https://commons.wikimedia.org/w/api.php?'+params.toString(),{credentials:'omit'});
-   if(!response.ok)throw new Error('검색 서비스 접속 실패 ('+response.status+')');
-   const data=await response.json();
-   if(data.error)throw new Error(data.error.info||'검색 API 응답 오류');
-   const results=(data.query?.pages||[]).flatMap(page=>{
-    const info=page.imageinfo?.[0];
-    if(!info||!types.has(info.mime)||!info.thumburl)return [];
-    return [{title:page.title||'',thumbnail:info.thumburl,
-      sourceUrl:'https://commons.wikimedia.org/wiki/'+encodeURIComponent((page.title||'').replace(/ /g,'_')),
-      license:cleanMeta(info.extmetadata?.LicenseShortName?.value),author:cleanMeta(info.user)}];
-   });
+   for(let batch=0;batch<8&&results.length<searchResultLimit;batch++){
+    if(serial!==searchSerial||!current(w))return;
+    const params=new URLSearchParams({
+     action:'query',format:'json',formatversion:'2',generator:'search',
+     gsrsearch:searchText,gsrnamespace:'6',gsrlimit:String(searchBatchSize),gsrsort:'relevance',
+     prop:'imageinfo',iiprop:'url|mime|extmetadata|user',iiurlwidth:'800',origin:'*'
+    });
+    if(continuation)for(const [name,value] of Object.entries(continuation))params.set(name,String(value));
+    let data;
+    try{
+     const response=await fetch('https://commons.wikimedia.org/w/api.php?'+params.toString(),{credentials:'omit'});
+     if(!response.ok)throw new Error('검색 서비스 접속 실패 ('+response.status+')');
+     data=await response.json();
+     if(data.error)throw new Error(data.error.info||'검색 API 응답 오류');
+    }catch(error){
+     if(!results.length)throw error;
+     incomplete=true;problem=error.message||'일부 검색 결과를 불러오지 못했습니다.';break;
+    }
+    if(serial!==searchSerial||!current(w))return;
+    const pages=Array.isArray(data.query?.pages)?data.query.pages:[];
+    pages.sort((a,b)=>(a.index??0)-(b.index??0));
+    for(const page of pages){
+     const info=page.imageinfo?.[0],title=page.title||'';
+     if(!title||seen.has(title)||!info||!types.has(info.mime)||!info.thumburl)continue;
+     seen.add(title);
+     results.push({title,thumbnail:info.thumburl,
+      sourceUrl:'https://commons.wikimedia.org/wiki/'+encodeURIComponent(title.replace(/ /g,'_')),
+      license:cleanMeta(info.extmetadata?.LicenseShortName?.value),author:cleanMeta(info.user)});
+     if(results.length>=searchResultLimit)break;
+    }
+    $('wv-memory-search-status').textContent=results.length+'개 이미지 검색됨 · 추가 결과 확인 중…';
+    continuation=data.continue&&typeof data.continue==='object'?data.continue:null;
+    if(!continuation)break;
+   }
    if(serial!==searchSerial||!current(w))return;
    queryResults=results;renderResults(w,results);
-   $('wv-memory-search-status').textContent=results.length+'개 이미지 검색됨 · 각 이미지의 의미와 사용 허가를 확인하세요.'; 
-  }catch(error){if(serial===searchSerial&&current(w))$('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 인터넷 연결을 확인해 주세요.';}
-  finally{if(serial===searchSerial)button.disabled=false;}
+   if(incomplete)$('wv-memory-search-status').textContent=results.length+'개 표시 중 · 추가 검색 실패: '+problem;
+  }catch(error){
+   if(serial===searchSerial&&current(w))$('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 인터넷 연결을 확인해 주세요.';
+  }finally{if(serial===searchSerial)button.disabled=false;}
  }
  $('wv-image-search-shortcut').addEventListener('click',()=>{
   $('wv-memory-search-panel').hidden=false;
@@ -368,7 +422,7 @@
  $('wv-gallery-date').addEventListener('change',renderArchive);
  $('wv-gallery-refresh').addEventListener('click',renderArchive);
  function clear(){
-  searchSerial++;selectedId=null;queryResults=[];
+  searchSerial++;selectedId=null;queryResults=[];searchPage=0;
   revoked(wordUrls);
   $('wv-memory-photo-list').replaceChildren();
   $('wv-memory-search-results').replaceChildren();
