@@ -5,7 +5,7 @@
  const databaseName='wordville-memory-album-v1';
  const types=new Set(['image/png','image/jpeg','image/webp','image/gif']);
  const maximum=5*1024*1024;
- let connection=null,selectedId=null,wordUrls=[],archiveUrls=[],queryResults=[],searchSerial=0;
+ let connection=null,selectedId=null,wordUrls=[],archiveUrls=[],queryResults=[],searchSerial=0,archiveSerial=0;
  function owner(){return cloudUser?.id||'';}
  function ownerKey(){return owner()||'local';}
  function key(w){return 'legacy:'+ownerKey()+':'+w.id;}
@@ -211,6 +211,7 @@
   }
  }
  async function renderArchive(){
+  const serial=++archiveSerial;
   const view=$('wv-gallery-view');if(!view)return;
   const destination=$('wv-gallery-archive-list'),selection=$('wv-gallery-date');
   const previous=selection.value||'all';
@@ -218,6 +219,7 @@
   let items;
   try{await discoverLegacy();items=(await all()).filter(x=>x.ownerId===owner());}
   catch(e){$('wv-gallery-total').textContent='보관함을 열지 못했습니다: '+e.message;return;}
+  if(serial!==archiveSerial)return;
   items.sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
   const dates=[...new Set(items.map(itemDate))].filter(Boolean).sort().reverse();
   selection.replaceChildren(new Option('전체 날짜','all'),...dates.map(d=>new Option(d,d)));
@@ -317,7 +319,6 @@
  $('wv-memory-open-archive').addEventListener('click',()=>{
   $('word-dialog').close();active=null;clear();showImage(null);
   globalThis.WordvilleShell?.activate('gallery');
-  renderArchive();
  });
  $('wv-gallery-date').addEventListener('change',renderArchive);
  $('wv-gallery-refresh').addEventListener('click',renderArchive);
