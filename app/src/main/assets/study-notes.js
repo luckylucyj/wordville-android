@@ -57,6 +57,7 @@
    tx.oncomplete=()=>{
     cache.set(entry.key,entry);
     if(event){history.push({...event,id:assigned});history.sort(eventSort);}
+    document.dispatchEvent(new Event('wordville-record-changed'));
     resolve(entry);
    };
    tx.onerror=()=>reject(tx.error||new Error('노트 저장에 실패했습니다.'));
