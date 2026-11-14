@@ -33,3 +33,9 @@ body>header #balance{max-width:min(42%,148px);flex:0 1 auto;white-space:nowrap}
  body>header #balance{font-size:10px;padding:4px 5px}
  .wv-language-trigger{font-size:11px;padding:5px;min-height:34px}
 }
+
+/* Vocabulary meaning language-pack status; never overlays the word cards. */
+.wv-gloss-status{margin:10px 0;padding:9px 12px;line-height:1.45;font-size:13px;color:#5b4025;background:#f8e8c8;border:2px solid #b58d5e}
+.wv-gloss-status[hidden]{display:none}
+.wv-gloss-status button{font-size:12px;min-height:30px;padding:4px 8px;margin-left:8px}
+.word span[aria-busy="true"]{opacity:.67}
