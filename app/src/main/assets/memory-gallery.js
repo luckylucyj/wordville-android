@@ -78,7 +78,9 @@
   const word=document.createElement('strong');word.textContent=item.word;
   const date=document.createElement('small');date.textContent=itemDate(item)||'저장 날짜 미상';
   const source=document.createElement('small');source.textContent=item.source+(item.license?' · '+item.license:'');
-  description.append(word,date,source);article.append(button,description);
+  description.append(word,date,source);
+  if(item.author){const credit=document.createElement('small');credit.textContent='업로더: '+item.author;description.append(credit);}
+  article.append(button,description);
   const url=safeLink(item.sourceUrl);
   if(url){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='이미지 출처';article.append(link);}
   return article;
@@ -252,7 +254,7 @@
    const article=document.createElement('article');article.className='wv-search-result';
    const img=document.createElement('img');img.src=result.thumbnail;img.alt=result.title;img.loading='lazy';
    const label=document.createElement('small');label.textContent=result.title.replace(/^File:/,'');
-   const rights=document.createElement('small');rights.textContent=result.license||'라이선스 정보 확인 필요';
+   const rights=document.createElement('small');rights.textContent=(result.license||'라이선스 정보 확인 필요')+(result.author?' · 업로더 '+result.author:'');
    const save=document.createElement('button');save.type='button';save.textContent='이 이미지 저장';
    save.addEventListener('click',async()=>{
     if(!current(w)||imageBusy)return;
