@@ -1,4 +1,7 @@
 /* Wordville image album and Commons finder — pixel-paper UI, mobile-first. */
+.wv-word-top-actions{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:9px 0 15px}
+.wv-word-top-actions button{font-size:13px;font-weight:850}
+.wv-word-top-actions #wv-image-search-shortcut{border:2px solid #986e46;background:#ffe9bc;color:#67472d}
 .wv-memory-panel{margin:15px 0;padding:12px;background:#f8e6bb;border:3px solid #9a7550;box-shadow:3px 3px 0 #674a34;min-width:0;color:#513b2a}
 .wv-memory-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .wv-memory-heading strong{font-size:16px}
