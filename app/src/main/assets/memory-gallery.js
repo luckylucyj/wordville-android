@@ -38,8 +38,8 @@
   });
  }
  const all=()=>query('readonly','all');
- const put=item=>query('readwrite','put',item);
- const del=id=>query('readwrite','delete',id);
+ const put=async item=>{const result=await query('readwrite','put',item);document.dispatchEvent(new Event('wordville-record-changed'));return result;};
+ const del=async id=>{const result=await query('readwrite','delete',id);document.dispatchEvent(new Event('wordville-record-changed'));return result;};
  function revoked(urls){for(const url of urls)URL.revokeObjectURL(url);urls.length=0;}
  function itemDate(item){
   if(!item.savedAt)return '';
