@@ -101,7 +101,7 @@ for(const [key,icon,label] of tabDefs){
 document.body.append(dock);
 const more=document.createElement('div');more.id='wv-more-panel';more.className='wv-more-panel';
 more.setAttribute('aria-label','Wordville 추가 기능');more.hidden=true;
-for(const [key,icon,label] of [['notes','📝','Day별 생각코딩 노트'],['lab','✦','단어 조합실'],['book','▧','개념 도감'],['account','⚙','계정·동기화']]){
+for(const [key,icon,label] of [['notes','📝','Day별 생각코딩 노트'],['gallery','🖼️','기억 이미지 보관함'],['lab','✦','단어 조합실'],['book','▧','개념 도감'],['account','⚙','계정·동기화']]){
  const b=document.createElement('button');b.type='button';b.dataset.more=key;
  b.textContent=icon+' '+label;b.addEventListener('click',()=>activate(key));more.append(b);
 }
@@ -111,7 +111,7 @@ function toggleMore(){
  buttons.get('more').setAttribute('aria-expanded',String(toOpen));
 }
 function activate(screen){
- if(!['town','places','residents','learn','review','lab','book','notes','account'].includes(screen))return;
+ if(!['town','places','residents','learn','review','lab','book','notes','gallery','account'].includes(screen))return;
  current=screen;lastScreen=screen;
  // Restore the Word tab only when it was the last active screen. Other tabs
  // still use their normal startup behavior without resuming unfinished quizzes.
@@ -140,9 +140,11 @@ function activate(screen){
   get(id).hidden=screen!==id;
  }
  get('wv-notes-view').hidden=screen!=='notes';
+  get('wv-gallery-view').hidden=screen!=='gallery';
+  if(screen==='gallery')globalThis.WordvilleGallery?.renderArchive();
  account.hidden=screen!=='account';
  for(const [key,b] of buttons){
-  const active=key===screen||(key==='more'&&['notes','lab','book','account'].includes(screen));
+  const active=key===screen||(key==='more'&&['notes','gallery','lab','book','account'].includes(screen));
   b.setAttribute('aria-current',active?'page':'false');
   b.setAttribute('aria-selected',String(active));
  }
