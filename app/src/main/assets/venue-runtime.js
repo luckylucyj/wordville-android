@@ -37,7 +37,6 @@ function mapId(){return scene==='home'&&focusedResidentId==='penny'?'pennyHome':
 function scheduleRosterKey(){const m=clockMinute();return places.active+'|'+schedule.hourOf(m)+'|'+schedule.occupants(places.active,m).map(id=>id+':'+schedule.at(id,m).activity).join('|');}
 function reset(){
  const next=places.active;
- if(scene!==next&&next!=='home')focusedResidentId=null;
  scene=next;
  rosterKey=scheduleRosterKey();
  const s=spec.forPlace(mapId());
