@@ -67,11 +67,13 @@
   const memoryDb=await openDb('wordville-memory',1);
   const albumDb=await openDb('wordville-memory-album-v1',1);
   try{
-   const [entries,events,legacyKeys,photos]=await Promise.all([
+   const [entries,events,legacyKeys,allPhotos]=await Promise.all([
     readStore(notesDb,'entries'),readStore(notesDb,'status-history'),readStore(memoryDb,'images','getAllKeys'),readStore(albumDb,'photos')
    ]);
+   const photos=allPhotos.filter(item=>item.ownerId===''||item.ownerId===ownerId);
    const legacyImages=[];
    for(const key of legacyKeys){
+    if(typeof key!=='string'||(key.includes('/')&&!key.startsWith(ownerId+'/')))continue;
     const blob=await new Promise((resolve,reject)=>{
      const transaction=memoryDb.transaction('images','readonly'),req=transaction.objectStore('images').get(key);
      req.onsuccess=()=>resolve(req.result);
@@ -128,6 +130,7 @@
   if(busy||!ownerId)return;
   const uid=ownerId;
   busy=true;controls();
+  const startingRevision=revision;
   try{
    await globalThis.WordvilleStudy?.ready;
    const local=await deviceSnapshot();
@@ -171,10 +174,13 @@
    if(blob.size>MAX_IMAGE)throw new Error('노트 백업 크기가 5MB를 초과했습니다. 서버 백업을 덮어쓰지 않았습니다.');
    // Publish the new snapshot only after every image has been safely uploaded.
    await upload(uid,blob,path(uid),'application/json');
-   remote=doc;remoteVersion=savedAt;dirty=false;present();
+   remote=doc;remoteVersion=savedAt;dirty=revision!==startingRevision;present();
    say('클라우드 백업 완료 · '+new Date(savedAt).toLocaleString('ko-KR')+' · 노트 '+local.entries.length+'건 · 이미지 '+(photos.length+legacyImages.length)+'장');
   }catch(error){say('백업 실패 · '+error.message);}
-  finally{busy=false;controls();}
+  finally{
+   busy=false;controls();
+   if(dirty&&ownerId===uid&&revision!==startingRevision)schedule();
+  }
  }
  async function downloadImage(uid,entry){
   const expected=uid+'/photos/';
