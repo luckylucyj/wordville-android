@@ -1,0 +1,37 @@
+/* Wordville image album and Commons finder — pixel-paper UI, mobile-first. */
+.wv-memory-panel{margin:15px 0;padding:12px;background:#f8e6bb;border:3px solid #9a7550;box-shadow:3px 3px 0 #674a34;min-width:0;color:#513b2a}
+.wv-memory-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.wv-memory-heading strong{font-size:16px}
+.wv-memory-heading span,.wv-memory-caution{font-size:11px;line-height:1.6;color:#755b41}
+.wv-memory-panel label{font-size:12px;margin:10px 0 5px}
+.wv-memory-panel input[type=file]{width:100%;min-width:0;background:#fff8e8;border:2px solid #a48358;border-radius:2px}
+.wv-memory-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.wv-memory-actions button,.wv-memory-search-row button,.wv-search-result button,.wv-gallery-controls button{font-size:12px;font-weight:800;white-space:normal;border:2px solid #855f3f;border-radius:3px;background:#ffecc2;min-width:0;padding:8px}
+.wv-memory-search-row{display:flex;gap:7px;align-items:stretch}
+.wv-memory-search-row input{min-width:0;flex:1 1 0;font-size:13px}
+.wv-memory-search-row button{flex:0 0 auto}
+.wv-memory-search-note,.wv-memory-panel #wv-memory-search-status{font-size:11px;line-height:1.5;color:#67523a}
+.wv-memory-search-results,.wv-memory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:10px 0;min-width:0}
+.wv-photo-card,.wv-search-result{padding:6px;min-width:0;border:2px solid #ae916b;background:#fff7e6;display:flex;flex-direction:column;gap:5px;overflow-wrap:anywhere}
+.wv-photo-card.wv-photo-selected{border-color:#376f55;outline:2px solid #376f55}
+.wv-photo-choice{display:block;padding:0;margin:0;background:transparent;border:0;min-height:0;width:100%;box-shadow:none}
+.wv-photo-card img,.wv-search-result img{display:block;width:100%;aspect-ratio:1.4;object-fit:contain;background:#f1e6d0}
+.wv-photo-card .wv-photo-meta{display:flex;flex-direction:column;gap:3px}
+.wv-photo-meta strong{font-size:12px;overflow-wrap:anywhere}
+.wv-photo-meta small,.wv-search-result small{font-size:10px;color:#735b43;overflow-wrap:anywhere;line-height:1.4}
+.wv-photo-card a{font-size:11px;display:inline-block;color:#38685b;text-decoration:underline}
+.wv-search-result button{margin-top:auto}
+.wv-memory-panel #memory-image{max-width:100%;max-height:300px;margin:12px auto;border:2px solid #a98862}
+.wv-memory-panel #remove-image,.wv-memory-panel #sync-image{font-size:12px;margin:7px 5px 7px 0}
+.wv-gallery-view{max-width:950px;min-width:0;margin:0 auto;padding:16px 12px 50px}
+.wv-gallery-header{background:#f1d9a7;border:4px solid #84603d;padding:16px 12px}
+.wv-gallery-header h2{font-size:20px;color:#604029;margin:8px 0}
+.wv-gallery-header p{font-size:12px;line-height:1.5;color:#654d35}
+.wv-gallery-controls{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin:12px 0}
+.wv-gallery-controls label{margin:0;flex:1;min-width:155px}
+.wv-gallery-controls select{font-size:13px}
+#wv-gallery-total{font-size:13px;color:#654d35;font-weight:700}
+.wv-gallery-day{border-top:2px solid #b69c77;padding:9px 0 15px}
+.wv-gallery-day h3{font-size:16px;color:#684d35}
+.wv-gallery-day .wv-memory-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:480px){.wv-gallery-day .wv-memory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wv-memory-actions{grid-template-columns:1fr}.wv-memory-panel{padding:9px}}
