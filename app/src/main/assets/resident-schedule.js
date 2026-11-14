@@ -119,7 +119,7 @@ function load(){
  }catch(_){/* private browsing or invalid storage: use safe defaults */}
 }
 function persist(){
- try{root.localStorage?.setItem(STORAGE_KEY,JSON.stringify(overrides));return true;}
+ try{root.localStorage?.setItem(STORAGE_KEY,JSON.stringify(overrides));root.document?.dispatchEvent(new Event('wordville-record-changed'));return true;}
  catch(_){return false;}
 }
 function at(id,minute){
