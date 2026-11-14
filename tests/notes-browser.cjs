@@ -31,6 +31,13 @@ const assert=require('node:assert/strict');
    ['wv-note-category','취업과 지원 서류'],['wv-note-body','I updated my résumé.\n입사 지원 전에 이력서를 업데이트했다.'],
    ['wv-note-opinion','cover letter와의 차이가 궁금하다.'],['wv-note-summary','이력서를 의미하며 지원할 때 자주 사용한다.']
   ])await page.locator('#'+id).fill(val);
+  const originalBody='I updated my résumé.\n입사 지원 전에 이력서를 업데이트했다.';
+  await page.locator('#wv-note-body').evaluate(field=>field.setSelectionRange(0,0));
+  await page.locator('#wv-note-insert-time').click();
+  const stampedBody=await page.locator('#wv-note-body').inputValue();
+  assert.match(stampedBody,/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}\n/);
+  assert.equal(stampedBody.split('\n').slice(1).join('\n'),originalBody);
+  assert.match(await page.locator('#wv-note-message').innerText(),/삽입했습니다/);
   await page.locator('#wv-note-dialog [data-check="0"]').check();
   await page.locator('#wv-note-dialog [data-check="2"]').check();
   await page.locator('#wv-note-save').click();
@@ -62,6 +69,7 @@ const assert=require('node:assert/strict');
   await resume.locator('.wv-word-note').click();
   assert.equal(await page.locator('#wv-note-summary').inputValue(),'이력서를 의미하며 지원할 때 자주 사용한다.');
   assert.equal(await page.locator('#wv-note-opinion').inputValue(),'cover letter와의 차이가 궁금하다.');
+  assert.match(await page.locator('#wv-note-body').inputValue(),/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}\nI updated my résumé\./);
   assert.equal(await page.locator('#wv-note-dialog [data-check="2"]').isChecked(),true);
   await page.locator('#wv-note-close').click();
   await page.locator('#wv-open-day-notes').click();
