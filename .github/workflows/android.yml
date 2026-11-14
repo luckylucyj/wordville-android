@@ -131,6 +131,15 @@ jobs:
         run: gradle --no-daemon assembleDebug assembleDebugAndroidTest lintDebug
       - name: Verify APK signature
         run: '$ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk'
+      - name: Verify APK version increases beyond previous installed versionCode 19
+        run: |
+          EXPECTED_CODE="$((20 + GITHUB_RUN_NUMBER))"
+          EXPECTED_NAME="2.10.3.${GITHUB_RUN_NUMBER}"
+          INFO="$("$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | head -n1)"
+          echo "$INFO"
+          [[ "$INFO" == *"versionCode='$EXPECTED_CODE'"* ]]
+          [[ "$INFO" == *"versionName='$EXPECTED_NAME'"* ]]
+          [[ "$INFO" == *"name='com.wordville.app.village.vocabulary.safeinstall'"* ]]
       - name: Name APK
         run: cp app/build/outputs/apk/debug/app-debug.apk wordville-debug.apk
       - uses: actions/upload-artifact@v4
@@ -215,20 +224,22 @@ jobs:
       - name: Prepare standalone APK file
         run: |
           test -s release/wordville-debug.apk
-          cp release/wordville-debug.apk release/Wordville_Day30_Native_Backup_v2.10.1.apk
-      - name: Publish download
+          cp release/wordville-debug.apk "release/Wordville_v2.10.3.${GITHUB_RUN_NUMBER}.apk"
+      - name: Publish installable stable APK for Obtainium
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v2.10.1-native-day-backup"
-          ASSET="release/Wordville_Day30_Native_Backup_v2.10.1.apk"
+          TAG="v2.10.3.${GITHUB_RUN_NUMBER}"
+          ASSET="release/Wordville_v2.10.3.${GITHUB_RUN_NUMBER}.apk"
+          CODE="$((20 + GITHUB_RUN_NUMBER))"
           test -s "$ASSET"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --latest --prerelease=false
           else
             gh release create "$TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "Wordville v2.10.1 - Android Native Day and Search Persistence" \
-              --notes "v2.10.1: Fixes Day selection resetting when reopening Wordville on Android. Selection, search, status filter, PDF page and word-list page now save to both Android SharedPreferences and WebView localStorage, with latest valid snapshot restored at startup. Last active Word tab uses a native fallback. Includes emulator regression for WebView localStorage loss with Day 30. Does not delete XP, reviews or existing saved word images." \
-              --prerelease
+              --title "Wordville 2.10.3.${GITHUB_RUN_NUMBER} (versionCode ${CODE})" \
+              --notes "Standalone signed APK (versionCode ${CODE}). Install over an existing versionCode 19 or lower without uninstalling, provided the Android package ID and signing certificate are unchanged. New releases are published automatically for Obtainium. Local study data should remain when updating in place. If installation fails, do not uninstall the existing app; check signing and backups." \
+              --latest
           fi
