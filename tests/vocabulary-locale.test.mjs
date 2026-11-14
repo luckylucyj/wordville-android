@@ -35,7 +35,7 @@ test('Day status summary and total word count change with selected UI language',
 test('native translator gets Korean gloss; original word and record data are unchanged',()=>{
  const {vocab,bridgeCalls,data}=setup();
  const word={id:'fatigue',word:'fatigue',meaning:'피로'};
- const span={dataset:{},textContent:''};
+ const span={dataset:{},textContent:'',setAttribute(){},removeAttribute(){}};
  vocab.bindText(span,word.meaning,word.word);
  assert.equal(span.textContent,'피로');
  assert.equal(bridgeCalls.length,1);
@@ -49,7 +49,7 @@ test('native translator gets Korean gloss; original word and record data are unc
 });
 test('without Android translation bridge the Korean source is retained, never fabricated',()=>{
  const {vocab}=setup('ja',false);
- const span={dataset:{},textContent:''};
+ const span={dataset:{},textContent:'',setAttribute(){},removeAttribute(){}};
  vocab.bindText(span,'피로','fatigue');
  assert.equal(span.textContent,'피로');
 });
