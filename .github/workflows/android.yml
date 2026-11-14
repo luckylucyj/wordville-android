@@ -59,6 +59,7 @@ jobs:
           CHROME_PATH="$(command -v google-chrome)" node tests/browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/notes-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/memory-browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/backup-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
