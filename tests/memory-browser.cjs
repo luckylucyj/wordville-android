@@ -38,16 +38,18 @@ const assert=require('node:assert/strict');
   await page.route('https://commons.wikimedia.org/w/api.php?**',route=>route.fulfill({
    status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},
    body:JSON.stringify({query:{pages:[{title:'File:Sample memory.png',
-    imageinfo:[{mime:'image/png',thumburl:'https://upload.wikimedia.org/wikipedia/commons/thumb/sample-memory.png',
+    imageinfo:[{mime:'image/png',thumburl:'https://thumb.wikimedia.org/wikipedia/commons/thumb/sample-memory.png',
       extmetadata:{LicenseShortName:{value:'CC BY-SA 4.0'}},user:'Sample author'}]}]}})
   }));
-  await page.route('https://upload.wikimedia.org/**',route=>route.fulfill({
+  await page.route('https://thumb.wikimedia.org/**',route=>route.fulfill({
    status:200,contentType:'image/png',headers:{'access-control-allow-origin':'*'},body:png
   }));
   await page.locator('#wv-memory-search-query').fill('comprehensive');
   await page.locator('#wv-memory-search-submit').click();
   await page.waitForFunction(()=>document.querySelectorAll('.wv-search-result').length===1);
   assert.match(await page.locator('#wv-memory-search-results').innerText(),/CC BY-SA 4.0/);
+  await page.waitForFunction(()=>{const img=document.querySelector('.wv-search-result img');return img?.complete&&img.naturalWidth>0;});
+  assert.equal(await page.locator('.wv-search-result img').isVisible(),true);
   await page.locator('.wv-search-result button').click();
   await page.waitForFunction(()=>document.querySelector('#wv-memory-count').textContent.includes('3장'));
   assert.equal(await page.evaluate(async()=>{const items=await WordvilleGallery.getAll();return items.some(i=>i.source==='Wikimedia Commons'&&i.license==='CC BY-SA 4.0'&&i.sourceUrl.startsWith('https://commons.wikimedia.org/'));}),true);
