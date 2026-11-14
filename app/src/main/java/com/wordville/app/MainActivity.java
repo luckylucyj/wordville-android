@@ -131,11 +131,16 @@ public class MainActivity extends Activity {
      WebResourceResponse response=loader.shouldInterceptRequest(url);
      if(response!=null)return response;
     }
-    if("https".equals(url.getScheme())&&CLOUD_HOST.equals(url.getHost()))return null;
+    if("https".equals(url.getScheme())&&(CLOUD_HOST.equals(url.getHost())||"commons.wikimedia.org".equals(url.getHost())||"upload.wikimedia.org".equals(url.getHost())))return null;
     return new WebResourceResponse("text/plain","UTF-8",new ByteArrayInputStream(new byte[0]));
    }
    @Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest request){
-    return !("https".equals(request.getUrl().getScheme())&&HOST.equals(request.getUrl().getHost()));
+    Uri destination=request.getUrl();
+    if("https".equals(destination.getScheme())&&HOST.equals(destination.getHost()))return false;
+    if("https".equals(destination.getScheme())&&"commons.wikimedia.org".equals(destination.getHost())){
+     try{startActivity(new Intent(Intent.ACTION_VIEW,destination));}catch(ActivityNotFoundException ignored){}
+    }
+    return true;
    }
    @Override public void onPageFinished(WebView w,String url){
     super.onPageFinished(w,url);
@@ -172,6 +177,7 @@ public class MainActivity extends Activity {
     chooser=callback;
     Intent intent=new Intent(Intent.ACTION_GET_CONTENT);
     intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("image/*");
+     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,params.getMode()==FileChooserParams.MODE_OPEN_MULTIPLE);
     try{startActivityForResult(intent,100);}
     catch(ActivityNotFoundException e){chooser.onReceiveValue(null);chooser=null;}
     return true;
