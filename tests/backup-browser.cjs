@@ -53,6 +53,7 @@ const assert=require('node:assert/strict');
    document.dispatchEvent(new CustomEvent('wordville-auth',{detail:{id:'12345678-1234-4234-8234-123456789abc'}}));
   });
   await page.waitForFunction(()=>document.querySelector('#wv-backup-state').textContent.includes('서버 백업 없음'));
+  await page.evaluate(()=>WordvilleShell.activate('account'));
   await page.locator('#wv-backup-now').click();
   await page.waitForFunction(()=>document.querySelector('#wv-backup-message').textContent.includes('클라우드 백업 완료'),null,{timeout:30000});
   const manifest=await page.evaluate(async()=>{
