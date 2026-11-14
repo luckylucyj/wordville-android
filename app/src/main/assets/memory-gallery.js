@@ -302,6 +302,12 @@
   }catch(error){if(serial===searchSerial&&current(w))$('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 인터넷 연결을 확인해 주세요.';}
   finally{if(serial===searchSerial)button.disabled=false;}
  }
+ $('wv-image-search-shortcut').addEventListener('click',()=>{
+  $('wv-memory-search-panel').hidden=false;
+  $('wv-memory-search-toggle').setAttribute('aria-expanded','true');
+  $('wv-memory-search-panel').scrollIntoView({block:'start',behavior:'smooth'});
+  $('wv-memory-search-query').focus({preventScroll:true});
+ });
  $('wv-memory-search-toggle').addEventListener('click',()=>{
   const panel=$('wv-memory-search-panel');panel.hidden=!panel.hidden;
   $('wv-memory-search-toggle').setAttribute('aria-expanded',String(!panel.hidden));
