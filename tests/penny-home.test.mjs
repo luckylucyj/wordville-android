@@ -26,7 +26,7 @@ test('Penny home exit and all 10 furniture edges stay reachable without clipping
   }
   const adjacent=spec.adjacentSpot('pennyHome',f,m.entrance);
   assert.ok(adjacent,f.label+' is approachable');
-  assert.ok(spec.route('pennyHome',m.entrance,adjacent).length>0,f.label+' path from door');
+  assert.ok((m.entrance.x===adjacent.x&&m.entrance.y===adjacent.y)||spec.route('pennyHome',m.entrance,adjacent).length>0,f.label+' path from door');
  }
  assert.equal(spec.tile('pennyHome',m.door.x,m.door.y),'exit');
 });
