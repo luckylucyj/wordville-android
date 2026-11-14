@@ -86,8 +86,9 @@ const assert=require('node:assert/strict');
    }
    localStorage.removeItem('wordville.rebuilt.v1');
   });
-  await page.locator('#wv-restore-now').click();
-  await page.waitForFunction(()=>globalThis.WordvilleStudy&&WordvilleStudy.ready&&JSON.parse(localStorage.getItem('wordville.rebuilt.v1')||'{}').xp===142,null,{timeout:30000});
+  await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded',timeout:30000}),page.locator('#wv-restore-now').click()]);
+  await page.waitForFunction(()=>globalThis.WordvilleStudy&&JSON.parse(localStorage.getItem('wordville.rebuilt.v1')||'{}').xp===142,null,{timeout:30000});
+  await page.evaluate(()=>WordvilleStudy.ready);
   const restored=await page.evaluate(async()=>{
    const read=async(name,store)=>{
     const db=await new Promise((resolve,reject)=>{
