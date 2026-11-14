@@ -1,0 +1,35 @@
+/* Persistent four-language selector. Keep the village map and bottom dock unobstructed. */
+body>header{display:flex;align-items:center;gap:7px}
+body>header .brand{white-space:nowrap;min-width:0;flex-shrink:1}
+body>header #balance{max-width:min(42%,148px);flex:0 1 auto;white-space:nowrap}
+.wv-language-trigger{
+ margin-left:auto;flex:0 0 auto;min-height:36px;padding:5px 9px;
+ color:#fff6de;background:#4b694d;border:2px solid #c7a970;
+ border-radius:5px;font-size:12px;font-weight:800;line-height:1.2;
+ touch-action:manipulation
+}
+.wv-language-trigger:focus-visible,.wv-language-dialog button:focus-visible{outline:3px solid #f4c85c;outline-offset:2px}
+.wv-language-dialog{
+ position:fixed;inset:0;margin:auto;width:min(92vw,390px);max-height:85dvh;
+ padding:20px 18px 17px;background:#f8e9c9;color:#4b3828;
+ border:4px solid #745132;border-radius:9px;box-shadow:6px 7px #342f2799;
+ overflow:auto;z-index:2000
+}
+.wv-language-dialog::backdrop{background:#181e1bd1}
+.wv-language-dialog h2{font-size:20px;margin:0 0 8px;color:#49341f}
+.wv-language-dialog p{font-size:12px;line-height:1.55;margin:0 0 16px}
+.wv-language-options{display:grid;gap:9px}
+.wv-language-options button{
+ display:flex;justify-content:space-between;align-items:center;
+ padding:14px 15px;min-height:48px;text-align:left;font-size:15px;font-weight:800;
+ color:#3c372a;background:#fff7e5;border:2px solid #ad9471;border-radius:6px
+}
+.wv-language-options button[aria-checked="true"]{border-color:#4b7755;background:#e1eedf}
+.wv-language-check{font-size:20px;color:#326642}
+.wv-language-close{display:block;margin:16px 0 0 auto;min-width:96px;min-height:42px}
+@media(max-width:385px){
+ body>header{gap:4px;padding-left:8px;padding-right:8px}
+ body>header .brand{font-size:14px}
+ body>header #balance{font-size:10px;padding:4px 5px}
+ .wv-language-trigger{font-size:11px;padding:5px;min-height:34px}
+}
