@@ -35,6 +35,12 @@ test('Penny shortcut and private collision map are wired into the existing venue
  const r=readFileSync(new URL('../app/src/main/assets/venue-runtime.js',import.meta.url),'utf8');
  const page=readFileSync(new URL('../app/src/main/assets/index.html',import.meta.url),'utf8');
  assert.ok(page.includes('src="penny-home.js"'));
+ assert.ok(page.includes('id="wv-penny-home-entry"'),'Penny entry must be visible on the village screen');
+ assert.ok(p.includes("ids('wv-penny-home-entry')?.addEventListener('click',visitPenny)"));
+ assert.ok(p.includes("globalThis.WordvilleShell.activate('places')"));
+ assert.ok(p.includes("WordvillePlaces={places,filters,show,pick,step,redraw,visitPenny"));
+ assert.ok(p.includes("'wv-place-chip wv-penny-home-shortcut',visitPenny"));
+
  assert.ok(p.includes('페니의 집')&&p.includes("focusResident?.('penny')"));
  assert.ok(r.includes("?'pennyHome':scene"));
  assert.ok(r.includes('places.redraw?.()'));

@@ -39,6 +39,16 @@ function show(view){
  document.querySelector('.village-section').dataset.view=view;
  if(isSite)render();
 }
+function visitPenny(){
+ // Always open the venue panel first; the resident need not be home at this hour.
+ if(globalThis.WordvilleShell?.activate)globalThis.WordvilleShell.activate('places');
+ else show('places');
+ filter='all';
+ pick('home');
+ const focused=globalThis.WordvilleVenueRuntime?.focusResident?.('penny');
+ redraw();
+ return focused===true;
+}
 function button(label,className,handler){const b=document.createElement('button');b.type='button';b.textContent=label;b.className=className;b.addEventListener('click',handler);return b;}
 function appendPortrait(parent,id,small=false){
  const p=people[id];if(!p)return;
@@ -80,9 +90,7 @@ function render(){
    b.setAttribute('aria-pressed',String(place.id===p.id));
    ids('wv-place-rail').append(b);
  }
- const pennyButton=button('🏠 페니의 집','wv-place-chip wv-penny-home-shortcut',()=>{
-  filter='all';pick('home');globalThis.WordvilleVenueRuntime?.focusResident?.('penny');
- });
+ const pennyButton=button('🏠 페니의 집','wv-place-chip wv-penny-home-shortcut',visitPenny);
  pennyButton.setAttribute('aria-label','페니의 집 방문하기');
  document.querySelector('.wv-penny-home-shortcut')?.remove();
  Object.assign(pennyButton.style,{display:'block',width:'100%',margin:'-5px 0 12px'});
@@ -173,7 +181,8 @@ for(const tab of [ids('wv-map-tab'),ids('wv-places-tab')]){
  });
 }
 document.addEventListener('wordville-art-ready',e=>{if(e.detail?.id===active&&siteView&&!siteView.hidden)draw(current());});
+ids('wv-penny-home-entry')?.addEventListener('click',visitPenny);
 render();
 show('map');
-globalThis.WordvillePlaces={places,filters,show,pick,step,redraw,get active(){return active;},get filter(){return filter;}};
+globalThis.WordvillePlaces={places,filters,show,pick,step,redraw,visitPenny,get active(){return active;},get filter(){return filter;}};
 })();
