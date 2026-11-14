@@ -155,7 +155,7 @@
    }
    if(current(w)){
     await showSelected(w,acceptedRecords[acceptedRecords.length-1]);
-    $('detail-status').textContent=acceptedRecords.length+'장 저장 완료'+(invalid.length?' · '+invalid.length+'장 제외(형식/용량)':'')+'. 기기 보관함에 저장됩니다.';
+    $('detail-status').textContent=acceptedRecords.length+'장 저장 완료'+(invalid.length?' · '+invalid.length+'장 제외(형식/용량)':'')+'. 기기에 저장했습니다.';
    }
    await renderArchive();
   }catch(error){if(current(w))$('detail-status').textContent='이미지 저장 오류: '+error.message;}
@@ -187,13 +187,36 @@
   }catch(error){if(current(w))$('detail-status').textContent=error.message;}
   finally{imageLock(false);}
  }
+ // Import legacy one-image records when the album is first opened, without
+ // deleting the old IndexedDB contents or inventing original save dates.
+ async function discoverLegacy(){
+  if(!db)return;
+  const found=await new Promise((resolve,reject)=>{
+   const request=db.transaction('images','readonly').objectStore('images').getAllKeys();
+   request.onsuccess=()=>resolve(request.result||[]);
+   request.onerror=()=>reject(request.error||new Error('기존 이미지 목록을 읽지 못했습니다.'));
+  });
+  const existing=new Set((await all()).map(item=>item.id));
+  for(const storedKey of found){
+   if(typeof storedKey!=='string')continue;
+   const username=owner();
+   if(username?!storedKey.startsWith(username+'/'):storedKey.includes('/'))continue;
+   const wordId=username?storedKey.slice(username.length+1):storedKey;
+   const word=words.find(w=>Wordville.wordIds(w).includes(wordId));
+   if(!word||existing.has(key(word)))continue;
+   const blob=await imageAction('get',storedKey);
+   if(!blob)continue;
+   await put(record(word,blob,{savedAt:null,source:'기존 저장 이미지'},key(word)));
+   existing.add(key(word));
+  }
+ }
  async function renderArchive(){
   const view=$('wv-gallery-view');if(!view)return;
   const destination=$('wv-gallery-archive-list'),selection=$('wv-gallery-date');
   const previous=selection.value||'all';
   revoked(archiveUrls);destination.replaceChildren();
   let items;
-  try{items=(await all()).filter(x=>x.ownerId===owner());}
+  try{await discoverLegacy();items=(await all()).filter(x=>x.ownerId===owner());}
   catch(e){$('wv-gallery-total').textContent='보관함을 열지 못했습니다: '+e.message;return;}
   items.sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
   const dates=[...new Set(items.map(itemDate))].filter(Boolean).sort().reverse();
@@ -285,6 +308,11 @@
   if(!panel.hidden)$('wv-memory-search-query').focus();
  });
  $('wv-memory-search-form').addEventListener('submit',event=>{event.preventDefault();search();});
+ $('wv-memory-open-archive').addEventListener('click',()=>{
+  $('word-dialog').close();active=null;clear();showImage(null);
+  globalThis.WordvilleShell?.activate('gallery');
+  renderArchive();
+ });
  $('wv-gallery-date').addEventListener('change',renderArchive);
  $('wv-gallery-refresh').addEventListener('click',renderArchive);
  function clear(){
