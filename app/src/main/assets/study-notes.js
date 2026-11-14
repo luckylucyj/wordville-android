@@ -276,6 +276,24 @@
  $('wv-status-to-note').addEventListener('click',()=>{if(statusWord)exposeNote(statusWord,$('wv-status-day').value);});
  $('wv-word-status').addEventListener('click',()=>{if(active)exposeStatus(active,pageDay());});
  $('wv-word-note').addEventListener('click',()=>{if(active)exposeNote(active,pageDay());});
+ // The timestamp is generated on click and inserted at the caret without deleting existing text.
+ $('wv-note-insert-time').addEventListener('click',()=>{
+  if(!noteWord)return;
+  const field=$('wv-note-body'),value=field.value;
+  const caret=Number.isInteger(field.selectionStart)?field.selectionStart:value.length;
+  const before=caret>0&&value[caret-1]!=='\n'?'\n':'';
+  const after=caret<value.length&&value[caret]==='\n'?'':'\n';
+  const stamp=localNow().replace('T',' ');
+  const insert=before+stamp+after;
+  if(value.length+insert.length>field.maxLength){
+   $('wv-note-message').textContent='필기 영역의 최대 6,000자를 초과합니다. 내용을 줄인 뒤 다시 눌러 주세요.';
+   return;
+  }
+  field.setRangeText(insert,caret,caret,'end');
+  field.dispatchEvent(new Event('input',{bubbles:true}));
+  field.focus();
+  $('wv-note-message').textContent='현재 날짜·시간을 삽입했습니다. 저장 버튼을 눌러 보관하세요.';
+ });
  $('wv-note-form').addEventListener('input',event=>{if(event.target.id!=='wv-note-day')noteDirty=true;});
  $('wv-note-form').addEventListener('change',event=>{if(event.target.id!=='wv-note-day')noteDirty=true;});
  $('wv-note-close').addEventListener('click',cancelNote);
