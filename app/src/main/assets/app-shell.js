@@ -26,6 +26,7 @@ resumeLearningTab=lastOpened==='learn';
 const residents=document.createElement('section');
 residents.id='wv-residents-view';
 residents.className='wv-residents-screen';
+residents.dataset.mode='portraits';
 residents.setAttribute('aria-label','Wordville 주민 만나기');
 residents.hidden=true;
 const heading=document.createElement('div');heading.className='wv-residents-header';
@@ -102,12 +103,12 @@ for(const [key,icon,label] of tabDefs){
 document.body.append(dock);
 const more=document.createElement('div');more.id='wv-more-panel';more.className='wv-more-panel';
 more.setAttribute('aria-label','Wordville 추가 기능');more.hidden=true;
-for(const [key,icon,label] of [['sentences','✍','나의 영어 문장'],['notes','📝','Day별 생각코딩 노트'],['gallery','🖼️','기억 이미지 보관함'],['lab','✦','단어 조합실'],['book','▧','개념 도감'],['account','⚙','계정·동기화']]){
+for(const [key,icon,label] of [['sentences','✍','나의 영어 문장'],['notes','📝','Day별 생각코딩 노트'],['gallery','🖼️','기억 이미지 보관함'],['schedule','🕒','주민 일정 관리'],['lab','✦','단어 조합실'],['book','▧','개념 도감'],['account','⚙','계정·동기화']]){
  const b=document.createElement('button');b.type='button';b.dataset.more=key;
  const symbol=document.createElement('span');symbol.textContent=icon+' ';symbol.setAttribute('aria-hidden','true');
  const title=document.createElement('span');title.className='wv-more-text';title.dataset.sourceLabel=label;
  title.textContent=globalThis.WordvilleI18n?.translate(label)||label;
- b.append(symbol,title);b.addEventListener('click',()=>activate(key));more.append(b);
+ b.append(symbol,title);b.addEventListener('click',()=>key==='schedule'?openResidentSchedule():activate(key));more.append(b);
 }
 function translateMore(){
  for(const title of more.querySelectorAll('.wv-more-text')){
@@ -119,6 +120,11 @@ document.body.append(more);
 function toggleMore(){
  const toOpen=more.hidden;more.hidden=!toOpen;
  buttons.get('more').setAttribute('aria-expanded',String(toOpen));
+}
+function openResidentSchedule(){
+ activate('residents');
+ residents.dataset.mode='schedule';
+ if(scheduleDetails){scheduleDetails.open=true;residents.scrollTop=0;}
 }
 function activate(screen){
  if(!['town','places','residents','learn','review','lab','book','notes','gallery','account','sentences'].includes(screen))return;
@@ -139,7 +145,7 @@ function activate(screen){
  } else if(screen==='places'){
    map.hidden=true;places.hidden=false;residents.hidden=true;
  } else if(screen==='residents'){
-   map.hidden=true;places.hidden=true;residents.hidden=false;
+   map.hidden=true;places.hidden=true;residents.hidden=false;residents.dataset.mode='portraits';
  }
  if(['town','places','residents'].includes(screen)){
    try{globalThis.WordvillePlaces?.show(screen==='places'?'places':'map');}
