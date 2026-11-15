@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
  try {
   const page=await browser.newPage({viewport:{width:390,height:844}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  // Regressions: English Places and Town remain navigable after a venue draw error.
   await page.goto('http://127.0.0.1:4173');
   await page.waitForFunction(()=>globalThis.WordvilleShell?.screen==='town'&&document.querySelector('.word'));
   assert.equal(await page.locator('#wv-bottom-dock .wv-dock-tab').count(),6);
@@ -196,6 +197,19 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.wv-residents-screen .wv-portrait')).imageRendering),'auto');
   await page.screenshot({path:'wordville-portraits-browser.png'});
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+  // English locale: venue names and descriptions are localized, Korean-only
+  // subtitles are suppressed, and changing screens preserves locale.
+  await page.evaluate(()=>WordvilleI18n.setLanguage('en'));
+  await page.locator('#wv-bottom-dock [data-screen="places"]').click();
+  assert.equal(await page.evaluate(()=>WordvilleShell.screen),'places');
+  assert.equal(await page.locator('#wv-places-view').isVisible(),true);
+  assert.equal(await page.locator('#wv-place-name').innerText(),'Swimming pool');
+  assert.equal(await page.locator('#wv-place-description').innerText(),'Book a swimming lane and practice with friends.');
+  assert.equal(await page.locator('#wv-place-dialogue-ko').isVisible(),false);
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+  assert.equal(await page.evaluate(()=>WordvilleShell.screen),'town');
+  assert.equal(await page.locator('#village-canvas').isVisible(),true);
+  await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
   // Fullscreen town map zone controls must remain accessible inside the gear menu.
   await page.locator('#wv-map-tools').click();
   assert.equal(await page.locator('#wv-map-tool-panel [data-map-zone]').count(),4);

@@ -37,7 +37,24 @@ function show(view){
  ids('wv-map-tab').tabIndex=isSite?-1:0;
  ids('wv-places-tab').tabIndex=isSite?0:-1;
  document.querySelector('.village-section').dataset.view=view;
- if(isSite)render();
+ if(isSite){
+  try{render();}
+  catch(error){
+   // Keep navigation usable even when a venue image or resident renderer fails.
+   console.error('Unable to draw Wordville venue',error);
+   const description=ids('wv-place-description');
+   if(description)description.textContent='장소 그림을 표시하지 못했습니다. 다른 장소를 선택하거나 다시 실행해 주세요.';
+   const fallback=ids('wv-place-canvas');
+   const drawing=fallback?.getContext('2d');
+   if(drawing){
+    drawing.fillStyle='#f4e1b9';
+    drawing.fillRect(0,0,fallback.width,fallback.height);
+    drawing.fillStyle='#553923';
+    drawing.font='bold 22px sans-serif';
+    drawing.fillText('WORDVILLE',28,70);
+   }
+  }
+ }
 }
 function visitPenny(){
  // Always open the venue panel first; the resident need not be home at this hour.
@@ -155,8 +172,14 @@ function redraw(){
  }
  draw(p);
 }
-ids('wv-map-tab').addEventListener('click',()=>show('map'));
-ids('wv-places-tab').addEventListener('click',()=>show('places'));
+ids('wv-map-tab').addEventListener('click',()=>{
+ if(globalThis.WordvilleShell?.activate)globalThis.WordvilleShell.activate('town');
+ else show('map');
+});
+ids('wv-places-tab').addEventListener('click',()=>{
+ if(globalThis.WordvilleShell?.activate)globalThis.WordvilleShell.activate('places');
+ else show('places');
+});
 ids('wv-place-prev').addEventListener('click',()=>step(-1));
 ids('wv-place-next').addEventListener('click',()=>step(1));
 ids('wv-place-talk').addEventListener('click',()=>{lineIndex=(lineIndex+1)%current().lines.length;renderConversation();});

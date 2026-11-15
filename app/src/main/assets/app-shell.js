@@ -122,15 +122,18 @@ function activate(screen){
  more.hidden=true;buttons.get('more').setAttribute('aria-expanded','false');
  document.body.dataset.screen=screen;
  village.hidden=!['town','places','residents'].includes(screen);
+ // Screen visibility must be committed BEFORE invoking the separate venue
+ // renderer. An image/canvas failure must never strand the dock on a blank page.
  if(screen==='town'){
-   globalThis.WordvillePlaces?.show('map');
    map.hidden=false;places.hidden=true;residents.hidden=true;
  } else if(screen==='places'){
-   globalThis.WordvillePlaces?.show('places');
    map.hidden=true;places.hidden=false;residents.hidden=true;
  } else if(screen==='residents'){
-   globalThis.WordvillePlaces?.show('map');
    map.hidden=true;places.hidden=true;residents.hidden=false;
+ }
+ if(['town','places','residents'].includes(screen)){
+   try{globalThis.WordvillePlaces?.show(screen==='places'?'places':'map');}
+   catch(error){console.error('Wordville screen transition failed',screen,error);}
  }
  for(const id of learnTabs){
   if(learnTabs.includes(screen)){

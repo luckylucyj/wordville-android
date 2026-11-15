@@ -41,6 +41,9 @@ public class MainActivity extends Activity {
  private ValueCallback<Uri[]> chooser;
  private long previousRendererRecovery=0L;
  private boolean pageReady=false;
+ private int pageLoadGeneration=0;
+ private int recoveryReloads=0;
+ private LinearLayout recoveryPanel=null;
  // Native backup is independent of WebView's localStorage and survives WebView
  // renderer recreation, app process restarts, and compatible APK upgrades.
  private static final String SETTINGS_FILE="wordville_wordview_preferences";
@@ -178,6 +181,7 @@ public class MainActivity extends Activity {
  }
 
  private void createWebView(){
+  pageLoadGeneration++;
   pageReady=false;
   web=new WebView(this);
   final WebView view=web;
@@ -219,7 +223,10 @@ public class MainActivity extends Activity {
     super.onPageFinished(w,url);
     if(w!=web||url==null||!url.startsWith(HOME))return;
     pageReady=true;
-    if(!isFinishing()&&!isDestroyed())notifyJsResume();
+    if(!isFinishing()&&!isDestroyed()){
+     notifyJsResume();
+     scheduleWebViewHealthCheck(2500);
+    }
    }
    @Override public void onReceivedError(WebView w,WebResourceRequest req,WebResourceError error){
     super.onReceivedError(w,req,error);
@@ -257,6 +264,39 @@ public class MainActivity extends Activity {
    }
   });
   view.loadUrl(HOME);
+  // A missing document or a failed deferred script can leave a beige WebView
+  // without firing onRenderProcessGone. Check that the navigation actually mounted.
+  scheduleWebViewHealthCheck(8500);
+ }
+
+ private void scheduleWebViewHealthCheck(long delayMs){
+  final WebView expected=web;
+  final int generation=pageLoadGeneration;
+  if(expected==null)return;
+  expected.postDelayed(()->{
+   if(expected!=web||generation!=pageLoadGeneration||isFinishing()||isDestroyed())return;
+   if(!pageReady){handleUnresponsiveWebView(expected);return;}
+   // No user content is read or uploaded. Only check the static app shell.
+   String probe="(function(){return document.readyState==='complete' && !!document.body && !!document.body.dataset.screen && !!document.getElementById('wv-bottom-dock') && !!window.WordvilleShell;})()";
+   expected.evaluateJavascript(probe,result->{
+    if(expected!=web||generation!=pageLoadGeneration||isFinishing()||isDestroyed())return;
+    if("true".equals(result)){
+     recoveryReloads=0;
+     if(recoveryPanel!=null){root.removeView(recoveryPanel);recoveryPanel=null;}
+    }else handleUnresponsiveWebView(expected);
+   });
+  },delayMs);
+ }
+
+ private void handleUnresponsiveWebView(WebView expected){
+  if(expected!=web||isFinishing()||isDestroyed())return;
+  if(recoveryReloads<1){
+   recoveryReloads++;
+   pageReady=false;
+   pageLoadGeneration++;
+   expected.reload(); // reload retains localStorage, IndexedDB and study records
+   scheduleWebViewHealthCheck(8500);
+  }else showRecovery("마을 화면이 정상적으로 열리지 않았습니다.");
  }
 
  private void notifyJsResume(){
@@ -269,7 +309,7 @@ public class MainActivity extends Activity {
  }
 
  private void showRecovery(String message){
-  if(root==null||isFinishing())return;
+  if(root==null||isFinishing()||recoveryPanel!=null)return;
   // Explicit recovery UI rather than leaving the user on a blank brown surface.
   LinearLayout panel=new LinearLayout(this);
   panel.setOrientation(LinearLayout.VERTICAL);
@@ -281,19 +321,22 @@ public class MainActivity extends Activity {
   Button retry=new Button(this);retry.setText("마을 다시 열기");
   retry.setOnClickListener(v->{
    root.removeView(panel);
+   recoveryPanel=null;
    if(web!=null){root.removeView(web);web.destroy();web=null;}
    previousRendererRecovery=0;
+   recoveryReloads=0;
    createWebView();
   });
   panel.addView(label);
   panel.addView(retry);
+  recoveryPanel=panel;
   root.addView(panel,new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
     ViewGroup.LayoutParams.WRAP_CONTENT));
  }
 
  @Override protected void onResume(){
   super.onResume();
-  if(web!=null){web.onResume();web.resumeTimers();notifyJsResume();}
+  if(web!=null){web.onResume();web.resumeTimers();notifyJsResume();scheduleWebViewHealthCheck(3800);}
  }
  @Override protected void onPause(){
   if(web!=null){web.onPause();web.pauseTimers();}
@@ -311,6 +354,7 @@ public class MainActivity extends Activity {
   wordTranslators.clear();
   if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
   if(web!=null){root.removeView(web);web.destroy();web=null;}
+  recoveryPanel=null;
   super.onDestroy();
  }
 }

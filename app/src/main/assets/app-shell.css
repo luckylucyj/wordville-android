@@ -119,6 +119,10 @@ body[data-screen="town"] .wv-more-panel{bottom:var(--wv-bottom)}
 }
 @media(max-width:340px){.wv-dock-icon{font-size:18px}.wv-dock-label{font-size:10px}.wv-bottom-dock{padding-inline:2px}}
 @media(prefers-reduced-motion:reduce){.wv-bottom-dock *{transition:none!important}}
+/* English UI must not show original Korean subtitles beneath English dialogue.
+ * The original data is retained and becomes visible again in Korean mode. */
+html[lang="en"] #wv-place-dialogue-ko,
+html[lang="en"] #resident-korean{display:none!important}
 /* Keep Android startup visually stable until reference scenery and the app shell are ready. */
 #wv-loading-cover{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#365c51;color:#f5e8c5;padding:24px}
 #wv-loading-cover[hidden]{display:none!important}
