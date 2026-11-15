@@ -338,6 +338,7 @@ const patterns=[
  [/^(\d+) \/ (\d+)곳$/,m=>({en:m[1]+' / '+m[2]+' places','zh-CN':m[1]+' / '+m[2]+' 个地点',ja:m[1]+' / '+m[2]+' か所'})],
  [/^영어 대화 예시 (\d+)개 펼치기$/,m=>({en:'Show '+m[1]+' English dialogue examples','zh-CN':'展开 '+m[1]+' 个英语对话示例',ja:'英会話例 '+m[1]+' 件を開く'})],
  [/^검색 결과 (\d+)개 · PDF 수록 순서 · 한 페이지 60개$/,m=>({en:m[1]+' results · PDF order · 60 per page','zh-CN':m[1]+' 个结果 · PDF顺序 · 每页60个',ja:'検索結果 '+m[1]+' 件・PDF順・1ページ60語'})],
+ [/^저장된 기억 이미지 (\d+)장 · 최대 5MB\/장$/,m=>({en:m[1]+' saved memory images · Up to 5 MB each','zh-CN':'已保存 '+m[1]+' 张记忆图片 · 每张最多5MB',ja:'保存済み画像 '+m[1]+' 枚・各5MBまで'})],
  [/^(\d+) \/ (\d+) 쪽$/,m=>({en:'Page '+m[1]+' / '+m[2],'zh-CN':'第 '+m[1]+' / '+m[2]+' 页',ja:m[1]+' / '+m[2]+' ページ'})],
  [/^PDF 원본 (\d+)쪽 단어만 표시 중$/,m=>({en:'Showing words on original PDF page '+m[1],'zh-CN':'仅显示原 PDF 第 '+m[1]+' 页的单词',ja:'元の PDF '+m[1]+' ページの単語を表示中'})],
  [/^선택 가능한 단어 (\d+)개 · 현재 페이지 (\d+)개$/,m=>({en:m[1]+' available words · '+m[2]+' on this page','zh-CN':'可选单词 '+m[1]+' 个 · 当前页 '+m[2]+' 个',ja:'選択可能 '+m[1]+' 語・このページ '+m[2]+' 語'})],
