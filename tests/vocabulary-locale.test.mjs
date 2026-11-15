@@ -37,7 +37,7 @@ test('native translator gets Korean gloss; original word and record data are unc
  const word={id:'fatigue',word:'fatigue',meaning:'피로'};
  const span={dataset:{},textContent:'',setAttribute(){},removeAttribute(){}};
  vocab.bindText(span,word.meaning,word.word);
- assert.equal(span.textContent,'피로');
+ assert.equal(span.textContent,'Translating meaning…');
  assert.equal(bridgeCalls.length,1);
  assert.equal(bridgeCalls[0].source[0],'피로');
  assert.equal(bridgeCalls[0].target,'en');
@@ -47,9 +47,22 @@ test('native translator gets Korean gloss; original word and record data are unc
  assert.equal(word.meaning,'피로');
  assert.ok(data.get('wordville.gloss-translations.v1.en').includes('fatigue'));
 });
-test('without Android translation bridge the Korean source is retained, never fabricated',()=>{
+test('without Android translation bridge the Korean source remains in storage but not on the translated screen',()=>{
  const {vocab}=setup('ja',false);
  const span={dataset:{},textContent:'',setAttribute(){},removeAttribute(){}};
  vocab.bindText(span,'피로','fatigue');
- assert.equal(span.textContent,'피로');
+ assert.equal(span.textContent,'意味を表示できません');
+});
+test('selected word options do not leak Korean or trigger a 6000-word translation queue',()=>{
+ const {vocab,bridgeCalls}=setup('en');
+ const option={dataset:{},textContent:'',setAttribute(){},removeAttribute(){}};
+ vocab.bindOption(option,'disturb','방해하다');
+ assert.equal(option.textContent,'disturb');
+ assert.equal(bridgeCalls.length,0);
+ vocab.requestGloss('방해하다');
+ assert.equal(bridgeCalls.length,1);
+ const request=bridgeCalls[0];
+ vocab.onNativeResult(JSON.stringify({id:request.id,locale:'en',values:['interrupt'],error:''}));
+ vocab.bindOption(option,'disturb','방해하다');
+ assert.equal(option.textContent,'disturb · interrupt');
 });

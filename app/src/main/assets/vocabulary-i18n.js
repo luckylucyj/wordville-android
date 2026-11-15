@@ -15,11 +15,13 @@ const queue=[],queued=new Set(),failed=new Set();
 const inFlight=new Map();
 let serial=0,activeRequest=null,scheduled=false;
 const text={
- en:{loading:'Preparing on-device translation… A language pack may download the first time (about 30 MB).',working:'Translating displayed vocabulary…',failed:'Translation model unavailable. Original Korean meanings are shown.',unsupported:'Vocabulary translation requires the Android app.',retry:'Retry translation'},
- 'zh-CN':{loading:'正在准备设备端翻译… 首次使用可能需要下载约30MB语言包。',working:'正在翻译当前单词…',failed:'无法使用翻译模型，暂时显示韩语原文。',unsupported:'单词翻译需要 Android 应用。',retry:'重试翻译'},
- ja:{loading:'端末内翻訳を準備中… 初回は約30MBの言語パックが必要な場合があります。',working:'表示中の単語を翻訳中…',failed:'翻訳モデルが使えません。元の韓国語を表示します。',unsupported:'単語の翻訳には Android アプリが必要です。',retry:'翻訳を再試行'}
+ en:{loading:'Preparing on-device translation… A language pack may download the first time (about 30 MB).',working:'Translating displayed vocabulary…',failed:'English meanings are unavailable. Retry translation.',unsupported:'Vocabulary translation requires the Android app.',retry:'Retry translation'},
+ 'zh-CN':{loading:'正在准备设备端翻译… 首次使用可能需要下载约30MB语言包。',working:'正在翻译当前单词…',failed:'翻译暂不可用，请重试。',unsupported:'单词翻译需要 Android 应用。',retry:'重试翻译'},
+ ja:{loading:'端末内翻訳を準備中… 初回は約30MBの言語パックが必要な場合があります。',working:'表示中の単語を翻訳中…',failed:'翻訳が利用できません。再試行してください。',unsupported:'単語の翻訳には Android アプリが必要です。',retry:'翻訳を再試行'}
 };
 const nativeAvailable=()=>typeof globalThis.WordvilleTranslate?.translateBatch==='function';
+const placeholders={en:{pending:'Translating meaning…',unavailable:'English meaning unavailable'},'zh-CN':{pending:'正在翻译词义…',unavailable:'暂无法显示释义'},ja:{pending:'意味を翻訳中…',unavailable:'意味を表示できません'}};
+const containsKorean=value=>/[\uac00-\ud7a3]/u.test(String(value));
 function current(){return I?.language||'ko';}
 function display(source,locale=current()){
  const original=String(source||'');
@@ -33,20 +35,41 @@ function bindText(el,original,word=''){
  el.dataset.wvOriginalWord=String(word||'');
  applyElement(el);
 }
+function bindOption(el,word,original){
+ if(!el)return;
+ el.dataset.wvOriginalGloss=String(original||'');
+ el.dataset.wvOriginalWord=String(word||'');
+ el.dataset.wvGlossFormat='option';
+ applyElement(el);
+}
+function requestGloss(original){
+ const lang=current();
+ if(lang!=='ko'&&original)enqueue(String(original),lang);
+}
 function applyElement(el){
  const locale=current(),original=el.dataset.wvOriginalGloss||'';
- if(locale==='ko'||!original.trim()){el.textContent=original;return;}
+ const option=el.dataset.wvGlossFormat==='option';
+ const word=el.dataset.wvOriginalWord||'';
+ if(locale==='ko'||!original.trim()){
+  el.textContent=option?(word+(original?' · '+original:'')):original;
+  el.removeAttribute('aria-busy');
+  return;
+ }
  const mapped=translations[locale]?.[original];
- if(mapped){
-  el.textContent=mapped;
+ const available=typeof mapped==='string'&&!!mapped.trim()&&!containsKorean(mapped);
+ if(available){
+  el.textContent=option?(word+' · '+mapped):mapped;
   el.removeAttribute('aria-busy');
  } else {
-  // When a translation model has not been downloaded yet, show the source and
-  // explicitly signal that it is untranslated instead of inventing meanings.
-  el.textContent=original;
-  if(nativeAvailable()&&!failed.has(locale)){
+  // Never display untranslated Korean definitions in a non-Korean UI.
+  // Keep the word selectable and preserve the original definition in storage.
+  const canTranslate=nativeAvailable()&&!failed.has(locale);
+  el.textContent=option?word:canTranslate?placeholders[locale].pending:placeholders[locale].unavailable;
+  if(canTranslate){
    el.setAttribute('aria-busy','true');
-   enqueue(original,locale);
+   // A selector can have thousands of options: translate only chosen words,
+   // not every option during app startup.
+   if(!option)enqueue(original,locale);
   }else el.removeAttribute('aria-busy');
  }
 }
@@ -98,7 +121,7 @@ function onNativeResult(json){
  for(let i=0;i<request.group.length;i++){
   const source=request.group[i],value=values[i];
   queued.delete(request.lang+'\u0000'+source);
-  if(typeof value==='string'&&value.trim().length&&value.length<600){
+  if(typeof value==='string'&&value.trim().length&&value.length<600&&!containsKorean(value)){
    translations[request.lang][source]=value.trim();
    got++;
   }
@@ -161,5 +184,5 @@ if(typeof document!=='undefined'){
   if(queue.some(x=>x.locale===lang))setTimeout(processQueue,0);
  });
 }
-globalThis.WordvilleVocabularyLocale={bindText,display,onNativeResult,refreshVisible,get language(){return current();},get nativeAvailable(){return nativeAvailable();}};
+globalThis.WordvilleVocabularyLocale={bindText,bindOption,requestGloss,display,onNativeResult,refreshVisible,get language(){return current();},get nativeAvailable(){return nativeAvailable();}};
 })();

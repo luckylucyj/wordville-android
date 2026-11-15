@@ -192,7 +192,7 @@
   const choice=slot.target.value,q=slot.search.value.trim().toLowerCase(),d=slot.day.value;
   const matches=ws.filter(w=>(d==='all'||(w.days||[]).includes(Number(d)))&&(!q||w.word.toLowerCase().includes(q)||String(w.meaning||'').toLowerCase().includes(q)));
   const fragment=document.createDocumentFragment();
-  for(const w of matches){const option=document.createElement('option');option.value=w.id;option.textContent=w.word+' · '+w.meaning;fragment.append(option);}
+  for(const w of matches){const option=document.createElement('option');option.value=w.id;globalThis.WordvilleVocabularyLocale?.bindOption(option,w.word,w.meaning);if(!globalThis.WordvilleVocabularyLocale)option.textContent=w.word;fragment.append(option);}
   slot.target.replaceChildren(fragment);
   const retained=matches.some(w=>String(w.id)===String(choice));
   if(retained)slot.target.value=choice;
