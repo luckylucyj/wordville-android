@@ -53,6 +53,35 @@ const assert=require('node:assert/strict');
   assert.match(await page.locator('.wv-file-pick-name').innerText(),/画像ファイル/);
   await page.evaluate(()=>WordvilleI18n.setLanguage('zh-CN'));
   assert.match(await page.locator('.wv-file-pick-name').innerText(),/选择图片/);
+  // Regression: localization previously caused the migration card to stay outside
+  // the Account tab and block every Town/Places/Residents screen.
+  for(const locale of ['en','ja','zh-CN','ko']){
+   await page.evaluate(value=>WordvilleI18n.setLanguage(value),locale);
+   await page.reload();
+   await page.waitForFunction(()=>WordvilleShell?.screen&&window.WordvilleWords?.length>100);
+   assert.equal(await page.evaluate(()=>document.getElementById('wv-migration-card')?.parentElement?.id),'wv-account-view',
+     'The migration card must be placed under Account even when translated before app-shell.js runs: '+locale);
+   for(const screen of ['town','places','residents','learn','review']){
+    await page.locator('#wv-bottom-dock [data-screen="'+screen+'"]').click();
+    assert.equal(await page.evaluate(()=>WordvilleShell.screen),screen);
+    const target={town:'#wv-map-view',places:'#wv-places-view',residents:'#wv-residents-view',learn:'#learn',review:'#review'}[screen];
+    assert.equal(await page.locator(target).isVisible(),true,screen+' is not displayed ('+locale+')');
+    assert.equal(await page.locator('#wv-migration-card').isVisible(),false,
+      'Old-account notice leaked into '+screen+' ('+locale+')');
+   }
+   await page.locator('#wv-bottom-dock [data-screen="more"]').click();
+   await page.locator('[data-more="lab"]').click();
+   assert.equal(await page.locator('#lab').isVisible(),true);
+   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+   assert.equal(await page.locator('#wv-map-view').isVisible(),true);
+   assert.equal(await page.locator('#wv-migration-card').isVisible(),false);
+   await page.locator('#wv-bottom-dock [data-screen="more"]').click();
+   await page.locator('[data-more="account"]').click();
+   assert.equal(await page.locator('#wv-migration-card').isVisible(),true);
+   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
+   assert.equal(await page.locator('#wv-residents-view').isVisible(),true);
+   assert.equal(await page.locator('#wv-migration-card').isVisible(),false);
+  }
   assert.deepEqual(exceptions,[]);
   console.log('Sentence journal, Gemini UI, Day 30 picker, localized menus and file picker: OK');
  }finally{await browser.close();}
