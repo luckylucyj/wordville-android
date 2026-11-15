@@ -160,3 +160,15 @@ body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #
 #combine-form #concept-length-help{font-size:13px;line-height:1.5;margin:6px 0 16px}
 #combine-form #concept-char-count{display:inline-block;white-space:nowrap;color:#715239;font-weight:700}
 #concepts .wv-combined-sentence{font-size:18px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 10px}
+
+/* Residents gallery: show only the 12 original portraits by default.
+   Schedule editing and study options remain accessible from explicit actions. */
+#wv-residents-view[data-mode="portraits"] > :not(.neighbors),
+#wv-residents-view[data-mode="schedule"] > :not(#wv-resident-schedule),
+#wv-residents-view[data-mode="study"] > :not(#wv-resident-study-picker){display:none!important}
+#wv-residents-view[data-mode="portraits"]{padding:14px 13px 36px;background:#f2e0b8}
+#wv-residents-view[data-mode="portraits"] .neighbors{display:block;margin:0;padding:0}
+#wv-residents-view[data-mode="portraits"] .resident-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0}
+#wv-residents-view[data-mode="portraits"] .resident-list button{display:flex;align-items:center;justify-content:center;box-sizing:border-box;aspect-ratio:1;min-height:0;height:auto;padding:5px;border:3px solid #aa7b47;font-size:0!important;line-height:0;overflow:hidden}
+#wv-residents-view[data-mode="portraits"] .resident-list .wv-portrait{display:block;width:100%;max-width:none;aspect-ratio:1;margin:0;flex:none}
+@media(min-width:700px){#wv-residents-view[data-mode="portraits"] .resident-list{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}}
