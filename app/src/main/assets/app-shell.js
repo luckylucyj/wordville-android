@@ -146,6 +146,7 @@ function activate(screen){
    map.hidden=true;places.hidden=false;residents.hidden=true;
  } else if(screen==='residents'){
    map.hidden=true;places.hidden=true;residents.hidden=false;residents.dataset.mode='portraits';
+   if(oldDialogue)oldDialogue.hidden=true;
  }
  if(['town','places','residents'].includes(screen)){
    try{globalThis.WordvillePlaces?.show(screen==='places'?'places':'map');}
