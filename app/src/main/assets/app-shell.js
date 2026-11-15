@@ -82,7 +82,8 @@ const account=document.createElement('section');
 account.id='wv-account-view';account.hidden=true;account.className='wv-account-screen';
 const accHeading=document.createElement('div');accHeading.innerHTML='<h2>계정과 기록</h2><p>기존 학습 기록과 저장 이미지를 안전하게 관리합니다.</p>';
 account.append(accHeading);
-const accountCard=[...main.querySelectorAll('section.card')].find(s=>s.textContent.includes('기존 앱의 기록 이어받기'));
+// Match by a stable element ID. Display text is translated before this script runs.
+const accountCard=get('wv-migration-card');
 if(accountCard)account.append(accountCard);
 const cloud=document.querySelector('.cloud-panel');if(cloud)account.append(cloud);
 const foot=main.querySelector('footer');if(foot)account.append(foot);
