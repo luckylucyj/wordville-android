@@ -88,6 +88,7 @@ const lines=[
 ["계정과 기록","Account & records","账户与记录","アカウントと記録"],
 ["기존 학습 기록과 저장 이미지를 안전하게 관리합니다.","Manage existing study records and saved images.","管理现有学习记录与保存的图片。","学習記録と保存画像を管理します。"],
 ["Day별 생각코딩 노트","Notes by Day","按 Day 分类的笔记","Day 別ノート"],
+["나의 영어 문장","My English sentences","我的英语句子","私の英文"],
 ["기억 이미지 보관함","Memory image gallery","记忆图片库","記憶画像ギャラリー"],
 ["단어 조합실","Word combinations","单词组合","単語の組み合わせ"],
 ["개념 도감","Concept collection","概念图鉴","概念図鑑"],
