@@ -178,3 +178,6 @@ body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #
 
 /* Explicit resident selection may reveal dialogue while the default gallery remains portraits-only. */
 body[data-screen="residents"] #wv-residents-view[data-mode="dialogue"] > #village-dialogue:not([hidden]){display:block!important;visibility:visible!important}
+
+/* Show expanded schedules in the dedicated More screen even when the portrait gallery is otherwise simplified. */
+body[data-screen="residents"] #wv-residents-view[data-mode="schedule"] > #wv-resident-schedule{display:block!important;visibility:visible!important}
