@@ -175,3 +175,6 @@ body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #
 
 /* A deliberately selected resident can still open dialogue and the study picker. */
 #wv-residents-view[data-mode="dialogue"] > :not(.neighbors):not(.village-dialogue){display:none!important}
+
+/* Explicit resident selection may reveal dialogue while the default gallery remains portraits-only. */
+body[data-screen="residents"] #wv-residents-view[data-mode="dialogue"] > #village-dialogue:not([hidden]){display:block!important;visibility:visible!important}
