@@ -1,0 +1,28 @@
+/* New sentence journal and localized image picker; mobile WebView layout. */
+.wv-sentences-view{padding:clamp(12px,3vw,28px);margin:12px auto;max-width:920px;width:100%;box-sizing:border-box}
+.wv-sentence-head{margin:4px 0 18px}
+.wv-sentence-head h2{margin-bottom:8px}
+.wv-sentence-head p{font-size:16px;line-height:1.55}
+.wv-sentence-actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.wv-sentence-actions button{flex:1 1 140px;min-height:44px;white-space:normal}
+#wv-sentence-text{width:100%;min-height:105px;box-sizing:border-box;font:inherit;resize:vertical;line-height:1.5;padding:12px}
+#wv-sentence-status{min-height:1.3em;overflow-wrap:anywhere}
+.wv-sentence-feedback{padding:12px 14px;margin:12px 0;border:2px solid #a88050;background:#fff5db;border-radius:8px}
+.wv-sentence-feedback-row{padding:8px 0}
+.wv-sentence-feedback-row+.wv-sentence-feedback-row{border-top:1px solid #ddc9a5}
+.wv-sentence-feedback-row p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;margin:6px 0}
+.wv-sentence-feedback ul{padding-left:20px;line-height:1.6}
+.wv-sentence-archive{margin:25px 0}
+.wv-sentence-entry{margin:10px 0;padding:14px 15px;background:#f8e9c7;border:2px solid #ae8658;border-radius:8px}
+.wv-sentence-entry time{font-size:12px}
+.wv-sentence-entry-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;margin:10px 0}
+.wv-sentence-entry-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wv-sentence-entry-actions button{min-height:42px;padding:6px 14px}
+.wv-combine-options{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin:10px 0}
+.wv-combine-options label{display:flex;flex-direction:column;gap:4px;min-width:0}
+.wv-combine-options select,.wv-combine-options input{box-sizing:border-box;width:100%;min-width:0}
+.wv-file-input{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important;pointer-events:none!important}
+.wv-file-pick-name{display:block;cursor:pointer;text-align:center;background:#fff2d4;border:2px solid #8f6948;border-radius:5px;padding:12px;margin-top:8px;font-weight:700}
+.wv-file-pick-info{display:block;font-size:14px;padding:6px 0;overflow-wrap:anywhere}
+.wv-memory-panel label:has(.wv-file-input){position:relative;display:block}
+@media(max-width:430px){.wv-combine-options{grid-template-columns:1fr}.wv-sentences-view{padding:12px 8px}.wv-sentence-actions button{flex:1 1 125px}}
