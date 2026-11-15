@@ -191,7 +191,12 @@ if(typeof ResizeObserver!=='undefined'){
  resizeObserver.observe(wrap);
 }
 window.addEventListener('resize',resizeVillage);
-document.addEventListener('wordville-resident-selected',()=>activate('residents'));
+document.addEventListener('wordville-resident-selected',()=>{
+ // Explicit selection opens resident details; opening the Residents tab itself still shows portraits only.
+ activate('residents');
+ residents.dataset.mode='dialogue';
+ if(oldDialogue)oldDialogue.hidden=false;
+});
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&!more.hidden){more.hidden=true;buttons.get('more').setAttribute('aria-expanded','false');}
 });
