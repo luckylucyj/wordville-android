@@ -194,7 +194,9 @@
   const fragment=document.createDocumentFragment();
   for(const w of matches){const option=document.createElement('option');option.value=w.id;option.textContent=w.word+' · '+w.meaning;fragment.append(option);}
   slot.target.replaceChildren(fragment);
-  if(matches.some(w=>String(w.id)===String(choice)))slot.target.value=choice;
+  const retained=matches.some(w=>String(w.id)===String(choice));
+  if(retained)slot.target.value=choice;
+  else if(key==='b'&&matches.length>1&&slot.target.value===slotData.a?.target.value)slot.target.selectedIndex=1;
   slot.target.disabled=!matches.length;
   if(!matches.length)slot.target.add(new Option(t('noMatch'),''));
   slot.target.dispatchEvent(new Event('change',{bubbles:true}));
