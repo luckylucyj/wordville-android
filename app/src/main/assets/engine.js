@@ -13,7 +13,7 @@
  }
  function combine(state,a,b,name){
   if(a===b)throw Error('서로 다른 단어를 선택해 주세요.');
-  name=String(name).trim();if(!name||name.length>60)throw Error('개념 이름은 1~60자로 입력해 주세요.');
+  name=String(name).trim();if(!name||name.length>1000)throw Error('문장은 1~1000자로 입력해 주세요.');
   const key=[a,b].sort().join('|');if(state.concepts.some(c=>c.key===key))throw Error('이미 저장한 단어 조합입니다.');
   return {...state,xp:state.xp+15,coins:state.coins+5,concepts:[...state.concepts,{key,a,b,name}]};
  }

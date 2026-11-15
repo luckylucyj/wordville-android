@@ -153,3 +153,10 @@ body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #
 .brand{display:flex;align-items:center;gap:9px}
 .wv-logo{width:34px;height:34px;flex:none;image-rendering:pixelated;border-radius:7px;object-fit:cover}
 .wv-loading-panel .wv-loading-logo{display:block;width:96px;height:96px;object-fit:cover;image-rendering:pixelated;margin:0 auto 12px;border:3px solid #e9c88c;border-radius:14px;box-shadow:2px 3px 0 #3b3029}
+
+/* Combine: multiline sentence writing without clipping or horizontal overflow. */
+#combine-form textarea#concept-name{display:block;box-sizing:border-box;width:100%;min-height:180px;padding:14px 15px;border:3px solid #b38b56;border-radius:3px;background:#fff8e5;color:#46301e;font:inherit;font-size:16px;line-height:1.6;resize:vertical;overflow-wrap:anywhere}
+#combine-form textarea#concept-name:focus-visible{outline:3px solid #266f60;outline-offset:3px}
+#combine-form #concept-length-help{font-size:13px;line-height:1.5;margin:6px 0 16px}
+#combine-form #concept-char-count{display:inline-block;white-space:nowrap;color:#715239;font-weight:700}
+#concepts .wv-combined-sentence{font-size:18px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 10px}

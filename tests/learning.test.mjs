@@ -18,3 +18,23 @@ test('expanded vocabulary has stable IDs, merged senses and source pages',()=>{
  for(let day=1;day<=30;day++)assert.ok(words.filter(w=>w.days.includes(day)).length>=150);
  assert.ok(words.filter(w=>w.sourceTypes.includes('이디엄')).length>=115);
 });
+
+test('Combine accepts multiline sentences up to 1000 characters without changing legacy records',()=>{
+ const paragraph='I confirmed the reservation.\nI did not disturb anyone.';
+ const old=E.combine(E.fresh(),'old-a','old-b','예약 확인');
+ const saved=E.combine(old,'reservation','disturb',paragraph);
+ assert.equal(saved.concepts[0].name,'예약 확인');
+ assert.equal(saved.concepts[1].name,paragraph);
+ assert.equal(JSON.parse(JSON.stringify(saved)).concepts[1].name,paragraph);
+ assert.equal(E.combine(E.fresh(),'a','b','A'.repeat(1000)).concepts[0].name.length,1000);
+ assert.throws(()=>E.combine(E.fresh(),'a','b','A'.repeat(1001)),/1000/);
+});
+test('Combine has a multiline editor and displays saved newlines',()=>{
+ const html=fs.readFileSync(new URL('../app/src/main/assets/index.html',import.meta.url),'utf8');
+ const ui=fs.readFileSync(new URL('../app/src/main/assets/app.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../app/src/main/assets/app-shell.css',import.meta.url),'utf8');
+ assert.match(html,/<textarea id="concept-name" rows="6" maxlength="1000"/);
+ assert.match(html,/id="concept-char-count"/);
+ assert.match(ui,/wv-combined-sentence/);
+ assert.match(css,/#concepts \.wv-combined-sentence\{[^}]*white-space:pre-wrap/);
+});
