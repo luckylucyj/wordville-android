@@ -60,3 +60,6 @@
 #wv-penny-home-entry small{display:block;margin-top:3px;font-size:12px;color:#456246;font-weight:700;line-height:1.4}
 #wv-penny-home-entry .wv-penny-entry-chevron{margin-left:auto;font-size:28px;flex:none}
 #wv-penny-home-entry:focus-visible{outline:3px solid #2d64bd;outline-offset:2px}
+
+/* Native 896px furniture is downsampled once from a high-resolution scene. */
+#wv-place-canvas[data-hires='penny']{image-rendering:auto}

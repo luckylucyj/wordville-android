@@ -45,3 +45,20 @@ test('Penny shortcut and private collision map are wired into the existing venue
  assert.ok(r.includes("?'pennyHome':scene"));
  assert.ok(r.includes('places.redraw?.()'));
 });
+
+test('Penny original assets are all unique 896px transparent PNGs, not upscaled lossy room art',()=>{
+ const unique=new Set();
+ for(const f of home.furniture){
+  assert.ok(f.asset&&f.crop,'each fixture references original furniture art');
+  assert.ok(!unique.has(f.asset),'no sprite is reused');
+  unique.add(f.asset);
+  const png=readFileSync(new URL('../app/src/main/assets/art/furniture/'+f.asset,import.meta.url));
+  assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+  assert.equal(png.readUInt32BE(16),896);
+  assert.equal(png.readUInt32BE(20),896);
+ }
+ assert.equal(unique.size,10);
+ const placesSource=readFileSync(new URL('../app/src/main/assets/places.js',import.meta.url),'utf8');
+ assert.ok(placesSource.includes('pennyHiRes?1024:512'));
+ assert.ok(placesSource.includes('pennyHiRes?840:420'));
+});

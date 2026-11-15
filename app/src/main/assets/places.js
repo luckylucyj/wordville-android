@@ -136,7 +136,15 @@ function scenery(p){
  }
 }
 function draw(p){
- if(p.id==='home'&&globalThis.WordvilleVenueRuntime?.focusedResident==='penny'&&globalThis.WordvillePennyHome?.paint){
+ // Keep the world-map scenes at their original resolution, but render Penny's
+ // 896px-source furniture into a 1024x840 buffer before fitting the phone screen.
+ const pennyHiRes=p.id==='home'&&globalThis.WordvilleVenueRuntime?.focusedResident==='penny';
+ const targetWidth=pennyHiRes?1024:512,targetHeight=pennyHiRes?840:420;
+ if(canvas.width!==targetWidth||canvas.height!==targetHeight){
+  canvas.width=targetWidth;canvas.height=targetHeight;
+ }
+ canvas.dataset.hires=pennyHiRes?'penny':'';
+ if(pennyHiRes&&globalThis.WordvillePennyHome?.paint){
   globalThis.WordvillePennyHome.paint(ctx);return;
  }
  if(globalThis.WordvilleWorldArt?.place){globalThis.WordvilleWorldArt.place(ctx,p);return;}
