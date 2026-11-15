@@ -18,18 +18,12 @@
      button.querySelector('.wv-portrait')?.remove();
      const dot=button.querySelector('.resident-dot');dot?.remove();
      const art=portrait(id,'wv-portrait-small');
-     art.title='자화상을 누르면 현재 위치로 이동';
-     art.setAttribute('role','button');art.setAttribute('tabindex','0');
-     art.removeAttribute('aria-hidden');
-     art.setAttribute('aria-label',labels[order[id]]+' 현재 장소로 이동');
-     const navigate=e=>{
-      e.stopPropagation();e.preventDefault();
-      globalThis.WordvilleVillage?.visitResident?.(id);
-     };
-     art.addEventListener('click',navigate);
-     art.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){navigate(e);}});
+     // Use the parent button as the single accessible click target.
      button.prepend(art);
-     button.title=labels[order[id]]+' 주민 선택 · 자화상 터치 시 위치 이동';
+     const name=globalThis.WordvilleI18n?.translate(labels[order[id]])||labels[order[id]];
+     const action=globalThis.WordvilleI18n?.translate('현재 위치로 이동')||'현재 위치로 이동';
+     button.setAttribute('aria-label',name+' — '+action);
+     button.title=name+' — '+action;
    }
    const neighbors=document.querySelector('.neighbors');
    if(neighbors)neighbors.open=true;
@@ -55,6 +49,15 @@
  globalThis.WordvillePortraits={image,spriteImage,order,position,portrait,sheet,spriteSheet,portraitCell:384,spriteCell:{width:160,height:256,frames:4}};
  // Loaded with defer after village.js: HTML and residents already exist.
  decorate();
+ document.addEventListener('wordville-language-changed',()=>{
+  for(const button of document.querySelectorAll('#resident-list [data-person]')){
+   const id=button.dataset.person;if(order[id]==null)continue;
+   const name=globalThis.WordvilleI18n?.translate(labels[order[id]])||labels[order[id]];
+   const action=globalThis.WordvilleI18n?.translate('현재 위치로 이동')||'현재 위치로 이동';
+   button.setAttribute('aria-label',name+' — '+action);
+   button.title=name+' — '+action;
+  }
+ });
  // Safely populate late-added residents without duplicating portraits.
  const list=document.getElementById('resident-list');
  if(list)new MutationObserver(()=>{if(list.querySelector('[data-person]:not(:has(.wv-portrait))'))decorate();}).observe(list,{childList:true});
