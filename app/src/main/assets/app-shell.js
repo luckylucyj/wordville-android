@@ -124,7 +124,12 @@ function toggleMore(){
 function openResidentSchedule(){
  activate('residents');
  residents.dataset.mode='schedule';
- if(scheduleDetails){scheduleDetails.open=true;residents.scrollTop=0;}
+ if(scheduleDetails){
+  if(scheduleDetails.parentElement!==residents)residents.append(scheduleDetails);
+  scheduleDetails.hidden=false;
+  scheduleDetails.open=true;
+  residents.scrollTop=0;
+ }
 }
 function activate(screen){
  if(!['town','places','residents','learn','review','lab','book','notes','gallery','account','sentences'].includes(screen))return;
