@@ -66,3 +66,24 @@ test('selected word options do not leak Korean or trigger a 6000-word translatio
  vocab.bindOption(option,'disturb','방해하다');
  assert.equal(option.textContent,'disturb · interrupt');
 });
+
+test('Chinese and Japanese meanings are displayed instead of source Korean',()=>{
+ for(const [lang,expected] of [['zh-CN','保险'],['ja','保険']]){
+  const {vocab}=setup(lang,false);
+  const span={dataset:{},textContent:'',setAttribute(){},removeAttribute(){}};
+  vocab.bindText(span,'보험','insurance');
+  assert.equal(span.textContent,expected);
+  assert.equal(vocab.display('영양'),lang==='ja'?'栄養':'营养');
+  assert.equal(vocab.display('영양사'),lang==='ja'?'栄養士':'营养师');
+  assert.doesNotMatch(vocab.display('빼앗다'),/[가-힣]/);
+ }
+});
+test('preexisting untranslated cached glosses cannot leak Korean into Chinese and Japanese views',()=>{
+ for(const lang of ['zh-CN','ja']){
+  const {vocab,data}=setup(lang,false);
+  data.set('wordville.gloss-translations.v1.'+lang,JSON.stringify({'보험':'보험'}));
+  const span={dataset:{},textContent:'',setAttribute(){},removeAttribute(){}};
+  vocab.bindText(span,'보장','coverage');
+  assert.doesNotMatch(span.textContent,/[가-힣]/);
+ }
+});
