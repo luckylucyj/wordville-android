@@ -110,8 +110,8 @@ function visitResident(id){
  if(indoor&&globalThis.WordvillePlaces?.places?.some(place=>place.id===here)){
   followId=null;
   globalThis.WordvilleShell?.activate('places');
-  globalThis.WordvillePlaces.pick(here);
-  globalThis.WordvilleVenueRuntime?.focusResident?.(id);
+  globalThis.WordvillePlaces.pick(here,here==='home'?id:null);
+  if(here!=='home')globalThis.WordvilleVenueRuntime?.focusResident?.(id);
  }else{
   followId=id;viewZone='all';zoom=1.5;
   globalThis.WordvilleShell?.activate('town');

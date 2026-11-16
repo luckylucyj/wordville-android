@@ -528,6 +528,31 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleVenueRuntime.focusedResident),'harvey');
   assert.equal(await page.locator('#wv-place-name').innerText(),'하비의 집','23:00에는 하비의 개인 집을 방문해야 합니다.');
   assert.ok(await page.evaluate(()=>WordvilleVenueRuntime.actors.some(a=>a.id==='harvey')));
+  const homePicker=page.locator('#wv-home-select');
+  const owners=await homePicker.locator('option').evaluateAll(options=>options.map(o=>o.value));
+  const roomPictures=new Set();
+  assert.equal(owners.length,12);
+  await page.waitForFunction(()=>WordvillePennyHome.ready);
+  for(const owner of owners){
+   await homePicker.selectOption(owner);
+   const room=await page.evaluate(()=>{
+    const canvas=document.getElementById('wv-place-canvas');
+    const bounds=canvas.getBoundingClientRect();
+    const actors=document.getElementById('wv-venue-actors').getBoundingClientRect();
+    return {
+     map:WordvilleVenueRuntime.dimensions.id,
+     visibleResidents:WordvilleVenueRuntime.actors.filter(a=>!a.player).map(a=>a.id),
+     bounds:[bounds.x,bounds.y,bounds.width,bounds.height],
+     overlay:[actors.x,actors.y,actors.width,actors.height],
+     image:canvas.toDataURL()
+    };
+   });
+   assert.equal(room.map,owner+'Home');
+   assert.ok(room.visibleResidents.every(id=>id===owner));
+   assert.deepEqual(room.bounds,room.overlay,owner+' canvas and movement overlay must align');
+   roomPictures.add(room.image);
+  }
+  assert.equal(roomPictures.size,12,'each home displays a distinct illustration');
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   for(const width of [360,390,768,1280]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow at ${width}`);}
   await page.setViewportSize({width:1280,height:1000});await page.locator('#wv-bottom-dock [data-screen="town"]').click();if(await page.locator('#wv-map-tool-panel').isHidden())await page.locator('#wv-map-tools').click();await page.locator('#village-time-mode').selectOption('day');await page.screenshot({path:process.env.WORDVILLE_SCREENSHOT_DIR?`${process.env.WORDVILLE_SCREENSHOT_DIR}/wordville-day.png`:'/tmp/wordville-day.png',fullPage:true});
