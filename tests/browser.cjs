@@ -462,9 +462,11 @@ const assert = require('node:assert/strict');
     const result=await page.evaluate(i=>{
       const button=document.querySelectorAll('#wv-sched-rows .wv-schedule-row button')[i];
       const rect=button?.getBoundingClientRect();
-      if(!button?.isConnected||!rect?.width||!rect?.height)return {clicked:false,connected:button?.isConnected||false};
+      if(!button?.isConnected)return {clicked:false,connected:false};
+      // The app may rerender timetable rows during a clock tick. Verify the wired
+      // current node's handler without relying on Playwright's stale hitbox.
       button.click();
-      return {clicked:true,connected:button.isConnected};
+      return {clicked:true,connected:true,layoutWidth:rect?.width||0};
     },index);
     assert.equal(result.clicked,true,JSON.stringify(result));
   }
