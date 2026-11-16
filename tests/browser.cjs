@@ -456,12 +456,28 @@ const assert = require('node:assert/strict');
   console.log('Schedule visibility',JSON.stringify(scheduleUI));
   assert.equal(scheduleUI.mode,'schedule');
   assert.equal(scheduleUI.open,true);
-  await page.locator('#wv-sched-rows .wv-schedule-row').nth(8).locator('button').click();
+  // Use a real pointer press at the button center; this also verifies its hit-test path.
+  async function clickScheduleRow(index){
+    const button=page.locator('#wv-sched-rows .wv-schedule-row').nth(index).locator('button');
+    const center=await button.evaluate(el=>{
+      el.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+      const rect=el.getBoundingClientRect();
+      return {x:rect.x+rect.width/2,y:rect.y+rect.height/2,width:rect.width,height:rect.height};
+    });
+    assert.ok(center.width>0&&center.height>0,'Schedule edit button must have a visible rectangle');
+    const target=await page.evaluate(({x,y})=>{
+      const el=document.elementFromPoint(x,y);
+      return {tag:el?.tagName||'',role:el?.closest('button')?.getAttribute('aria-label')||''};
+    },center);
+    assert.equal(target.tag,'BUTTON',JSON.stringify({center,target}));
+    await page.mouse.click(center.x,center.y);
+  }
+  await clickScheduleRow(8);
   await page.locator('#wv-sched-edit-place').selectOption('museum');
   await page.locator('#wv-sched-edit-action').fill('전시품 관찰');
   await page.locator('#wv-sched-save').click();
   assert.deepEqual(await page.evaluate(()=>[WordvilleSchedule.at('alex',480).place,WordvilleSchedule.at('alex',480).activity]),['museum','전시품 관찰']);
-  await page.locator('#wv-sched-rows .wv-schedule-row').nth(8).locator('button').click();
+  await clickScheduleRow(8);
   await page.locator('#wv-sched-reset').click();
   assert.equal(await page.evaluate(()=>WordvilleSchedule.at('alex',480).place),'gym');
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
