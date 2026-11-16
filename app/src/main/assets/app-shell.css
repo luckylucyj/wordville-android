@@ -188,3 +188,8 @@ body[data-screen="residents"] #wv-residents-view[data-mode="schedule"] #wv-sched
 }
 body[data-screen="residents"] #wv-residents-view[data-mode="schedule"]{min-height:100%;height:auto;overflow:visible}
 body[data-screen="residents"] .village-section{overflow-y:auto!important;scrollbar-gutter:stable}
+
+/* Remove the hidden town/venue siblings from the Residents document flow.
+   They were still occupying ~900px above the resident schedule editor. */
+body[data-screen="residents"] .village-section > :not(#wv-residents-view){display:none!important}
+body[data-screen="residents"] .village-section > #wv-residents-view{margin-top:0!important}
