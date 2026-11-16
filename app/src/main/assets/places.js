@@ -26,12 +26,25 @@ const ids=id=>document.getElementById(id), canvas=ids('wv-place-canvas'), ctx=ca
 let filter='all',active='pool',speakerIndex=0,lineIndex=0;
 const people=Object.fromEntries((globalThis.VillageModel?.people||[]).map(p=>[p.id,p]));
 const portraits=globalThis.WordvillePortraits;
+const homes=globalThis.WordvilleHomes;
+const homePicker=ids('wv-home-picker'),homeOptions=ids('wv-home-options');
+let homeOwner=Object.keys(people)[0];
 const mapView=ids('wv-map-view'),siteView=ids('wv-places-view');
 function listed(){return places.filter(p=>filter==='all'||p.type===filter);}
 function current(){return places.find(p=>p.id===active);}
-function pick(id){if(!places.some(p=>p.id===id))return;active=id;speakerIndex=0;lineIndex=0;render();}
+function pick(id,owner){
+ const place=places.find(p=>p.id===id);
+ if(!place)return;
+ if(filter!=='all'&&filter!==place.type)filter='all';
+ const changed=active!==id||id==='home'&&homes.get(owner)&&homeOwner!==owner;
+ if(id==='home'&&homes.get(owner))homeOwner=owner;
+ active=id;speakerIndex=0;lineIndex=0;render();
+ if(changed)globalThis.WordvilleVenueRuntime?.placeChanged();
+}
 function show(view){
- const isSite=view==='places';mapView.hidden=isSite;siteView.hidden=!isSite;
+ const isSite=view==='places';
+ if(!isSite&&homePicker.open)homePicker.close();
+ mapView.hidden=isSite;siteView.hidden=!isSite;
  ids('wv-map-tab').setAttribute('aria-selected',String(!isSite));
  ids('wv-places-tab').setAttribute('aria-selected',String(isSite));
  ids('wv-map-tab').tabIndex=isSite?-1:0;
@@ -56,16 +69,32 @@ function show(view){
   }
  }
 }
-function visitPenny(){
- // Always open the venue panel first; the resident need not be home at this hour.
+function visitHome(id){
+ if(!homes.get(id))return false;
  if(globalThis.WordvilleShell?.activate)globalThis.WordvilleShell.activate('places');
  else show('places');
- filter='all';
- pick('home');
- const focused=globalThis.WordvilleVenueRuntime?.focusResident?.('penny');
- redraw();
- return focused===true;
+ pick('home',id);
+ return true;
 }
+function homeGuests(roster){return roster.filter(id=>id===homeOwner);}
+function openHomePicker(){
+ if(homePicker.open)return;
+ homeOptions.replaceChildren(...Object.values(people).map(person=>{
+  const choice=button(person.name,'wv-home-option',()=>{
+   homePicker.close();
+   pick('home',person.id);
+   ids('wv-place-rail').querySelector('[data-place="home"]').focus({preventScroll:true});
+  });
+  choice.dataset.homeResident=person.id;
+  if(active==='home'&&homeOwner===person.id)choice.setAttribute('aria-current','true');
+  return choice;
+ }));
+ homePicker.showModal();
+ const initial=homeOptions.querySelector('[aria-current="true"]')||homeOptions.firstElementChild;
+ initial?.focus();
+}
+ids('wv-home-close').addEventListener('click',()=>homePicker.close());
+document.addEventListener('wordville-language-changed',()=>{if(active==='home')redraw();});
 function button(label,className,handler){const b=document.createElement('button');b.type='button';b.textContent=label;b.className=className;b.addEventListener('click',handler);return b;}
 function appendPortrait(parent,id,small=false){
  const p=people[id];if(!p)return;
@@ -80,7 +109,7 @@ function appendPortrait(parent,id,small=false){
  parent.append(b);
 }
 function renderConversation(){
- const p=current(),person=people[p.people[speakerIndex]]||people[p.people[0]];
+ const p=current(),person=p.id==='home'?people[homeOwner]:people[p.people[speakerIndex]]||people[p.people[0]];
  ids('wv-place-speaker').textContent=(person?.name||'주민')+'의 이야기';
  ids('wv-place-dialogue-en').textContent=p.lines[lineIndex][0];
  ids('wv-place-dialogue-ko').textContent=p.lines[lineIndex][1];
@@ -88,7 +117,7 @@ function renderConversation(){
  ids('wv-place-people').replaceChildren();
  const roster=globalThis.WordvilleSchedule?.occupants(p.id,globalThis.WordvilleVillage?.clockMinute??globalThis.WordvilleSchedule.minuteNow())||[];
  if(p.id==='home'||p.id===globalThis.WordvilleVillage?.visitingPlace){
-  roster.forEach(id=>appendPortrait(ids('wv-place-people'),id));
+  (p.id==='home'?homeGuests(roster):roster).forEach(id=>appendPortrait(ids('wv-place-people'),id));
  }else p.people.forEach(id=>appendPortrait(ids('wv-place-people'),id));
 }
 function render(){
@@ -102,20 +131,18 @@ function render(){
  ids('wv-place-canvas').setAttribute('aria-label',p.name+' 픽셀아트 장소 풍경');
  ids('wv-place-rail').replaceChildren();
  for(const place of items){
-   const b=button(place.name,'wv-place-chip',()=>{if(place.id==='home')globalThis.WordvilleVenueRuntime?.clearFocus?.();pick(place.id);});
+   const isHome=place.id==='home';
+   const b=button(place.name,'wv-place-chip',isHome?openHomePicker:()=>pick(place.id));
+   if(isHome){b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls',homePicker.id);}
    b.dataset.place=place.id;
    b.setAttribute('aria-pressed',String(place.id===p.id));
    ids('wv-place-rail').append(b);
  }
- const pennyButton=button('🏠 페니의 집','wv-place-chip wv-penny-home-shortcut',visitPenny);
- pennyButton.setAttribute('aria-label','페니의 집 방문하기');
- document.querySelector('.wv-penny-home-shortcut')?.remove();
- Object.assign(pennyButton.style,{display:'block',width:'100%',margin:'-5px 0 12px'});
- ids('wv-place-rail').parentElement.after(pennyButton);
  const rail=ids('wv-place-rail');
  const activeButton=rail.querySelector('[aria-pressed="true"]');
- // Scroll only the horizontal venue strip; do not move the entire page.
- if(activeButton)rail.scrollLeft=Math.max(0,activeButton.offsetLeft-rail.offsetLeft-12);
+ // Keep Homes beside the pool on entry, even on narrow screens.
+ if(idx<=1)rail.scrollLeft=0;
+ else if(activeButton)rail.scrollLeft=Math.max(0,activeButton.offsetLeft-rail.offsetLeft-12);
  ids('wv-place-filters').querySelectorAll('[data-place-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.placeFilter===filter)));
  renderConversation();redraw();
 }
@@ -138,14 +165,15 @@ function scenery(p){
 function draw(p){
  // Keep the world-map scenes at their original resolution, but render Penny's
  // 896px-source furniture into a 1024x840 buffer before fitting the phone screen.
- const pennyHiRes=p.id==='home'&&globalThis.WordvilleVenueRuntime?.focusedResident==='penny';
+ const pennyHiRes=p.id==='home'&&homeOwner==='penny';
  const targetWidth=pennyHiRes?1024:512,targetHeight=pennyHiRes?840:420;
  if(canvas.width!==targetWidth||canvas.height!==targetHeight){
   canvas.width=targetWidth;canvas.height=targetHeight;
  }
  canvas.dataset.hires=pennyHiRes?'penny':'';
- if(pennyHiRes&&globalThis.WordvillePennyHome?.paint){
-  globalThis.WordvillePennyHome.paint(ctx);return;
+ if(p.id==='home'){
+  const map=globalThis.WordvilleVenueSpec.getMap(homes.mapId(homeOwner));
+  globalThis.WordvilleHomeArt.paint(ctx,homeOwner,map);return;
  }
  if(globalThis.WordvilleWorldArt?.place){globalThis.WordvilleWorldArt.place(ctx,p);return;}
  ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,512,240);scenery(p);
@@ -171,12 +199,13 @@ function draw(p){
 function redraw(){
  const p=current();
  if(p.id==='home'){
-  const residentId=globalThis.WordvilleVenueRuntime?.focusedResident;
-  const penny=residentId==='penny';
-  ids('wv-place-name').textContent=residentId&&people[residentId]?people[residentId].name+'의 집':p.name;
-  ids('wv-place-en').textContent=penny?"Penny's Home":p.en;
-  ids('wv-place-description').textContent=penny?'책상과 책장, 침대와 소파가 있는 페니의 개인 생활 공간입니다. 가구를 누르면 주변으로 이동합니다.':p.desc;
-  ids('wv-place-canvas').setAttribute('aria-label',penny?'페니의 집 내부, 실내 가구 10종을 배치한 픽셀아트':'주민의 집 내부');
+  const i18n=globalThis.WordvilleI18n,name=people[homeOwner].name+'의 집';
+  const localizedName=i18n?.translate(name)||name,theme=homes.get(homeOwner).theme;
+  const languageIndex=Math.max(0,['ko','en','zh-CN','ja'].indexOf(i18n?.language));
+  ids('wv-place-name').textContent=name;
+  ids('wv-place-en').textContent=i18n?.translate(name,'en')||name;
+  ids('wv-place-description').textContent=theme[languageIndex];
+  canvas.setAttribute('aria-label',localizedName+' · '+theme[languageIndex]);
  }
  draw(p);
 }
@@ -194,7 +223,7 @@ ids('wv-place-talk').addEventListener('click',()=>{lineIndex=(lineIndex+1)%curre
 ids('wv-place-study').addEventListener('click',()=>{
  const place=current();
  const roster=globalThis.WordvilleSchedule?.occupants(place.id,globalThis.WordvilleVillage?.clockMinute??globalThis.WordvilleSchedule.minuteNow())||[];
- const residentId=place.people[speakerIndex]||globalThis.WordvilleVenueRuntime?.focusedResident||roster[0]||'alex';
+ const residentId=place.id==='home'?homeOwner:place.people[speakerIndex]||globalThis.WordvilleVenueRuntime?.focusedResident||roster[0]||'alex';
  document.dispatchEvent(new CustomEvent('wordville-open-venue-study',{detail:{residentId,placeId:place.id}}));
 });
 for(const [id,label] of filters){
@@ -212,8 +241,7 @@ for(const tab of [ids('wv-map-tab'),ids('wv-places-tab')]){
  });
 }
 document.addEventListener('wordville-art-ready',e=>{if(e.detail?.id===active&&siteView&&!siteView.hidden)draw(current());});
-ids('wv-penny-home-entry')?.addEventListener('click',visitPenny);
 render();
 show('map');
-globalThis.WordvillePlaces={places,filters,show,pick,step,redraw,visitPenny,get active(){return active;},get filter(){return filter;}};
+globalThis.WordvillePlaces={places,filters,show,pick,step,redraw,visitHome,get homeOwner(){return active==='home'?homeOwner:null;},get active(){return active;},get filter(){return filter;}};
 })();

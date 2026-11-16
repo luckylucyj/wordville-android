@@ -5,7 +5,8 @@ import android.content.ActivityNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Build;
-import android.os.SystemClock;
+import android.os.Handler;
+import android.os.Looper;
 import android.graphics.Color;
 import android.view.WindowInsets;
 import android.view.ViewGroup;
@@ -39,10 +40,14 @@ public class MainActivity extends Activity {
  private WebView web;
  private FrameLayout root;
  private ValueCallback<Uri[]> chooser;
- private long previousRendererRecovery=0L;
- private boolean pageReady=false;
- private int pageLoadGeneration=0;
- private int recoveryReloads=0;
+ private static final long STARTUP_TIMEOUT_MS=20000;
+ private static final long RESUME_TIMEOUT_MS=5000;
+ private final Handler mainHandler=new Handler(Looper.getMainLooper());
+ private boolean foreground;
+ private boolean pageReady;
+ private boolean recoveryAttempted;
+ private long screenCheckId;
+ private Runnable screenTimeout;
  private LinearLayout recoveryPanel=null;
  // Native backup is independent of WebView's localStorage and survives WebView
  // renderer recreation, app process restarts, and compatible APK upgrades.
@@ -181,7 +186,6 @@ public class MainActivity extends Activity {
  }
 
  private void createWebView(){
-  pageLoadGeneration++;
   pageReady=false;
   web=new WebView(this);
   final WebView view=web;
@@ -219,35 +223,16 @@ public class MainActivity extends Activity {
     }
     return true;
    }
-   @Override public void onPageFinished(WebView w,String url){
-    super.onPageFinished(w,url);
-    if(w!=web||url==null||!url.startsWith(HOME))return;
-    pageReady=true;
-    if(!isFinishing()&&!isDestroyed()){
-     notifyJsResume();
-     scheduleWebViewHealthCheck(2500);
-    }
+   @Override public void onPageStarted(WebView w,String url,android.graphics.Bitmap favicon){
+    if(w==web)pageReady=false;
    }
-   @Override public void onReceivedError(WebView w,WebResourceRequest req,WebResourceError error){
-    super.onReceivedError(w,req,error);
-    if(req.isForMainFrame()&&w==web)showRecovery("마을 화면을 읽지 못했습니다.");
+   @Override public void onPageFinished(WebView w,String url){
+    if(w!=web||!HOME.equals(url))return;
+    pageReady=true;
+    if(foreground&&screenTimeout==null)watchScreen(STARTUP_TIMEOUT_MS);
    }
    @Override public boolean onRenderProcessGone(WebView w,RenderProcessGoneDetail detail){
-    // Android may kill a background WebView renderer without killing the Activity.
-    // The old WebView is unusable and MUST be removed/destroyed before re-creating it.
-    if(w!=web)return true;
-    if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
-    root.removeView(w);
-    w.destroy();
-    web=null;
-    pageReady=false;
-    long now=SystemClock.elapsedRealtime();
-    if(now-previousRendererRecovery<8000){
-     showRecovery("화면 처리기가 반복 종료되었습니다.");
-     return true;
-    }
-    previousRendererRecovery=now;
-    createWebView();
+    if(w==web)recoverScreen("화면 처리기가 반복 종료되었습니다.");
     return true;
    }
   });
@@ -264,48 +249,79 @@ public class MainActivity extends Activity {
    }
   });
   view.loadUrl(HOME);
-  // A missing document or a failed deferred script can leave a beige WebView
-  // without firing onRenderProcessGone. Check that the navigation actually mounted.
-  scheduleWebViewHealthCheck(8500);
+  if(foreground)watchScreen(STARTUP_TIMEOUT_MS);
  }
 
- private void scheduleWebViewHealthCheck(long delayMs){
-  final WebView expected=web;
-  final int generation=pageLoadGeneration;
-  if(expected==null)return;
-  expected.postDelayed(()->{
-   if(expected!=web||generation!=pageLoadGeneration||isFinishing()||isDestroyed())return;
-   if(!pageReady){handleUnresponsiveWebView(expected);return;}
-   // No user content is read or uploaded. Only check the static app shell.
-   String probe="(function(){return document.readyState==='complete' && !!document.body && !!document.body.dataset.screen && !!document.getElementById('wv-bottom-dock') && !!window.WordvilleShell;})()";
-   expected.evaluateJavascript(probe,result->{
-    if(expected!=web||generation!=pageLoadGeneration||isFinishing()||isDestroyed())return;
-    if("true".equals(result)){
-     recoveryReloads=0;
-     if(recoveryPanel!=null){root.removeView(recoveryPanel);recoveryPanel=null;}
-    }else handleUnresponsiveWebView(expected);
+ private void watchScreen(long timeoutMs){
+  cancelScreenCheck();
+  WebView expected=web;
+  long checkId=screenCheckId;
+  // The native deadline also runs when JavaScript or the compositor never calls back.
+  screenTimeout=()->{
+   if(isCurrentCheck(expected,checkId))recoverScreen("마을 화면이 정상적으로 열리지 않았습니다.");
+  };
+  mainHandler.postDelayed(screenTimeout,timeoutMs);
+  checkScreen(expected,checkId);
+ }
+
+ private boolean isCurrentCheck(WebView expected,long checkId){
+  return foreground&&expected==web&&checkId==screenCheckId&&!isFinishing()&&!isDestroyed();
+ }
+
+ private void cancelScreenCheck(){
+  screenCheckId++;
+  if(screenTimeout!=null)mainHandler.removeCallbacks(screenTimeout);
+  screenTimeout=null;
+ }
+
+ private void checkScreen(WebView expected,long checkId){
+  if(!isCurrentCheck(expected,checkId))return;
+  if(!pageReady){
+   mainHandler.postDelayed(()->checkScreen(expected,checkId),250);
+   return;
+  }
+  String probe="(function(){document.dispatchEvent(new Event('wordville-app-resume'));"
+    +"var cover=document.getElementById('wv-loading-cover'),dock=document.getElementById('wv-bottom-dock');"
+    +"return !!window.WordvilleShell && !!cover && cover.hidden && !!dock && dock.getBoundingClientRect().height>0;})()";
+  expected.evaluateJavascript(probe,result->{
+   if(!isCurrentCheck(expected,checkId))return;
+   if(!"true".equals(result)){
+    mainHandler.postDelayed(()->checkScreen(expected,checkId),250);
+    return;
+   }
+   expected.postVisualStateCallback(checkId,new WebView.VisualStateCallback(){
+    @Override public void onComplete(long requestId){
+     if(!isCurrentCheck(expected,requestId))return;
+     expected.invalidate();
+     recoveryAttempted=false;
+     cancelScreenCheck();
+    }
    });
-  },delayMs);
- }
-
- private void handleUnresponsiveWebView(WebView expected){
-  if(expected!=web||isFinishing()||isDestroyed())return;
-  if(recoveryReloads<1){
-   recoveryReloads++;
-   pageReady=false;
-   pageLoadGeneration++;
-   expected.reload(); // reload retains localStorage, IndexedDB and study records
-   scheduleWebViewHealthCheck(8500);
-  }else showRecovery("마을 화면이 정상적으로 열리지 않았습니다.");
- }
-
- private void notifyJsResume(){
-  WebView current=web;
-  if(current==null)return;
-  current.post(()->{
-   if(current!=web||!pageReady)return;
-   current.evaluateJavascript("document.dispatchEvent(new Event('wordville-app-resume'));",null);
   });
+ }
+
+ private void closeWebView(){
+  cancelScreenCheck();
+  if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
+  if(web!=null){
+   WebView previous=web;
+   web=null;
+   root.removeView(previous);
+   previous.destroy();
+  }
+  pageReady=false;
+ }
+
+ private void recoverScreen(String message){
+  closeWebView();
+  if(isFinishing()||isDestroyed())return;
+  if(recoveryAttempted){
+   showRecovery(message);
+  }else if(foreground){
+   recoveryAttempted=true;
+   // Recreate the view without clearing the origin's storage or native preferences.
+   createWebView();
+  }
  }
 
  private void showRecovery(String message){
@@ -322,9 +338,8 @@ public class MainActivity extends Activity {
   retry.setOnClickListener(v->{
    root.removeView(panel);
    recoveryPanel=null;
-   if(web!=null){root.removeView(web);web.destroy();web=null;}
-   previousRendererRecovery=0;
-   recoveryReloads=0;
+   closeWebView();
+   recoveryAttempted=false;
    createWebView();
   });
   panel.addView(label);
@@ -336,10 +351,20 @@ public class MainActivity extends Activity {
 
  @Override protected void onResume(){
   super.onResume();
-  if(web!=null){web.onResume();web.resumeTimers();notifyJsResume();scheduleWebViewHealthCheck(3800);}
+  foreground=true;
+  if(recoveryPanel!=null)return;
+  if(web==null){
+   recoveryAttempted=true;
+   createWebView();
+  }else{
+   web.onResume();
+   watchScreen(pageReady?RESUME_TIMEOUT_MS:STARTUP_TIMEOUT_MS);
+  }
  }
  @Override protected void onPause(){
-  if(web!=null){web.onPause();web.pauseTimers();}
+  foreground=false;
+  cancelScreenCheck();
+  if(web!=null)web.onPause();
   super.onPause();
  }
  @Override protected void onActivityResult(int request,int result,Intent data){
@@ -352,8 +377,7 @@ public class MainActivity extends Activity {
  @Override protected void onDestroy(){
   for(Translator translator:wordTranslators.values())translator.close();
   wordTranslators.clear();
-  if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
-  if(web!=null){root.removeView(web);web.destroy();web=null;}
+  closeWebView();
   recoveryPanel=null;
   super.onDestroy();
  }

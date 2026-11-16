@@ -3,6 +3,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.webkit.WebView;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.runner.lifecycle.Stage;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +37,7 @@ public class VillageSmokeTest {
  }
  @Test public void villageAndWordCardRunOnAndroid() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
-  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  Activity activity=launchWordville(inst);
   android.view.ViewGroup content=activity.findViewById(android.R.id.content);
   WebView web=findWebView(content);
   assertNotNull("WebView is present inside the safe-inset container",web);
@@ -132,8 +134,7 @@ public class VillageSmokeTest {
  }
  @Test public void resumesWithoutBrownScreenAndHasLauncherIcon() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
-  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class)
-   .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  Activity activity=launchWordville(inst);
   WebView web=findWebView(activity.findViewById(android.R.id.content));
   assertNotNull("WebView exists after cold start",web);
   assertTrue("Wordville has a custom launcher icon",activity.getPackageManager()
@@ -146,11 +147,9 @@ public class VillageSmokeTest {
    Thread.sleep(180);
   }
   assertTrue("Initial loading screen finishes",ready);
-  // Exercise the same onPause/onResume callbacks used when switching Android apps.
-  inst.runOnMainSync(()->{
-   ((MainActivity)activity).onPause();
-   ((MainActivity)activity).onResume();
-  });
+  assertEquals("true",eval(web,"WordvilleShell.activate('town');window.appSwitchMarker=true"));
+  switchToHomeAndBack(inst,activity);
+  assertEquals("true",eval(web,"window.appSwitchMarker===true"));
   boolean recovered=false;
   for(int i=0;i<50;i++){
    if("true".equals(eval(web,"document.getElementById('wv-loading-cover').hidden&&WordvilleShell.screen==='town'&&document.querySelector('#village-canvas').width>20"))){
@@ -164,10 +163,82 @@ public class VillageSmokeTest {
   inst.runOnMainSync(activity::finish);
  }
 
+ @Test public void replacesBlankScreenAfterReturningFromHome() throws Exception {
+  android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
+  Activity activity=launchWordville(inst);
+  android.view.ViewGroup content=activity.findViewById(android.R.id.content);
+  try{
+   WebView original=findWebView(content);
+   assertNotNull(original);
+   for(int i=0;i<80&&!"true".equals(eval(original,
+     "!!window.WordvilleShell&&document.getElementById('wv-loading-cover').hidden"));i++)Thread.sleep(200);
+   assertEquals("true",eval(original,"(function(){var dock=document.getElementById('wv-bottom-dock');"
+    +"if(!dock)return false;localStorage.setItem('wordville.android-recovery-test','saved');"
+    +"dock.remove();return true;})()"));
+
+   switchToHomeAndBack(inst,activity);
+   WebView replacement=null;
+   for(int i=0;i<80;i++){
+    AtomicReference<WebView> current=new AtomicReference<>();
+    inst.runOnMainSync(()->current.set(findWebView(content)));
+    if(current.get()!=null&&current.get()!=original){replacement=current.get();break;}
+    Thread.sleep(200);
+   }
+   assertNotNull("A blank Wordville screen is replaced after returning",replacement);
+   String restored="!!window.WordvilleShell&&document.getElementById('wv-loading-cover').hidden"
+    +"&&document.getElementById('wv-bottom-dock').getBoundingClientRect().height>0"
+    +"&&localStorage.getItem('wordville.android-recovery-test')==='saved'";
+   for(int i=0;i<60&&!"true".equals(eval(replacement,restored));i++)Thread.sleep(200);
+   assertEquals("Restores settings and a visible screen after replacement","true",eval(replacement,restored));
+   eval(replacement,"localStorage.removeItem('wordville.android-recovery-test')");
+  }finally{
+   inst.runOnMainSync(activity::finish);
+  }
+ }
+
+ private Activity launchWordville(android.app.Instrumentation inst){
+  android.content.Context context=inst.getTargetContext();
+  Intent launch=context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+  assertNotNull("Wordville has a launcher entry",launch);
+  return inst.startActivitySync(launch);
+ }
+
+ private void switchToHomeAndBack(android.app.Instrumentation inst,Activity activity) throws Exception {
+  awaitResumed(inst,activity,true);
+  runShell(inst,"input keyevent KEYCODE_HOME");
+  awaitResumed(inst,activity,false);
+  String result=runShell(inst,"am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER"
+    +" -f 0x30020000 -n "+activity.getComponentName().flattenToString());
+  assertFalse(result,result.contains("Error"));
+  awaitResumed(inst,activity,true);
+ }
+
+ private void awaitResumed(android.app.Instrumentation inst,Activity activity,boolean expected)
+   throws InterruptedException {
+  AtomicReference<Stage> stage=new AtomicReference<>();
+  for(int i=0;i<100;i++){
+   inst.runOnMainSync(()->stage.set(ActivityLifecycleMonitorRegistry.getInstance()
+     .getLifecycleStageOf(activity)));
+   if((stage.get()==Stage.RESUMED)==expected)return;
+   Thread.sleep(150);
+  }
+  fail("Wordville activity expected resumed="+expected+", actual "+stage.get());
+ }
+
+ private String runShell(android.app.Instrumentation inst,String command) throws java.io.IOException {
+  try(java.io.InputStream output=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
+    inst.getUiAutomation().executeShellCommand(command))){
+   java.io.ByteArrayOutputStream result=new java.io.ByteArrayOutputStream();
+   byte[] buffer=new byte[1024];
+   int count;
+   while((count=output.read(buffer))!=-1)result.write(buffer,0,count);
+   return result.toString(java.nio.charset.StandardCharsets.UTF_8.name());
+  }
+ }
+
  @Test public void wordTabRestoresDayThirtyAfterWebViewReload() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
-  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class)
-   .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  Activity activity=launchWordville(inst);
   WebView web=findWebView(activity.findViewById(android.R.id.content));
   assertNotNull("Wordville WebView present",web);
   boolean initialized=false;

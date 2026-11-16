@@ -81,8 +81,7 @@ toolButton.addEventListener('click',()=>{
  toolPanel.hidden=!toolPanel.hidden;
  toolButton.setAttribute('aria-expanded',String(!toolPanel.hidden));
 });
-const oldNav=document.querySelector('nav[aria-label="학습 메뉴"]');
-oldNav?.classList.add('wv-legacy-nav');
+const oldNav=get('wv-learning-nav');
 const account=document.createElement('section');
 account.id='wv-account-view';account.hidden=true;account.className='wv-account-screen';
 const accHeading=document.createElement('div');accHeading.innerHTML='<h2>계정과 기록</h2><p>기존 학습 기록과 저장 이미지를 안전하게 관리합니다.</p>';
@@ -152,7 +151,7 @@ function activate(screen){
    map.hidden=true;places.hidden=true;residents.hidden=false;residents.dataset.mode='portraits';
    if(oldDialogue)oldDialogue.hidden=true;
  }
- if(['town','places','residents'].includes(screen)){
+ if(screen==='town'||screen==='places'){
    try{globalThis.WordvillePlaces?.show(screen==='places'?'places':'map');}
    catch(error){console.error('Wordville screen transition failed',screen,error);}
  }
@@ -180,6 +179,8 @@ function activate(screen){
   logo.src='favicon.svg';logo.alt='';logo.className='wv-logo';
   brand.replaceChildren(logo,document.createTextNode('WORDVILLE'));
  }
+ main.scrollTop=0;
+ if(screen==='places')village.scrollTop=0;
  window.scrollTo({top:0,behavior:'instant'});
  if(screen==='town'){
    requestAnimationFrame(resizeVillage);
