@@ -270,6 +270,16 @@ const assert = require('node:assert/strict');
    await dock.locator('[data-screen="more"]').click();
    await narrow.locator('#wv-more-panel [data-more="lab"]').click();
    assert.equal(await narrow.locator('#combine-form textarea').inputValue(),'I can practice English in Wordville.');
+   await narrow.setViewportSize({width:320,height:568});
+   await dock.locator('[data-screen="places"]').click();
+   const buttonsFit=await narrow.locator('#wv-place-rail').evaluate(rail=>{
+    const bounds=rail.getBoundingClientRect();
+    return ['home','pool'].every(id=>{
+     const chip=rail.querySelector('[data-place="'+id+'"]').getBoundingClientRect();
+     return chip.left>=bounds.left&&chip.right<=bounds.right;
+    });
+   });
+   assert.equal(buttonsFit,true,'Homes and Swimming pool must fit side by side at 320px');
   }finally{await narrow.close();}
   // English locale: venue names and descriptions are localized, Korean-only
   // subtitles are suppressed, and changing screens preserves locale.

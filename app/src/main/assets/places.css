@@ -64,3 +64,9 @@
 #wv-home-options button{min-width:0;padding:8px;background:#fff6df;border:2px solid #a98960;color:#543a26;overflow-wrap:anywhere}
 #wv-home-options button[aria-current="true"]{background:#527d5a;border-color:#375941;color:#fff5d7}
 #wv-home-close{justify-self:end}
+
+@media(max-width:360px){
+ #wv-place-rail:has(> [data-place="home"] + [data-place="pool"]) > :is([data-place="home"],[data-place="pool"]){
+  min-width:0;max-width:calc((100% - 12px) / 2);padding-inline:7px;white-space:normal;overflow-wrap:anywhere
+ }
+}
