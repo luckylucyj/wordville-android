@@ -28,7 +28,7 @@ test('English menus translate actual venues and descriptions without leaking Kor
  const {i18n}=load('en');
  assert.equal(i18n.translate('마을'),'Town');
  assert.equal(i18n.translate('장소'),'Places');
- assert.equal(i18n.translate('주민의 집'),"Resident's home");
+ assert.equal(i18n.translate('주민의 집'),"Homes");
  assert.equal(i18n.translate('동물을 돌보고 목장 생활을 체험해요.'),
               'Care for animals and experience ranch life.');
  assert.equal(i18n.translate('책상과 책장, 침대와 소파가 있는 페니의 개인 생활 공간입니다. 가구를 누르면 주변으로 이동합니다.'),
