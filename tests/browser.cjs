@@ -27,9 +27,11 @@ const assert = require('node:assert/strict');
     assert.ok(meanings.length>0,'Day 30 must render vocabulary cards');
     assert.ok(meanings.every(s=>!/[가-힣]/u.test(s)),language+' must not expose Korean source meanings: '+JSON.stringify(meanings.slice(0,7)));
     for(const [word,expected] of [['insurance',insurance],['nutrition',nutrition]]){
-      const card=page.locator('#words .word').filter({has:page.locator('strong', {hasText:word})}).first();
-      assert.equal((await card.locator('span').innerText()).trim(),expected,language+' '+word+' meaning');
+      await page.locator('#search').fill(word);
+      await page.waitForFunction(term=>document.querySelector('#words .word strong')?.textContent?.toLowerCase()===term,word);
+      assert.equal((await page.locator('#words .word').first().locator('span').innerText()).trim(),expected,language+' '+word+' meaning');
     }
+    await page.locator('#search').fill('');
     const phrase=await page.locator('#search').getAttribute('placeholder');
     assert.doesNotMatch(phrase,/[가-힣]/u,'search placeholder should also be localized');
   }
