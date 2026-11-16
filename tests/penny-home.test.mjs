@@ -31,22 +31,6 @@ test('Penny home exit and all 10 furniture edges stay reachable without clipping
  }
  assert.equal(spec.tile('pennyHome',m.door.x,m.door.y),'exit');
 });
-test('Penny shortcut and private collision map are wired into the existing venue',()=>{
- const p=readFileSync(new URL('../app/src/main/assets/places.js',import.meta.url),'utf8');
- const r=readFileSync(new URL('../app/src/main/assets/venue-runtime.js',import.meta.url),'utf8');
- const page=readFileSync(new URL('../app/src/main/assets/index.html',import.meta.url),'utf8');
- assert.ok(page.includes('src="penny-home.js"'));
- assert.ok(page.includes('id="wv-penny-home-entry"'),'Penny entry must be visible on the village screen');
- assert.ok(p.includes("ids('wv-penny-home-entry')?.addEventListener('click',visitPenny)"));
- assert.ok(p.includes("globalThis.WordvilleShell.activate('places')"));
- assert.ok(p.includes('visitPenny,visitHome'));
- assert.ok(p.includes("'wv-place-chip wv-penny-home-shortcut',visitPenny"));
-
- assert.ok(p.includes("return visitHome('penny')"));
- assert.ok(r.includes('WordvilleHomes.mapId(places.homeOwner)'));
- assert.ok(r.includes('places.redraw?.()'));
-});
-
 test('Penny original assets are all unique 896px transparent PNGs, not upscaled lossy room art',()=>{
  const unique=new Set();
  for(const f of home.furniture){
