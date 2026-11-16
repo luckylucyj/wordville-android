@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
  private WebView web;
  private FrameLayout root;
  private ValueCallback<Uri[]> chooser;
- private static final long STARTUP_TIMEOUT_MS=10000;
+ private static final long STARTUP_TIMEOUT_MS=20000;
  private static final long RESUME_TIMEOUT_MS=5000;
  private final Handler mainHandler=new Handler(Looper.getMainLooper());
  private boolean foreground;
