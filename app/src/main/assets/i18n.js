@@ -278,7 +278,7 @@ const lines=[
 ["공방","Workshop","工坊","工房"],
 ["공원","Park","公园","公園"],
 ["집","Home","家","家"],
-["주민의 집","Resident's home","居民之家","住民の家"],
+["주민의 집","Homes","居民之家","住民の家"],
 ["방문할 집","Choose a home","选择要访问的家","訪問する家を選択"],
 ["독서와 과외의 방","Reading and tutoring room","阅读与辅导室","読書と勉強の部屋"],
 ["장소 그림을 표시하지 못했습니다. 다른 장소를 선택하거나 다시 실행해 주세요.","Could not display venue artwork. Choose another place or reopen the app.","无法显示地点画面，请选择其他地点或重新打开应用。","場所の画像を表示できません。別の場所を選ぶか、アプリを再起動してください。"],
