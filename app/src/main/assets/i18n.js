@@ -25,6 +25,7 @@ const lines=[
 ["영어·한국어","English/Korean","英语/韩语","英語/韓国語"],
 ["예약","reservation","预约","予約"],
 ["피로","fatigue","疲劳","疲労"],
+["reservation 또는 예약","reservation or booking","reservation 或 预约","reservation または 予約"],
 ["건강 진단","health checkup","健康检查","健康診断"],
 ["단어와 연결할 이미지를 직접 저장해 보세요.","Save an image to remember this word.","保存有助于记忆此词的图片。","単語の記憶に役立つ画像を保存しましょう。"],
 ["기존 예시","Existing example","现有示例","既存の例"],
