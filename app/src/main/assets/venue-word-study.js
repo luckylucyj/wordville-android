@@ -39,7 +39,12 @@ function populateWordOptions(items=sourceList()){
  const from=(Number(page.value)||0)*PAGE,old=select.value;
  select.replaceChildren();
  const entries=items.slice(from,from+PAGE);
- for(const w of entries)option(select,w.id,w.word+' · '+w.meaning);
+ for(const w of entries){
+  const item=document.createElement('option');item.value=String(w.id);
+  if(root.WordvilleVocabularyLocale)root.WordvilleVocabularyLocale.bindOption(item,w.word,w.meaning);
+  else item.textContent=w.word;
+  select.add(item);
+ }
  if(entries.some(w=>w.id===old))select.value=old;
  status.textContent='선택 가능한 단어 '+items.length+'개 · 현재 페이지 '+entries.length+'개';
  $('wv-vstudy-start').disabled=$('wv-vstudy-card').disabled=entries.length===0;
@@ -77,7 +82,7 @@ function renderPractice(){
  const person=people.find(p=>p.id===resident.value);
  const [a,b='']=item.english.split(/\nB:\s*/);
  $('wv-vstudy-title').textContent=(person?.name||'주민')+'과 '+w.word+' 연습';
- $('wv-vstudy-progress').textContent=(index+1)+' / '+examples.length+' · '+w.word+' · '+w.meaning;
+ $('wv-vstudy-progress').textContent=(index+1)+' / '+examples.length+' · '+w.word+' · '+(root.WordvilleVocabularyLocale?.display(w.meaning)||w.word);
  $('wv-vstudy-prompt').textContent=(person?.name||'주민')+': '+a.replace(/^A:\s*/,'');
  $('wv-vstudy-example-text').textContent='예시 답변: '+b;
  $('wv-vstudy-example-text').hidden=true;
