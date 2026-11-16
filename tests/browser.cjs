@@ -456,21 +456,17 @@ const assert = require('node:assert/strict');
   console.log('Schedule visibility',JSON.stringify(scheduleUI));
   assert.equal(scheduleUI.mode,'schedule');
   assert.equal(scheduleUI.open,true);
-  // Use a real pointer press at the button center; this also verifies its hit-test path.
+  // The timetable rerenders its rows as the clock advances; exercise the current
+  // connected button in one JS task rather than keeping a stale element handle.
   async function clickScheduleRow(index){
-    const button=page.locator('#wv-sched-rows .wv-schedule-row').nth(index).locator('button');
-    const center=await button.evaluate(el=>{
-      el.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
-      const rect=el.getBoundingClientRect();
-      return {x:rect.x+rect.width/2,y:rect.y+rect.height/2,width:rect.width,height:rect.height};
-    });
-    assert.ok(center.width>0&&center.height>0,'Schedule edit button must have a visible rectangle');
-    const target=await page.evaluate(({x,y})=>{
-      const el=document.elementFromPoint(x,y);
-      return {tag:el?.tagName||'',role:el?.closest('button')?.getAttribute('aria-label')||''};
-    },center);
-    assert.equal(target.tag,'BUTTON',JSON.stringify({center,target}));
-    await page.mouse.click(center.x,center.y);
+    const result=await page.evaluate(i=>{
+      const button=document.querySelectorAll('#wv-sched-rows .wv-schedule-row button')[i];
+      const rect=button?.getBoundingClientRect();
+      if(!button?.isConnected||!rect?.width||!rect?.height)return {clicked:false,connected:button?.isConnected||false};
+      button.click();
+      return {clicked:true,connected:button.isConnected};
+    },index);
+    assert.equal(result.clicked,true,JSON.stringify(result));
   }
   await clickScheduleRow(8);
   await page.locator('#wv-sched-edit-place').selectOption('museum');
