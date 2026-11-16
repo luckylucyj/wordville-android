@@ -21,13 +21,27 @@ const text={
 };
 const nativeAvailable=()=>typeof globalThis.WordvilleTranslate?.translateBatch==='function';
 const placeholders={en:{pending:'Translating meaning…',unavailable:'English meaning unavailable'},'zh-CN':{pending:'正在翻译词义…',unavailable:'暂无法显示释义'},ja:{pending:'意味を翻訳中…',unavailable:'意味を表示できません'}};
-const containsKorean=value=>/[\uac00-\ud7a3]/u.test(String(value));
+const containsKorean=value=>/[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3]/u.test(String(value));
+// Immediate verified glosses for the first visible Day 30 cards. All other
+// meanings continue through the native, cached KO→target translation pipeline.
+const offlineGlosses={
+ 'zh-CN':{'보험':'保险','영양':'营养','영양분이 많은':'营养丰富的','영양사':'营养师'},
+ ja:{'보험':'保険','영양':'栄養','영양분이 많은':'栄養価が高い','영양사':'栄養士'},
+ en:{'보험':'insurance','영양':'nutrition','영양분이 많은':'nutritious','영양사':'nutritionist'}
+};
+function localizedGloss(original,locale){
+ const cached=translations[locale]?.[original];
+ if(typeof cached==='string'&&cached.trim()&&!containsKorean(cached))return cached.trim();
+ return offlineGlosses[locale]?.[original]||null;
+}
 function current(){return I?.language||'ko';}
 function display(source,locale=current()){
  const original=String(source||'');
- if(locale==='ko'||!original.trim())return original;
- const translated=translations[locale]?.[original];
- return translated&&typeof translated==='string'?translated:original;
+ if(locale==='ko'||!original.trim()||!containsKorean(original))return original;
+ const translated=localizedGloss(original,locale);
+ if(translated)return translated;
+ if(locale===current())enqueue(original,locale);
+ return placeholders[locale]?.pending||'Meaning unavailable';
 }
 function bindText(el,original,word=''){
  if(!el)return;
@@ -50,21 +64,24 @@ function applyElement(el){
  const locale=current(),original=el.dataset.wvOriginalGloss||'';
  const option=el.dataset.wvGlossFormat==='option';
  const word=el.dataset.wvOriginalWord||'';
- if(locale==='ko'||!original.trim()){
-  el.textContent=option?(word+(original?' · '+original:'')):original;
+ if(locale==='ko'||!original.trim()||!containsKorean(original)){
+  const next=option?(word+(original?' · '+original:'')):original;
+  if(el.textContent!==next)el.textContent=next;
   el.removeAttribute('aria-busy');
   return;
  }
- const mapped=translations[locale]?.[original];
- const available=typeof mapped==='string'&&!!mapped.trim()&&!containsKorean(mapped);
+ const mapped=localizedGloss(original,locale);
+ const available=!!mapped;
  if(available){
-  el.textContent=option?(word+' · '+mapped):mapped;
+  const next=option?(word+' · '+mapped):mapped;
+  if(el.textContent!==next)el.textContent=next;
   el.removeAttribute('aria-busy');
  } else {
   // Never display untranslated Korean definitions in a non-Korean UI.
   // Keep the word selectable and preserve the original definition in storage.
   const canTranslate=nativeAvailable()&&!failed.has(locale);
-  el.textContent=option?word:canTranslate?placeholders[locale].pending:placeholders[locale].unavailable;
+  const next=option?word:canTranslate?placeholders[locale].pending:placeholders[locale].unavailable;
+  if(el.textContent!==next)el.textContent=next;
   if(canTranslate){
    el.setAttribute('aria-busy','true');
    // A selector can have thousands of options: translate only chosen words,
@@ -73,13 +90,26 @@ function applyElement(el){
   }else el.removeAttribute('aria-busy');
  }
 }
+function bindMissingCardGlosses(){
+ // Guard against any word card created by another renderer without binding.
+ // A missing binding must never leave source Korean in Chinese/Japanese UI.
+ const root=document.getElementById('words');
+ if(!root)return;
+ root.querySelectorAll('.word span').forEach(el=>{
+  if(!Object.hasOwn(el.dataset,'wvOriginalGloss')){
+   const word=el.closest('.word')?.querySelector('strong')?.textContent||'';
+   bindText(el,el.textContent||'',word);
+  }
+ });
+}
 function refreshVisible(){
  if(typeof document==='undefined')return;
+ bindMissingCardGlosses();
  document.querySelectorAll('[data-wv-original-gloss]').forEach(applyElement);
  renderStatus();
 }
 function enqueue(source,locale){
- if(!nativeAvailable()||failed.has(locale)||translations[locale]?.[source])return;
+ if(!nativeAvailable()||failed.has(locale)||localizedGloss(source,locale)||!containsKorean(source))return;
  const key=locale+'\u0000'+source;
  if(queued.has(key))return;
  queued.add(key);queue.push({source,locale});
@@ -93,7 +123,7 @@ function processQueue(){
  const group=[];
  for(let i=0;i<queue.length&&group.length<16;){
   const item=queue[i];
-  if(item.locale!==lang||translations[lang]?.[item.source]){
+  if(item.locale!==lang||localizedGloss(item.source,lang)){
    queued.delete(item.locale+'\u0000'+item.source);
    queue.splice(i,1);
    continue;
@@ -172,7 +202,13 @@ function addStatus(){
  renderStatus();
 }
 if(typeof document!=='undefined'){
- const init=()=>{addStatus();refreshVisible();};
+ const init=()=>{
+  addStatus();refreshVisible();
+  const host=document.getElementById('words');
+  if(host&&typeof MutationObserver!=='undefined'){
+   new MutationObserver(()=>bindMissingCardGlosses()).observe(host,{childList:true,subtree:true});
+  }
+ };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
  else init();
  document.addEventListener('wordville-language-changed',()=>{
