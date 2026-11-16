@@ -222,6 +222,55 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.wv-residents-screen .wv-portrait')).imageRendering),'auto');
   await page.screenshot({path:'wordville-portraits-browser.png'});
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+  // A saved English locale translates labels before the shell initializes.
+  // The hidden learning controls must not consume room in the portrait gallery.
+  const narrow=await browser.newPage({viewport:{width:360,height:740},isMobile:true,hasTouch:true});
+  try{
+   await narrow.addInitScript(()=>localStorage.setItem('wordville.ui-language.v1','en'));
+   await narrow.goto('http://127.0.0.1:4173');
+   await narrow.locator('#wv-loading-cover').waitFor({state:'hidden'});
+   const dock=narrow.locator('#wv-bottom-dock');
+   const firstRow=narrow.locator('#resident-list :is([data-person="alex"],[data-person="elliott"]) .wv-portrait');
+   const checkFirstRow=async()=>{
+    await firstRow.first().waitFor({state:'visible'});
+    const bounds=await firstRow.evaluateAll(tiles=>{
+     const viewport=document.querySelector('main').getBoundingClientRect();
+     return tiles.map(tile=>{
+      const r=tile.getBoundingClientRect();
+      return r.top>=viewport.top&&r.bottom<=viewport.bottom&&r.left>=viewport.left&&r.right<=viewport.right;
+     });
+    });
+    assert.deepEqual(bounds,[true,true],'Alex and Elliott must be fully visible after opening Residents');
+    const layout=await narrow.evaluate(()=>{
+     const main=document.querySelector('main'),gallery=document.querySelector('.village-section');
+     return [main.scrollTop,getComputedStyle(gallery).overflowY];
+    });
+    assert.deepEqual(layout,[0,'visible'],'the gallery must use a single viewport scroller');
+    assert.equal(await narrow.locator('#wv-learning-nav').isHidden(),true);
+   };
+   await dock.locator('[data-screen="more"]').click();
+   await narrow.locator('#wv-more-panel [data-more="lab"]').click();
+   assert.equal(await narrow.locator('#combine-form textarea').isVisible(),true);
+   await narrow.locator('#combine-form textarea').fill('I can practice English in Wordville.');
+   await narrow.locator('#combine-form .primary').scrollIntoViewIfNeeded();
+   await dock.locator('[data-screen="residents"]').click();
+   await checkFirstRow();
+   const finalPortrait=narrow.locator('#resident-list [data-person="emily"] .wv-portrait');
+   await finalPortrait.scrollIntoViewIfNeeded();
+   assert.equal(await finalPortrait.evaluate(tile=>document.elementFromPoint(
+    tile.getBoundingClientRect().left+4,tile.getBoundingClientRect().bottom-4
+   )===tile),true,'the last portrait must be reachable above the dock');
+   await dock.locator('[data-screen="town"]').click();
+   await dock.locator('[data-screen="residents"]').click();
+   await checkFirstRow();
+   await narrow.evaluate(()=>WordvilleVillage.select('alex'));
+   await narrow.locator('#resident-study').click();
+   await narrow.locator('#wv-rstudy-close').click();
+   await checkFirstRow();
+   await dock.locator('[data-screen="more"]').click();
+   await narrow.locator('#wv-more-panel [data-more="lab"]').click();
+   assert.equal(await narrow.locator('#combine-form textarea').inputValue(),'I can practice English in Wordville.');
+  }finally{await narrow.close();}
   // English locale: venue names and descriptions are localized, Korean-only
   // subtitles are suppressed, and changing screens preserves locale.
   await page.evaluate(()=>WordvilleI18n.setLanguage('en'));
