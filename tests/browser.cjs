@@ -14,6 +14,29 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleWorldArt.landmarks.length),17);
   await page.waitForFunction(()=>document.getElementById('wv-loading-cover')?.hidden===true);
   assert.equal(await page.locator('#wv-loading-cover').isVisible(),false);
+  // Regression: changing to Chinese/Japanese must replace actual vocabulary
+  // meanings, not just the navigation labels. The browser deliberately has no
+  // Android translator, so unknown glosses must use a localized unavailable
+  // message rather than silently reverting to the Korean source.
+  const originalDay=await page.locator('#day-filter').inputValue();
+  for(const [language,insurance,nutrition] of [['zh-CN','保险','营养'],['ja','保険','栄養']]){
+    await page.evaluate(lang=>WordvilleI18n.setLanguage(lang),language);
+    await page.locator('#wv-bottom-dock [data-screen="learn"]').click();
+    await page.locator('#day-filter').selectOption('30');
+    const meanings=await page.locator('#words .word span').allTextContents();
+    assert.ok(meanings.length>0,'Day 30 must render vocabulary cards');
+    assert.ok(meanings.every(s=>!/[가-힣]/u.test(s)),language+' must not expose Korean source meanings: '+JSON.stringify(meanings.slice(0,7)));
+    for(const [word,expected] of [['insurance',insurance],['nutrition',nutrition]]){
+      const card=page.locator('#words .word').filter({has:page.locator('strong', {hasText:word})}).first();
+      assert.equal((await card.locator('span').innerText()).trim(),expected,language+' '+word+' meaning');
+    }
+    const phrase=await page.locator('#search').getAttribute('placeholder');
+    assert.doesNotMatch(phrase,/[가-힣]/u,'search placeholder should also be localized');
+  }
+  await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
+  await page.locator('#day-filter').selectOption(originalDay);
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+
   // Android resume and icon smoke checks. Use a synthetic app resume event
   // to verify state is not reset when WebView is only suspended.
   assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),'favicon.svg');
