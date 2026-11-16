@@ -40,8 +40,9 @@ function display(source,locale=current()){
  if(locale==='ko'||!original.trim()||!containsKorean(original))return original;
  const translated=localizedGloss(original,locale);
  if(translated)return translated;
- if(locale===current())enqueue(original,locale);
- return placeholders[locale]?.pending||'Meaning unavailable';
+ const canTranslate=locale===current()&&nativeAvailable()&&!failed.has(locale);
+ if(canTranslate)enqueue(original,locale);
+ return canTranslate?(placeholders[locale]?.pending||'Translating meaning…'):(placeholders[locale]?.unavailable||'Meaning unavailable');
 }
 function bindText(el,original,word=''){
  if(!el)return;
