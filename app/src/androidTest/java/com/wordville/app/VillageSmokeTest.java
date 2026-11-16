@@ -146,11 +146,9 @@ public class VillageSmokeTest {
    Thread.sleep(180);
   }
   assertTrue("Initial loading screen finishes",ready);
-  // Exercise the same onPause/onResume callbacks used when switching Android apps.
-  inst.runOnMainSync(()->{
-   ((MainActivity)activity).onPause();
-   ((MainActivity)activity).onResume();
-  });
+  assertEquals("true",eval(web,"WordvilleShell.activate('town');window.appSwitchMarker=true"));
+  switchToHomeAndBack(inst,activity);
+  assertEquals("true",eval(web,"window.appSwitchMarker===true"));
   boolean recovered=false;
   for(int i=0;i<50;i++){
    if("true".equals(eval(web,"document.getElementById('wv-loading-cover').hidden&&WordvilleShell.screen==='town'&&document.querySelector('#village-canvas').width>20"))){
@@ -162,6 +160,67 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"document.querySelector('.brand .wv-logo').getAttribute('src')==='favicon.svg'"));
   assertEquals("true",eval(web,"WordvilleShell.activate('places');WordvilleShell.screen==='places'&&document.getElementById('wv-places-view').hidden===false"));
   inst.runOnMainSync(activity::finish);
+ }
+
+ @Test public void replacesBlankScreenAfterReturningFromHome() throws Exception {
+  android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
+  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(),MainActivity.class)
+   .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  android.view.ViewGroup content=activity.findViewById(android.R.id.content);
+  try{
+   WebView original=findWebView(content);
+   assertNotNull(original);
+   for(int i=0;i<80&&!"true".equals(eval(original,
+     "!!window.WordvilleShell&&document.getElementById('wv-loading-cover').hidden"));i++)Thread.sleep(200);
+   assertEquals("true",eval(original,"(function(){var dock=document.getElementById('wv-bottom-dock');"
+    +"if(!dock)return false;localStorage.setItem('wordville.android-recovery-test','saved');"
+    +"dock.remove();return true;})()"));
+
+   switchToHomeAndBack(inst,activity);
+   WebView replacement=null;
+   for(int i=0;i<80;i++){
+    AtomicReference<WebView> current=new AtomicReference<>();
+    inst.runOnMainSync(()->current.set(findWebView(content)));
+    if(current.get()!=null&&current.get()!=original){replacement=current.get();break;}
+    Thread.sleep(200);
+   }
+   assertNotNull("A blank Wordville screen is replaced after returning",replacement);
+   String restored="!!window.WordvilleShell&&document.getElementById('wv-loading-cover').hidden"
+    +"&&document.getElementById('wv-bottom-dock').getBoundingClientRect().height>0"
+    +"&&localStorage.getItem('wordville.android-recovery-test')==='saved'";
+   for(int i=0;i<60&&!"true".equals(eval(replacement,restored));i++)Thread.sleep(200);
+   assertEquals("Restores settings and a visible screen after replacement","true",eval(replacement,restored));
+   eval(replacement,"localStorage.removeItem('wordville.android-recovery-test')");
+  }finally{
+   inst.runOnMainSync(activity::finish);
+  }
+ }
+
+ private void switchToHomeAndBack(android.app.Instrumentation inst,Activity activity) throws Exception {
+  runShell(inst,"input keyevent KEYCODE_HOME");
+  awaitWindowFocus(inst,activity,false);
+  runShell(inst,"am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER"
+    +" -f 0x10200000 -n "+activity.getComponentName().flattenToString());
+  awaitWindowFocus(inst,activity,true);
+ }
+
+ private void awaitWindowFocus(android.app.Instrumentation inst,Activity activity,boolean expected)
+   throws InterruptedException {
+  for(int i=0;i<80;i++){
+   java.util.concurrent.atomic.AtomicBoolean focused=new java.util.concurrent.atomic.AtomicBoolean();
+   inst.runOnMainSync(()->focused.set(activity.hasWindowFocus()));
+   if(focused.get()==expected)return;
+   Thread.sleep(150);
+  }
+  fail("Wordville window focus did not become "+expected);
+ }
+
+ private void runShell(android.app.Instrumentation inst,String command) throws java.io.IOException {
+  try(java.io.InputStream output=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
+    inst.getUiAutomation().executeShellCommand(command))){
+   byte[] buffer=new byte[1024];
+   while(output.read(buffer)!=-1){}
+  }
  }
 
  @Test public void wordTabRestoresDayThirtyAfterWebViewReload() throws Exception {
