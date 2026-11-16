@@ -450,7 +450,7 @@ const assert = require('node:assert/strict');
   await scheduleDetails.evaluate(el=>el.open=true);
   await page.waitForFunction(()=>document.querySelectorAll('#wv-sched-rows .wv-schedule-row').length===24);
   await page.locator('#wv-sched-person').selectOption('alex');
-  const scheduleUI=await page.evaluate(()=>{const b=document.querySelector('#wv-sched-rows .wv-schedule-row:nth-child(9) button');const d=document.querySelector('#wv-resident-schedule');const parents=[];for(let el=b;el&&parents.length<10;el=el.parentElement)parents.push({tag:el.tagName,id:el.id,mode:el.dataset.mode||'',display:getComputedStyle(el).display,hidden:el.hidden});return {mode:document.querySelector('#wv-residents-view')?.dataset.mode,open:d.open,parents};});
+  const scheduleUI=await page.evaluate(()=>{const b=document.querySelector('#wv-sched-rows .wv-schedule-row:nth-child(9) button');const d=document.querySelector('#wv-resident-schedule');const parents=[];for(let el=b;el&&parents.length<10;el=el.parentElement){const rect=el.getBoundingClientRect(),cs=getComputedStyle(el);parents.push({tag:el.tagName,id:el.id,mode:el.dataset.mode||'',display:cs.display,visibility:cs.visibility,overflow:cs.overflowY,hidden:el.hidden,rect:{x:rect.x,y:rect.y,w:rect.width,h:rect.height},scrollTop:el.scrollTop,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight});}return {mode:document.querySelector('#wv-residents-view')?.dataset.mode,open:d.open,parents};});
   console.log('Schedule visibility',JSON.stringify(scheduleUI));
   assert.equal(scheduleUI.mode,'schedule');
   assert.equal(scheduleUI.open,true);
