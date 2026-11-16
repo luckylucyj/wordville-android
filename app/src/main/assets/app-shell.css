@@ -181,3 +181,10 @@ body[data-screen="residents"] #wv-residents-view[data-mode="dialogue"] > #villag
 
 /* Show expanded schedules in the dedicated More screen even when the portrait gallery is otherwise simplified. */
 body[data-screen="residents"] #wv-residents-view[data-mode="schedule"] > #wv-resident-schedule{display:block!important;visibility:visible!important}
+
+/* Avoid nested 325px scrolling for the 24-hour schedule: the Residents panel owns scrolling. */
+body[data-screen="residents"] #wv-residents-view[data-mode="schedule"] #wv-sched-rows{
+ max-height:none!important;overflow-y:visible!important;overscroll-behavior:auto!important;
+}
+body[data-screen="residents"] #wv-residents-view[data-mode="schedule"]{min-height:100%;height:auto;overflow:visible}
+body[data-screen="residents"] .village-section{overflow-y:auto!important;scrollbar-gutter:stable}
