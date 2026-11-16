@@ -24,6 +24,15 @@ test('12 sprites have 8 directions x 8 separate 48x48 frames',()=>{
   assert.equal(coords.size,64);
  }
 });
+test('v2 hand-drawn resident atlases are the live assets while originals are preserved',()=>{
+ for(const id of IDS){
+  assert.equal(W.walk48Sheets[id].src,'walk48-v2/'+id+'.png');
+  const file=readFileSync(new URL('../app/src/main/assets/walk48-v2/'+id+'.png',import.meta.url));
+  assert.equal(file.subarray(1,4).toString(),'PNG');
+  assert.equal(file.readUInt32BE(16),384);
+  assert.equal(file.readUInt32BE(20),384);
+ }
+});
 test('two four-phase support-foot halves: contact, down, passing, up, 8FPS',()=>{
  assert.deepEqual(W.walk48Phases,['contact-left','down-left','passing-left','up-left','contact-right','down-right','passing-right','up-right']);
  for(let f=0;f<30;f++)assert.equal(W.frameFor({},true,f*125),f%8);

@@ -7,7 +7,7 @@ globalThis.Image=class{
  set src(value){
   this._src=value;
   if(value.startsWith('idle48/')){this.naturalWidth=192;this.naturalHeight=384;}
-  if(value.startsWith('walk48/')){this.naturalWidth=384;this.naturalHeight=384;}
+  if(value.startsWith('walk48-v2/')){this.naturalWidth=384;this.naturalHeight=384;}
  }
  get src(){return this._src;}
  addEventListener(){}
@@ -68,6 +68,6 @@ test('scene rendering switches to idle sheet when resident is not moving',()=>{
  assert.deepEqual(draw[0].slice(1,5),[96,4*48,48,48]);
  draw.length=0;
  assert.equal(W.paint(ctx,{id:'alex',direction:'up'},100,150,{walking:true,phase:2,width:48,height:48}),true);
- assert.equal(draw[0][0].src,'walk48/alex.png');
+ assert.equal(draw[0][0].src,'walk48-v2/alex.png');
  assert.deepEqual(draw[0].slice(1,5),[96,4*48,48,48]);
 });

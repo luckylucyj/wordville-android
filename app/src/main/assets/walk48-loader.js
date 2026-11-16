@@ -1,6 +1,8 @@
-/* Wordville 48x48 pre-generated sprite-sheet playback.
- * Asset layout: 8 rows (directions) x 8 distinct frames (contact/down/passing/up per support foot).
- * The sheet is built by scripts/build-walk48.py before packaging the APK.
+/* Wordville 48x48 character walk playback.
+ * Asset layout: 8 rows (directions) x 8 frames (contact/down/passing/up per support foot).
+ * Approved hand-drawn front/side/back cycles live in walk48-v2/. Diagonal
+ * rows currently reuse the matching side-view cycle until separately painted.
+ * The original generated walk48/ sheets remain available for comparison.
  */
 (function(root){'use strict';
 const W=root.WordvilleWalk;if(!W)return;
@@ -13,7 +15,7 @@ const sheets={}, idleSheets={};
 const idlePhases=['neutral','neutral','neutral','neutral'];
 const idleFrameCount=4,idleFrameDurationMs=400;
 for(const id of residentIds){
- const im=new Image();im.decoding='async';im.src='walk48/'+id+'.png';sheets[id]=im;
+ const im=new Image();im.decoding='async';im.src='walk48-v2/'+id+'.png';sheets[id]=im;
  const idle=new Image();idle.decoding='async';idle.src='idle48/'+id+'.png';idleSheets[id]=idle;
 }
 const existingPaint=W.paint;
