@@ -99,10 +99,17 @@
   select.value=String(chosen);
  }
  function wordById(id){return words.find(w=>w.id===id)||null;}
+ function localizedName(id,w){
+  const el=$(id);el.replaceChildren(document.createTextNode(w.word+' · '));
+  const gloss=document.createElement('span');
+  if(globalThis.WordvilleVocabularyLocale)globalThis.WordvilleVocabularyLocale.bindText(gloss,w.meaning,w.word);
+  else gloss.textContent=(globalThis.WordvilleI18n?.language||'ko')==='ko'?w.meaning:w.word;
+  el.append(gloss);
+ }
  function exposeStatus(w,day){
   statusWord=w;
   daysOptions($('wv-status-day'),w,day);
-  $('wv-status-word-name').textContent=w.word+' · '+w.meaning;
+  localizedName('wv-status-word-name',w);
   showStatusSelection();
   $('wv-status-message').textContent=loadingError||'';
   if($('word-dialog').open)$('word-dialog').close();
@@ -142,7 +149,7 @@
   noteWord=w;noteDirty=false;
   daysOptions($('wv-note-day'),w,day);
   $('wv-note-day').dataset.lastDay=$('wv-note-day').value;
-  $('wv-note-word-name').textContent=w.word+' · '+w.meaning;
+  localizedName('wv-note-word-name',w);
   if(statusDialog.open)statusDialog.close();
   if($('word-dialog').open)$('word-dialog').close();
   showNoteValues();
@@ -230,7 +237,7 @@
    const title=makeEl('strong',w.word);
    const tag=makeEl('span',N.dayLabel(entry.day)+' · '+entry.status+' '+N.statusName(entry.status),statusClass(entry.status));
    head.append(title,tag);
-   const brief=(entry.summary||entry.notes||entry.overview||entry.opinion||w.meaning).trim();
+   const brief=(entry.summary||entry.notes||entry.overview||entry.opinion||globalThis.WordvilleVocabularyLocale?.display(w.meaning)||w.word).trim();
    const excerpt=makeEl('p',brief.length>110?brief.slice(0,110)+'…':brief,'wv-note-excerpt');
    const review=makeEl('small','점검 '+entry.checks.filter(Boolean).length+'/5'+(entry.updatedAt?' · '+new Date(entry.updatedAt).toLocaleDateString('ko-KR'):''),'wv-note-archive-sub');
    const actions=makeEl('div',undefined,'wv-note-archive-actions');
