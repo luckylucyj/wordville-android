@@ -178,3 +178,24 @@ body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #
 
 /* Explicit resident selection may reveal dialogue while the default gallery remains portraits-only. */
 body[data-screen="residents"] #wv-residents-view[data-mode="dialogue"] > #village-dialogue:not([hidden]){display:block!important;visibility:visible!important}
+
+/* Show expanded schedules in the dedicated More screen even when the portrait gallery is otherwise simplified. */
+body[data-screen="residents"] #wv-residents-view[data-mode="schedule"] > #wv-resident-schedule{display:block!important;visibility:visible!important}
+
+/* Avoid nested 325px scrolling for the 24-hour schedule: the Residents panel owns scrolling. */
+body[data-screen="residents"] #wv-residents-view[data-mode="schedule"] #wv-sched-rows{
+ max-height:none!important;overflow-y:visible!important;overscroll-behavior:auto!important;
+}
+body[data-screen="residents"] #wv-residents-view[data-mode="schedule"]{min-height:100%;height:auto;overflow:visible}
+body[data-screen="residents"] .village-section{overflow-y:auto!important;scrollbar-gutter:stable}
+
+/* Remove the hidden town/venue siblings from the Residents document flow.
+   They were still occupying ~900px above the resident schedule editor. */
+body[data-screen="residents"] .village-section > :not(#wv-residents-view){display:none!important}
+body[data-screen="residents"] .village-section > #wv-residents-view{margin-top:0!important}
+
+/* Standalone 24-hour schedule editor (More → Resident schedules). */
+body[data-screen="schedule"] > main{overflow-y:auto!important;overflow-x:hidden;scroll-behavior:auto;padding:0 0 24px}
+#wv-schedule-view{width:min(100%,920px);min-height:100%;padding:15px;margin:0 auto;background:#f2e0b8}
+#wv-schedule-view .wv-resident-schedule{margin:0;max-width:100%}
+#wv-schedule-view .wv-schedule-rows{max-height:none;overflow:visible}

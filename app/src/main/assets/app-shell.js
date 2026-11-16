@@ -41,7 +41,11 @@ if(oldFeed)residents.append(oldFeed);
 // The town map is a full-screen canvas; the full-day editor belongs to the
 // scrollable Residents tab, not clipped below the canvas.
 const scheduleDetails=get('wv-resident-schedule');
-if(scheduleDetails)residents.append(scheduleDetails);
+// The 24-hour editor is a separate scrollable screen, outside the clipped village map.
+const scheduleScreen=document.createElement('section');
+scheduleScreen.id='wv-schedule-view';scheduleScreen.hidden=true;
+if(scheduleDetails)scheduleScreen.append(scheduleDetails);
+main.append(scheduleScreen);
 const studyPicker=get('wv-resident-study-picker');if(studyPicker)residents.append(studyPicker);
 const jumpStatus=get('wv-visit-feedback');if(jumpStatus)residents.append(jumpStatus);
 village.append(residents);
@@ -122,12 +126,12 @@ function toggleMore(){
  buttons.get('more').setAttribute('aria-expanded',String(toOpen));
 }
 function openResidentSchedule(){
- activate('residents');
- residents.dataset.mode='schedule';
- if(scheduleDetails){scheduleDetails.open=true;residents.scrollTop=0;}
+ activate('schedule');
+ if(scheduleDetails){scheduleDetails.hidden=false;scheduleDetails.open=true;}
+ scheduleScreen.scrollTop=0;
 }
 function activate(screen){
- if(!['town','places','residents','learn','review','lab','book','notes','gallery','account','sentences'].includes(screen))return;
+ if(!['town','places','residents','learn','review','lab','book','notes','gallery','account','sentences','schedule'].includes(screen))return;
  current=screen;lastScreen=screen;
  // Restore the Word tab only when it was the last active screen. Other tabs
  // still use their normal startup behavior without resuming unfinished quizzes.
@@ -161,11 +165,12 @@ function activate(screen){
  }
  get('wv-notes-view').hidden=screen!=='notes';
  get('wv-sentences-view').hidden=screen!=='sentences';
+ scheduleScreen.hidden=screen!=='schedule';
   get('wv-gallery-view').hidden=screen!=='gallery';
   if(screen==='gallery')globalThis.WordvilleGallery?.renderArchive();
  account.hidden=screen!=='account';
  for(const [key,b] of buttons){
-  const active=key===screen||(key==='more'&&['notes','gallery','lab','book','account','sentences'].includes(screen));
+  const active=key===screen||(key==='more'&&['notes','gallery','lab','book','account','sentences','schedule'].includes(screen));
   b.setAttribute('aria-current',active?'page':'false');
   b.setAttribute('aria-selected',String(active));
  }

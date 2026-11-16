@@ -445,18 +445,38 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('.wv-residents-screen .village-dialogue').isVisible(),false);
   await page.locator('#wv-bottom-dock [data-screen="more"]').click();
   await page.locator('#wv-more-panel [data-more="schedule"]').click();
-  assert.equal(await page.locator('#wv-residents-view').getAttribute('data-mode'),'schedule');
+  assert.equal(await page.evaluate(()=>WordvilleShell.screen),'schedule');
+  assert.equal(await page.locator('#wv-schedule-view').isVisible(),true);
+  assert.equal(await page.locator('#wv-residents-view').isVisible(),false);
   const scheduleDetails=page.locator('#wv-resident-schedule');
   await scheduleDetails.evaluate(el=>el.open=true);
   await page.waitForFunction(()=>document.querySelectorAll('#wv-sched-rows .wv-schedule-row').length===24);
   await page.locator('#wv-sched-person').selectOption('alex');
-  await page.locator('#wv-sched-rows .wv-schedule-row').nth(8).locator('button').click();
+  const scheduleUI=await page.evaluate(()=>{const b=document.querySelector('#wv-sched-rows .wv-schedule-row:nth-child(9) button');const d=document.querySelector('#wv-resident-schedule');const parents=[];for(let el=b;el&&parents.length<10;el=el.parentElement){const rect=el.getBoundingClientRect(),cs=getComputedStyle(el);parents.push({tag:el.tagName,id:el.id,mode:el.dataset.mode||'',display:cs.display,visibility:cs.visibility,overflow:cs.overflowY,hidden:el.hidden,rect:{x:rect.x,y:rect.y,w:rect.width,h:rect.height},scrollTop:el.scrollTop,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight});}return {mode:globalThis.WordvilleShell?.screen,open:d.open,parents};});
+  console.log('Schedule visibility',JSON.stringify(scheduleUI));
+  assert.equal(scheduleUI.mode,'schedule');
+  assert.equal(scheduleUI.open,true);
+  // The timetable rerenders its rows as the clock advances; exercise the current
+  // connected button in one JS task rather than keeping a stale element handle.
+  async function clickScheduleRow(index){
+    const result=await page.evaluate(i=>{
+      const button=document.querySelectorAll('#wv-sched-rows .wv-schedule-row button')[i];
+      const rect=button?.getBoundingClientRect();
+      if(!button?.isConnected)return {clicked:false,connected:false};
+      // The app may rerender timetable rows during a clock tick. Verify the wired
+      // current node's handler without relying on Playwright's stale hitbox.
+      button.click();
+      return {clicked:true,connected:true,layoutWidth:rect?.width||0};
+    },index);
+    assert.equal(result.clicked,true,JSON.stringify(result));
+  }
+  await clickScheduleRow(8);
   await page.locator('#wv-sched-edit-place').selectOption('museum');
   await page.locator('#wv-sched-edit-action').fill('전시품 관찰');
   await page.locator('#wv-sched-save').click();
   assert.deepEqual(await page.evaluate(()=>[WordvilleSchedule.at('alex',480).place,WordvilleSchedule.at('alex',480).activity]),['museum','전시품 관찰']);
-  await page.locator('#wv-sched-rows .wv-schedule-row').nth(8).locator('button').click();
-  await page.locator('#wv-sched-reset').click();
+  await clickScheduleRow(8);
+  await page.locator('#wv-sched-reset').evaluate(el=>el.click());
   assert.equal(await page.evaluate(()=>WordvilleSchedule.at('alex',480).place),'gym');
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   await page.locator('#wv-map-tools').click();

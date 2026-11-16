@@ -18,7 +18,8 @@ test('Residents tab displays portraits only; schedules are accessible from More'
  const shell=src('app-shell.js'),css=src('app-shell.css'),portrait=src('portrait-ui.js');
  assert.match(shell,/residents\.dataset\.mode='portraits'/);
  assert.match(shell,/\['schedule','🕒','주민 일정 관리'\]/);
- assert.match(shell,/residents\.dataset\.mode='schedule'/);
+ assert.match(shell,/scheduleScreen\.id='wv-schedule-view'/);
+ assert.match(shell,/activate\('schedule'\)/);
  assert.match(css,/#wv-residents-view\[data-mode="portraits"\] > :not\(\.neighbors\)/);
  assert.match(portrait,/button\.setAttribute\('aria-label',name\+' — '\+action\)/);
  assert.doesNotMatch(portrait,/art\.setAttribute\('role','button'\)/);
