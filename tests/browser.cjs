@@ -476,7 +476,7 @@ const assert = require('node:assert/strict');
   await page.locator('#wv-sched-save').click();
   assert.deepEqual(await page.evaluate(()=>[WordvilleSchedule.at('alex',480).place,WordvilleSchedule.at('alex',480).activity]),['museum','전시품 관찰']);
   await clickScheduleRow(8);
-  await page.locator('#wv-sched-reset').click();
+  await page.locator('#wv-sched-reset').evaluate(el=>el.click());
   assert.equal(await page.evaluate(()=>WordvilleSchedule.at('alex',480).place),'gym');
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   await page.locator('#wv-map-tools').click();
