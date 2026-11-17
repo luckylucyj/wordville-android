@@ -13,11 +13,11 @@ IDS = ('chiikawa', 'hachiware', 'usagi', 'rakko', 'kurimanju',
        'momo', 'toshiro', 'aizen', 'homura', 'madoka')
 RAKKO_FUR = ('#fff4de', '#dfc8ae')
 CLOTHES = {
-    'momo': ('#242135', '#4b4058', '#716077', '#292938', '#494657', '#f4e9df', '#58465a'),
+    'momo': ('#28222e', '#453444', '#766074', '#292938', '#494657', '#f4e9df', '#58465a'),
     'toshiro': ('#a8c3d1', '#e5eff2', '#ffffff', '#282e41', '#f0efe5', '#79b5ae', '#31374b'),
     'aizen': ('#4b3441', '#815644', '#ac7552', '#332b31', '#f2e4d3', '#ede9df', '#4c3c46'),
-    'homura': ('#241f3d', '#46325f', '#6b5185', '#3c3150', '#e5dfee', '#a47bc1', '#504267'),
-    'madoka': ('#9d405f', '#de749b', '#f9a0bd', '#ac4868', '#ffe1e7', '#d84e71', '#d85877'),
+    'homura': ('#181820', '#24232b', '#45434f', '#3c3150', '#e5dfee', '#a47bc1', '#504267'),
+    'madoka': ('#9d405f', '#f092ba', '#ffd0df', '#ac4868', '#ffe1e7', '#d84e71', '#d85877'),
 }
 # Per-foot offsets: contact, down, passing, up, then the opposite lead.
 STRIDE = ((-3, 3), (-2, 2), (0, 0), (2, -2), (3, -3), (2, -2), (0, 0), (-2, 2))
@@ -328,8 +328,11 @@ def sprite(resident, direction, frame=None):
                   (x - 1, 20)], hair, INK, shift)
             rect((x + 2, 15, x + 3, 23), shine, shift)
     elif resident == 'momo':
-        oval((15, 3, 29, 15), '#f4e9dd', INK, shift)
-        poly([(17, 7), (18, 5), (23, 4), (27, 6), (26, 9), (20, 10)], '#d6c8c6', offset=shift)
+        # The tied-up bun is the SAME dark hair as the head, not a white disc.
+        # Keep the bun smaller than the face, and centered above the crown.
+        oval((16, 2, 30, 16), hair, INK, shift)
+        poly([(18, 7), (19, 4), (23, 3), (27, 5),
+              (28, 9), (26, 11), (21, 10)], shine, offset=shift)
     if resident == 'toshiro':
         head = [(11, 20), (11, 13), (9, 10), (15, 11), (14, 5), (20, 8),
                 (22, 3), (26, 7), (31, 4), (31, 8), (37, 7), (34, 12),
@@ -344,10 +347,16 @@ def sprite(resident, direction, frame=None):
         for x in (9, 31):
             poly([(x, 9), (x + 3, 10), (x + 6, 8), (x + 7, 13), (x + 3, 12), (x, 13)],
                  '#d14564', INK, shift)
+    if resident == 'momo':
+        # Narrow tie makes the high bun read as gathered hair in every view.
+        rect((19, 11, 28, 12), dark, shift)
+        rect((21, 10, 26, 10), '#998090', shift)
     if rear:
         if resident == 'momo':
-            oval((16, 11, 29, 22), '#f2e6da', INK, shift)
-            rect((19, 14, 25, 15), '#d5c6c4', shift)
+            # Two soft side sections remain visible behind the bun.
+            poly([(13, 17), (16, 19), (16, 30), (12, 33), (10, 27)], hair, INK, shift)
+            poly([(32, 18), (35, 17), (38, 27), (34, 33), (30, 30)], hair, INK, shift)
+            poly([(18, 15), (24, 17), (30, 15), (28, 20), (20, 20)], shine, offset=shift)
         if resident == 'homura':
             rect((12, 16, 15, 16), '#8f76ae', shift)
             rect((33, 16, 35, 16), '#8f76ae', shift)
@@ -359,6 +368,19 @@ def sprite(resident, direction, frame=None):
         face = [(14, 17), (18, 14), (23, 15), (28, 14), (33, 17),
                 (34, 22), (31, 25), (28, 27), (20, 27), (15, 24)]
     poly(face, FACE, offset=shift)
+    if resident == 'momo':
+        # Keep the face uncovered while making the side hair fuller.
+        if side:
+            poly([(17, 14), (20, 16), (22, 21), (20, 30),
+                  (16, 33), (13, 27), (14, 19)], hair, INK, shift)
+            rect((17, 21, 18, 27), shine, shift)
+        else:
+            poly([(11, 14), (16, 15), (17, 19), (17, 28),
+                  (14, 32), (10, 31), (9, 24)], hair, INK, shift)
+            poly([(32, 15), (36, 15), (38, 24), (37, 31),
+                  (33, 33), (30, 29), (31, 20)], hair, INK, shift)
+            rect((12, 20, 13, 27), shine, shift)
+            rect((34, 20, 35, 27), shine, shift)
     rect((21 if not side else 27, 25, 29 if not side else 33, 25), SHADE, shift)
     if resident == 'aizen':
         poly([(13, 14), (20, 10), (28, 10), (32, 13), (28, 14), (23, 13),
