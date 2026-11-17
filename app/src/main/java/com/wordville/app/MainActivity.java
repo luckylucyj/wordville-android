@@ -31,6 +31,8 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Arrays;
+import java.util.function.BiConsumer;
 
 
 public class MainActivity extends Activity {
@@ -118,9 +120,80 @@ public class MainActivity extends Activity {
 
 
 
- // Only Korean vocabulary glosses (not notes, search terms, or personal data)
- // are translated. ML Kit runs the translation on device after a model download.
+ // ML Kit translates vocabulary glosses and explicitly submitted source text
+ // on device. Translation models can be downloaded on first use.
  private final HashMap<String,Translator> wordTranslators=new HashMap<>();
+ private static final List<String> INTERPRETATION_SOURCES=Arrays.asList("en","ja","zh","es","fr","de");
+
+ private Translator translationClient(String source,String target){
+  String key=source+">"+target;
+  Translator client=wordTranslators.get(key);
+  if(client==null){
+   TranslatorOptions options=new TranslatorOptions.Builder()
+    .setSourceLanguage(source).setTargetLanguage(target).build();
+   client=Translation.getClient(options);
+   wordTranslators.put(key,client);
+  }
+  return client;
+ }
+
+ private void translateOnDevice(List<String> originals,String source,String target,BiConsumer<JSONArray,String> finish){
+  Translator client=translationClient(source,target);
+  DownloadConditions conditions=new DownloadConditions.Builder().build();
+  client.downloadModelIfNeeded(conditions).addOnSuccessListener(unused->{
+   String[] results=new String[originals.size()];
+   int[] finished={0};
+   for(int i=0;i<originals.size();i++){
+    final int index=i;
+    client.translate(originals.get(i)).addOnCompleteListener(task->{
+     results[index]=task.isSuccessful()?task.getResult():"";
+     if(++finished[0]==originals.size()){
+      JSONArray output=new JSONArray();
+      for(String value:results)output.put(value==null?"":value);
+      finish.accept(output,"");
+     }
+    });
+   }
+  }).addOnFailureListener(error->finish.accept(new JSONArray(),"model-download-failed"));
+ }
+
+ private final class WordvilleInterpretationBridge {
+  private final WebView owner;
+  WordvilleInterpretationBridge(WebView owner){this.owner=owner;}
+  @JavascriptInterface public void translate(String json,String language,int id){
+   if(language==null||!INTERPRETATION_SOURCES.contains(language)||id<1||json==null||json.length()>10000)return;
+   final List<String> originals=new ArrayList<>();
+   try {
+    JSONArray items=new JSONArray(json);
+    if(items.length()<1||items.length()>8)return;
+    int total=0;
+    for(int i=0;i<items.length();i++){
+     Object item=items.get(i);
+     if(!(item instanceof String))return;
+     String text=((String)item).trim();
+     total+=text.length();
+     if(text.isEmpty()||total>1600)return;
+     originals.add(text);
+    }
+   }catch(Exception ignored){return;}
+   runOnUiThread(()->{
+    if(owner!=web||!pageReady)return;
+    try{
+     translateOnDevice(originals,language,TranslateLanguage.KOREAN,
+      (values,error)->sendInterpretation(owner,id,values,error));
+    }catch(Exception e){sendInterpretation(owner,id,new JSONArray(),"translation-error");}
+   });
+  }
+ }
+ private void sendInterpretation(WebView owner,int id,JSONArray values,String error){
+  if(owner!=web||!pageReady)return;
+  JSONObject payload=new JSONObject();
+  try{
+   payload.put("id",id);payload.put("values",values);payload.put("error",error);
+  }catch(Exception ignored){return;}
+  String js="window.WordvilleInterpretation?.onNativeResult("+JSONObject.quote(payload.toString())+");";
+  owner.evaluateJavascript(js,null);
+ }
  private final class WordvilleTranslationBridge {
   @JavascriptInterface public void translateBatch(String json,String locale,int requestId){
    if(requestId<1||requestId>2147483000||json==null||json.length()>7000)return;
@@ -137,31 +210,8 @@ public class MainActivity extends Activity {
      }
      String target="en".equals(locale)?TranslateLanguage.ENGLISH:
         "ja".equals(locale)?TranslateLanguage.JAPANESE:TranslateLanguage.CHINESE;
-     Translator translator=wordTranslators.get(locale);
-     if(translator==null){
-      TranslatorOptions options=new TranslatorOptions.Builder()
-        .setSourceLanguage(TranslateLanguage.KOREAN).setTargetLanguage(target).build();
-      translator=Translation.getClient(options);
-      wordTranslators.put(locale,translator);
-     }
-     final Translator client=translator;
-     DownloadConditions conditions=new DownloadConditions.Builder().build();
-     client.downloadModelIfNeeded(conditions).addOnSuccessListener(v->{
-      JSONArray output=new JSONArray();
-      String[] results=new String[originals.size()];
-      int[] finished={0};
-      for(int i=0;i<originals.size();i++){
-       final int index=i;
-       client.translate(originals.get(i)).addOnCompleteListener(task->{
-        results[index]=task.isSuccessful()?task.getResult():"";
-        finished[0]++;
-        if(finished[0]==originals.size()){
-         for(String value:results)output.put(value==null?"":value);
-         sendTranslations(requestId,locale,output,"");
-        }
-       });
-      }
-     }).addOnFailureListener(e->sendTranslations(requestId,locale,new JSONArray(),"model-download-failed"));
+     translateOnDevice(originals,TranslateLanguage.KOREAN,target,
+      (values,error)->sendTranslations(requestId,locale,values,error));
     }catch(Exception e){sendTranslations(requestId,locale,new JSONArray(),"translation-error");}
    });
   }
@@ -225,6 +275,7 @@ public class MainActivity extends Activity {
   // or progress, and the WebView restricts page navigation to bundled assets.
   view.addJavascriptInterface(new WordvilleSettingsBridge(),"WordvilleSettings");
   view.addJavascriptInterface(new WordvilleSpeechBridge(),"WordvilleSpeech");
+  view.addJavascriptInterface(new WordvilleInterpretationBridge(view),"WordvilleInterpretationNative");
   view.addJavascriptInterface(new WordvilleTranslationBridge(),"WordvilleTranslate");
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder()
     .addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
@@ -243,7 +294,7 @@ public class MainActivity extends Activity {
     if("https".equals(destination.getScheme())&&HOST.equals(destination.getHost()))return false;
     if(request.isForMainFrame()&&"https".equals(destination.getScheme())){
      String host=destination.getHost();
-     if(!("commons.wikimedia.org".equals(host)||SKELL_HOST.equals(host)||DICTIONARY_HOST.equals(host)))return true;
+     if(!("commons.wikimedia.org".equals(host)||SKELL_HOST.equals(host)||DICTIONARY_HOST.equals(host)||"translate.google.com".equals(host)))return true;
      try{startActivity(new Intent(Intent.ACTION_VIEW,destination));}catch(ActivityNotFoundException ignored){}
     }
     return true;
