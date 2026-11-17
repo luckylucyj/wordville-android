@@ -126,6 +126,9 @@ public class VillageSmokeTest {
   bitmap.recycle();
   assertTrue("PNG screenshot created",screenshot.length()>120000);
   assertEquals("true",eval(web,"document.querySelector('.word').click();document.getElementById('detail-meaning').hidden"));
+  assertEquals("true",eval(web,"typeof WordvilleSpeech.speak==='function' && document.querySelectorAll('#wv-pronunciation [data-accent]').length===2"));
+  assertEquals("true",eval(web,"document.getElementById('wv-word-usage').open=true; !!document.getElementById('wv-usage-examples').href"));
+
   assertEquals("false",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("true",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("\"night\"",eval(web,"document.getElementById('close-dialog').click();var mode=document.getElementById('village-time-mode');mode.value='night';mode.dispatchEvent(new Event('change'));WordvilleVillage.period"));
