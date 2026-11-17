@@ -118,13 +118,25 @@ const entranceNode=Object.freeze({
  market:4,square:0,workshop:5,park:1
 });
 const outdoorPlaces=new Set(['square','park']);
-const preferredCompanions=new Map([['momo','toshiro'],['toshiro','momo']]);
-const eveningWalk={hour:17,place:'park'};
-function hasEveningWalk(id,slot,minute){
- const partner=preferredCompanions.get(id);
- if(!partner||slot.custom||slot.hour!==eveningWalk.hour||slot.place!==eveningWalk.place)return false;
- const companionSlot=schedule.at(partner,minute);
- return !companionSlot.custom&&companionSlot.place===eveningWalk.place;
+const appointments=[
+ {pair:['momo','toshiro'],hour:17,place:'park',chatDuration:3.5},
+ {pair:['homura','madoka'],hour:18,place:'square',chatDuration:7}
+];
+const relationships=new Map();
+for(const appointment of appointments){
+ const [first,second]=appointment.pair;
+ relationships.set(first,{...appointment,partner:second});
+ relationships.set(second,{...appointment,partner:first});
+}
+function hasAppointment(id,slot,minute){
+ const appointment=relationships.get(id);
+ if(!appointment||slot.custom||slot.hour!==appointment.hour||slot.place!==appointment.place)return false;
+ const companionSlot=schedule.at(appointment.partner,minute);
+ return !companionSlot.custom&&companionSlot.place===appointment.place;
+}
+function beginsPrimaryVisit(p,slot){
+ return !slot.custom&&slot.hour>=schedule.PRIMARY_START&&slot.hour<schedule.PRIMARY_END
+  &&schedule.PRIMARY_PLACES[p.id]===slot.place&&p.schedulePlace!==slot.place;
 }
 function destinationFor(p,place){
  const node=place==='home'?p.homeNode:entranceNode[place];
@@ -139,13 +151,14 @@ function syncSchedule(residents,minute,{teleport=false}={}){
   const key=slot.hour+'|'+slot.place+'|'+slot.activity;
   if(key===p.scheduleKey&&!teleport)continue;
   const goal=destinationFor(p,slot.place);
+  // Arrive on time for the daytime venue or a shared appointment.
+  const arrive=teleport||beginsPrimaryVisit(p,slot)||hasAppointment(p.id,slot,minute);
   p.scheduleKey=key;p.scheduleHour=slot.hour;p.schedulePlace=slot.place;
   p.activity=slot.activity;p.targetNode=goal;
   p.chat=0;p.partner=null;p.wait=0;p.onStairs=false;
   p.isMoving=false;p.activityState='travel';
-  // A shared appointment must start on time even if the two approach
-  // along congested paths. Custom schedules continue to use ordinary routing.
-  if(teleport||hasEveningWalk(p.id,slot,minute)){
+  if(arrive){
+   p.cooldown=0;
    p.node=goal;p.x=nodes[goal].x;p.y=nodes[goal].y;
    p.route=[];p.atVenue=true;p.activityState='doing';
    continue;
@@ -203,7 +216,8 @@ function tick(residents,dt,onMeet,options={}){
   if(!available(a)||!available(b))return false;
   if(scheduled&&(!a.atVenue||!b.atVenue||!outdoorPlaces.has(a.schedulePlace)||a.schedulePlace!==b.schedulePlace))return false;
   if(Math.hypot(a.x-b.x,a.y-b.y)>=29)return false;
-  a.chat=b.chat=3.5;
+  const relationship=relationships.get(a.id);
+  a.chat=b.chat=relationship?.partner===b.id?relationship.chatDuration:3.5;
   a.cooldown=b.cooldown=15;
   a.partner=b.id;
   b.partner=a.id;
@@ -211,7 +225,7 @@ function tick(residents,dt,onMeet,options={}){
   return true;
  }
  for(const a of residents){
-  const preferred=preferredCompanions.get(a.id);
+  const preferred=relationships.get(a.id)?.partner;
   if(preferred)tryMeet(a,residents.find(b=>b.id===preferred));
  }
  for(let i=0;i<residents.length;i++){
@@ -221,6 +235,6 @@ function tick(residents,dt,onMeet,options={}){
  }
  for(const p of residents)p.cooldown=Math.max(0,(p.cooldown||0)-dt);
 }
-const api={people,nodes,edges,links,fountain,FOOT_RADIUS,decorations,collidesDecoration,segmentHitsDecoration,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,preferredCompanions,destinationFor,syncSchedule};
+const api={people,nodes,edges,links,fountain,FOOT_RADIUS,decorations,collidesDecoration,segmentHitsDecoration,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,relationships,destinationFor,syncSchedule};
 root.VillageModel=api;
 })(globalThis);

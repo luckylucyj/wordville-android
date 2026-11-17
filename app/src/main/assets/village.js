@@ -116,13 +116,69 @@ function syncTime(){
  if(document.getElementById('wv-resident-schedule')?.open)renderScheduleRows();
  document.dispatchEvent(new CustomEvent('wordville-time-changed',{detail:{period,minute:clock}}));
 }
-const meetingLines=[
- ['I always look forward to our walks, Toshiro.','토시로, 너와 함께 걷는 시간이 늘 기다려져.'],
- ['Me too, Momo. I’m glad I get to spend this time with you.','나도 그래, 모모. 너와 이 시간을 함께 보낼 수 있어서 좋아.']
+const meetingLines={
+ momo:['I always look forward to our walks, Toshiro.','토시로, 너와 함께 걷는 시간이 늘 기다려져.'],
+ toshiro:['Me too, Momo. I’m glad I get to spend this time with you.','나도 그래, 모모. 너와 이 시간을 함께 보낼 수 있어서 좋아.'],
+ homura:['Madoka, I got here early. I picked this postcard for you, and I think about you more than I know how to say.','마도카, 일찍 와서 네 생각을 하고 있었어. 널 위해 고른 엽서야. 말로 다 표현하기 어려울 만큼 네가 좋아.'],
+ madoka:['I like you too, Homura. I’m glad you told me. Will you stay and talk with me a little longer?','나도 호무라가 좋아. 말해 줘서 기뻐. 나랑 조금 더 이야기하고 갈래?']
+};
+function sharedFeelings(p){return p.chat>0&&M.relationships.get(p.id)?.partner===p.partner;}
+function meetingStatus(id){
+ return id==='homura'||id==='madoka'?'호무라가 먼저 마음을 전하고 마도카도 화답해요.':'서로에게 마음을 전하는 중이에요.';
+}
+function writeDialogue([english,korean]){
+ document.getElementById('resident-english').textContent=english;
+ document.getElementById('resident-korean').textContent=korean;
+}
+function select(id){
+ selected=id;
+ const gallery=document.getElementById('wv-residents-view');
+ if(gallery&&panel.parentElement!==gallery)gallery.append(panel);
+ if(document.body.dataset.screen==='residents'&&gallery)gallery.dataset.mode='dialogue';
+ const p=residents.find(r=>r.id===id);
+ const partner=residents.find(r=>r.id===p.partner);
+ const slot=S.at(id,scheduleMinute());
+ document.getElementById('speaker').textContent=p.name;
+ document.getElementById('resident-home').textContent='📍 '+slot.placeName+' · '+slot.activity;
+ const special=sharedFeelings(p);
+ const chatting=p.chat>0&&partner;
+ let status=`${slot.placeName}(으)로 이동하고 있어요.`;
+ if(p.atVenue)status=`${slot.placeName}에서 ${slot.activity} 중이에요.`;
+ if(chatting)status=`${partner.name}와 대화 중이에요.`;
+ if(special)status=meetingStatus(id);
+ document.getElementById('resident-line').textContent=status;
+ if(special)writeDialogue(meetingLines[id]);
+ else if(chatting)writeDialogue(['Would you like to study together?','함께 공부할래요?']);
+ else writeDialogue(['Let’s learn a new word together.','새로운 단어를 함께 배워요.']);
+ panel.hidden=false;
+ document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));
+ document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id}}));
+}
+const greetings=[
+ ['Let’s meet at the cafe.','카페에서 만나요.'],
+ ['Can you confirm the reservation?','예약을 확인해 줄 수 있나요?'],
+ ['The shipment will arrive tomorrow.','배송 물품은 내일 도착해요.'],
+ ['The appointment is at ten.','약속은 10시예요.'],
+ ['Let’s review our schedule.','우리 일정을 확인해요.']
 ];
-function sharedFeelings(p){return p.chat>0&&M.preferredCompanions.get(p.id)===p.partner;}
-function select(id){selected=id;const gallery=document.getElementById('wv-residents-view');if(gallery&&panel.parentElement!==gallery)gallery.append(panel);if(document.body.dataset.screen==='residents'&&gallery)gallery.dataset.mode='dialogue';const p=residents.find(r=>r.id===id);const partner=residents.find(r=>r.id===p.partner);document.getElementById('speaker').textContent=p.name;const slot=S.at(id,scheduleMinute());document.getElementById('resident-home').textContent='📍 '+slot.placeName+' · '+slot.activity;document.getElementById('resident-line').textContent=sharedFeelings(p)?'서로에게 마음을 전하는 중이에요.':p.chat>0&&partner?`${partner.name}와 대화 중이에요.`:p.atVenue?`${slot.placeName}에서 ${slot.activity} 중이에요.`:`${slot.placeName}(으)로 이동하고 있어요.`;const line=sharedFeelings(p)?meetingLines[p.id==='momo'?0:1]:p.chat>0?['Would you like to study together?','함께 공부할래요?']:['Let’s learn a new word together.','새로운 단어를 함께 배워요.'];document.getElementById('resident-english').textContent=line[0];document.getElementById('resident-korean').textContent=line[1];panel.hidden=false;document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id}}));}
-function meet(a,b){chatCount++;const messages=[['Let’s meet at the cafe.','카페에서 만나요.'],['Can you confirm the reservation?','예약을 확인해 줄 수 있나요?'],['The shipment will arrive tomorrow.','배송 물품은 내일 도착해요.'],['The appointment is at ten.','약속은 10시예요.'],['Let’s review our schedule.','우리 일정을 확인해요.']];const special=sharedFeelings(a);const [en,ko]=special?meetingLines[0]:messages[(chatCount-1)%messages.length];const li=document.createElement('li');li.textContent=`${a.name} ↔ ${b.name} · ${special?meetingLines.map(line=>line[1]).join(' / '):ko}`;feed.prepend(li);while(feed.children.length>5)feed.lastChild.remove();document.getElementById('conversation-count').textContent=chatCount+'번의 대화';if(selected===a.id||selected===b.id){const p=selected===a.id?a:b;document.getElementById('speaker').textContent=p.name;document.getElementById('resident-line').textContent=`${a.name}와 ${b.name}의 대화`;const line=special?meetingLines[p.id==='momo'?0:1]:[en,ko];document.getElementById('resident-english').textContent=line[0];document.getElementById('resident-korean').textContent=line[1];panel.hidden=false;}}
+function meet(a,b){
+ chatCount++;
+ const special=sharedFeelings(a);
+ const line=greetings[(chatCount-1)%greetings.length];
+ const [first,second]=special?M.relationships.get(a.id).pair:[a.id,b.id];
+ const residentsById=new Map([[a.id,a],[b.id,b]]);
+ const dialogue=special?[first,second].map(id=>meetingLines[id][1]).join(' / '):line[1];
+ const li=document.createElement('li');
+ li.textContent=`${residentsById.get(first).name} ↔ ${residentsById.get(second).name} · ${dialogue}`;
+ feed.prepend(li);
+ while(feed.children.length>5)feed.lastChild.remove();
+ document.getElementById('conversation-count').textContent=chatCount+'번의 대화';
+ if(!residentsById.has(selected))return;
+ document.getElementById('speaker').textContent=residentsById.get(selected).name;
+ document.getElementById('resident-line').textContent=special?meetingStatus(selected):`${a.name}와 ${b.name}의 대화`;
+ writeDialogue(special?meetingLines[selected]:line);
+ panel.hidden=false;
+}
 
 // Clicking a portrait is navigation, not just selection of a canned word.
 function visitResident(id){
