@@ -203,6 +203,23 @@ def main():
     # left-facing silhouettes are mirrored from the exact same authored art.
     sit = save_atlas("sit", row_by_direction(sit_side, sit_side, sit_side))
 
+    # Exact right-facing 8-frame row used by the renderer, extracted without
+    # changing a single sprite pixel. Provide a numbered inspection sheet so
+    # frame 4 -> 5 can be compared without GIF timing obscuring the transition.
+    side_row = walk.crop((0, 2 * CELL, 8 * CELL, 3 * CELL))
+    side_row.save(OUT / "alex_walk_side_sheet.png", optimize=True)
+    inspect = Image.new("RGBA", (8 * 144, 184), "#f1ebdd")
+    marker = ImageDraw.Draw(inspect)
+    for index in range(8):
+        left = index * 144 + 8
+        marker.line((left + 64, 26, left + 64, 154), fill="#c9d1c5", width=1)
+        marker.line((left, 146, left + 128, 146), fill="#c9d1c5", width=1)
+        marker.text((left + 58, 6), str(index + 1), fill="#5c4636")
+        frame = side_row.crop((index * CELL, 0, (index + 1) * CELL, CELL))
+        inspect.alpha_composite(frame.resize((128, 128), Image.Resampling.NEAREST), (left, 26))
+    marker.line((4 * 144, 0, 4 * 144, 184), fill="#c55a4d", width=3)
+    inspect.convert("RGB").save(OUT / "alex_walk_side_inspection.png", optimize=True)
+
     audit = {"cell": CELL, "foot_anchor_y": FEET_Y, "frames_per_action": 8,
              "directions": DIRS, "actions": {}}
     audit["side_gait_right_minus_left"] = [round(right_minus_left(frame), 1)
