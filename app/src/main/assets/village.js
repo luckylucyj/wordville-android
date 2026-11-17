@@ -50,9 +50,10 @@ function sprite(p){
  if(p.atVenue&&!M.outdoorPlaces.has(p.schedulePlace))return;
  const x=p.x,y=p.y,walking=!paused&&p.chat<=0&&p.isMoving===true;
  const assets=globalThis.WordvillePortraits,img=assets?.spriteImage,index=assets?.order?.[p.id];
- // 48px frame with an approximately 40px tall resident; fixed ground anchor.
- const width=48,height=48;
- if(globalThis.WordvilleWalk?.paint(ctx,p,x,y,{width,height,walking})){}else if(index!==undefined&&img?.complete&&img.naturalWidth===2560&&img.naturalHeight===768){
+ // Alex previews the hand-painted native 64px animation; others remain 48px.
+ const width=p.id==='alex'?64:48,height=width;
+ const action=p.id==='alex'&&!walking&&p.chat>0?'talk':undefined;
+ if(globalThis.WordvilleWalk?.paint(ctx,p,x,y,{width,height,walking,action})){}else if(index!==undefined&&img?.complete&&img.naturalWidth===2560&&img.naturalHeight===768){
   const col=index%4,row=Math.floor(index/4),time=p.steps*7.5+index*.19;
   // Two source-identical poses + two clean transitional variants = four animation slots.
   const motion=[1,2,3,2];

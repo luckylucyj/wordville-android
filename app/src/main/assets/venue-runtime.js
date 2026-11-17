@@ -194,8 +194,13 @@ function draw(){
  }
  for(const a of [...actors].sort((a,b)=>a.y-b.y)){
   const x=Math.round((a.x+.5)/s.cols*overlay.width),y=Math.round((a.y+.5)/s.rows*overlay.height),moving=a.isMoving===true;
-  const height=(a.id==='cat'||a.id==='dog')?32:48,width=height;
-  if(!walk?.paint(ctx,a,x,y,{height,width,walking:moving})){
+  const height=(a.id==='cat'||a.id==='dog')?32:(a.id==='alex'?64:48),width=height;
+  // Only Alex has new action artwork. Sitting and talking use the same stable
+  // 64px world-space foot anchor as walking/idle to avoid visible jumps.
+  const action=a.id==='alex'&&!moving&&a.activityState==='doing'
+   ?(/대화|이야기|잡담/.test(a.behaviorText||'')?'talk':
+     (/식사|음료|커피|독서|읽기|앉|휴식|쉬기/.test(a.behaviorText||'')?'sit':'idle')):undefined;
+  if(!walk?.paint(ctx,a,x,y,{height,width,walking:moving,action})){
    if(a.id==='cat'||a.id==='dog')pixelCreature(a,x,y,Math.min(28,height));
    else{ctx.fillStyle=a.shirt||'#675f9a';ctx.fillRect(x-6,y-20,12,16);ctx.fillStyle=a.hair||'#4a3542';ctx.fillRect(x-7,y-30,14,11);ctx.fillStyle='#e9bca0';ctx.fillRect(x-5,y-24,10,8);}
   }

@@ -85,7 +85,7 @@ function installPreview(){
  const facing=document.createElement('select');facing.setAttribute('aria-label','8방향 선택');
  directions.forEach((id)=>{const opt=document.createElement('option');opt.value=id;opt.textContent=id;facing.add(opt);});facing.value='right';
  const motion=document.createElement('select');motion.setAttribute('aria-label','움직임 상태');
- [['walk','걷기 · 8방향×8프레임'],['idle','서 있기 · 고정 자세']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;motion.add(option);});
+ [['walk','걷기 · 8방향×8프레임'],['idle','서 있기 · 알렉스 8프레임'],['talk','알렉스 대화 · 8프레임'],['sit','알렉스 앉기 · 8프레임']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;motion.add(option);});
  inputs.append(person,facing,motion);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=168;canvas.style.cssText='width:256px;max-width:100%;height:auto;image-rendering:pixelated;background:#dce9db;border-radius:8px';
  const caption=document.createElement('p');caption.style.cssText='font-size:12px;margin:6px 0 0';
@@ -102,18 +102,21 @@ function installPreview(){
    c.imageSmoothingEnabled=false;c.fillStyle='#dce9db';c.fillRect(0,0,256,168);
    c.fillStyle='#98aF92';c.fillRect(0,143,256,25);
    const moving=motion.value==='walk',id=person.value;
-   const beat=moving?Math.floor(ms/125)%frames:0;
+   const alexMotion=id==='alex'&&root.WordvilleAlex64;
+   const beat=moving?Math.floor(ms/125)%frames:(alexMotion?Math.floor(ms/200)%8:0);
    const im=moving?sheets[id]:idleSheets[id];
+   const action=(motion.value==='talk'||motion.value==='sit')?'idle':motion.value;
    if(moving?ready(im):idleReady(im)){
-    paint(c,{id,direction:facing.value,walkDistance:beat*stepDistance},128,142,{width:96,height:96,walking:moving,phase:beat,idlePhase:beat});
-    caption.textContent='PNG 시트에서 재생 · '+(moving?phases[beat]:idlePhases[beat])+' · '+(beat+1)+'/'+(moving?frames:idleFrameCount)+' · '+(moving?'8 FPS':'2.5 FPS')+' · 발 고정 y=43';
+    // Dispatch via the live renderer so the test panel shows the 64px Alex pilot.
+    W.paint(c,{id,direction:facing.value,walkDistance:beat*stepDistance},128,142,{width:96,height:96,walking:moving,action:alexMotion?motion.value:action,phase:beat,idlePhase:beat});
+    caption.textContent='게임에서 사용하는 PNG 재생 · '+(alexMotion?motion.value:(moving?phases[beat]:'neutral'))+' · '+(beat+1)+'/8 · '+(alexMotion?'64px · 발 고정 y=60':'48px · 발 고정 y=43');
    }else caption.textContent='스프라이트시트 불러오는 중. 자산 누락 시 APK 빌드 결과를 확인하세요.';
    if(!gallery.hidden){
     const g=gallery.getContext('2d');
     if(g){g.imageSmoothingEnabled=false;g.fillStyle='#e1ead7';g.fillRect(0,0,320,288);
       for(let i=0;i<residentIds.length;i++){
        const gx=i%4*80+40,gy=Math.floor(i/4)*96+64;
-       paint(g,{id:residentIds[i],direction:facing.value,walkDistance:beat*stepDistance},gx,gy,{width:48,height:48,walking:moving,phase:beat,idlePhase:beat});
+       W.paint(g,{id:residentIds[i],direction:facing.value,walkDistance:beat*stepDistance},gx,gy,{width:48,height:48,walking:moving,action:residentIds[i]==='alex'?motion.value:action,phase:beat,idlePhase:beat});
        g.textAlign='center';g.font='12px sans-serif';g.fillStyle='#47392f';
        g.fillText(labels[i],gx,Math.floor(i/4)*96+85);
       }
