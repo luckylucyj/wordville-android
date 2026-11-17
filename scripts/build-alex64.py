@@ -57,6 +57,28 @@ def extract(filename: str, parts: int) -> list[Image.Image]:
     return frames
 
 
+def extract_far_leg_phases() -> list[Image.Image]:
+    """Keep all four re-drawn rear-leg strides, including the first forward toe.
+
+    The image generator spaced the four figures asymmetrically; equal-width
+    slicing would cut off the leading (dark, layer-2) boot in the first pose.
+    These non-overlapping windows hold complete individual hand-painted frames.
+    """
+    whole = Image.open(SOURCE / "walk_side_far_v2.png").convert("RGBA")
+    windows = ((230, 590), (690, 1030), (1160, 1500), (1620, 1970))
+    frames = []
+    for left, right in windows:
+        part = whole.crop((left, 0, right, whole.height))
+        alpha = part.getchannel("A").point(lambda a: 255 if a >= 64 else 0)
+        box = alpha.getbbox()
+        if not box:
+            raise ValueError("A rear-leg stride frame is empty")
+        part = part.crop(box)
+        part.putalpha(part.getchannel("A").point(lambda a: a if a >= 64 else 0))
+        frames.append(part)
+    return frames
+
+
 def normalize(frames: list[Image.Image], *, target_height: int = 54) -> list[Image.Image]:
     """Use one scale per motion, a centered head axis, and one foot baseline."""
     max_width = max(im.width for im in frames)
@@ -76,6 +98,17 @@ def normalize(frames: list[Image.Image], *, target_height: int = 54) -> list[Ima
         dy = FEET_Y - h
         cell = Image.new("RGBA", (CELL, CELL))
         cell.alpha_composite(sprite, (dx, dy))
+        # Generated pose groups can have subtly different outer hair shapes.
+        # After scaling, correct the *actual painted* head midpoint to within
+        # half a pixel of x=32, shifting the whole body (never only its head).
+        painted_head = cell.getchannel("A").crop((0, 0, CELL, 25)).getbbox()
+        if painted_head:
+            axis = (painted_head[0] + painted_head[2]) / 2
+            shift = round(CELL / 2 - axis)
+            if shift:
+                aligned = Image.new("RGBA", (CELL, CELL))
+                aligned.alpha_composite(cell, (shift, 0))
+                cell = aligned
         result.append(cell)
     return result
 
@@ -102,6 +135,20 @@ def row_by_direction(front, side, back):
     return [front, side, side, side, back, flip(side), flip(side), flip(side)]
 
 
+def boot_red_level(frame: Image.Image, left: int, right: int) -> float:
+    """Approximate the lower boot's red-channel lightness for layer QA."""
+    pix = frame.load()
+    values = []
+    for y in range(44, 61):
+        for x in range(left, right):
+            r, g, b, a = pix[x, y]
+            if a > 150 and 65 < r < 195 and g < 145:
+                values.append(r)
+    if not values:
+        raise ValueError("Missing brown boot pixels in a walking frame")
+    return sum(values) / len(values)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     turnaround = normalize(extract("turnaround.png", 3))
@@ -110,7 +157,22 @@ def main():
     fixed_side = [side_static.copy() for _ in range(8)]
     fixed_back = [back_static.copy() for _ in range(8)]
     walk_front = normalize(extract("walk_front.png", 8))
-    walk_side = normalize(extract("walk_side.png", 8))
+    # The original 64px side drawing had a one-leg-only forward cycle. Keep
+    # the hand-painted whole-character frames, but explicitly assemble two
+    # equal four-phase support-foot halves. The lighter near leg (layer 1)
+    # strides first; the darker far leg (layer 2) then visibly strides ahead
+    # while remaining occluded at the hip/knee by the near leg throughout.
+    walk_side = (normalize(extract("walk_side_near_v2.png", 8)[:4])
+                 + normalize(extract_far_leg_phases()))
+    # Protect against the original one-leg-only regression: frames 1-4 have
+    # the brighter near shoe in the forward/right slot, but frames 5-7 MUST
+    # visibly advance the darker far shoe into that same forward slot.
+    def right_minus_left(frame):
+        return boot_red_level(frame, 33, 53) - boot_red_level(frame, 12, 31)
+    if right_minus_left(walk_side[0]) <= 5:
+        raise ValueError("Near-side leg no longer leads the first half of the side gait")
+    if any(right_minus_left(walk_side[f]) >= -8 for f in (4, 5, 6)):
+        raise ValueError("The darker layer-2 leg must step forward during frames 5-7")
     walk_back = normalize(extract("walk_back.png", 8))
     idle_front = normalize(extract("idle_front.png", 8))
     talk_front = normalize(extract("talk_front.png", 8))
@@ -125,6 +187,8 @@ def main():
 
     audit = {"cell": CELL, "foot_anchor_y": FEET_Y, "frames_per_action": 8,
              "directions": DIRS, "actions": {}}
+    audit["side_gait_right_minus_left"] = [round(right_minus_left(frame), 1)
+                                           for frame in walk_side]
     for action, atlas in (("walk", walk), ("idle", idle), ("talk", talk), ("sit", sit)):
         records = []
         for direction in range(len(DIRS)):
@@ -159,7 +223,21 @@ def main():
             frames.append(frame.convert("RGB"))
     frames[0].save(OUT / "alex_actions.gif", save_all=True, append_images=frames[1:],
                    duration=durations, loop=0, optimize=False)
-    print("QA files: alex_qa.png, alex_actions.gif")
+
+    # Standalone right-facing sideways gait: the eight exact in-game frames,
+    # with the same feet/head axes and no interpolation or added in-betweens.
+    # The left-facing lane of the atlas mirrors this sequence.
+    sideways = []
+    for phase in range(8):
+        sheet_frame = walk.crop((phase * CELL, 2 * CELL,
+                                 (phase + 1) * CELL, 3 * CELL))
+        preview = Image.new("RGBA", (224, 224), "#e9eedf")
+        preview.alpha_composite(sheet_frame.resize((192, 192), Image.Resampling.NEAREST), (16, 16))
+        sideways.append(preview.convert("RGB"))
+    sideways[0].save(OUT / "alex_walk_side.gif", save_all=True,
+                     append_images=sideways[1:], duration=[120, 130] * 4,
+                     disposal=2, loop=0, optimize=False)
+    print("QA files: alex_qa.png, alex_actions.gif, alex_walk_side.gif")
 
 
 if __name__ == "__main__":

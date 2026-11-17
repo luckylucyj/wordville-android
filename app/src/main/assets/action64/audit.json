@@ -108,7 +108,7 @@
         "bbox": [
           20,
           6,
-          45,
+          46,
           60
         ],
         "head_axis": 32.5
@@ -117,12 +117,12 @@
         "direction": "down-right",
         "frame": 1,
         "bbox": [
-          20,
+          18,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 31.5
       },
       {
         "direction": "down-right",
@@ -130,10 +130,10 @@
         "bbox": [
           20,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "down-right",
@@ -141,32 +141,32 @@
         "bbox": [
           20,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "down-right",
         "frame": 4,
         "bbox": [
-          20,
+          19,
           6,
-          45,
+          48,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "down-right",
         "frame": 5,
         "bbox": [
-          20,
+          19,
           6,
           45,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "down-right",
@@ -196,7 +196,7 @@
         "bbox": [
           20,
           6,
-          45,
+          46,
           60
         ],
         "head_axis": 32.5
@@ -205,12 +205,12 @@
         "direction": "right",
         "frame": 1,
         "bbox": [
-          20,
+          18,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 31.5
       },
       {
         "direction": "right",
@@ -218,10 +218,10 @@
         "bbox": [
           20,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "right",
@@ -229,32 +229,32 @@
         "bbox": [
           20,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "right",
         "frame": 4,
         "bbox": [
-          20,
+          19,
           6,
-          45,
+          48,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "right",
         "frame": 5,
         "bbox": [
-          20,
+          19,
           6,
           45,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "right",
@@ -284,7 +284,7 @@
         "bbox": [
           20,
           6,
-          45,
+          46,
           60
         ],
         "head_axis": 32.5
@@ -293,12 +293,12 @@
         "direction": "up-right",
         "frame": 1,
         "bbox": [
-          20,
+          18,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 31.5
       },
       {
         "direction": "up-right",
@@ -306,10 +306,10 @@
         "bbox": [
           20,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "up-right",
@@ -317,32 +317,32 @@
         "bbox": [
           20,
           6,
-          45,
+          44,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "up-right",
         "frame": 4,
         "bbox": [
-          20,
+          19,
           6,
-          45,
+          48,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "up-right",
         "frame": 5,
         "bbox": [
-          20,
+          19,
           6,
           45,
           60
         ],
-        "head_axis": 32.5
+        "head_axis": 32.0
       },
       {
         "direction": "up-right",
@@ -458,7 +458,7 @@
         "direction": "up-left",
         "frame": 0,
         "bbox": [
-          19,
+          18,
           6,
           44,
           60
@@ -469,45 +469,45 @@
         "direction": "up-left",
         "frame": 1,
         "bbox": [
-          19,
+          20,
           6,
-          44,
+          46,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.5
       },
       {
         "direction": "up-left",
         "frame": 2,
         "bbox": [
-          19,
+          20,
           6,
           44,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "up-left",
         "frame": 3,
         "bbox": [
-          19,
+          20,
           6,
           44,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "up-left",
         "frame": 4,
         "bbox": [
-          19,
+          16,
           6,
-          44,
+          45,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "up-left",
@@ -515,10 +515,10 @@
         "bbox": [
           19,
           6,
-          44,
+          45,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "up-left",
@@ -546,7 +546,7 @@
         "direction": "left",
         "frame": 0,
         "bbox": [
-          19,
+          18,
           6,
           44,
           60
@@ -557,45 +557,45 @@
         "direction": "left",
         "frame": 1,
         "bbox": [
-          19,
+          20,
           6,
-          44,
+          46,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.5
       },
       {
         "direction": "left",
         "frame": 2,
         "bbox": [
-          19,
+          20,
           6,
           44,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "left",
         "frame": 3,
         "bbox": [
-          19,
+          20,
           6,
           44,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "left",
         "frame": 4,
         "bbox": [
-          19,
+          16,
           6,
-          44,
+          45,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "left",
@@ -603,10 +603,10 @@
         "bbox": [
           19,
           6,
-          44,
+          45,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "left",
@@ -634,7 +634,7 @@
         "direction": "down-left",
         "frame": 0,
         "bbox": [
-          19,
+          18,
           6,
           44,
           60
@@ -645,45 +645,45 @@
         "direction": "down-left",
         "frame": 1,
         "bbox": [
-          19,
+          20,
           6,
-          44,
+          46,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.5
       },
       {
         "direction": "down-left",
         "frame": 2,
         "bbox": [
-          19,
+          20,
           6,
           44,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "down-left",
         "frame": 3,
         "bbox": [
-          19,
+          20,
           6,
           44,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "down-left",
         "frame": 4,
         "bbox": [
-          19,
+          16,
           6,
-          44,
+          45,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "down-left",
@@ -691,10 +691,10 @@
         "bbox": [
           19,
           6,
-          44,
+          45,
           60
         ],
-        "head_axis": 31.5
+        "head_axis": 32.0
       },
       {
         "direction": "down-left",
@@ -2837,5 +2837,15 @@
         "head_axis": 32.5
       }
     ]
-  }
+  },
+  "side_gait_right_minus_left": [
+    7.9,
+    11.8,
+    11.5,
+    13.5,
+    -15.1,
+    -12.8,
+    -34.6,
+    17.6
+  ]
 }

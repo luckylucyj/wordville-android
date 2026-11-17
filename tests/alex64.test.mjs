@@ -63,6 +63,17 @@ test('all painted frames keep a fixed foot baseline and stable head axis',()=>{
  }
 });
 
+test('side walk alternates which leg reaches forward without promoting layer 2',()=>{
+ const audit=JSON.parse(readFileSync(new URL('../app/src/main/assets/action64/audit.json',import.meta.url)));
+ const contrast=audit.side_gait_right_minus_left;
+ assert.equal(contrast.length,8);
+ assert.ok(contrast[0]>5,'first stride places the brighter layer-1 boot ahead');
+ for(const phase of [4,5,6]){
+  assert.ok(contrast[phase]<-8,
+   `stride ${phase+1} must show the darker layer-2 boot advancing in back`);
+ }
+});
+
 test('Alex uses the 64px action image and ground-anchored draw destination',()=>{
  const ctx=mockContext(),p={id:'alex',direction:'down',walkDistance:0};
  const result=W.paint(ctx,p,120,240,{width:64,height:64,walking:false,action:'talk',phase:4});
