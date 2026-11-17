@@ -2,6 +2,8 @@
 (() => {
 const M=VillageModel,S=globalThis.WordvilleSchedule,canvas=document.getElementById('village-canvas'),ctx=canvas.getContext('2d');
 const panel=document.getElementById('village-dialogue'),feed=document.getElementById('village-feed');
+const zoomIn=document.getElementById('zoom-in'),zoomOut=document.getElementById('zoom-out');
+const MIN_ZOOM=1,MAX_ZOOM=2,ZOOM_STEP=.25;
 const residents=M.freshResidents();let mode='auto',schedulePreview='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day',viewZone='all',followId=null,frameHandle=null;
 const scheduleMinute=()=>schedulePreview==='auto'?S.minuteNow():Number(schedulePreview)*60;
 
@@ -194,7 +196,7 @@ function visitResident(id){
   globalThis.WordvillePlaces.pick(here,here==='home'?id:null);
   if(here!=='home')globalThis.WordvilleVenueRuntime?.focusResident?.(id);
  }else{
-  followId=id;viewZone='all';zoom=1.5;
+  followId=id;viewZone='all';setZoom(1.5);
   globalThis.WordvilleShell?.activate('town');
   const controls=document.querySelectorAll('[data-map-zone]');
   controls.forEach(button=>button.setAttribute('aria-pressed','false'));
@@ -207,16 +209,29 @@ function visitResident(id){
 function selectedPlace(){return selected?residents.find(p=>p.id===selected)?.schedulePlace:null;}
 const VISIBLE_RESIDENTS=new Set(M.people.map(person=>person.id));
 const MAP_ZONES={all:400,north:160,central:405,south:645};
+function setZoom(value){
+ zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,value));
+ zoomOut.disabled=zoom===MIN_ZOOM;
+ zoomIn.disabled=zoom===MAX_ZOOM;
+}
 function currentMapView(){
- const scale=(viewZone==='all'?Math.max(canvas.width/600,canvas.height/800):Math.max(canvas.width/600,canvas.height/800)*1.25)*zoom;
+ const {width:mapWidth,height:mapHeight}=globalThis.WordvilleHubMap.scale;
+ const {width,height}=canvas;
+ const cover=Math.max(width/mapWidth,height/mapHeight);
+ const scale=cover*(viewZone==='all'?1:1.25)*zoom;
  const follow=followId?residents.find(p=>p.id===followId):null;
- if(follow&&!follow.atVenue)return {scale,offsetX:canvas.width/2-follow.x*scale,offsetY:canvas.height/2-(follow.y-42)*scale};
- if(follow&&M.outdoorPlaces.has(follow.schedulePlace)){const {x,y}=displayPosition(follow);return {scale,offsetX:canvas.width/2-x*scale,offsetY:canvas.height/2-(y-42)*scale};}
- return {scale,offsetX:canvas.width/2-300*scale,offsetY:canvas.height/2-MAP_ZONES[viewZone]*scale};
+ const target=!follow||!follow.atVenue?follow:
+  M.outdoorPlaces.has(follow.schedulePlace)?displayPosition(follow):null;
+ const centerX=target?.x??mapWidth/2;
+ const centerY=target?target.y-42:MAP_ZONES[viewZone];
+ // Following a resident or selecting a zone must keep every viewport edge inside the map.
+ const offsetX=Math.min(0,Math.max(width-mapWidth*scale,width/2-centerX*scale));
+ const offsetY=Math.min(0,Math.max(height-mapHeight*scale,height/2-centerY*scale));
+ return {scale,offsetX,offsetY};
 }
 function setMapZone(zone){
  if(!Object.hasOwn(MAP_ZONES,zone))return;
- viewZone=zone;zoom=1;followId=null;
+ viewZone=zone;setZoom(MIN_ZOOM);followId=null;
  document.querySelectorAll('[data-map-zone]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mapZone===zone)));
 }
 let showMapCollision=false;
@@ -330,7 +345,9 @@ document.getElementById('wv-sched-reset').addEventListener('click',()=>{
 M.syncSchedule(residents,scheduleMinute(),{teleport:true});
 
 document.getElementById('village-time-mode').addEventListener('change',e=>{mode=e.target.value;syncTime();});
-document.getElementById('zoom-in').addEventListener('click',()=>{zoom=Math.min(2,zoom+.25);});document.getElementById('zoom-out').addEventListener('click',()=>{zoom=Math.max(1,zoom-.25);});
+zoomIn.addEventListener('click',()=>setZoom(zoom+ZOOM_STEP));
+zoomOut.addEventListener('click',()=>setZoom(zoom-ZOOM_STEP));
+setZoom(zoom);
 document.getElementById('pause-village').addEventListener('click',e=>{paused=!paused;e.currentTarget.textContent=paused?'주민 움직이기':'잠시 멈추기';e.currentTarget.setAttribute('aria-pressed',String(paused));});
 document.getElementById('resident-study').addEventListener('click',()=>{if(selected)document.dispatchEvent(new CustomEvent('village-study',{detail:{residentId:selected,choose:true}}));});
 function resumeVillage(){

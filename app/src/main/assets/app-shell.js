@@ -50,8 +50,10 @@ const studyPicker=get('wv-resident-study-picker');if(studyPicker)residents.appen
 const jumpStatus=get('wv-visit-feedback');if(jumpStatus)residents.append(jumpStatus);
 village.append(residents);
 const wrap=document.querySelector('.canvas-wrap');
+const mapHeader=document.createElement('div');mapHeader.className='wv-map-header';
+wrap.prepend(mapHeader);
 const timeBadge=document.querySelector('.time-badge');
-if(timeBadge){timeBadge.classList.add('wv-world-clock');wrap.append(timeBadge);}
+if(timeBadge){timeBadge.classList.add('wv-world-clock');mapHeader.append(timeBadge);}
 const controls=document.querySelector('.village-controls');
 const timeNote=document.querySelector('.time-note');
 const toolButton=document.createElement('button');
@@ -61,13 +63,15 @@ toolButton.textContent='⚙';
 toolButton.title='마을 시간과 주민 움직임';
 toolButton.setAttribute('aria-label','마을 설정 펼치기');
 toolButton.setAttribute('aria-expanded','false');
-wrap.append(toolButton);
+mapHeader.append(toolButton);
+const mapToolbar=document.createElement('div');mapToolbar.className='wv-map-toolbar';
 const exploreButton=document.createElement('button');
 exploreButton.id='wv-visit-places';exploreButton.type='button';
 exploreButton.textContent='🏠 장소 둘러보기';
 exploreButton.setAttribute('aria-label','마을의 장소 17곳과 주민의 집 선택하기');
 exploreButton.addEventListener('click',()=>activate('places'));
-wrap.append(exploreButton);
+mapToolbar.append(exploreButton,wrap.querySelector('.zoom-controls'));
+wrap.append(mapToolbar);
 const toolPanel=document.createElement('div');
 toolPanel.id='wv-map-tool-panel';toolPanel.hidden=true;
 if(controls)toolPanel.append(controls);

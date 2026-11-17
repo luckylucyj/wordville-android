@@ -322,6 +322,40 @@ const assert = require('node:assert/strict');
   await page.locator('#wv-map-tool-panel [data-map-zone="all"]').click();
   assert.equal(await page.evaluate(()=>WordvilleVillage.zone),'all');
   await page.locator('#wv-map-tools').click();
+  // Follow a resident near the map edge and repeatedly zoom out on mobile.
+  const zoomChecks=await page.evaluate(async()=>{
+   const village=WordvilleVillage,canvas=document.getElementById('village-canvas');
+   const resident=village.residents.find(p=>p.id==='sam');
+   const saved={x:resident.x,y:resident.y,atVenue:resident.atVenue};
+   const pause=document.getElementById('pause-village');
+   pause.click();
+   try{
+    Object.assign(resident,{x:535,y:690,atVenue:false});
+    village.visitResident('sam');
+    const minus=document.getElementById('zoom-out');
+    const valid=[];
+    for(let step=0;step<6;step++){
+     minus.click();
+     const {offsetX,offsetY,scale}=village.mapView();
+     const {width,height}=WordvilleHubMap.scale;
+     valid.push(offsetX<=0&&offsetY<=0&&offsetX+width*scale>=canvas.width-.01&&offsetY+height*scale>=canvas.height-.01);
+    }
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const context=canvas.getContext('2d');
+    const samples=[[0,0],[canvas.width-1,0],[0,canvas.height-1],[canvas.width-1,canvas.height-1]];
+    const noBlankCorners=samples.every(([x,y])=>Array.from(context.getImageData(x,y,1,1).data).join()!=='59,81,70,255');
+    const map=canvas.getBoundingClientRect();
+    const buttons=[...document.querySelectorAll('.wv-map-toolbar button')];
+    const controlsOutside=buttons.every(button=>button.getBoundingClientRect().top>=map.bottom)&&
+      document.getElementById('wv-map-tools').getBoundingClientRect().bottom<=map.top;
+    return {valid:valid.every(Boolean),noBlankCorners,controlsOutside,zoom:village.zoom,minimumDisabled:minus.disabled};
+   }finally{
+    Object.assign(resident,saved);
+    village.setZone('all');
+    pause.click();
+   }
+  });
+  assert.deepEqual(zoomChecks,{valid:true,noBlankCorners:true,controlsOutside:true,zoom:1,minimumDisabled:true});
   // Clicking a map landmark must navigate the entire app to the corresponding venue.
   const visited=await page.evaluate(()=>{
     const c=document.getElementById('village-canvas'),r=c.getBoundingClientRect();
