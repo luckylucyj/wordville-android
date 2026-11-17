@@ -126,3 +126,8 @@ footer{color:#735940}
 .wv-portrait,.wv-place-person .wv-portrait{background-image:url('portraits/wordville-portraits-original.png')!important;background-size:400% 300%!important;image-rendering:auto!important;filter:none!important;transform:none!important;background-color:#fff7e8}
 #village-canvas{image-rendering:auto!important}
 @media(max-width:699px){.wv-residents-screen .resident-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px}.wv-residents-screen .wv-portrait{max-width:none}.wv-residents-screen:not([data-mode="portraits"]) .resident-list button{min-height:185px;padding:8px}}
+.wv-portrait.wv-guest-portrait,.wv-place-person .wv-portrait.wv-guest-portrait{
+ background-image:url('guest-residents/portraits.png')!important;
+ background-size:500% 200%!important;
+ image-rendering:pixelated!important;
+}

@@ -6,7 +6,17 @@ const people=[
  ['sebastian','세바스찬','작업실','equipment','#565980','#292b41'],['shane','셰인','식료품점','shipment','#685c9a','#3a3446'],
  ['haley','헤일리','사진관','available','#dd8d92','#e2bf58'],['leah','레아','공방','purchase','#9a7352','#a55132'],
  ['maru','마루','연구실','maintenance','#7b8aa9','#663e39'],['penny','페니','도서관','deadline','#bc8951','#b96639'],
- ['abigail','애비게일','광장','reservation','#836aa1','#895995'],['emily','에밀리','재봉실','customer','#b96463','#4d74ab']
+ ['abigail','애비게일','광장','reservation','#836aa1','#895995'],['emily','에밀리','재봉실','customer','#b96463','#4d74ab'],
+ ['chiikawa','치이카와','공원','available','#f4ebee','#fff6ef'],
+ ['hachiware','하치와레','서점','purchase','#5795cd','#3d7bb8'],
+ ['usagi','우사기','마을 광장','attend','#e5b75e','#f7dd91'],
+ ['rakko','랏코','헬스장','equipment','#a58971','#f6e3d1'],
+ ['kurimanju','쿠리만쥬','카페','customer','#c3905e','#9f6242'],
+ ['momo','히나모리 모모','도서관','deadline','#494659','#30283c'],
+ ['toshiro','히츠가야 토시로','공원','schedule','#78a7ab','#e9f1ef'],
+ ['aizen','아이젠','도서관','application','#69564e','#7a503a'],
+ ['homura','호무라','서점','reservation','#777091','#3c3059'],
+ ['madoka','마도카','식물원','maintenance','#d979a4','#e985aa']
 ].map(([id,name,home,word,shirt,hair],i)=>({id,name,home,word,shirt,hair,skin:['#edbe98','#d19b78','#f0c8a2','#b9805e'][i%4]}));
 // Coordinates are the 600×800 authored hub scene. Routes and the fountain share world units.
 const fountain={x:303,y:470,rx:112,ry:73};
@@ -108,6 +118,14 @@ const entranceNode=Object.freeze({
  market:4,square:0,workshop:5,park:1
 });
 const outdoorPlaces=new Set(['square','park']);
+const preferredCompanions=new Map([['momo','toshiro'],['toshiro','momo']]);
+const eveningWalk={hour:17,place:'park'};
+function hasEveningWalk(id,slot,minute){
+ const partner=preferredCompanions.get(id);
+ if(!partner||slot.custom||slot.hour!==eveningWalk.hour||slot.place!==eveningWalk.place)return false;
+ const companionSlot=schedule.at(partner,minute);
+ return !companionSlot.custom&&companionSlot.place===eveningWalk.place;
+}
 function destinationFor(p,place){
  const node=place==='home'?p.homeNode:entranceNode[place];
  if(!Number.isInteger(node)||!nodes[node])throw Error('Unknown destination: '+place);
@@ -125,7 +143,9 @@ function syncSchedule(residents,minute,{teleport=false}={}){
   p.activity=slot.activity;p.targetNode=goal;
   p.chat=0;p.partner=null;p.wait=0;p.onStairs=false;
   p.isMoving=false;p.activityState='travel';
-  if(teleport){
+  // A shared appointment must start on time even if the two approach
+  // along congested paths. Custom schedules continue to use ordinary routing.
+  if(teleport||hasEveningWalk(p.id,slot,minute)){
    p.node=goal;p.x=nodes[goal].x;p.y=nodes[goal].y;
    p.route=[];p.atVenue=true;p.activityState='doing';
    continue;
@@ -135,7 +155,9 @@ function syncSchedule(residents,minute,{teleport=false}={}){
   if(p.atVenue)p.activityState='doing';
  }
 }
-function freshResidents(){return people.map((p,i)=>{const ni=[0,1,2,3,4,5,6,7,10,11,12,13][i];const n=nodes[ni];return {...p,x:n.x,y:n.y,node:ni,homeNode:[3,4,15,16,3,4,15,16,3,4,15,16][i],schedulePlace:null,scheduleHour:null,scheduleKey:'',targetNode:null,atVenue:false,activity:'',activityState:'travel',route:[],wait:i*.6,chat:0,partner:null,cooldown:0,steps:i*.18,walkDistance:0,stairPhase:0,onStairs:false,heading:1,direction:'down',facing:'down',movementDirection:'down',isMoving:false,visits:0};});}
+const spawnNodes=[0,1,2,3,4,5,6,7,10,11,12,13,8,9,14,15,16,17,18];
+const homeNodes=[3,4,15,16];
+function freshResidents(){return people.map((p,i)=>{const ni=spawnNodes[i%spawnNodes.length];const n=nodes[ni];return {...p,x:n.x,y:n.y,node:ni,homeNode:homeNodes[i%homeNodes.length],schedulePlace:null,scheduleHour:null,scheduleKey:'',targetNode:null,atVenue:false,activity:'',activityState:'travel',route:[],wait:i*.6,chat:0,partner:null,cooldown:0,steps:i*.18,walkDistance:0,stairPhase:0,onStairs:false,heading:1,direction:'down',facing:'down',movementDirection:'down',isMoving:false,visits:0};});}
 function tick(residents,dt,onMeet,options={}){
  const scheduled=Boolean(schedule&&Number.isFinite(options?.minuteOfDay));
  if(scheduled)syncSchedule(residents,options.minuteOfDay,{teleport:options.teleport===true});
@@ -176,10 +198,29 @@ function tick(residents,dt,onMeet,options={}){
    p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;
   }
  }
- for(let i=0;i<residents.length;i++){const a=residents[i];if(a.chat||a.cooldown>0||a.onStairs)continue;for(let j=i+1;j<residents.length;j++){const b=residents[j];if(b.chat||b.cooldown>0||b.onStairs)continue;
-  if(scheduled&&(!a.atVenue||!b.atVenue||!outdoorPlaces.has(a.schedulePlace)||a.schedulePlace!==b.schedulePlace))continue;if(Math.hypot(a.x-b.x,a.y-b.y)<29){a.chat=b.chat=3.5;a.cooldown=b.cooldown=15;a.partner=b.id;b.partner=a.id;onMeet?.(a,b);break;}}}
+ const available=p=>p&&!p.chat&&p.cooldown<=0&&!p.onStairs;
+ function tryMeet(a,b){
+  if(!available(a)||!available(b))return false;
+  if(scheduled&&(!a.atVenue||!b.atVenue||!outdoorPlaces.has(a.schedulePlace)||a.schedulePlace!==b.schedulePlace))return false;
+  if(Math.hypot(a.x-b.x,a.y-b.y)>=29)return false;
+  a.chat=b.chat=3.5;
+  a.cooldown=b.cooldown=15;
+  a.partner=b.id;
+  b.partner=a.id;
+  onMeet?.(a,b);
+  return true;
+ }
+ for(const a of residents){
+  const preferred=preferredCompanions.get(a.id);
+  if(preferred)tryMeet(a,residents.find(b=>b.id===preferred));
+ }
+ for(let i=0;i<residents.length;i++){
+  const a=residents[i];
+  if(!available(a))continue;
+  for(let j=i+1;j<residents.length;j++)if(tryMeet(a,residents[j]))break;
+ }
  for(const p of residents)p.cooldown=Math.max(0,(p.cooldown||0)-dt);
 }
-const api={people,nodes,edges,links,fountain,FOOT_RADIUS,decorations,collidesDecoration,segmentHitsDecoration,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,destinationFor,syncSchedule};
+const api={people,nodes,edges,links,fountain,FOOT_RADIUS,decorations,collidesDecoration,segmentHitsDecoration,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,preferredCompanions,destinationFor,syncSchedule};
 root.VillageModel=api;
 })(globalThis);

@@ -6,6 +6,19 @@
 const W=root.WordvilleWalk;if(!W)return;
 const residentIds=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily'];
 const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'];
+const guestIds=(root.VillageModel?.people||[]).filter(p=>!residentIds.includes(p.id)).map(p=>p.id);
+const guestOrder=new Map(guestIds.map((id,index)=>[id,index]));
+const guestSheets={};
+if(guestIds.length){
+ for(const kind of ['walk','idle']){
+  const image=new Image();
+  image.decoding='async';
+  image.src='guest-residents/'+kind+'.png';
+  guestSheets[kind]=image;
+ }
+}
+const previewPeople=[...residentIds.map((id,i)=>({id,name:labels[i]})),
+ ...guestIds.map(id=>root.VillageModel.people.find(p=>p.id===id))];
 const directions=['down','down-right','right','up-right','up','up-left','left','down-left'];
 const cell=48,anchorY=43,frames=8,stepDistance=2.25,fps=8;
 const phases=['contact-left','down-left','passing-left','up-left','contact-right','down-right','passing-right','up-right'];
@@ -31,13 +44,27 @@ function getFrame(p,moving,ms){
  const time=Number.isFinite(ms)?ms:(typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now());
  return Math.floor((Math.max(0,time)+1e-6)/125)%frames;
 }
-function getCell(id,direction,frame){
- if(!sheets[id]||!directions.includes(direction)||!Number.isInteger(frame)||frame<0||frame>=frames)return null;
- return {x:frame*cell,y:directions.indexOf(direction)*cell,width:cell,height:cell,anchorX:24,anchorY};
+function sourceCell(id,direction,frame,idle=false){
+ const guest=guestOrder.get(id), row=directions.indexOf(direction);
+ const sheet=idle?idleSheets[id]:sheets[id];
+ const frameLimit=idle?idleFrameCount:frames;
+ if((guest===undefined&&!sheet)||row<0||!Number.isInteger(frame)||frame<0||frame>=frameLimit)return null;
+ return {
+  x:guest!==undefined&&idle?0:frame*cell,
+  y:((guest??0)*directions.length+row)*cell,
+  width:cell,height:cell,anchorX:24,anchorY
+ };
 }
-function getIdleCell(id,direction,frame){
- if(!idleSheets[id]||!directions.includes(direction)||!Number.isInteger(frame)||frame<0||frame>=idleFrameCount)return null;
- return {x:frame*cell,y:directions.indexOf(direction)*cell,width:cell,height:cell,anchorX:24,anchorY};
+const getCell=(id,direction,frame)=>sourceCell(id,direction,frame);
+const getIdleCell=(id,direction,frame)=>sourceCell(id,direction,frame,true);
+function loadedSheet(id,walking){
+ if(guestOrder.has(id)){
+  const image=guestSheets[walking?'walk':'idle'];
+  return image.complete&&image.naturalWidth===(walking?frames*cell:cell)
+   &&image.naturalHeight===guestIds.length*directions.length*cell?image:null;
+ }
+ const image=walking?sheets[id]:idleSheets[id];
+ return (walking?ready(image):idleReady(image))?image:null;
 }
 function directionForSprite(p,walking=false){
  const move=p?.movementDirection;
@@ -47,9 +74,9 @@ function directionForSprite(p,walking=false){
 }
 function paint(c,p,x,y,o={}){
  const id=p?.id||p,walking=o.walking===true;
- const img=walking?sheets[id]:idleSheets[id];
+ const img=loadedSheet(id,walking);
  // Neutral reference-frame fallback: never show a walking contact pose at rest.
- if(!(walking?ready(img):idleReady(img)))return existingPaint(c,p,x,y,o);
+ if(!img)return guestOrder.has(id)?(walking&&paint(c,p,x,y,{...o,walking:false})):existingPaint(c,p,x,y,o);
  // A walking actor has exactly ONE direction for face, torso and feet.
  // The model records movementDirection from the same physical movement vector.
  const direction=directionForSprite(p,walking);
@@ -70,7 +97,7 @@ function directionFromDelta(dx,dy){
  return directions[Math.round(degrees/45)%8];
 }
 Object.assign(W,{paint,frameFor:getFrame,frameSize:{width:48,height:48},anchorY,groundY:anchorY,frameCount:frames,stepDistance,fps,walk48Sheets:sheets,walk48Directions:directions,walk48Cell:getCell,walk48Phases:phases,idle48Sheets:idleSheets,idle48Cell:getIdleCell,idle48Frame:idleFrameFor,idle48Phases:idlePhases,idle48FrameCount:idleFrameCount,directionForSprite,directionFromDelta});
-root.WordvilleWalk48={ids:residentIds,labels,directions,sheets,idleSheets,getFrame,getCell,getIdleCell,idleFrameFor,directionForSprite,directionFromDelta,paint,frameSize:{width:48,height:48},anchorY,fps};
+root.WordvilleWalk48={ids:residentIds,labels,directions,sheets,idleSheets,getFrame,getCell,getIdleCell,idleFrameFor,directionForSprite,directionFromDelta,paint,frameSize:{width:48,height:48},guestIds,guestSheets,anchorY,fps};
 function installPreview(){
  const zones=document.querySelector('.village-controls')||document.querySelector('.wv-map-zones');if(!zones)return;
  const old=document.getElementById('wv-walk-preview');if(old)old.remove();
@@ -79,7 +106,7 @@ function installPreview(){
  const title=document.createElement('summary');title.textContent='주민 보행 검사 · 얼굴·발 동일 방향 · 8자 걸음 제거';title.style.cssText='font-weight:700;cursor:pointer';
  const inputs=document.createElement('div');inputs.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
  const person=document.createElement('select');person.setAttribute('aria-label','주민 선택');
- residentIds.forEach((id,i)=>{const opt=document.createElement('option');opt.value=id;opt.textContent=labels[i];person.add(opt);});
+ previewPeople.forEach(({id,name})=>{const opt=document.createElement('option');opt.value=id;opt.textContent=name;person.add(opt);});
  const facing=document.createElement('select');facing.setAttribute('aria-label','8방향 선택');
  directions.forEach((id)=>{const opt=document.createElement('option');opt.value=id;opt.textContent=id;facing.add(opt);});facing.value='right';
  const motion=document.createElement('select');motion.setAttribute('aria-label','움직임 상태');
@@ -87,11 +114,11 @@ function installPreview(){
  inputs.append(person,facing,motion);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=168;canvas.style.cssText='width:256px;max-width:100%;height:auto;image-rendering:pixelated;background:#dce9db;border-radius:8px';
  const caption=document.createElement('p');caption.style.cssText='font-size:12px;margin:6px 0 0';
- const galleryButton=document.createElement('button');galleryButton.type='button';galleryButton.textContent='12명 한꺼번에 보기';
+ const galleryButton=document.createElement('button');galleryButton.type='button';galleryButton.textContent='모든 주민 한꺼번에 보기';
  galleryButton.style.cssText='margin:10px 0;padding:6px 10px;border:1px solid #85694a;border-radius:8px;background:#f0dbb6;color:#46372a';
- const gallery=document.createElement('canvas');gallery.width=320;gallery.height=288;gallery.hidden=true;
- gallery.setAttribute('aria-label','12명 주민 걷기 프레임 비교');gallery.style.cssText='max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
- galleryButton.addEventListener('click',()=>{gallery.hidden=!gallery.hidden;galleryButton.textContent=gallery.hidden?'12명 한꺼번에 보기':'12명 보기 닫기';});
+ const gallery=document.createElement('canvas');gallery.width=320;gallery.height=Math.ceil(previewPeople.length/4)*96;gallery.hidden=true;
+ gallery.setAttribute('aria-label','모든 주민 걷기 프레임 비교');gallery.style.cssText='max-width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#e1ead7';
+ galleryButton.addEventListener('click',()=>{gallery.hidden=!gallery.hidden;galleryButton.textContent=gallery.hidden?'모든 주민 한꺼번에 보기':'주민 비교 닫기';});
  panel.append(title,inputs,canvas,caption,galleryButton,gallery);zones.after(panel);
  const c=canvas.getContext('2d');if(!c)return;
  function animate(ms){
@@ -101,19 +128,18 @@ function installPreview(){
    c.fillStyle='#98aF92';c.fillRect(0,143,256,25);
    const moving=motion.value==='walk',id=person.value;
    const beat=moving?Math.floor(ms/125)%frames:0;
-   const im=moving?sheets[id]:idleSheets[id];
-   if(moving?ready(im):idleReady(im)){
+   if(loadedSheet(id,moving)){
     paint(c,{id,direction:facing.value,walkDistance:beat*stepDistance},128,142,{width:96,height:96,walking:moving,phase:beat,idlePhase:beat});
     caption.textContent='PNG 시트에서 재생 · '+(moving?phases[beat]:idlePhases[beat])+' · '+(beat+1)+'/'+(moving?frames:idleFrameCount)+' · '+(moving?'8 FPS':'2.5 FPS')+' · 발 고정 y=43';
    }else caption.textContent='스프라이트시트 불러오는 중. 자산 누락 시 APK 빌드 결과를 확인하세요.';
    if(!gallery.hidden){
     const g=gallery.getContext('2d');
-    if(g){g.imageSmoothingEnabled=false;g.fillStyle='#e1ead7';g.fillRect(0,0,320,288);
-      for(let i=0;i<residentIds.length;i++){
+    if(g){g.imageSmoothingEnabled=false;g.fillStyle='#e1ead7';g.fillRect(0,0,gallery.width,gallery.height);
+      for(let i=0;i<previewPeople.length;i++){
        const gx=i%4*80+40,gy=Math.floor(i/4)*96+64;
-       paint(g,{id:residentIds[i],direction:facing.value,walkDistance:beat*stepDistance},gx,gy,{width:48,height:48,walking:moving,phase:beat,idlePhase:beat});
+       paint(g,{id:previewPeople[i].id,direction:facing.value,walkDistance:beat*stepDistance},gx,gy,{width:48,height:48,walking:moving,phase:beat,idlePhase:beat});
        g.textAlign='center';g.font='12px sans-serif';g.fillStyle='#47392f';
-       g.fillText(labels[i],gx,Math.floor(i/4)*96+85);
+       g.fillText(root.WordvilleI18n?.translate(previewPeople[i].name)||previewPeople[i].name,gx,Math.floor(i/4)*96+85,76);
       }
     }
    }

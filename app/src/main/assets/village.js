@@ -44,11 +44,25 @@ function ground(p){
  r(11,375,82,5,p.shade);r(21,358,43,16,'#8b7761');r(17,352,51,8,'#b86f64');for(let i=0;i<6;i++)r(25+i*6,361,4,7,['#d2ba73','#859e91','#a58f98'][i%3]);
  for(const [x,y] of [[527,370],[556,389]]){r(x-9,y-9,18,3,'#a88e67');r(x-1,y-6,2,10,'#665e55');r(x-15,y-4,5,3,'#778c70');r(x+10,y-4,5,3,'#778c70');}
 }
+const outdoorPositions=new Map();
+function arrangeOutdoorResidents(){
+ outdoorPositions.clear();
+ for(const place of M.outdoorPlaces){
+  const here=residents.filter(p=>p.atVenue&&p.schedulePlace===place&&!p.isMoving);
+  if(here.length<2)continue;
+  const columns=Math.min(4,here.length);
+  here.forEach((p,i)=>outdoorPositions.set(p.id,{
+   x:p.x+(i%columns-(columns-1)/2)*31,
+   y:p.y+Math.floor(i/columns)*30
+  }));
+ }
+}
+function displayPosition(p){return outdoorPositions.get(p.id)||p;}
 function sprite(p){
  // A scheduled villager inside a building (or asleep at home) is drawn in
  // that indoor place, not simultaneously outside in the town square.
  if(p.atVenue&&!M.outdoorPlaces.has(p.schedulePlace))return;
- const x=p.x,y=p.y,walking=!paused&&p.chat<=0&&p.isMoving===true;
+ const {x,y}=displayPosition(p),walking=!paused&&p.chat<=0&&p.isMoving===true;
  const assets=globalThis.WordvillePortraits,img=assets?.spriteImage,index=assets?.order?.[p.id];
  // 48px frame with an approximately 40px tall resident; fixed ground anchor.
  const width=48,height=48;
@@ -76,7 +90,14 @@ function sprite(p){
   ctx.strokeStyle='#ffe08b';ctx.lineWidth=2;
   ctx.strokeRect(Math.round(x-width/2-2),Math.round(y-height+4),width+4,height+7);
  }
- if(p.chat>0){r(x-11,y-height-18,22,13,'#f8f1dc');text('···',x,y-height-9,8);}
+ if(p.chat>0){
+  r(x-11,y-height-18,22,13,'#f8f1dc');
+  if(sharedFeelings(p)){
+   const red='#bc4666', top=y-height-15;
+   r(x-4,top,3,2,red);r(x+1,top,3,2,red);
+   r(x-4,top+2,8,2,red);r(x-3,top+4,6,1,red);r(x-2,top+5,4,1,red);r(x-1,top+6,2,1,red);
+  }else text('···',x,y-height-9,8);
+ }
  if(zoom>1.6||p.id===selected){
   const shownName=globalThis.WordvilleI18n?.translate(p.name)||p.name;
   const w=shownName.length*7+8;
@@ -95,8 +116,13 @@ function syncTime(){
  if(document.getElementById('wv-resident-schedule')?.open)renderScheduleRows();
  document.dispatchEvent(new CustomEvent('wordville-time-changed',{detail:{period,minute:clock}}));
 }
-function select(id){selected=id;const gallery=document.getElementById('wv-residents-view');if(gallery&&panel.parentElement!==gallery)gallery.append(panel);if(document.body.dataset.screen==='residents'&&gallery)gallery.dataset.mode='dialogue';const p=residents.find(r=>r.id===id);const partner=residents.find(r=>r.id===p.partner);document.getElementById('speaker').textContent=p.name;const slot=S.at(id,scheduleMinute());document.getElementById('resident-home').textContent='📍 '+slot.placeName+' · '+slot.activity;document.getElementById('resident-line').textContent=p.chat>0&&partner?`${partner.name}와 대화 중이에요.`:p.atVenue?`${slot.placeName}에서 ${slot.activity} 중이에요.`:`${slot.placeName}(으)로 이동하고 있어요.`;document.getElementById('resident-english').textContent=p.chat>0?'Would you like to study together?':'Let’s learn a new word together.';document.getElementById('resident-korean').textContent=p.chat>0?'함께 공부할래요?':'새로운 단어를 함께 배워요.';panel.hidden=false;document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id}}));}
-function meet(a,b){chatCount++;const messages=[['Let’s meet at the cafe.','카페에서 만나요.'],['Can you confirm the reservation?','예약을 확인해 줄 수 있나요?'],['The shipment will arrive tomorrow.','배송 물품은 내일 도착해요.'],['The appointment is at ten.','약속은 10시예요.'],['Let’s review our schedule.','우리 일정을 확인해요.']];const [en,ko]=messages[(chatCount-1)%messages.length];const li=document.createElement('li');li.textContent=`${a.name} ↔ ${b.name} · ${ko}`;feed.prepend(li);while(feed.children.length>5)feed.lastChild.remove();document.getElementById('conversation-count').textContent=chatCount+'번의 대화';if(selected===a.id||selected===b.id){const p=selected===a.id?a:b;document.getElementById('speaker').textContent=p.name;document.getElementById('resident-line').textContent=`${a.name}와 ${b.name}의 대화`;document.getElementById('resident-english').textContent=en;document.getElementById('resident-korean').textContent=ko;panel.hidden=false;}}
+const meetingLines=[
+ ['I always look forward to our walks, Toshiro.','토시로, 너와 함께 걷는 시간이 늘 기다려져.'],
+ ['Me too, Momo. I’m glad I get to spend this time with you.','나도 그래, 모모. 너와 이 시간을 함께 보낼 수 있어서 좋아.']
+];
+function sharedFeelings(p){return p.chat>0&&M.preferredCompanions.get(p.id)===p.partner;}
+function select(id){selected=id;const gallery=document.getElementById('wv-residents-view');if(gallery&&panel.parentElement!==gallery)gallery.append(panel);if(document.body.dataset.screen==='residents'&&gallery)gallery.dataset.mode='dialogue';const p=residents.find(r=>r.id===id);const partner=residents.find(r=>r.id===p.partner);document.getElementById('speaker').textContent=p.name;const slot=S.at(id,scheduleMinute());document.getElementById('resident-home').textContent='📍 '+slot.placeName+' · '+slot.activity;document.getElementById('resident-line').textContent=sharedFeelings(p)?'서로에게 마음을 전하는 중이에요.':p.chat>0&&partner?`${partner.name}와 대화 중이에요.`:p.atVenue?`${slot.placeName}에서 ${slot.activity} 중이에요.`:`${slot.placeName}(으)로 이동하고 있어요.`;const line=sharedFeelings(p)?meetingLines[p.id==='momo'?0:1]:p.chat>0?['Would you like to study together?','함께 공부할래요?']:['Let’s learn a new word together.','새로운 단어를 함께 배워요.'];document.getElementById('resident-english').textContent=line[0];document.getElementById('resident-korean').textContent=line[1];panel.hidden=false;document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id}}));}
+function meet(a,b){chatCount++;const messages=[['Let’s meet at the cafe.','카페에서 만나요.'],['Can you confirm the reservation?','예약을 확인해 줄 수 있나요?'],['The shipment will arrive tomorrow.','배송 물품은 내일 도착해요.'],['The appointment is at ten.','약속은 10시예요.'],['Let’s review our schedule.','우리 일정을 확인해요.']];const special=sharedFeelings(a);const [en,ko]=special?meetingLines[0]:messages[(chatCount-1)%messages.length];const li=document.createElement('li');li.textContent=`${a.name} ↔ ${b.name} · ${special?meetingLines.map(line=>line[1]).join(' / '):ko}`;feed.prepend(li);while(feed.children.length>5)feed.lastChild.remove();document.getElementById('conversation-count').textContent=chatCount+'번의 대화';if(selected===a.id||selected===b.id){const p=selected===a.id?a:b;document.getElementById('speaker').textContent=p.name;document.getElementById('resident-line').textContent=`${a.name}와 ${b.name}의 대화`;const line=special?meetingLines[p.id==='momo'?0:1]:[en,ko];document.getElementById('resident-english').textContent=line[0];document.getElementById('resident-korean').textContent=line[1];panel.hidden=false;}}
 
 // Clicking a portrait is navigation, not just selection of a canned word.
 function visitResident(id){
@@ -130,7 +156,7 @@ function currentMapView(){
  const scale=(viewZone==='all'?Math.max(canvas.width/600,canvas.height/800):Math.max(canvas.width/600,canvas.height/800)*1.25)*zoom;
  const follow=followId?residents.find(p=>p.id===followId):null;
  if(follow&&!follow.atVenue)return {scale,offsetX:canvas.width/2-follow.x*scale,offsetY:canvas.height/2-(follow.y-42)*scale};
- if(follow&&M.outdoorPlaces.has(follow.schedulePlace))return {scale,offsetX:canvas.width/2-follow.x*scale,offsetY:canvas.height/2-(follow.y-42)*scale};
+ if(follow&&M.outdoorPlaces.has(follow.schedulePlace)){const {x,y}=displayPosition(follow);return {scale,offsetX:canvas.width/2-x*scale,offsetY:canvas.height/2-(y-42)*scale};}
  return {scale,offsetX:canvas.width/2-300*scale,offsetY:canvas.height/2-MAP_ZONES[viewZone]*scale};
 }
 function setMapZone(zone){
@@ -161,9 +187,9 @@ function drawMapCollision(){
  }
  ctx.restore();
 }
-function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));drawMapCollision();for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>a.y-b.y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();frameHandle=requestAnimationFrame(frame);}
+function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();arrangeOutdoorResidents();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));drawMapCollision();for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>displayPosition(a).y-displayPosition(b).y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();frameHandle=requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>{if(document.body.dataset.screen==='residents'&&globalThis.WordvilleVillage?.visitResident){globalThis.WordvilleVillage.visitResident(p.id);}else select(p.id);});document.getElementById('resident-list').append(b);}
-canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=[...residents].filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
+canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=residents.filter(p=>!p.atVenue||M.outdoorPlaces.has(p.schedulePlace)).map(p=>({id:p.id,...displayPosition(p)})).filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 // The reference painting has different entrances from the generated fallback map.
 const art=globalThis.WordvilleWorldArt;
 const landmarks=art?.hubLandmarks?.length?art.hubLandmarks:(art?.reference?.complete&&art.reference.naturalWidth>0?art.referenceLandmarks:art?.landmarks)||[];

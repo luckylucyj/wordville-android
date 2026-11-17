@@ -48,7 +48,7 @@ function reset(){
  const prioritized=focusedResidentId&&guests.includes(focusedResidentId)?[focusedResidentId,...guests.filter(id=>id!==focusedResidentId)]:guests;
  const roster=['visitor',...prioritized];
  const spots=[[.12,.80],[.84,.81],[.19,.89],[.78,.87],[.38,.80],
-              [.65,.78],[.30,.65],[.7,.65],[.47,.87],[.53,.65]];
+              [.65,.78],[.30,.65],[.7,.65],[.47,.87],[.53,.65],[.4,.53],[.62,.54]];
  actors=[];announce('');
  for(let i=0;i<Math.min(spots.length,roster.length);i++){
   const id=roster[i],npc=id!=='visitor';

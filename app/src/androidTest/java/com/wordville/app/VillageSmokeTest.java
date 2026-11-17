@@ -46,7 +46,7 @@ public class VillageSmokeTest {
   assertEquals("32",eval(web,"document.getElementById('day-filter').options.length"));
   assertEquals("true",eval(web,"document.getElementById('next-page').click();document.getElementById('page-info').textContent.startsWith('2 /')"));
   assertEquals("true",eval(web,"var day=document.getElementById('day-filter');day.value='2';day.dispatchEvent(new Event('change'));document.getElementById('page-info').textContent.startsWith('1 /')"));
-  assertEquals("12",eval(web,"WordvilleVillage.residents.length"));
+  assertEquals("22",eval(web,"WordvilleVillage.residents.length"));
   boolean artReady=false;
   for(int i=0;i<55;i++){
    if("true".equals(eval(web,"globalThis.WordvilleWorldArt?.reference?.naturalWidth===840&&Object.keys(globalThis.WordvilleWorldArt?.venueImages||{}).length===17&&Object.values(globalThis.WordvilleWorldArt.venueImages).every(img=>img.complete&&img.naturalWidth===640)"))){artReady=true;break;}
@@ -74,10 +74,10 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"WordvilleWalk.walkAtlas.width===256&&WordvilleWalk.walkAtlas.height===2304"));
   boolean idleSpritesReady=false;
   for(int i=0;i<60;i++){
-   if("true".equals(eval(web,"Object.values(WordvilleWalk.idle48Sheets).length===12&&Object.values(WordvilleWalk.idle48Sheets).every(im=>im.complete&&im.naturalWidth===192&&im.naturalHeight===384)"))){idleSpritesReady=true;break;}
+   if("true".equals(eval(web,"Object.values(WordvilleWalk.idle48Sheets).length===12&&Object.values(WordvilleWalk.idle48Sheets).every(im=>im.complete&&im.naturalWidth===192&&im.naturalHeight===384)&&WordvilleWalk48.guestIds.length===10&&WordvilleWalk48.guestSheets.idle.naturalHeight===3840&&WordvilleWalk48.guestSheets.walk.naturalHeight===3840"))){idleSpritesReady=true;break;}
    Thread.sleep(150);
   }
-  assertTrue("All 12 anchored idle sprite sheets decode in Android WebView",idleSpritesReady);
+  assertTrue("Original and guest sprite sheets decode in Android WebView",idleSpritesReady);
   assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:48,width:48,walking:false,idlePhase:2});})()"));
   assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:48,width:48,walking:true,phase:2});})()"));
   // Freeze the schedule at 13:00: Penny is working in the bookstore then.
