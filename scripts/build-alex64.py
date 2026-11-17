@@ -32,6 +32,18 @@ def extract(filename: str, parts: int) -> list[Image.Image]:
             # unwanted disconnected fragment occupies x=261..270.
             ImageDraw.Draw(frame).rectangle((259, 315, frame.width, 390), fill=(0, 0, 0, 0))
             assert frame.getchannel("A").crop((259, 315, frame.width, 391)).getbbox() is None
+        if filename == "walk_side_near_v2.png" and index == 3:
+            # Right-facing stride 4 has a ghost THIRD arm/hand hanging behind
+            # Alex's left torso edge (x≈70-105, y≈350-475). The two actual
+            # arms are the sleeved foreground fist at x≈150-190 and the
+            # farther forward fist at x≈190-230. Keep both intact.
+            ImageDraw.Draw(frame).polygon(
+                ((50, 340), (96, 340), (96, 357), (90, 386),
+                 (88, 412), (96, 440), (107, 452), (108, 472),
+                 (102, 485), (50, 485)), fill=(0, 0, 0, 0))
+            assert frame.getpixel((76, 440))[3] == 0
+            assert frame.getpixel((175, 440))[3] >= 64
+            assert frame.getpixel((200, 406))[3] >= 64
         if filename == "walk_side.png" and index == 3:
             # Side walk frame 4 inadvertently contains THREE brown shoes.
             # Remove only the spurious rear-left shoe at x=60..104/y=505..580;
@@ -164,6 +176,12 @@ def main():
     # while remaining occluded at the hip/knee by the near leg throughout.
     walk_side = (normalize(extract("walk_side_near_v2.png", 8)[:4])
                  + normalize(extract_far_leg_phases()))
+    # On the final 64px cell, the former third hand occupied (26, 36..42).
+    # Confirm it is now transparent without erasing either actual fist.
+    if any(walk_side[3].getpixel((26, y))[3] != 0 for y in (36, 38, 42)):
+        raise ValueError("Side walk frame 4 still contains a third arm")
+    if any(walk_side[3].getpixel(p)[3] < 150 for p in ((35, 40), (39, 38))):
+        raise ValueError("Side walk frame 4 lost a real fist")
     # Protect against the original one-leg-only regression: frames 1-4 have
     # the brighter near shoe in the forward/right slot, but frames 5-7 MUST
     # visibly advance the darker far shoe into that same forward slot.
