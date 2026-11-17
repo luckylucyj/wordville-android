@@ -30,6 +30,40 @@ const assert=require('node:assert/strict');
   await page.locator('#wv-sentence-entry-missing').count(); // nonexistent selector is harmless
   await page.locator('.wv-sentence-entry-actions button').first().click();
   assert.equal(await page.locator('#wv-sentence-text').inputValue(),'I have went to the market yesterday.');
+  await page.locator('#wv-open-interpretation').click();
+  assert.equal(await page.locator('#wv-interpretation-view').isVisible(),true);
+  assert.equal(await page.locator('#wv-sentences-view').isVisible(),false);
+  await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
+  const source=page.locator('#wv-interpretation-source'),draft=page.locator('#wv-interpretation-draft');
+  await source.fill("You don't have to pay. We need at least 5 copies.");
+  await draft.fill('지불하면 안 돼요. 최대 3부가 필요해요.');
+  await page.evaluate(()=>{
+   window.WordvilleInterpretationNative={translate(originals,locale,id){
+    window.interpretationRequest={originals:JSON.parse(originals),locale,id};
+   }};
+  });
+  await page.locator('#wv-interpretation-check').click();
+  assert.equal(await page.locator('.wv-interpretation-card').count(),2);
+  assert.match(await page.locator('.wv-interpretation-card').first().innerText(),/의무의 부정/);
+  assert.match(await page.locator('.wv-interpretation-card').last().innerText(),/숫자·시간/);
+  const nativeRequest=await page.evaluate(()=>window.interpretationRequest);
+  assert.deepEqual(nativeRequest.originals,["You don't have to pay.","We need at least 5 copies."]);
+  assert.equal(nativeRequest.locale,'en');
+  await page.evaluate(id=>WordvilleInterpretation.onNativeResult(JSON.stringify({
+   id,values:['지불할 필요가 없습니다.','최소 5부가 필요합니다.'],error:''
+  })),nativeRequest.id);
+  assert.match(await page.locator('.wv-interpretation-reference').first().innerText(),/지불할 필요가 없습니다/);
+  assert.equal(await page.locator('.wv-interpretation-credit').count(),2);
+  await draft.fill('지불하지 않아도 돼요. 최소 5부가 필요해요.');
+  assert.equal(await page.locator('#wv-interpretation-results').isHidden(),true);
+  await page.evaluate(id=>WordvilleInterpretation.onNativeResult(JSON.stringify({id,values:['오래된 결과']})),nativeRequest.id);
+  assert.equal(await page.locator('#wv-interpretation-results').isHidden(),true);
+  await page.reload();
+  await page.waitForFunction(()=>window.WordvilleShell&&window.WordvilleWords?.length>100);
+  await page.locator('#wv-bottom-dock [data-screen="more"]').click();
+  await page.locator('[data-more="interpretation"]').click();
+  assert.equal(await draft.inputValue(),'지불하지 않아도 돼요. 최소 5부가 필요해요.');
+
   await page.locator('#wv-bottom-dock [data-screen="more"]').click();
   await page.locator('[data-more="lab"]').click();
   assert.equal(await page.locator('#wv-combine-day-a option').count(),31);

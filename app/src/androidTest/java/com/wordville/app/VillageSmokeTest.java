@@ -133,6 +133,8 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("\"night\"",eval(web,"document.getElementById('close-dialog').click();var mode=document.getElementById('village-time-mode');mode.value='night';mode.dispatchEvent(new Event('change'));WordvilleVillage.period"));
   assertEquals("true",eval(web,"WordvilleVillage.select('alex');!document.getElementById('village-dialogue').hidden"));
+  assertEquals("true",eval(web,"WordvilleShell.activate('interpretation'); typeof WordvilleInterpretationNative.translate==='function' && !document.getElementById('wv-interpretation-view').hidden"));
+
   inst.runOnMainSync(activity::finish);
  }
  @Test public void resumesWithoutBrownScreenAndHasLauncherIcon() throws Exception {
