@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
-from PIL import Image
+from PIL import Image, ImageDraw
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +26,25 @@ def extract(filename: str, parts: int) -> list[Image.Image]:
     for index in range(parts):
         x0, x1 = round(index * whole.width / parts), round((index + 1) * whole.width / parts)
         frame = whole.crop((x0, 0, x1, whole.height))
+        if filename == "talk_front.png" and index == 2:
+            # A sliver of the next drawn panel leaked into the right edge of
+            # talk frame 3. The full Alex silhouette ends at x=257; the
+            # unwanted disconnected fragment occupies x=261..270.
+            ImageDraw.Draw(frame).rectangle((259, 315, frame.width, 390), fill=(0, 0, 0, 0))
+            assert frame.getchannel("A").crop((259, 315, frame.width, 391)).getbbox() is None
+        if filename == "walk_side.png" and index == 3:
+            # Side walk frame 4 inadvertently contains THREE brown shoes.
+            # Remove only the spurious rear-left shoe at x=60..104/y=505..580;
+            # retain the raised front shoe and planted rear shoe, including
+            # their unbroken trouser silhouettes and fixed ground point.
+            ImageDraw.Draw(frame).polygon(
+                ((49, 498), (101, 498), (104, 510), (107, 567),
+                 (102, 582), (55, 583), (49, 568)), fill=(0, 0, 0, 0))
+            # The extra shoe is gone, while the lifted shoe and grounded shoe
+            # both retain their pixels (a deliberate regression guard).
+            assert frame.getpixel((72, 545))[3] == 0
+            assert frame.getpixel((125, 550))[3] >= 64
+            assert frame.getpixel((120, 600))[3] >= 64
         # Ignore barely visible anti-aliasing ghosts around an otherwise clear silhouette.
         alpha = frame.getchannel("A").point(lambda a: 255 if a >= 64 else 0)
         box = alpha.getbbox()
@@ -122,8 +141,9 @@ def main():
     (OUT / "audit.json").write_text(json.dumps(audit, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     # Compact reference sheet for side-by-side visual QA.
-    qa = Image.new("RGBA", (8 * CELL, 4 * CELL), "#e9eedf")
-    for index, (atlas, lane) in enumerate(((walk, 0), (idle, 0), (talk, 0), (sit, 2))):
+    qa = Image.new("RGBA", (8 * CELL, 5 * CELL), "#e9eedf")
+    # Side walk first, so the previously broken fourth frame is easy to inspect.
+    for index, (atlas, lane) in enumerate(((walk, 2), (walk, 0), (idle, 0), (talk, 0), (sit, 2))):
         qa.paste(atlas.crop((0, lane * CELL, 8 * CELL, (lane + 1) * CELL)),
                  (0, index * CELL), atlas.crop((0, lane * CELL, 8 * CELL, (lane + 1) * CELL)))
     qa.save(OUT / "alex_qa.png", optimize=True)

@@ -1452,12 +1452,12 @@
         "direction": "down",
         "frame": 2,
         "bbox": [
-          19,
+          20,
           6,
-          46,
+          45,
           60
         ],
-        "head_axis": 32.0
+        "head_axis": 32.5
       },
       {
         "direction": "down",
