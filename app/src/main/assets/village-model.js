@@ -120,7 +120,7 @@ const entranceNode=Object.freeze({
 const outdoorPlaces=new Set(['square','park']);
 const appointments=[
  {pair:['momo','toshiro'],hour:17,place:'park',chatDuration:3.5},
- {pair:['homura','madoka'],hour:18,place:'square',chatDuration:7}
+ {pair:['homura','madoka'],hour:18,place:'square',chatDuration:7,waitingHour:17}
 ];
 const relationships=new Map();
 for(const appointment of appointments){
@@ -128,10 +128,12 @@ for(const appointment of appointments){
  relationships.set(first,{...appointment,partner:second});
  relationships.set(second,{...appointment,partner:first});
 }
-function hasAppointment(id,slot,minute){
+function hasAppointment(id,slot){
  const appointment=relationships.get(id);
- if(!appointment||slot.custom||slot.hour!==appointment.hour||slot.place!==appointment.place)return false;
- const companionSlot=schedule.at(appointment.partner,minute);
+ if(!appointment||slot.custom||slot.place!==appointment.place)return false;
+ const waitsEarly=id===appointment.pair[0]&&slot.hour===appointment.waitingHour;
+ if(slot.hour!==appointment.hour&&!waitsEarly)return false;
+ const companionSlot=schedule.at(appointment.partner,appointment.hour*60);
  return !companionSlot.custom&&companionSlot.place===appointment.place;
 }
 function beginsPrimaryVisit(p,slot){
@@ -152,7 +154,7 @@ function syncSchedule(residents,minute,{teleport=false}={}){
   if(key===p.scheduleKey&&!teleport)continue;
   const goal=destinationFor(p,slot.place);
   // Arrive on time for the daytime venue or a shared appointment.
-  const arrive=teleport||beginsPrimaryVisit(p,slot)||hasAppointment(p.id,slot,minute);
+  const arrive=teleport||beginsPrimaryVisit(p,slot)||hasAppointment(p.id,slot);
   p.scheduleKey=key;p.scheduleHour=slot.hour;p.schedulePlace=slot.place;
   p.activity=slot.activity;p.targetNode=goal;
   p.chat=0;p.partner=null;p.wait=0;p.onStairs=false;

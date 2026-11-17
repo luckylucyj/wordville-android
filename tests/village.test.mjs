@@ -46,9 +46,11 @@ test('nine residents occupy their assigned venues from 09:00 until 17:00',()=>{
 });
 test('Homura waits first and shares a mutual conversation with Madoka at 18:00',()=>{
  const residents=M.freshResidents();
- M.syncSchedule(residents,17*60,{teleport:true});
+ M.syncSchedule(residents,16*60,{teleport:true});
+ M.syncSchedule(residents,17*60);
  const homura=residents.find(p=>p.id==='homura'),madoka=residents.find(p=>p.id==='madoka');
  assert.equal(homura.schedulePlace,'square');
+ assert.equal(homura.atVenue,true);
  assert.match(homura.activity,/먼저 기다리기/);
  assert.equal(madoka.schedulePlace,'workshop');
  const meetings=[];
