@@ -11,10 +11,7 @@ FACE = '#f6d3b8'
 SHADE = '#d9a492'
 IDS = ('chiikawa', 'hachiware', 'usagi', 'rakko', 'kurimanju',
        'momo', 'toshiro', 'aizen', 'homura', 'madoka')
-FUR = {
-    'rakko': ('#fff4de', '#dfc8ae', '#a57d6e'),
-    'kurimanju': ('#ffedc3', '#e5c897', '#a1694a'),
-}
+RAKKO_FUR = ('#fff4de', '#dfc8ae')
 CLOTHES = {
     'momo': ('#242135', '#4b4058', '#716077', '#292938', '#494657', '#f4e9df', '#58465a'),
     'toshiro': ('#a8c3d1', '#e5eff2', '#ffffff', '#282e41', '#f0efe5', '#79b5ae', '#31374b'),
@@ -28,13 +25,15 @@ RISE = ((0, -2), (0, -3), (0, -4), (0, -2), (-2, 0), (-3, 0), (-4, 0), (-2, 0))
 BOB = (0, 1, 0, -1, 0, 1, 0, -1)
 
 
-# The trio shares a rounded, continuous silhouette. Ear and cap contours
+# These residents share rounded, continuous silhouettes. Ear and cap contours
 # attach to the face so there is no separate band between the head and body.
 STORYBOOK_FUR = {
     'chiikawa': ('#fffdfb', '#e9e2e6'),
     'hachiware': ('#fffdfb', '#e3ebef'),
     'usagi': ('#fff0c6', '#f2d99d'),
+    'kurimanju': ('#ffebca', '#f2dab3'),
 }
+CHESTNUT_CAP = ((37, 12.4), (30.8, 3.5, 17, 3.3, 11, 12.7))
 STORYBOOK_CROWNS = {
     'chiikawa': ((36, 13), (37, 8, 34, 6, 31, 8), (30, 8, 29, 10, 29, 11),
                  (26, 10, 22, 10, 19, 11), (18, 7, 14, 7, 13, 9),
@@ -45,6 +44,8 @@ STORYBOOK_CROWNS = {
     'usagi': ((29, 16), (31, 11, 33, 5, 31, 3), (28, 1, 26, 9, 25, 15),
               (24, 15, 23, 15, 22, 15), (22, 10, 23, 3, 21, 3),
               (18, 2, 16, 9, 17, 16)),
+    'kurimanju': ((39, 15.6), (43, 15, 42.5, 12, 37, 12.4),
+                  CHESTNUT_CAP[1], (5, 12.5, 5.3, 16.1, 9, 15.7)),
 }
 
 
@@ -60,6 +61,7 @@ def storybook_sprite(resident, direction, frame=None, portrait=False):
     side, rear = direction == 2, direction >= 3
     width = (1, .94, .82, .94, 1)[direction]
     crown = STORYBOOK_CROWNS[resident]
+    chestnut = resident == 'kurimanju'
 
     def point(x, y):
         return (round(((x - 24) * width + 24) * scale), round((y + bob) * scale))
@@ -98,7 +100,7 @@ def storybook_sprite(resident, direction, frame=None, portrait=False):
         oval(11, 37, 7, 6, '#fffdfb', 1.35)
 
     # Anchor the feet to the same ground line in every view while the body bobs.
-    centers = (15, 31) if side else (18, 29)
+    centers = (15, 31) if side else (16, 32) if chestnut else (18, 29)
     for i, center in sorted(enumerate(centers), key=lambda item: rise[item[0]]):
         foot_x = center + stride[i] * (0.75 if side else 0.35)
         foot_y = GROUND + rise[i] - bob - 1.7
@@ -108,13 +110,31 @@ def storybook_sprite(resident, direction, frame=None, portrait=False):
     arm_right = 0 if frame is None else stride[0] * .45
     right_crown_x, right_crown_y = crown[0]
     left_crown_x, left_crown_y = crown[-1][-2:]
-    path((crown[0], *crown[1:],
-          (3, left_crown_y + 4, 3, 27, 9, 32),
-          (5, 32 + arm_left, 5, 36 + arm_left, 11, 35),
-          (12, 41.5, 33, 43, 36, 35),
-          (41, 36 + arm_right, 43, 33 + arm_right, 38, 32),
-          (45, 27, 44, right_crown_y + 5, right_crown_x, right_crown_y)), fur, 1.65)
-    path(((13, 37), (18, 41, 29, 42, 34, 37), (32, 42, 17, 43, 13, 37)), shade)
+    if chestnut:
+        path((*crown,
+              (3, 21, 3, 29, 11, 32),
+              (10, 34 + arm_left, 10, 38 + arm_left, 13.5, 36),
+              (14.5, 42, 33.5, 42, 34.5, 36),
+              (38, 38 + arm_right, 38, 34 + arm_right, 37, 32),
+              (45, 28, 46, 22, 39, 15.6)), fur, 1.65)
+        path(((13.5, 36), (14, 35, 14, 34, 14, 34 + arm_left)), stroke=1.05)
+        path(((34.5, 36), (34, 35, 34, 34, 34, 34 + arm_right)), stroke=1.05)
+        edge = {
+            0: ((16, 20.3, 31.8, 21.1, 37, 12.4),),
+            1: ((17, 21.2, 32.5, 20.1, 37, 12.4),),
+            2: ((15, 21.5, 31.2, 20.1, 37, 12.4),),
+            3: ((15.9, 22.4, 31.5, 23, 37, 12.4),),
+            4: ((16, 23, 32, 23, 37, 12.4),),
+        }[direction]
+        path((*CHESTNUT_CAP, *edge), '#a2745b', 1.55)
+    else:
+        path((crown[0], *crown[1:],
+              (3, left_crown_y + 4, 3, 27, 9, 32),
+              (5, 32 + arm_left, 5, 36 + arm_left, 11, 35),
+              (12, 41.5, 33, 43, 36, 35),
+              (41, 36 + arm_right, 43, 33 + arm_right, 38, 32),
+              (45, 27, 44, right_crown_y + 5, right_crown_x, right_crown_y)), fur, 1.65)
+        path(((13, 37), (18, 41, 29, 42, 34, 37), (32, 42, 17, 43, 13, 37)), shade)
 
     if resident == 'hachiware':
         edge = ((12, 20, 19, 21, 24, 16), (29, 21, 35, 21, 38, 16))
@@ -125,7 +145,7 @@ def storybook_sprite(resident, direction, frame=None, portrait=False):
         elif direction == 1:
             edge = ((14, 21, 22, 21, 27, 16), (31, 20, 35, 20, 38, 16))
         path((*crown, *edge), blue, 1.55)
-    if direction == 4 and resident != 'hachiware':
+    if direction == 4 and resident in ('chiikawa', 'usagi'):
         oval(24, 37.5, 6 if resident == 'usagi' else 5, 5, '#fffdfb', 1.2)
     if resident == 'usagi' and not rear:
         path(((18.7, 14), (17.8, 10, 19, 4.5, 20.3, 4.5),
@@ -134,24 +154,28 @@ def storybook_sprite(resident, direction, frame=None, portrait=False):
               (31.4, 5.3, 28.4, 12, 27.4, 14)), blush)
     if not rear:
         shift = (0, 4, 8)[direction]
-        face_y = 1 if resident == 'usagi' else 0
+        face_y = -1.7 if chestnut else 1 if resident == 'usagi' else 0
         eyes = (21 + shift,) if side else (18 + shift, 29 + shift * .66)
         cheeks = (16 + shift,) if side else (13 + shift, 34 + shift * .70)
+        cheek_marks = (-2.45, -.85, .85, 2.45) if chestnut and portrait else (-1.55, 0, 1.55)
         for cheek in cheeks:
-            oval(cheek, 28 + face_y, 6.8, 4.7, blush)
-            for dx in (-1.55, 0, 1.55):
+            oval(cheek, 28 + face_y, 7.5 if chestnut else 6.8, 4.7, blush)
+            for dx in cheek_marks:
                 x, y = cheek + dx, 28 + face_y
                 path(((x - .35, y + .75), (x, y, x, y, x + .35, y - .75)), stroke=.75)
         for x in eyes:
             y = 24.8 + face_y
-            oval(x, y, 4.8, 4.95, ink)
+            if chestnut:
+                oval(x, y, 4.1, 4.25, ink)
+            else:
+                oval(x, y, 4.8, 4.95, ink)
             oval(x - .25, y - .70, 2.25, 1.85, '#fffdfb')
             oval(x + .1, y + 1.3, 1.45, .65, '#fffdfb')
             if resident == 'usagi':
                 sign = 1 if x == eyes[0] else -1
                 path(((x - 3.5*sign, y - 3), (x - 3*sign, y - 5.2, x - sign, y - 6.1,
                       x + 1.8*sign, y - 6.4)), stroke=1.05)
-            else:
+            elif not chestnut:
                 sign = 1 if x == eyes[0] else -1
                 path(((x - 1.3*sign, y - 4.5), (x - .6*sign, y - 5.1, x, y - 5.1,
                       x + .5*sign, y - 5)), stroke=.85)
@@ -214,10 +238,10 @@ def sprite(resident, direction, frame=None):
             if bottom >= top + 3:
                 draw.line((x - 1, bottom - 1, x + 1, bottom - 1), light)
 
-    if resident in FUR:
-        light, shade, accent = FUR[resident]
+    if resident == 'rakko':
+        light, shade = RAKKO_FUR
         feet(shade, light, True)
-        if resident == 'rakko' and rear:
+        if rear:
             oval((20, 35, 27, 41), '#b3927d', INK)
         oval((11, 25, 36, 40), shade, INK)
         oval((15, 27, 34, 38), light)
@@ -226,10 +250,9 @@ def sprite(resident, direction, frame=None):
             oval((x, 30 + arm_shift, x + 4, 36 + arm_shift), light, INK)
 
         shift = tilt - (2 if rear and tilt else 0)
-        ear_color = accent if resident == 'kurimanju' else light
-        oval((10, 5, 20, 16), ear_color, INK, shift)
-        oval((27, 5, 37, 16), ear_color, INK, shift)
-        if not rear and resident != 'kurimanju':
+        oval((10, 5, 20, 16), light, INK, shift)
+        oval((27, 5, 37, 16), light, INK, shift)
+        if not rear:
             oval((13, 8, 17, 12), '#e6bcb5', offset=shift)
             oval((30, 8, 34, 12), '#e6bcb5', offset=shift)
         top = 10
@@ -238,10 +261,6 @@ def sprite(resident, direction, frame=None):
               (30, top + 1), (36, top + 5), (39 if not side else 37, 24),
               (38, 28), (34, 32), (15, 33), (10, 30)], shade, INK, shift)
         oval((10, top + 2, 37 if not side else 36, 30), light, offset=shift)
-        if resident == 'kurimanju':
-            poly([(10, 21), (11, 16), (16, 12), (22, 11), (29, 12), (35, 15),
-                  (37, 19), (32, 17), (25, 17), (18, 19)], accent, offset=shift)
-            rect((18, 13, 27, 14), '#c38d5e', shift)
         if rear:
             return image
         face = 3 if direction == 1 else 0
@@ -253,14 +272,10 @@ def sprite(resident, direction, frame=None):
         mouth_x = 23 + face + (8 if side else 0)
         poly([(mouth_x - 2, 25), (mouth_x, 26), (mouth_x + 2, 25),
               (mouth_x + 1, 27), (mouth_x - 1, 27)], INK, offset=shift)
-        if resident == 'rakko':
-            poly([(15, 17), (17, 19), (19, 17), (19, 18), (17, 20), (15, 18)],
-                 '#9c7367', offset=shift)
-            if not side:
-                rect((14, 21, 17, 21), INK, shift + face)
-        if resident == 'kurimanju':
-            rect((14, 20, 19, 21), '#6d453c', shift + face)
-            rect((27, 20, 31, 21), '#6d453c', shift + face)
+        poly([(15, 17), (17, 19), (19, 17), (19, 18), (17, 20), (15, 18)],
+             '#9c7367', offset=shift)
+        if not side:
+            rect((14, 21, 17, 21), INK, shift + face)
         return image
 
     dark, hair, shine, robe, outer, trim, boot = CLOTHES[resident]
