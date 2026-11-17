@@ -6,6 +6,9 @@
  const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'];
  const guests=globalThis.VillageModel.people.filter(person=>!ids.includes(person.id));
  const guestOrder=new Map(guests.map(({id},i)=>[id,i]));
+ // Three portrait-only overrides, ordered within the authored 3 × 96px atlas.
+ // Walking/idle sprites remain separately animated on the native 48px grid.
+ const referencePortraitSlots=Object.freeze({momo:0,madoka:1,homura:2});
  const galleryPeople=[...ids.map((id,i)=>({id,name:labels[i]})),...guests];
  const sheet='portraits/wordville-portraits-original.png';
  const spriteSheet='portraits/wordville-walk-4phase.png';
@@ -22,7 +25,12 @@
   if(p)el.style.backgroundPosition=(p.col*100/3)+'% '+(p.row*50)+'%';
   else {
    el.classList.add('wv-guest-portrait');
-   el.style.backgroundPosition=(guest%5*25)+'% '+(Math.floor(guest/5)*100)+'%';
+   if(Object.prototype.hasOwnProperty.call(referencePortraitSlots,id)){
+    el.classList.add('wv-reference-portrait');
+    el.style.backgroundPosition=(referencePortraitSlots[id]*50)+'% 0%';
+   }else{
+    el.style.backgroundPosition=(guest%5*25)+'% '+(Math.floor(guest/5)*100)+'%';
+   }
   }
   return el;
  }

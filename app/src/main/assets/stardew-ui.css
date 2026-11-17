@@ -131,3 +131,14 @@ footer{color:#735940}
  background-size:500% 200%!important;
  image-rendering:pixelated!important;
 }
+
+/* Custom portrait references: Momo (soft brown eyes + high coiled bun),
+   Madoka (pink twin-tails and ribbons), Homura (black straight hair + violet eyes).
+   288×96 WebP contains three individual 96×96 portraits. */
+.wv-portrait.wv-guest-portrait.wv-reference-portrait,
+.wv-place-person .wv-portrait.wv-guest-portrait.wv-reference-portrait{
+ background-image:url('guest-residents/character-portraits.webp')!important;
+ background-size:300% 100%!important;
+ background-repeat:no-repeat!important;
+ image-rendering:auto!important;
+}
