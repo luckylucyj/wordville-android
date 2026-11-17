@@ -49,6 +49,16 @@ npm run serve
 
 `http://localhost:4173`에서 미리볼 수 있습니다. Supabase SDK는 로컬 파일로 묶이므로 CDN 스크립트가 필요 없습니다.
 
+로컬에서 바로 실행해도 주민·반려동물 이미지가 404로 빠지지 않도록
+`app/src/main/assets/sprites32/`, `walk48/`, `idle48/`의 생성된 시트를 저장소에 포함합니다.
+스프라이트 생성 코드를 수정했을 때만 다음 순서로 다시 생성합니다(Python Pillow 필요).
+
+```sh
+python scripts/build-audited-sprites.py
+python scripts/build-walk48.py
+python scripts/build-idle48.py
+```
+
 모바일 브라우저 테스트:
 
 ```sh

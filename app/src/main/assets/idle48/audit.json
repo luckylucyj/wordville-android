@@ -1,0 +1,10027 @@
+{
+  "resident_count": 12,
+  "direction_count": 8,
+  "frames_per_direction": 4,
+  "total_frames": 384,
+  "cell_size": [
+    48,
+    48
+  ],
+  "sheet_size": [
+    192,
+    384
+  ],
+  "anchor": [
+    24,
+    43
+  ],
+  "fps": 2.5,
+  "postures": [
+    "neutral",
+    "neutral",
+    "neutral",
+    "neutral"
+  ],
+  "foot_centers": [
+    [
+      19,
+      43
+    ],
+    [
+      29,
+      43
+    ]
+  ],
+  "feet_fixed": true,
+  "no_sway": true,
+  "frames_identical_per_direction": true,
+  "center_x": 24,
+  "center_y": 24,
+  "source": "walk48 first frame, with new neutral planted legs",
+  "frames": [
+    {
+      "character": "alex",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "alex",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "elliott",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "harvey",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sam",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "sebastian",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        16,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        16,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        16,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        16,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        16,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        16,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        16,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        16,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "shane",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        11,
+        4,
+        37,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        11,
+        4,
+        37,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        11,
+        4,
+        37,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        11,
+        4,
+        37,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "haley",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        5,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "leah",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        5,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "maru",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        36,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "penny",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        12,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        11,
+        4,
+        37,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        11,
+        4,
+        37,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        11,
+        4,
+        37,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        11,
+        4,
+        37,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "abigail",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up-right",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up-right",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up-right",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up-right",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        14,
+        4,
+        33,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        13,
+        4,
+        35,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "up-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down-left",
+      "frame": 0,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down-left",
+      "frame": 1,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down-left",
+      "frame": 2,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    },
+    {
+      "character": "emily",
+      "direction": "down-left",
+      "frame": 3,
+      "posture": "neutral",
+      "anchor": [
+        24,
+        43
+      ],
+      "bbox": [
+        15,
+        4,
+        34,
+        44
+      ],
+      "feet": [
+        [
+          19,
+          43
+        ],
+        [
+          29,
+          43
+        ]
+      ]
+    }
+  ]
+}
