@@ -3,12 +3,17 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const root=new URL('../app/src/main/assets/',import.meta.url);
 const text=path=>readFileSync(new URL(path,root),'utf8');
-test('Momo uses the original photo asset and Madoka and Homura keep their atlas slots',()=>{
+test('Standalone guest portraits and the reference atlas use their assigned assets',()=>{
  const js=text('portrait-ui.js'),css=text('stardew-ui.css');
- assert.match(js,/if\(id==='momo'\)\{\s*el\.classList\.add\('wv-momo-portrait'\)/);
- assert.match(css,/\.wv-momo-portrait\{\s*background-image:url\('guest-residents\/momo-portrait\.jpg'\)/);
+ assert.match(js,/standalonePortraits=new Set\(\['momo','toshiro','aizen'\]\)/);
+ assert.match(css,/\.wv-momo-portrait\{--wv-portrait-image:url\('guest-residents\/momo-portrait\.jpg'\)/);
  const momo=readFileSync(new URL('guest-residents/momo-portrait.jpg',root));
  assert.equal(momo.subarray(0,3).toString('hex'),'ffd8ff');
+ for(const id of ['toshiro','aizen']){
+  assert.ok(css.includes(`.wv-${id}-portrait{--wv-portrait-image:url('guest-residents/${id}-portrait.webp')}`));
+  const bytes=readFileSync(new URL(`guest-residents/${id}-portrait.webp`,root));
+  assert.equal(bytes.toString('ascii',8,16),'WEBPVP8L');
+ }
  assert.match(js,/referencePortraitSlots=Object\.freeze\(\{madoka:1,homura:2\}\)/);
  assert.match(js,/el\.classList\.add\('wv-reference-portrait'\)/);
  assert.match(js,/referencePortraitSlots\[id\]\*50/);

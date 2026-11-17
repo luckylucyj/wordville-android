@@ -225,6 +225,18 @@ const assert = require('node:assert/strict');
   const guestPortraits=page.locator('#resident-list .wv-guest-portrait');
   assert.equal(await guestPortraits.count(),10);
   assert.equal(await guestPortraits.first().evaluate(el=>getComputedStyle(el).imageRendering),'pixelated');
+  for(const [id,width] of [['momo',1536],['toshiro',887],['aizen',887]]){
+   const portrait=page.locator(`#resident-list [data-person="${id}"] .wv-portrait`);
+   const actual=await portrait.evaluate(async el=>{
+    const style=getComputedStyle(el);
+    const url=style.backgroundImage.slice(5,-2);
+    const image=new Image();
+    image.src=url;
+    await image.decode();
+    return [new URL(url).pathname.split('/').pop(),style.backgroundSize,image.naturalWidth,image.naturalHeight];
+   });
+   assert.deepEqual(actual,[`${id}-portrait.${id==='momo'?'jpg':'webp'}`,'contain',width,width]);
+  }
   assert.ok((await page.request.get('http://127.0.0.1:4173/guest-residents/portraits.png')).ok());
   assert.equal(await page.evaluate(()=>WordvillePortraits.spriteCell.frames),4);
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.wv-residents-screen .wv-portrait')).imageRendering),'auto');

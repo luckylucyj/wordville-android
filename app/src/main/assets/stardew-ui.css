@@ -141,9 +141,12 @@ footer{color:#735940}
  image-rendering:auto!important;
 }
 
-.wv-portrait.wv-guest-portrait.wv-momo-portrait,
-.wv-place-person .wv-portrait.wv-guest-portrait.wv-momo-portrait{
- background-image:url('guest-residents/momo-portrait.jpg')!important;
+.wv-momo-portrait{--wv-portrait-image:url('guest-residents/momo-portrait.jpg')}
+.wv-toshiro-portrait{--wv-portrait-image:url('guest-residents/toshiro-portrait.webp')}
+.wv-aizen-portrait{--wv-portrait-image:url('guest-residents/aizen-portrait.webp')}
+.wv-portrait.wv-guest-portrait.wv-standalone-portrait,
+.wv-place-person .wv-portrait.wv-guest-portrait.wv-standalone-portrait{
+ background-image:var(--wv-portrait-image)!important;
  background-size:contain!important;
  background-position:center;
  image-rendering:auto!important;
