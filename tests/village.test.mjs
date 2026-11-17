@@ -25,10 +25,10 @@ test('Momo and Toshiro share an evening walk and seek each other first',()=>{
  assert.equal(toshiro.partner,momo.id);
  assert.ok(meetings.some(([a,b])=>a===momo.id&&b===toshiro.id));
 });
-test('nine residents occupy their assigned venues from 09:00 until 17:00',()=>{
+test('ten residents occupy their assigned venues from 09:00 until 17:00',()=>{
  const assignments={
   momo:'library',aizen:'bookstore',hachiware:'icecream',chiikawa:'burger',
-  toshiro:'pool',homura:'museum',rakko:'greenhouse',madoka:'cafe',kurimanju:'workshop'
+  toshiro:'pool',homura:'museum',rakko:'greenhouse',madoka:'cafe',kurimanju:'pub',usagi:'workshop'
  };
  const residents=M.freshResidents();
  M.syncSchedule(residents,8*60,{teleport:true});
@@ -41,8 +41,8 @@ test('nine residents occupy their assigned venues from 09:00 until 17:00',()=>{
    assert.equal(resident.atVenue,true,id+' arrives on time');
   }
  }
- const usagi=residents.find(person=>person.id==='usagi');
- assert.equal(usagi.schedulePlace,'icecream');
+ assert.equal(S.at('usagi',17*60).place,'icecream');
+ assert.equal(S.at('kurimanju',17*60).place,'pub');
 });
 test('Homura waits first and shares a mutual conversation with Madoka at 18:00',()=>{
  const residents=M.freshResidents();

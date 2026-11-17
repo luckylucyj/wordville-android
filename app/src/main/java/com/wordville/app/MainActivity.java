@@ -38,6 +38,27 @@ public class MainActivity extends Activity {
  private static final String HOST="appassets.androidplatform.net";
  private static final String HOME="https://"+HOST+"/assets/index.html";
  private WebView web;
+ private WordvillePronunciation pronunciation;
+ private static final String SKELL_HOST="skell.sketchengine.eu";
+ private static final String DICTIONARY_HOST="dictionary.cambridge.org";
+ private final class WordvilleSpeechBridge {
+  @JavascriptInterface public void speak(String word,String accent,int id){
+   if(word==null||word.trim().isEmpty()||word.length()>180||id<1)return;
+   if(!("en-US".equals(accent)||"en-GB".equals(accent)))return;
+   runOnUiThread(()->{
+    if(foreground&&pageReady&&pronunciation!=null)pronunciation.speak(word,accent,id);
+   });
+  }
+  @JavascriptInterface public void stop(){
+   runOnUiThread(()->{if(pronunciation!=null)pronunciation.stop();});
+  }
+ }
+ private void onPronunciationResult(int id,String state){
+  WebView current=web;
+  if(current!=null&&pageReady&&foreground){
+   current.evaluateJavascript("window.WordvillePronunciation?.onNativeResult("+id+","+JSONObject.quote(state)+");",null);
+  }
+ }
  private FrameLayout root;
  private ValueCallback<Uri[]> chooser;
  private static final long STARTUP_TIMEOUT_MS=20000;
@@ -159,6 +180,7 @@ public class MainActivity extends Activity {
 
  @Override public void onCreate(Bundle saved) {
   super.onCreate(saved);
+  pronunciation=new WordvillePronunciation(this,this::onPronunciationResult);
   // Keep the status and navigation bar insets outside of the WebView.
   getWindow().setStatusBarColor(Color.rgb(83,55,34));
   getWindow().setNavigationBarColor(Color.rgb(83,55,34));
@@ -202,6 +224,7 @@ public class MainActivity extends Activity {
   // The bridge exposes only validated display preferences, never credentials
   // or progress, and the WebView restricts page navigation to bundled assets.
   view.addJavascriptInterface(new WordvilleSettingsBridge(),"WordvilleSettings");
+  view.addJavascriptInterface(new WordvilleSpeechBridge(),"WordvilleSpeech");
   view.addJavascriptInterface(new WordvilleTranslationBridge(),"WordvilleTranslate");
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder()
     .addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
@@ -218,7 +241,9 @@ public class MainActivity extends Activity {
    @Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest request){
     Uri destination=request.getUrl();
     if("https".equals(destination.getScheme())&&HOST.equals(destination.getHost()))return false;
-    if("https".equals(destination.getScheme())&&"commons.wikimedia.org".equals(destination.getHost())){
+    if(request.isForMainFrame()&&"https".equals(destination.getScheme())){
+     String host=destination.getHost();
+     if(!("commons.wikimedia.org".equals(host)||SKELL_HOST.equals(host)||DICTIONARY_HOST.equals(host)))return true;
      try{startActivity(new Intent(Intent.ACTION_VIEW,destination));}catch(ActivityNotFoundException ignored){}
     }
     return true;
@@ -301,6 +326,7 @@ public class MainActivity extends Activity {
  }
 
  private void closeWebView(){
+  if(pronunciation!=null)pronunciation.stop();
   cancelScreenCheck();
   if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
   if(web!=null){
@@ -363,6 +389,7 @@ public class MainActivity extends Activity {
  }
  @Override protected void onPause(){
   foreground=false;
+  if(pronunciation!=null)pronunciation.stop();
   cancelScreenCheck();
   if(web!=null)web.onPause();
   super.onPause();
@@ -375,6 +402,7 @@ public class MainActivity extends Activity {
   }
  }
  @Override protected void onDestroy(){
+  if(pronunciation!=null)pronunciation.close();
   for(Translator translator:wordTranslators.values())translator.close();
   wordTranslators.clear();
   closeWebView();

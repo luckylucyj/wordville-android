@@ -482,6 +482,29 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('#wv-vstudy-answer').inputValue(),'');
   await page.locator('#wv-vstudy-card').click();
   assert.equal(await page.locator('#detail-word').innerText(),'reservation');
+  await page.evaluate(()=>{
+   window.pronunciationCalls=[];
+   window.WordvilleSpeech={
+    speak(term,accent,request){pronunciationCalls.push([term,accent,request]);WordvillePronunciation.onNativeResult(request,'playing');},
+    stop(){}
+   };
+  });
+  for(const [accent,status] of [['en-US','미국식 발음 재생 중'],['en-GB','영국식 발음 재생 중']]){
+   await page.locator('[data-accent="'+accent+'"]').click();
+   assert.equal(await page.locator('#wv-pronunciation-status').innerText(),status);
+  }
+  const calls=await page.evaluate(()=>pronunciationCalls);
+  assert.deepEqual(calls.map(([word,locale])=>[word,locale]),[['reservation','en-US'],['reservation','en-GB']]);
+  await page.evaluate(ids=>{
+   WordvillePronunciation.onNativeResult(ids[0],'done');
+   WordvillePronunciation.onNativeResult(ids[1],'unavailable');
+  },calls.map(call=>call[2]));
+  assert.equal(await page.locator('#wv-pronunciation-dictionary').isVisible(),true);
+  await page.evaluate(()=>{delete window.WordvilleSpeech;delete window.pronunciationCalls;});
+  await page.locator('#wv-word-usage summary').click();
+  await page.waitForFunction(()=>document.querySelector('#wv-usage-genres li'));
+  assert.match(await page.locator('#wv-usage-genres').innerText(),/[0-9]/);
+  assert.equal(await page.locator('#wv-usage-examples').getAttribute('href'),'https://skell.sketchengine.eu/#result?f=concordance&lang=en&query=reservation');
   await page.locator('#close-dialog').click();
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   assert.equal(await page.locator('#wv-map-view').isVisible(),true);

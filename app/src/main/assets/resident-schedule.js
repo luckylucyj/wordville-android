@@ -13,7 +13,7 @@ const PLACE_NAMES={
 };
 const PRIMARY_PLACES=Object.freeze({
  momo:'library',aizen:'bookstore',hachiware:'icecream',chiikawa:'burger',
- toshiro:'pool',homura:'museum',rakko:'greenhouse',madoka:'cafe',kurimanju:'workshop'
+ toshiro:'pool',homura:'museum',rakko:'greenhouse',madoka:'cafe',kurimanju:'pub',usagi:'workshop'
 });
 const PRIMARY_START=9;
 const PRIMARY_END=17;
@@ -95,16 +95,17 @@ const BLOCKS={
   ...daytime('hachiware',['오늘의 아이스크림 맛 살펴보기','아이스크림 맛보기','새 맛을 친구에게 추천하기']),
   [17,'park','산책하며 노래하기'],[21,'home','일기 쓰고 취침']],
  usagi:[
-  [0,'home','잠자기'],[7,'park','뜀뛰기'],[10,'square','친구들과 숨바꼭질'],
-  [12,'burger','햄버거 먹기'],[15,'icecream','아이스크림 고르기'],[20,'home','간식 먹고 취침']],
+  [0,'home','잠자기'],[7,'park','뜀뛰기'],
+  ...daytime('usagi',['공방 재료 살펴보기','나무 장난감 만들기','장난감 색칠하고 공구 정리']),
+  [17,'icecream','아이스크림 고르기'],[20,'home','간식 먹고 취침']],
  rakko:[
   [0,'home','잠자기'],[6,'gym','아침 체력 훈련'],
   ...daytime('rakko',['화분 흙 상태 확인','온실 꽃과 나무 살펴보기','어린 식물에 물 주기']),
   [17,'park','후배와 산책'],[21,'home','장비 정리 후 취침']],
  kurimanju:[
-  [0,'home','잠자기'],[8,'market','공방 재료 고르기'],
-  ...daytime('kurimanju',['나무 찻잔 받침 깎기','차를 마시며 작업 살피기','받침 다듬고 공구 정리']),
-  [17,'pub','친구들과 저녁 먹기'],[22,'home','컵 정리 후 취침']],
+  [0,'home','잠자기'],[8,'market','펍에 가져갈 간식 고르기'],
+  ...daytime('kurimanju',['펍의 테이블 정리','따뜻한 안주 맛보기','친구들과 펍에서 한잔하기']),
+  [18,'park','저녁 산책'],[22,'home','컵 정리 후 취침']],
  momo:[
   [0,'home','잠자기'],[7,'greenhouse','꽃에 물 주기'],
   ...daytime('momo',['반납 도서 정리','창가에서 책 읽기','토시로에게 추천할 책 고르기']),
