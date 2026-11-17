@@ -378,6 +378,7 @@ const assert = require('node:assert/strict');
   assert.ok(standingCheck.residents>4,'evening gathering must exercise multiple outdoor standing slots');
   assert.deepEqual(standingCheck.blocked,[]);
   assert.equal(standingCheck.distinct,standingCheck.residents);
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   // Clicking a map landmark must navigate the entire app to the corresponding venue.
   const visited=await page.evaluate(()=>{
     const c=document.getElementById('village-canvas'),r=c.getBoundingClientRect();
