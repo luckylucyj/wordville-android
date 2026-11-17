@@ -18,6 +18,19 @@ const lines=[
 ["페니","Penny","佩妮","ペニー"],
 ["애비게일","Abigail","阿比盖尔","アビゲイル"],
 ["에밀리","Emily","艾米莉","エミリー"],
+["치이카와","Chiikawa","吉伊","ちいかわ"],
+["하치와레","Hachiware","小八","ハチワレ"],
+["우사기","Usagi","乌萨奇","うさぎ"],
+["랏코","Rakko","海獭","ラッコ"],
+["쿠리만쥬","Kurimanju","栗子馒头","くりまんじゅう"],
+["히나모리 모모","Momo Hinamori","雏森桃","雛森桃"],
+["히츠가야 토시로","Toshiro Hitsugaya","日番谷冬狮郎","日番谷冬獅郎"],
+["아이젠","Sosuke Aizen","蓝染惣右介","藍染惣右介"],
+["호무라","Homura Akemi","晓美焰","暁美ほむら"],
+["마도카","Madoka Kaname","鹿目圆","鹿目まどか"],
+["토시로와 약속한 산책","Evening walk with Toshiro","和冬狮郎约好去散步","冬獅郎と約束した散歩"],
+["모모와 약속한 산책","Evening walk with Momo","和雏森桃约好去散步","雛森と約束した散歩"],
+["서로에게 마음을 전하는 중이에요.","They are telling each other how they feel.","他们正在向对方表达心意。","お互いの気持ちを伝え合っています。"],
 ["＋ 노트","＋ Notes","＋ 笔记","＋ ノート"],
 ["📝 노트 보기","📝 View notes","📝 查看笔记","📝 ノートを見る"],
 ["학습 진도","Learning progress","学习进度","学習進捗"],
@@ -336,10 +349,10 @@ for(const row of lines){
 const patterns=[
  [/^총 ([\d,]+)개$/,m=>({en:'Total '+m[1]+' words','zh-CN':'共 '+m[1]+' 个单词',ja:'全 '+m[1]+' 語'})],
  [/^(Day \d+|전체 Day) · (\d+)개 \| 체크 (\d+) · 미기록 (\d+) · ✓ (\d+)개$/,m=>({en:m[1].replace('전체 Day','All Days')+' · '+m[2]+' words | Checked '+m[3]+' · Unrecorded '+m[4]+' · ✓ '+m[5], 'zh-CN':m[1].replace('전체 Day','全部 Day')+' · '+m[2]+' 个词 | 已标记 '+m[3]+' · 未记录 '+m[4]+' · ✓ '+m[5], ja:m[1].replace('전체 Day','全 Day')+' · '+m[2]+' 語 | 記録 '+m[3]+' · 未記録 '+m[4]+' · ✓ '+m[5]})],
- [/^(알렉스|엘리엇|하비|샘|세바스찬|셰인|헤일리|레아|마루|페니|애비게일|에밀리)의 이야기$/,m=>{const n=dictionary.get(m[1]);return {en:n.en+"'s story",'zh-CN':n['zh-CN']+'的故事',ja:n.ja+'の話'};}],
- [/^(알렉스|엘리엇|하비|샘|세바스찬|셰인|헤일리|레아|마루|페니|애비게일|에밀리)의 집$/,m=>{const n=dictionary.get(m[1]);return {en:n.en+"'s home",'zh-CN':n['zh-CN']+'的家',ja:n.ja+'の家'};}],
- [/^(알렉스|엘리엇|하비|샘|세바스찬|셰인|헤일리|레아|마루|페니|애비게일|에밀리) 현재 장소로 이동$/,m=>{const n=dictionary.get(m[1]);return {en:'Find '+n.en,'zh-CN':'前往'+n['zh-CN']+'的位置',ja:n.ja+'の現在地へ移動'};}],
- [/^(알렉스|엘리엇|하비|샘|세바스찬|셰인|헤일리|레아|마루|페니|애비게일|에밀리) 주민 선택 · 자화상 터치 시 위치 이동$/,m=>{const n=dictionary.get(m[1]);return {en:'Select '+n.en+' · Tap portrait to find location','zh-CN':'选择'+n['zh-CN']+' · 点击头像查看位置',ja:n.ja+'を選択・肖像をタップして位置へ移動'};}],
+ [/^(.+)의 이야기$/,m=>{const n=dictionary.get(m[1]);if(!n)return null;return {en:n.en+"'s story",'zh-CN':n['zh-CN']+'的故事',ja:n.ja+'の話'};}],
+ [/^(.+)의 집$/,m=>{const n=dictionary.get(m[1]);if(!n)return null;return {en:n.en+"'s home",'zh-CN':n['zh-CN']+'的家',ja:n.ja+'の家'};}],
+ [/^(.+) 현재 장소로 이동$/,m=>{const n=dictionary.get(m[1]);if(!n)return null;return {en:'Find '+n.en,'zh-CN':'前往'+n['zh-CN']+'的位置',ja:n.ja+'の現在地へ移動'};}],
+ [/^(.+) 주민 선택 · 자화상 터치 시 위치 이동$/,m=>{const n=dictionary.get(m[1]);if(!n)return null;return {en:'Select '+n.en+' · Tap portrait to find location','zh-CN':'选择'+n['zh-CN']+' · 点击头像查看位置',ja:n.ja+'を選択・肖像をタップして位置へ移動'};}],
  [/^(\d+) XP · (\d+) coins$/,m=>({en:m[0],'zh-CN':m[1]+' XP · '+m[2]+' 金币',ja:m[1]+' XP · '+m[2]+' コイン'})],
  [/^(\d+)개$/,m=>({en:m[1]+' items','zh-CN':m[1]+' 个',ja:m[1]+' 件'})],
  [/^(\d+) XP · (\d+) 코인$/,m=>({en:m[1]+' XP · '+m[2]+' coins','zh-CN':m[1]+' XP · '+m[2]+' 金币',ja:m[1]+' XP · '+m[2]+' コイン'})],
@@ -364,7 +377,7 @@ function translateText(text,lang=current){
  let value=entry?.[lang];
  if(!value)for(const [regex,fn] of patterns){
   const match=core.match(regex);
-  if(match){value=fn(match)[lang];break;}
+  if(match){value=fn(match)?.[lang];if(value)break;}
  }
  if(!value)return input; // English vocabulary, original Korean meanings and user data must not be machine-rewritten.
  return input.slice(0,input.indexOf(core))+value+input.slice(input.indexOf(core)+core.length);

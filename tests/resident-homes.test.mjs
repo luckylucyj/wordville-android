@@ -44,6 +44,6 @@ test('every resident has a distinct, fully navigable 24 × 18 home',()=>{
   themes.add(room.theme[0]);
   layouts.add([...footprint].sort().join(';'));
  }
- assert.equal(themes.size,12);
- assert.equal(layouts.size,12);
+ assert.equal(themes.size,22);
+ assert.equal(layouts.size,22);
 });

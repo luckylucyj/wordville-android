@@ -4,23 +4,39 @@
  'use strict';
  const ids=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily'];
  const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'];
+ const guests=globalThis.VillageModel.people.filter(person=>!ids.includes(person.id));
+ const guestOrder=new Map(guests.map(({id},i)=>[id,i]));
+ const galleryPeople=[...ids.map((id,i)=>({id,name:labels[i]})),...guests];
  const sheet='portraits/wordville-portraits-original.png';
  const spriteSheet='portraits/wordville-walk-4phase.png';
  const spriteImage=new Image();spriteImage.decoding='async';spriteImage.src=spriteSheet;
  const image=new Image();image.decoding='async';image.src=sheet;
  const order=Object.fromEntries(ids.map((id,i)=>[id,i]));
  function position(id){const i=order[id];if(i==null)return null;return {index:i,col:i%4,row:Math.floor(i/4)};}
- function portrait(id,extra=''){const p=position(id);if(!p)return document.createElement('span');const el=document.createElement('span');el.className='wv-portrait '+extra;el.setAttribute('aria-hidden','true');el.style.backgroundPosition=(p.col*100/3)+'% '+(p.row*50)+'%';return el;}
+ function portrait(id,extra=''){
+  const p=position(id), guest=guestOrder.get(id);
+  const el=document.createElement('span');
+  if(!p&&guest===undefined)return el;
+  el.className='wv-portrait '+extra;
+  el.setAttribute('aria-hidden','true');
+  if(p)el.style.backgroundPosition=(p.col*100/3)+'% '+(p.row*50)+'%';
+  else {
+   el.classList.add('wv-guest-portrait');
+   el.style.backgroundPosition=(guest%5*25)+'% '+(Math.floor(guest/5)*100)+'%';
+  }
+  return el;
+ }
  function decorate(){
    const list=document.getElementById('resident-list');
    for(const button of list?.querySelectorAll('[data-person]')||[]){
-     const id=button.dataset.person;if(!position(id))continue;
+     const id=button.dataset.person;if(!position(id)&&!guestOrder.has(id))continue;
      button.querySelector('.wv-portrait')?.remove();
      const dot=button.querySelector('.resident-dot');dot?.remove();
      const art=portrait(id,'wv-portrait-small');
      // Use the parent button as the single accessible click target.
      button.prepend(art);
-     const name=globalThis.WordvilleI18n?.translate(labels[order[id]])||labels[order[id]];
+     const original=galleryPeople.find(p=>p.id===id).name;
+     const name=globalThis.WordvilleI18n?.translate(original)||original;
      const action=globalThis.WordvilleI18n?.translate('현재 위치로 이동')||'현재 위치로 이동';
      button.setAttribute('aria-label',name+' — '+action);
      button.title=name+' — '+action;
@@ -32,12 +48,12 @@
    if(!panel||!speaker)return;
    let last='';
    function sync(){
-     const shown=speaker.textContent.trim();const id=ids.find((candidate,i)=>shown===labels[i]||shown===globalThis.WordvilleI18n?.translate(labels[i]));if(id===last)return;last=id;
+     const shown=speaker.textContent.trim();const person=galleryPeople.find(({name})=>shown===name||shown===globalThis.WordvilleI18n?.translate(name));const id=person?.id;if(id===last)return;last=id;
      panel.querySelector('.wv-dialog-portrait-jump')?.remove();
      if(id){
       const jump=document.createElement('button');
       jump.type='button';jump.className='wv-dialog-portrait-jump';
-      jump.setAttribute('aria-label',labels[order[id]]+' 현재 장소로 이동');
+      jump.setAttribute('aria-label',person.name+' 현재 장소로 이동');
       jump.append(portrait(id,'wv-dialog-portrait'));
       jump.addEventListener('click',()=>globalThis.WordvilleVillage?.visitResident?.(id));
       panel.prepend(jump);
@@ -51,8 +67,9 @@
  decorate();
  document.addEventListener('wordville-language-changed',()=>{
   for(const button of document.querySelectorAll('#resident-list [data-person]')){
-   const id=button.dataset.person;if(order[id]==null)continue;
-   const name=globalThis.WordvilleI18n?.translate(labels[order[id]])||labels[order[id]];
+   const id=button.dataset.person;if(!position(id)&&!guestOrder.has(id))continue;
+   const original=galleryPeople.find(p=>p.id===id).name;
+     const name=globalThis.WordvilleI18n?.translate(original)||original;
    const action=globalThis.WordvilleI18n?.translate('현재 위치로 이동')||'현재 위치로 이동';
    button.setAttribute('aria-label',name+' — '+action);
    button.title=name+' — '+action;

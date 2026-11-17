@@ -1,4 +1,4 @@
-/* Deterministic 24-hour daily routines for all 12 Wordville residents.
+/* Deterministic 24-hour daily routines for Wordville residents.
  * One slot per local clock hour (00:00 through 24:00); no network data.
  * Custom overrides belong to the current device, not another user's account.
  */
@@ -75,7 +75,37 @@ const BLOCKS={
   [10,'market','원단과 소품 구입'],[12,'cafe','점심 식사'],
   [13,'workshop','옷 수선과 제작'],[17,'icecream','휴식과 디저트'],
   [18,'square','주민 행사 준비'],[20,'pub','친구들과 저녁'],
-  [22,'home','옷 정리 후 취침']]
+  [22,'home','옷 정리 후 취침']],
+ chiikawa:[
+  [0,'home','잠자기'],[7,'park','풀밭에서 아침 산책'],[9,'market','간식 고르기'],
+  [12,'cafe','하치와레와 점심 먹기'],[15,'greenhouse','꽃 구경'],[19,'home','간식 정리 후 취침']],
+ hachiware:[
+  [0,'home','잠자기'],[7,'square','친구에게 인사하기'],[9,'bookstore','모험 책 고르기'],
+  [12,'cafe','치이카와와 점심 먹기'],[16,'park','산책하며 노래하기'],[21,'home','일기 쓰고 취침']],
+ usagi:[
+  [0,'home','잠자기'],[7,'park','뜀뛰기'],[10,'square','친구들과 숨바꼭질'],
+  [12,'burger','햄버거 먹기'],[15,'icecream','아이스크림 고르기'],[20,'home','간식 먹고 취침']],
+ rakko:[
+  [0,'home','잠자기'],[6,'gym','아침 체력 훈련'],[9,'workshop','훈련 도구 점검'],
+  [12,'cafe','달콤한 디저트 먹기'],[16,'park','후배와 산책'],[21,'home','장비 정리 후 취침']],
+ kurimanju:[
+  [0,'home','잠자기'],[8,'market','간식 재료 고르기'],[11,'cafe','따뜻한 차와 간식 즐기기'],
+  [14,'park','벤치에서 쉬기'],[18,'pub','친구들과 저녁 먹기'],[22,'home','컵 정리 후 취침']],
+ momo:[
+  [0,'home','잠자기'],[7,'library','어제 읽던 책 정리'],[10,'greenhouse','꽃에 물 주기'],
+  [13,'bookstore','토시로에게 줄 책 고르기'],[17,'park','토시로와 약속한 산책'],[20,'home','편지를 쓰고 취침']],
+ toshiro:[
+  [0,'home','잠자기'],[6,'gym','아침 수련'],[9,'library','순찰 일정 정리'],
+  [13,'square','마을 순찰'],[17,'park','모모와 약속한 산책'],[20,'home','하루를 기록하고 취침']],
+ aizen:[
+  [0,'home','잠자기'],[7,'library','자료 읽기'],[11,'museum','서예 전시 관찰'],
+  [14,'cafe','차를 마시며 생각 정리'],[18,'bookstore','서예 책 고르기'],[22,'home','서예 연습 후 취침']],
+ homura:[
+  [0,'home','잠자기'],[7,'park','혼자 아침 산책'],[10,'bookstore','시계에 관한 책 고르기'],
+  [15,'museum','오래된 시계 관찰'],[18,'greenhouse','마도카와 꽃 구경'],[22,'home','시계를 정리하고 취침']],
+ madoka:[
+  [0,'home','잠자기'],[8,'ranch','작은 동물 돌보기'],[11,'workshop','친구에게 줄 리본 만들기'],
+  [15,'icecream','딸기 아이스크림 먹기'],[18,'greenhouse','호무라와 꽃 구경'],[21,'home','리본 정리 후 취침']]
 };
 // Visible three-step behavior loops while NPCs remain at each venue.
 const TASK_STEPS=Object.freeze({

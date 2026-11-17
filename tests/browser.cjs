@@ -54,7 +54,7 @@ const assert = require('node:assert/strict');
   });
   await page.waitForFunction(()=>document.getElementById('wv-loading-cover')?.hidden===true);
   assert.equal(await page.evaluate(()=>WordvilleShell.screen),'town');
-  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
+  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),22);
   assert.ok(await page.evaluate(()=>document.getElementById('village-canvas').width>20));
 
 
@@ -87,7 +87,7 @@ const assert = require('node:assert/strict');
   assert.ok(pixelVenueQA.every(x=>x.ok&&x.painted>100&&Number.isInteger(x.signature)),'Every venue needs visible pixel-art artwork');
   assert.ok(new Set(pixelVenueQA.map(x=>x.signature)).size>=14,'Distinct venues require distinct scenery');
   await page.waitForFunction(()=>WordvilleWalk?.referenceAtlas?.naturalWidth===384&&WordvilleWalk.referenceAtlas.naturalHeight===576);
-  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
+  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),22);
   assert.equal(await page.evaluate(()=>WordvilleWalk.sourceFrameCount),3);
   assert.equal(await page.evaluate(()=>WordvilleWalk.frameCount),8);
   await page.waitForFunction(()=>WordvilleWalk.petSheets.cat.naturalWidth===128&&WordvilleWalk.petSheets.dog.naturalWidth===128&&WordvilleWalk.petSheets.cat.naturalHeight===192&&WordvilleWalk.petSheets.dog.naturalHeight===192);
@@ -136,10 +136,14 @@ const assert = require('node:assert/strict');
    assert.deepEqual(sheetQA.errors,[]);
    assert.equal(sheetQA.fps,8);
    await page.waitForFunction(()=>Object.keys(WordvilleWalk.walk48Sheets).length===12&&Object.values(WordvilleWalk.walk48Sheets).every(im=>im.complete&&im.naturalWidth===384&&im.naturalHeight===384));
-   const qaEight=await page.evaluate(()=>{
+   await page.waitForFunction(()=>WordvilleWalk48.guestSheets.walk.naturalWidth===384
+   &&WordvilleWalk48.guestSheets.idle.naturalWidth===48);
+  const qaEight=await page.evaluate(()=>{
     const issues=[],dirs=WordvilleWalk.walk48Directions;
     const c=document.createElement('canvas');c.width=48;c.height=48;const cx=c.getContext('2d',{willReadFrequently:true});
-    for(const [id,img] of Object.entries(WordvilleWalk.walk48Sheets))for(const di of dirs){
+    const sheets=[...Object.entries(WordvilleWalk.walk48Sheets),
+     ...WordvilleWalk48.guestIds.map(id=>[id,WordvilleWalk48.guestSheets.walk])];
+    for(const [id,img] of sheets)for(const di of dirs){
      const sig=new Set();
      for(let f=0;f<8;f++){
       const rect=WordvilleWalk.walk48Cell(id,di,f);
@@ -195,7 +199,7 @@ const assert = require('node:assert/strict');
   for(const [id,data] of sheetFiles)fs.writeFileSync(path.join(output,id+'.png'),Buffer.from(data,'base64'));
   await page.screenshot({path:'wordville-resident-walk-qa.png'});
 
-  // Check user-facing preview, including the 12-resident comparison view.
+  // Check user-facing preview, including the full resident comparison view.
   const walkPreview=page.locator('#wv-walk-preview');
   assert.equal(await walkPreview.count(),1);
   await walkPreview.locator('summary').click();
@@ -206,7 +210,7 @@ const assert = require('node:assert/strict');
   assert.equal(await walkPreview.locator('select').nth(2).inputValue(),'idle');
   await page.waitForFunction(()=>WordvilleWalk.idle48Sheets.emily?.naturalWidth===192);
   assert.equal(await walkPreview.locator('canvas').nth(1).getAttribute('hidden'),'');
-  await walkPreview.getByRole('button',{name:'12명 한꺼번에 보기'}).click();
+  await walkPreview.getByRole('button',{name:'모든 주민 한꺼번에 보기'}).click();
   assert.equal(await walkPreview.locator('canvas').nth(1).getAttribute('hidden'),null);
   assert.equal(await walkPreview.locator('canvas').nth(1).isVisible(),true);
   assert.equal(await walkPreview.locator('canvas').nth(1).getAttribute('width'),'320');
@@ -217,7 +221,11 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))),true);
   assert.equal(await page.evaluate(()=>VillageModel.links.filter(([a,b])=>VillageModel.isStairEdge(a,b)).length),2);
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
-  assert.equal(await page.locator('.wv-residents-screen .wv-portrait').count(),12);
+  assert.equal(await page.locator('.wv-residents-screen .wv-portrait').count(),22);
+  const guestPortraits=page.locator('#resident-list .wv-guest-portrait');
+  assert.equal(await guestPortraits.count(),10);
+  assert.equal(await guestPortraits.first().evaluate(el=>getComputedStyle(el).imageRendering),'pixelated');
+  assert.ok((await page.request.get('http://127.0.0.1:4173/guest-residents/portraits.png')).ok());
   assert.equal(await page.evaluate(()=>WordvillePortraits.spriteCell.frames),4);
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.wv-residents-screen .wv-portrait')).imageRendering),'auto');
   await page.screenshot({path:'wordville-portraits-browser.png'});
@@ -366,9 +374,9 @@ const assert = require('node:assert/strict');
   await page.evaluate(()=>{localStorage.setItem('wordville.rebuilt.v1',JSON.stringify(Wordville.fresh()));});
   await page.reload();await page.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelectorAll('.word').length>0);await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   const first=await page.locator('.word strong').first().innerText();await page.locator('#next-page').click();assert.notEqual(await page.locator('.word strong').first().innerText(),first);await page.locator('#day-filter').selectOption('2');assert.equal(await page.locator('#page-info').innerText().then(t=>t.startsWith('1 /')),true);await page.locator('#day-filter').selectOption('');
-  assert.equal(await page.locator('[data-person]').count(),12);
+  assert.equal(await page.locator('[data-person]').count(),22);
   await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.naturalWidth>0);
-  assert.equal(await page.locator('.resident-list .wv-portrait').count(),12);
+  assert.equal(await page.locator('.resident-list .wv-portrait').count(),22);
   assert.ok(await page.evaluate(()=>WordvillePortraits.image.naturalWidth>=128));
   assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('.resident-list .wv-portrait')).backgroundImage.includes('wordville-portraits-original.png')));
   assert.ok(await page.evaluate(()=>!!document.querySelector('link[href="stardew-ui.css"]')));
@@ -398,7 +406,7 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('#wv-penny-home-entry,.wv-penny-home-shortcut').count(),0);
   await homeChip.click();
   await homePicker.waitFor({state:'visible'});
-  assert.equal(await homePicker.locator('button[data-home-resident]').count(),12);
+  assert.equal(await homePicker.locator('button[data-home-resident]').count(),22);
   await page.keyboard.press('Escape');
   await homePicker.waitFor({state:'hidden'});
   assert.equal(await page.evaluate(()=>WordvillePlaces.active),'pool','Cancel keeps the current venue');
@@ -536,7 +544,7 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.find(p=>p.id==='sam').schedulePlace),'square');
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.find(p=>p.id==='harvey').schedulePlace),'clinic');
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
-  assert.equal(await page.locator('.wv-residents-screen .resident-list .wv-portrait').count(),12);
+  assert.equal(await page.locator('.wv-residents-screen .resident-list .wv-portrait').count(),22);
   assert.equal(await page.locator('.wv-residents-screen .village-dialogue').isVisible(),false);
   await page.locator('#wv-bottom-dock [data-screen="more"]').click();
   await page.locator('#wv-more-panel [data-more="schedule"]').click();
@@ -604,7 +612,7 @@ const assert = require('node:assert/strict');
   assert.equal(await homePicker.locator('[aria-current=true]').innerText(),'하비');
   await homePicker.locator('#wv-home-close').click();
   const roomPictures=new Set();
-  assert.equal(owners.length,12);
+  assert.equal(owners.length,22);
   await page.waitForFunction(()=>WordvillePennyHome.ready);
   for(const owner of owners){
    await homeChip.click();
@@ -627,7 +635,7 @@ const assert = require('node:assert/strict');
    assert.deepEqual(room.bounds,room.overlay,owner+' canvas and movement overlay must align');
    roomPictures.add(room.image);
   }
-  assert.equal(roomPictures.size,12,'each home displays a distinct illustration');
+  assert.equal(roomPictures.size,22,'each home displays a distinct illustration');
   await page.evaluate(()=>WordvilleI18n.setLanguage('en'));
   await homeChip.click();
   assert.equal(await homePicker.locator('[data-home-resident="penny"]').innerText(),'Penny');

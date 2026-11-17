@@ -23,7 +23,7 @@ const places=[
 ];
 const filters=[['all','전체'],['leisure','운동·휴식'],['food','먹거리'],['culture','문화'],['nature','자연'],['life','생활']];
 const ids=id=>document.getElementById(id), canvas=ids('wv-place-canvas'), ctx=canvas.getContext('2d');
-let filter='all',active='pool',speakerIndex=0,lineIndex=0;
+let filter='all',active='pool',speakerId=null,lineIndex=0;
 const people=Object.fromEntries((globalThis.VillageModel?.people||[]).map(p=>[p.id,p]));
 const portraits=globalThis.WordvillePortraits;
 const homes=globalThis.WordvilleHomes;
@@ -38,7 +38,7 @@ function pick(id,owner){
  if(filter!=='all'&&filter!==place.type)filter='all';
  const changed=active!==id||id==='home'&&homes.get(owner)&&homeOwner!==owner;
  if(id==='home'&&homes.get(owner))homeOwner=owner;
- active=id;speakerIndex=0;lineIndex=0;render();
+ active=id;speakerId=null;lineIndex=0;render();
  if(changed)globalThis.WordvilleVenueRuntime?.placeChanged();
 }
 function show(view){
@@ -98,8 +98,8 @@ document.addEventListener('wordville-language-changed',()=>{if(active==='home')r
 function button(label,className,handler){const b=document.createElement('button');b.type='button';b.textContent=label;b.className=className;b.addEventListener('click',handler);return b;}
 function appendPortrait(parent,id,small=false){
  const p=people[id];if(!p)return;
- const b=button(p.name,'wv-place-person',()=>{speakerIndex=current().people.indexOf(id);lineIndex=0;renderConversation();});
- b.setAttribute('aria-pressed',String(current().people[speakerIndex]===id));
+ const b=button(p.name,'wv-place-person',()=>{speakerId=id;lineIndex=0;renderConversation();});
+ b.setAttribute('aria-pressed',String((speakerId||current().people[0])===id));
  if(portraits?.portrait){
   const picture=portraits.portrait(id,small?'wv-venue-mini':'wv-venue-portrait');
   picture.title='이 주민의 현재 장소로 이동';
@@ -109,7 +109,7 @@ function appendPortrait(parent,id,small=false){
  parent.append(b);
 }
 function renderConversation(){
- const p=current(),person=p.id==='home'?people[homeOwner]:people[p.people[speakerIndex]]||people[p.people[0]];
+ const p=current(),person=p.id==='home'?people[homeOwner]:people[speakerId||p.people[0]];
  ids('wv-place-speaker').textContent=(person?.name||'주민')+'의 이야기';
  ids('wv-place-dialogue-en').textContent=p.lines[lineIndex][0];
  ids('wv-place-dialogue-ko').textContent=p.lines[lineIndex][1];
@@ -223,7 +223,7 @@ ids('wv-place-talk').addEventListener('click',()=>{lineIndex=(lineIndex+1)%curre
 ids('wv-place-study').addEventListener('click',()=>{
  const place=current();
  const roster=globalThis.WordvilleSchedule?.occupants(place.id,globalThis.WordvilleVillage?.clockMinute??globalThis.WordvilleSchedule.minuteNow())||[];
- const residentId=place.id==='home'?homeOwner:place.people[speakerIndex]||globalThis.WordvilleVenueRuntime?.focusedResident||roster[0]||'alex';
+ const residentId=place.id==='home'?homeOwner:speakerId||globalThis.WordvilleVenueRuntime?.focusedResident||place.people[0]||roster[0]||'alex';
  document.dispatchEvent(new CustomEvent('wordville-open-venue-study',{detail:{residentId,placeId:place.id}}));
 });
 for(const [id,label] of filters){
