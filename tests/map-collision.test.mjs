@@ -10,9 +10,30 @@ test('every drawn ground decoration has a named foot collision area',()=>{
  assert.equal(H.collision,M.decorations);
  assert.ok(M.decorations.some(d=>d.id==='fountain'));
  for(const d of M.decorations){
+  if(d.kind==='polygon'){
+   for(const [x,y] of d.points)assert.ok(M.collidesDecoration(x,y,0),d.id);
+   continue;
+  }
   assert.ok(M.collidesDecoration(d.kind==='rect'?d.x+d.w/2:d.x,d.kind==='rect'?d.y+d.h/2:d.y,0),d.id);
  }
  assert.equal(M.collidesDecoration(300,300),false,'open pavement must remain passable');
+});
+test('garden hedges block residents while the adjacent paved lanes stay open',()=>{
+ for(const [x,y] of [[178,601],[420,603],[236,365],[393,365],[147,440],[492,445]])
+  assert.ok(M.collidesDecoration(x,y),`${x},${y} is inside a garden bed`);
+ assert.equal(M.collidesDecoration(218,613,0),false);
+ assert.equal(M.collidesDecoration(218,613),true,'clearance applies beyond the hedge edge');
+ for(const [x,y] of [[230,601],[300,615],[378,603],[300,359]])
+  assert.equal(M.collidesDecoration(x,y),false,`${x},${y} is on pavement`);
+});
+test('outside venues can place all residents on distinct paved positions',()=>{
+ for(let parkCount=0;parkCount<=M.people.length;parkCount++){
+  const residents=M.freshResidents().map((p,i)=>({...p,atVenue:true,schedulePlace:i<parkCount?'park':'square'}));
+  const spots=M.outdoorStandingPositions(residents);
+  assert.equal(spots.size,residents.length);
+  assert.equal(new Set(spots.values()).size,spots.size,'park and square share no slot');
+  for(const [id,{x,y}] of spots)assert.equal(M.collidesDecoration(x,y),false,id);
+ }
 });
 test('all authored walking routes avoid decoration collision with foot clearance',()=>{
  for(const [i,n] of M.nodes.entries()){

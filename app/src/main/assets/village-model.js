@@ -24,6 +24,11 @@ const fountain={x:303,y:470,rx:112,ry:73};
 // A collision box covers the part touching the ground, not a tree crown,
 // floating foliage or the entire height of a building.
 const FOOT_RADIUS=6;
+function hedge(id,points){
+ const xs=points.map(([x])=>x),ys=points.map(([,y])=>y);
+ return {id,kind:'polygon',points:Object.freeze(points.map(point=>Object.freeze(point))),
+  left:Math.min(...xs),right:Math.max(...xs),top:Math.min(...ys),bottom:Math.max(...ys)};
+}
 const decorations=Object.freeze([
  {id:'fountain',kind:'ellipse',...fountain},
  {id:'academy-base',kind:'rect',x:189,y:173,w:223,h:10},
@@ -34,11 +39,17 @@ const decorations=Object.freeze([
  {id:'north-west-flowers',kind:'ellipse',x:210,y:228,rx:24,ry:7},
  {id:'north-east-flowers',kind:'ellipse',x:395,y:229,rx:24,ry:7},
  {id:'west-garden',kind:'ellipse',x:113,y:358,rx:45,ry:8},
- {id:'east-garden',kind:'ellipse',x:494,y:358,rx:45,ry:8},
+ {id:'east-garden',kind:'ellipse',x:494,y:358,rx:38,ry:8},
  {id:'south-west-garden',kind:'ellipse',x:135,y:472,rx:22,ry:8},
  {id:'south-east-garden',kind:'ellipse',x:467,y:471,rx:22,ry:8},
  {id:'west-gate-flowers',kind:'ellipse',x:65,y:620,rx:40,ry:8},
  {id:'east-gate-flowers',kind:'ellipse',x:535,y:617,rx:40,ry:8},
+ hedge('park-west-hedge',[[0,547],[94,550],[137,568],[174,575],[205,593],[214,613],[205,633],[181,650],[145,665],[88,673],[0,660]]),
+ hedge('park-east-hedge',[[600,538],[534,550],[515,572],[459,572],[424,579],[398,593],[391,611],[400,632],[421,647],[456,660],[512,671],[600,673]]),
+ hedge('academy-west-hedge',[[201,321],[240,318],[266,324],[278,336],[275,364],[258,386],[229,397],[202,397],[184,386],[152,383],[148,361],[156,345],[183,338]]),
+ hedge('academy-east-hedge',[[397,319],[423,326],[437,350],[437,380],[419,398],[393,398],[366,389],[347,373],[342,347],[350,331],[373,321]]),
+ hedge('west-bench-flowers',[[0,414],[39,409],[72,424],[114,420],[146,427],[162,444],[153,456],[122,462],[85,470],[43,469],[0,484]]),
+ hedge('east-bench-flowers',[[600,421],[543,423],[502,424],[475,430],[462,448],[472,466],[508,469],[549,480],[600,487]]),
  {id:'west-tree',kind:'ellipse',x:52,y:419,rx:7,ry:5},
  {id:'east-tree',kind:'ellipse',x:554,y:421,rx:7,ry:5},
  {id:'north-west-lamp',kind:'ellipse',x:162,y:331,rx:4,ry:4},
@@ -46,9 +57,23 @@ const decorations=Object.freeze([
  {id:'south-west-lamp',kind:'ellipse',x:142,y:521,rx:4,ry:4},
  {id:'south-east-lamp',kind:'ellipse',x:462,y:520,rx:4,ry:4}
 ].map(item=>Object.freeze(item)));
+function hitsHedge(hedge,x,y,radius){
+ if(x<hedge.left-radius||x>hedge.right+radius||y<hedge.top-radius||y>hedge.bottom+radius)return false;
+ let inside=false;
+ const points=hedge.points;
+ for(let i=0,j=points.length-1;i<points.length;j=i++){
+  const [ax,ay]=points[j],[bx,by]=points[i];
+  const dx=bx-ax,dy=by-ay;
+  const t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy)));
+  if((x-ax-t*dx)**2+(y-ay-t*dy)**2<=radius**2)return true;
+  if((ay>y)!==(by>y)&&x<ax+(y-ay)*dx/dy)inside=!inside;
+ }
+ return inside;
+}
 function collidesDecoration(x,y,radius=FOOT_RADIUS){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(radius)||radius<0)return true;
  return decorations.some(d=>{
+  if(d.kind==='polygon')return hitsHedge(d,x,y,radius);
   if(d.kind==='rect'){
    const cx=Math.max(d.x,Math.min(x,d.x+d.w));
    const cy=Math.max(d.y,Math.min(y,d.y+d.h));
@@ -70,27 +95,27 @@ function segmentHitsDecoration(a,b,radius=FOOT_RADIUS){
 
 const nodes=[
  {x:300,y:615},
- {x:178,y:601},
- {x:420,y:603},
- {x:146,y:667},
- {x:455,y:666},
- {x:190,y:335},
- {x:413,y:337},
+ {x:230,y:601},
+ {x:378,y:603},
+ {x:220,y:667},
+ {x:381,y:666},
+ {x:191,y:418},
+ {x:447,y:323},
  {x:410,y:310,stair:true},
  {x:400,y:289,stair:true},
  {x:354,y:310,stair:true},
- {x:165,y:433},
+ {x:178,y:431},
  {x:438,y:430},
  {x:181,y:544},
- {x:422,y:545},
+ {x:402,y:545},
  {x:301,y:692},
  {x:278,y:725},
  {x:309,y:765},
- {x:168,y:353},
- {x:437,y:350}
+ {x:155,y:403},
+ {x:447,y:405}
 ];
 const links=[
- [0,1],[0,2],[0,14],[1,12],[1,3],[2,13],[2,4],[5,17],[6,18],[17,10],[18,7],[10,12],[11,13],[6,7],[7,8],[8,9],[9,11],[14,15],[15,16],[5,10]
+ [0,1],[0,2],[0,14],[1,12],[1,3],[2,13],[2,4],[5,17],[6,18],[17,10],[18,11],[10,12],[11,13],[6,7],[7,8],[8,9],[14,15],[15,16],[5,10]
 ];
 const edges=nodes.map(()=>[]);
 for(const [a,b] of links){edges[a].push(b);edges[b].push(a);}
@@ -118,6 +143,31 @@ const entranceNode=Object.freeze({
  market:4,square:0,workshop:5,park:1
 });
 const outdoorPlaces=new Set(['square','park']);
+// These slots cover the paved apron south of the fountain and share one grid,
+// so residents at the park and square can never claim the same standing spot.
+const standingSlots=[];
+for(let y=550;y<=670;y+=30){
+ for(let x=145;x<=455;x+=30){
+  if(!collidesDecoration(x,y))standingSlots.push(Object.freeze({x,y}));
+ }
+}
+const slotsByPlace=new Map([...outdoorPlaces].map(place=>{
+ const center=nodes[entranceNode[place]];
+ const distance=p=>(p.x-center.x)**2+(p.y-center.y)**2;
+ return [place,[...standingSlots].sort((a,b)=>distance(a)-distance(b))];
+}));
+function outdoorStandingPositions(residents){
+ const positions=new Map(),claimed=new Set();
+ for(const place of outdoorPlaces){
+  const slots=slotsByPlace.get(place);
+  for(const p of residents){
+   if(!p.atVenue||p.schedulePlace!==place||p.isMoving)continue;
+   const slot=slots.find(point=>!claimed.has(point));
+   if(slot){claimed.add(slot);positions.set(p.id,slot);}
+  }
+ }
+ return positions;
+}
 const appointments=[
  {pair:['momo','toshiro'],hour:17,place:'park',chatDuration:3.5},
  {pair:['homura','madoka'],hour:18,place:'square',chatDuration:7,waitingHour:17}
@@ -237,6 +287,6 @@ function tick(residents,dt,onMeet,options={}){
  }
  for(const p of residents)p.cooldown=Math.max(0,(p.cooldown||0)-dt);
 }
-const api={people,nodes,edges,links,fountain,FOOT_RADIUS,decorations,collidesDecoration,segmentHitsDecoration,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,relationships,destinationFor,syncSchedule};
+const api={people,nodes,edges,links,fountain,FOOT_RADIUS,decorations,collidesDecoration,segmentHitsDecoration,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,outdoorStandingPositions,relationships,destinationFor,syncSchedule};
 root.VillageModel=api;
 })(globalThis);

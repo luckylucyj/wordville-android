@@ -356,6 +356,28 @@ const assert = require('node:assert/strict');
    }
   });
   assert.deepEqual(zoomChecks,{valid:true,noBlankCorners:true,controlsOutside:true,zoom:1,minimumDisabled:true});
+  // The coordinates handed to the renderer include the standing arrangement.
+  const standingCheck=await page.evaluate(async()=>{
+   const hour=document.getElementById('wv-schedule-hour');
+   const previous=hour.value;
+   const paint=WordvilleWalk.paint,spots=new Map();
+   try{
+    hour.value='18';hour.dispatchEvent(new Event('change'));
+    WordvilleWalk.paint=function(context,resident,x,y,options){
+     if(resident.atVenue&&VillageModel.outdoorPlaces.has(resident.schedulePlace))spots.set(resident.id,[x,y]);
+     return paint.call(this,context,resident,x,y,options);
+    };
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return {residents:spots.size,blocked:[...spots].filter(([,p])=>VillageModel.collidesDecoration(...p)).map(([id])=>id),
+     distinct:new Set([...spots.values()].map(p=>p.join(','))).size};
+   }finally{
+    WordvilleWalk.paint=paint;
+    hour.value=previous;hour.dispatchEvent(new Event('change'));
+   }
+  });
+  assert.ok(standingCheck.residents>4,'evening gathering must exercise multiple outdoor standing slots');
+  assert.deepEqual(standingCheck.blocked,[]);
+  assert.equal(standingCheck.distinct,standingCheck.residents);
   // Clicking a map landmark must navigate the entire app to the corresponding venue.
   const visited=await page.evaluate(()=>{
     const c=document.getElementById('village-canvas'),r=c.getBoundingClientRect();

@@ -46,19 +46,7 @@ function ground(p){
  r(11,375,82,5,p.shade);r(21,358,43,16,'#8b7761');r(17,352,51,8,'#b86f64');for(let i=0;i<6;i++)r(25+i*6,361,4,7,['#d2ba73','#859e91','#a58f98'][i%3]);
  for(const [x,y] of [[527,370],[556,389]]){r(x-9,y-9,18,3,'#a88e67');r(x-1,y-6,2,10,'#665e55');r(x-15,y-4,5,3,'#778c70');r(x+10,y-4,5,3,'#778c70');}
 }
-const outdoorPositions=new Map();
-function arrangeOutdoorResidents(){
- outdoorPositions.clear();
- for(const place of M.outdoorPlaces){
-  const here=residents.filter(p=>p.atVenue&&p.schedulePlace===place&&!p.isMoving);
-  if(here.length<2)continue;
-  const columns=Math.min(4,here.length);
-  here.forEach((p,i)=>outdoorPositions.set(p.id,{
-   x:p.x+(i%columns-(columns-1)/2)*31,
-   y:p.y+Math.floor(i/columns)*30
-  }));
- }
-}
+let outdoorPositions=new Map();
 function displayPosition(p){return outdoorPositions.get(p.id)||p;}
 function sprite(p){
  // A scheduled villager inside a building (or asleep at home) is drawn in
@@ -251,13 +239,18 @@ function drawMapCollision(){
  ctx.save();ctx.lineWidth=1.5;ctx.fillStyle='#e34b4248';ctx.strokeStyle='#f7d4a9';
  for(const d of M.decorations){
   const r=M.FOOT_RADIUS;ctx.beginPath();
-  if(d.kind==='rect')ctx.rect(d.x-r,d.y-r,d.w+2*r,d.h+2*r);
+  if(d.kind==='polygon'){
+   ctx.moveTo(...d.points[0]);
+   for(const point of d.points.slice(1))ctx.lineTo(...point);
+   ctx.closePath();
+   ctx.save();ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=2*r;ctx.lineJoin='round';ctx.stroke();ctx.restore();
+  }else if(d.kind==='rect')ctx.rect(d.x-r,d.y-r,d.w+2*r,d.h+2*r);
   else ctx.ellipse(d.x,d.y,d.rx+r,d.ry+r,0,0,Math.PI*2);
   ctx.fill();ctx.stroke();
  }
  ctx.restore();
 }
-function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();arrangeOutdoorResidents();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));drawMapCollision();for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>displayPosition(a).y-displayPosition(b).y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();frameHandle=requestAnimationFrame(frame);}
+function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();outdoorPositions=M.outdoorStandingPositions(residents);const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));drawMapCollision();for(const p of [...residents].filter(p=>VISIBLE_RESIDENTS.has(p.id)||p.id===selected).sort((a,b)=>displayPosition(a).y-displayPosition(b).y))sprite(p);globalThis.WordvilleWalk?.drawPets(ctx,t);ctx.restore();frameHandle=requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>{if(document.body.dataset.screen==='residents'&&globalThis.WordvilleVillage?.visitResident){globalThis.WordvilleVillage.visitResident(p.id);}else select(p.id);});document.getElementById('resident-list').append(b);}
 canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=residents.filter(p=>!p.atVenue||M.outdoorPlaces.has(p.schedulePlace)).map(p=>({id:p.id,...displayPosition(p)})).filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 // The reference painting has different entrances from the generated fallback map.
