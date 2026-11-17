@@ -3,9 +3,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const root=new URL('../app/src/main/assets/',import.meta.url);
 const text=path=>readFileSync(new URL(path,root),'utf8');
-test('Momo, Madoka and Homura use their dedicated reference portrait slots',()=>{
+test('Momo uses the original photo asset and Madoka and Homura keep their atlas slots',()=>{
  const js=text('portrait-ui.js'),css=text('stardew-ui.css');
- assert.match(js,/referencePortraitSlots=Object\.freeze\(\{momo:0,madoka:1,homura:2\}\)/);
+ assert.match(js,/if\(id==='momo'\)\{\s*el\.classList\.add\('wv-momo-portrait'\)/);
+ assert.match(css,/\.wv-momo-portrait\{\s*background-image:url\('guest-residents\/momo-portrait\.jpg'\)/);
+ const momo=readFileSync(new URL('guest-residents/momo-portrait.jpg',root));
+ assert.equal(momo.subarray(0,3).toString('hex'),'ffd8ff');
+ assert.match(js,/referencePortraitSlots=Object\.freeze\(\{madoka:1,homura:2\}\)/);
  assert.match(js,/el\.classList\.add\('wv-reference-portrait'\)/);
  assert.match(js,/referencePortraitSlots\[id\]\*50/);
  assert.match(css,/guest-residents\/character-portraits\.webp/);
