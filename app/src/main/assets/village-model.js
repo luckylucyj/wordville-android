@@ -12,11 +12,11 @@ const people=[
  ['usagi','우사기','마을 광장','attend','#e5b75e','#f7dd91'],
  ['rakko','랏코','헬스장','equipment','#a58971','#f6e3d1'],
  ['kurimanju','쿠리만쥬','카페','customer','#c3905e','#9f6242'],
- ['momo','히나모리 모모','도서관','deadline','#494659','#30283c'],
+ ['momo','히나모리 모모','도서관','deadline','#494659','#453444'],
  ['toshiro','히츠가야 토시로','공원','schedule','#78a7ab','#e9f1ef'],
  ['aizen','아이젠','도서관','application','#69564e','#7a503a'],
- ['homura','호무라','서점','reservation','#777091','#3c3059'],
- ['madoka','마도카','식물원','maintenance','#d979a4','#e985aa']
+ ['homura','호무라','서점','reservation','#777091','#24232b'],
+ ['madoka','마도카','식물원','maintenance','#d979a4','#f092ba']
 ].map(([id,name,home,word,shirt,hair],i)=>({id,name,home,word,shirt,hair,skin:['#edbe98','#d19b78','#f0c8a2','#b9805e'][i%4]}));
 // Coordinates are the 600×800 authored hub scene. Routes and the fountain share world units.
 const fountain={x:303,y:470,rx:112,ry:73};
