@@ -549,6 +549,8 @@ const assert = require('node:assert/strict');
   await page.waitForFunction(()=>document.querySelector('#village-feed').textContent.includes('말로 다 표현하기 어려울 만큼 네가 좋아'));
   await page.evaluate(()=>WordvilleVillage.select('madoka'));
   assert.match(await page.locator('#resident-english').textContent(),/I like you too, Homura/);
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+  if(await page.locator('#wv-map-tool-panel').isHidden())await page.locator('#wv-map-tools').click();
   await page.locator('#wv-schedule-hour').selectOption('17');
   assert.notDeepEqual(await page.evaluate(()=>WordvilleVillage.residents.map(p=>[p.x,p.y])),before,'clock preview must place residents at scheduled venues');
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.find(p=>p.id==='sam').schedulePlace),'square');
