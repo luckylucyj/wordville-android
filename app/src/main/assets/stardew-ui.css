@@ -132,18 +132,11 @@ footer{color:#735940}
  image-rendering:pixelated!important;
 }
 
-/* Madoka and Homura use their original 96×96 cells in the reference atlas. */
-.wv-portrait.wv-guest-portrait.wv-reference-portrait,
-.wv-place-person .wv-portrait.wv-guest-portrait.wv-reference-portrait{
- background-image:url('guest-residents/character-portraits.webp')!important;
- background-size:300% 100%!important;
- background-repeat:no-repeat!important;
- image-rendering:auto!important;
-}
-
 .wv-momo-portrait{--wv-portrait-image:url('guest-residents/momo-portrait.jpg')}
 .wv-toshiro-portrait{--wv-portrait-image:url('guest-residents/toshiro-portrait.webp')}
 .wv-aizen-portrait{--wv-portrait-image:url('guest-residents/aizen-portrait.webp')}
+.wv-madoka-portrait{--wv-portrait-image:url('guest-residents/madoka-portrait.webp')}
+.wv-homura-portrait{--wv-portrait-image:url('guest-residents/homura-portrait.webp')}
 .wv-portrait.wv-guest-portrait.wv-standalone-portrait,
 .wv-place-person .wv-portrait.wv-guest-portrait.wv-standalone-portrait{
  background-image:var(--wv-portrait-image)!important;
