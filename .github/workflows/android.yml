@@ -33,6 +33,8 @@ jobs:
           python scripts/build-audited-sprites.py
           python scripts/build-walk48.py
           python scripts/build-idle48.py
+          python scripts/build-guest-sprites.py
+          python tests/guest-hair-colors.py
       - uses: actions/upload-artifact@v4
         with:
           name: wordville-audited-32x32-sprites
@@ -43,6 +45,12 @@ jobs:
         with:
           name: wordville-8way8-cohesive-leg-resident-sheets
           path: app/src/main/assets/walk48/*.png
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wordville-guest-hair-portraits-and-sprites
+          path: app/src/main/assets/guest-residents/*.png
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@v4
