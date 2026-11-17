@@ -410,17 +410,143 @@ def sprite(resident, direction, frame=None):
     return image
 
 
+def reference_walk_sprite(resident, direction, frame=None):
+    """Draw Momo and Toshiro from their full-body references on the map grid."""
+    if direction > 4:
+        return ImageOps.mirror(reference_walk_sprite(resident, 8 - direction, frame))
+
+    image = Image.new('RGBA', (CELL, CELL))
+    draw = ImageDraw.Draw(image)
+    momo = resident == 'momo'
+    rear = direction >= 3
+    side = direction == 2
+    bob = BOB[frame] if frame is not None else 0
+    stride = STRIDE[frame] if frame is not None else (0, 0)
+    rise = RISE[frame] if frame is not None else (0, 0)
+    ink = '#181a24'
+    robe = '#303747' if momo else '#222631'
+    fold = '#4b5264' if momo else '#3c4250'
+    hem = '#242735' if momo else '#171a24'
+    collar = '#afb3c0' if momo else '#e5edf2'
+    skin, skin_shade = '#f3c693', '#c78b68'
+
+    def shape(points, fill, outline=None, dx=0):
+        draw.polygon([(x + dx, y + bob) for x, y in points], fill, outline)
+
+    def line(points, fill, dx=0, width=1):
+        draw.line([(x + dx, y + bob) for x, y in points], fill, width=width)
+
+    # The two shoes keep separate lanes. Draw the raised/far shoe first.
+    centers = (19, 28) if not side else (20, 27)
+    projection = (0, 0.5, 1, 0.5, 0)[direction]
+    for i in sorted(range(2), key=lambda index: (rise[index], index)):
+        x = centers[i] + round(stride[i] * projection)
+        y = GROUND + rise[i]
+        top = 34 + bob
+        draw.polygon([(centers[i] - 3, top), (centers[i] + 3, top),
+                      (x + 2, y - 4), (x - 3, y - 3)], fill=fold, outline=ink)
+        toe = 3 if side or direction in (1, 3) else 0
+        draw.polygon([(x - 3, y - 3), (x + 2, y - 3), (x + 3 + toe, y - 1),
+                      (x + 3 + toe, y), (x - 3, y)], fill=ink)
+        draw.line((x - 1, y - 2, x + 1 + toe, y - 2), fill=skin_shade if momo else collar)
+
+    def sleeve(x, swing, far=False):
+        y = 29 + round(swing * 0.65)
+        dx = round(swing * projection)
+        shape([(x - 2, 25), (x + 3, 26), (x + dx + 3, y + 3),
+               (x + dx, y + 5), (x + dx - 3, y + 3)], hem if far else robe, ink)
+        line([(x + dx - 2, y + 2), (x + dx + 2, y + 3)], fold if far else collar)
+        shape([(x + dx - 1, y + 4), (x + dx + 2, y + 3), (x + dx + 2, y + 5),
+               (x + dx, y + 6), (x + dx - 1, y + 5)], skin_shade if far else skin)
+
+    sleeve(16 if not side else 27, stride[1], True)
+    center = (24, 25, 23, 24, 24)[direction]
+    shape([(center - 6, 24), (center + 5, 24), (center + 7, 28), (center + 5, 33),
+           (center + 8, 37), (center + 4, 39), (center, 37), (center - 5, 39),
+           (center - 8, 37), (center - 5, 32), (center - 7, 27)], robe, ink)
+    line([(center - 4, 32), (center - 5, 36), (center - 5, 37)], fold)
+    line([(center + 2, 34), (center + 4, 37)], fold)
+    if not rear:
+        line([(center - 5, 25), (center, 29), (center + 5, 25)], collar, width=2)
+        line([(center - 4, 32), (center + 4, 32)], collar)
+        draw.point((center + 1, 33 + bob), fill=collar)
+    if not momo:
+        # Pale coat edging, blue cord and a compact sheathed sword from the reference.
+        line([(center - 6, 26), (center - 5, 32), (center - 7, 37)], collar, width=2)
+        line([(center + 5, 25), (center + 5, 31), (center + 7, 36)], '#a5b4c4', width=2)
+        line([(center - 4, 25), (center - 2, 29), (center + 2, 33)], '#4488bd', width=2)
+        if rear:
+            line([(center + 7, 23), (center + 2, 30), (center - 8, 38)], ink, width=3)
+            line([(center + 7, 23), (center + 3, 29), (center - 8, 38)], '#8599a9')
+            line([(center + 8, 22), (center + 6, 24)], '#d4b765', width=2)
+        else:
+            line([(center - 7, 30), (center - 9, 33), (center - 11, 37)], '#758998', width=2)
+            line([(center - 8, 30), (center - 6, 31)], '#d4b765')
+    sleeve(30 if not side else 21, stride[0])
+
+    # Positive views look right. Mirroring above turns head and torso together.
+    dx = (0, 2, 3, 1, 0)[direction]
+    if not rear:
+        face = [(18, 14), (25, 12), (30, 14), (32, 19), (31, 23), (27, 26),
+                (21, 25), (17, 22)]
+        if side:
+            face = [(20, 14), (27, 13), (31, 15), (32, 18), (34, 20), (32, 21),
+                    (32, 23), (28, 26), (22, 24), (19, 21)]
+        shape(face, skin, ink, dx)
+        line([(20, 23), (23, 25), (27, 25)], skin_shade, dx)
+        eyes = ((27, 19),) if side else ((20, 19), (28, 19))
+        for x, y in eyes:
+            line([(x - 1, y), (x + 1, y)], ink, dx)
+            line([(x, y + 1), (x, y + 2)], '#665b59' if momo else '#4295a4', dx)
+        line([(29 if side else 24, 23), (30 if side else 25, 23)], '#996459', dx)
+
+    if momo:
+        hair, shade, highlight = '#323745', '#232735', '#616a7b'
+        bun_x = (25, 20, 17, 19, 24)[direction]
+        draw.ellipse((bun_x - 5, 4 + bob, bun_x + 5, 13 + bob), fill=hair, outline=ink)
+        line([(bun_x - 3, 7), (bun_x, 5), (bun_x + 3, 6)], highlight)
+        crown = [(14, 17), (14, 13), (17, 9), (22, 7), (27, 8), (31, 10), (33, 14),
+                 (32, 18), (29, 17), (27, 13), (25, 13), (23, 17), (20, 18), (19, 23), (16, 21)]
+        if rear:
+            crown = [(14, 17), (15, 12), (18, 9), (23, 7), (29, 8), (33, 12),
+                     (34, 18), (32, 23), (28, 26), (21, 26), (16, 23)]
+        shape(crown, hair, ink, dx)
+        line([(16, 15), (19, 11), (24, 9), (28, 10)], highlight, dx)
+        line([(20, 13), (22, 11), (26, 11)], '#474e60', dx)
+        line([(17, 17), (17, 20), (19, 23)], shade, dx, 2)
+        if rear:
+            line([(20, 24), (24, 25), (28, 24), (31, 20)], shade, dx, 2)
+        else:
+            line([(31, 16), (32, 19), (31, 22)], shade, dx)
+    else:
+        fringe = [(12, 17), (15, 13), (11, 12), (17, 10), (13, 7), (20, 8),
+                  (20, 3), (25, 7), (29, 4), (28, 8), (34, 6), (32, 11), (37, 11),
+                  (33, 15), (34, 18), (29, 16), (27, 20), (26, 15), (22, 18),
+                  (21, 14), (17, 19), (17, 15)]
+        if rear:
+            fringe = fringe[:14] + [(33, 21), (29, 25), (23, 26), (17, 23), (15, 19)]
+        shape(fringe, '#e4eff4', '#8297a7', dx)
+        line([(16, 13), (21, 10), (20, 7)], '#a4d3e1', dx, 2)
+        line([(19, 16), (24, 11), (28, 10), (32, 12)], '#a4d3e1', dx, 2)
+        line([(22, 9), (25, 9), (28, 7)], '#fcffff', dx)
+        line([(25, 13), (29, 12), (32, 13)], '#fcffff', dx)
+        if rear:
+            line([(19, 20), (23, 23), (29, 22), (32, 18)], '#a9c2d2', dx, 2)
+    return image
+
+
 def build():
     ASSETS.mkdir(parents=True, exist_ok=True)
     walk = Image.new('RGBA', (8 * CELL, len(IDS) * 8 * CELL))
     idle = Image.new('RGBA', (CELL, walk.height))
     portraits = Image.new('RGB', (5 * 64, 2 * 64), '#fff7e8')
     for i, resident in enumerate(IDS):
+        map_sprite = reference_walk_sprite if resident in ('momo', 'toshiro') else sprite
         for direction in range(8):
             y = (i * 8 + direction) * CELL
-            idle.paste(sprite(resident, direction), (0, y))
+            idle.paste(map_sprite(resident, direction), (0, y))
             for frame in range(8):
-                walk.paste(sprite(resident, direction, frame), (frame * CELL, y))
+                walk.paste(map_sprite(resident, direction, frame), (frame * CELL, y))
         if resident in STORYBOOK_FUR:
             portrait = storybook_sprite(resident, 0, portrait=True)
         else:
