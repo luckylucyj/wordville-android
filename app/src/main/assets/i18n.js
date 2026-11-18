@@ -6,6 +6,21 @@ const LANGS=['ko','en','zh-CN','ja'];
 const NAMES={ko:'한국어',en:'English','zh-CN':'简体中文',ja:'日本語'};
 const SHORT={ko:'한국어',en:'English','zh-CN':'中文',ja:'日本語'};
 const lines=[
+["옥스퍼드 사전","Oxford Dictionary","牛津词典","オックスフォード辞典"],
+["옥스퍼드에서 이 단어 조회","Look up this word in Oxford","在牛津词典查这个词","オックスフォードでこの単語を調べる"],
+["단어 세부내용","Word details","单词详情","単語の詳細"],
+["브라우저에서 필요한 문장을 길게 눌러 복사한 뒤, Wordville로 돌아와 붙여넣으세요.","Press and hold text in the browser to copy it. Return to Wordville and paste it here.","在浏览器中长按所需文字并复制，再回到 Wordville 粘贴。","ブラウザーで必要な文を長押ししてコピーし、Wordville に戻って貼り付けてください。"],
+["사전 내용과 내 메모","Dictionary text and my notes","词典内容和我的笔记","辞典の内容と自分のメモ"],
+["붙여넣기","Paste","粘贴","貼り付け"],
+["세부내용 저장","Save word details","保存单词详情","単語の詳細を保存"],
+["세부내용 저장소를 열 수 없습니다.","Couldn't open word details storage.","无法打开单词详情的存储空间。","単語の詳細の保存先を開けません。"],
+["입력칸을 길게 눌러 붙여넣기를 선택하세요.","Press and hold the text box and choose Paste.","长按输入框并选择粘贴。","入力欄を長押しし、貼り付けを選んでください。"],
+["먼저 사전에서 텍스트를 복사하세요.","Copy text from the dictionary first.","请先从词典复制文字。","先に辞典のテキストをコピーしてください。"],
+["최대 6,000자까지 저장할 수 있습니다. 더 짧게 복사해 주세요.","You can save up to 6,000 characters. Copy a shorter selection.","最多可保存 6,000 个字符。请复制较短的内容。","最大6,000文字まで保存できます。短い範囲をコピーしてください。"],
+["붙여넣었습니다. 세부내용 저장을 누르세요.","Pasted. Tap Save word details.","已粘贴。请点击保存单词详情。","貼り付けました。単語の詳細を保存してください。"],
+["단어 세부내용을 저장했습니다.","Word details saved.","已保存单词详情。","単語の詳細を保存しました。"],
+["저장 후 변경된 내용을 다시 저장할 수 있습니다.","You can save changes made since the last save.","可以再次保存上次保存后所做的修改。","保存後の変更を再度保存できます。"],
+["세부내용을 저장하지 못했습니다. 다시 시도해 주세요.","Couldn't save word details. Try again.","无法保存单词详情，请重试。","単語の詳細を保存できませんでした。もう一度お試しください。"],
 ["해석 피드백","Translation feedback","译文反馈","訳文フィードバック"],
 ["해석 피드백 열기","Open translation feedback","打开译文反馈","訳文フィードバックを開く"],
 ["외국어 원문과 내가 쓴 한국어 해석을 입력하세요. 뜻이 달라지기 쉬운 부분을 문장별로 확인할 수 있어요.","Enter the source text and your Korean translation to review meaning sentence by sentence.","输入原文和你写的韩语译文，逐句检查容易译错的意思。","原文と自分の韓国語訳を入力すると、意味が変わりやすい箇所を文ごとに確認できます。"],

@@ -43,12 +43,20 @@
    req.onerror=()=>reject(req.error||new Error('노트를 불러올 수 없습니다.'));
   });
  }
- function put(entry,event=null){
+ function put(entry,event=null,dictionaryNotes){
   return new Promise((resolve,reject)=>{
    if(!db)return reject(new Error(loadingError||'저장소가 준비되지 않았습니다.'));
    // A status change and its history event commit together or not at all.
    const tx=db.transaction(event?[storeName,historyStore]:[storeName],'readwrite');
-   tx.objectStore(storeName).put(entry);
+   const store=tx.objectStore(storeName);
+   const current=store.get(entry.key);
+   current.onsuccess=()=>{
+    const latest=N.clean(current.result,entry.wordId,entry.day);
+    entry=dictionaryNotes===undefined
+      ?{...entry,dictionaryNotes:latest.dictionaryNotes}
+      :N.clean({...latest,dictionaryNotes},entry.wordId,entry.day);
+    store.put(entry);
+   };
    let assigned=null;
    if(event){
     const req=tx.objectStore(historyStore).add(event);
@@ -341,7 +349,11 @@
   catch(err){loadingError=err.message;console.warn('Wordville notes storage:',err.message);}
   sync();return !loadingError;
  })();
- const api={ready,statusFor,attachCard:cardButtons,renderSummary,renderArchive,openNote:exposeNote,openStatus:exposeStatus,get:(w,d)=>getEntry(w,d),eventsFor,
+ async function saveDictionary(w,day,text){
+  if(!await ready)throw new Error(loadingError);
+  await put(getEntry(w,day),null,text);
+ }
+ const api={ready,statusFor,saveDictionary,attachCard:cardButtons,renderSummary,renderArchive,openNote:exposeNote,openStatus:exposeStatus,get:(w,d)=>getEntry(w,d),eventsFor,
    get events(){return history.slice();},get count(){return cache.size;},get error(){return loadingError;}};
  globalThis.WordvilleStudy=api;
  initSelects();renderArchive();

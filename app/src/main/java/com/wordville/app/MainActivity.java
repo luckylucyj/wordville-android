@@ -1,6 +1,8 @@
 package com.wordville.app;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ActivityNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,6 +45,27 @@ public class MainActivity extends Activity {
  private WordvillePronunciation pronunciation;
  private static final String SKELL_HOST="skell.sketchengine.eu";
  private static final String DICTIONARY_HOST="dictionary.cambridge.org";
+ private static final String OXFORD_HOST="www.oxfordlearnersdictionaries.com";
+ private final class WordvilleDictionaryClipboardBridge {
+  private final WebView owner;
+  WordvilleDictionaryClipboardBridge(WebView owner){this.owner=owner;}
+  @JavascriptInterface public void paste(int id){
+   if(id<1)return;
+   runOnUiThread(()->{
+    if(owner!=web||!pageReady||!foreground)return;
+    String result="null";
+    try{
+     if(owner.hasWindowFocus()){
+      ClipboardManager clipboard=getSystemService(ClipboardManager.class);
+      ClipData clip=clipboard==null?null:clipboard.getPrimaryClip();
+      CharSequence text=clip==null||clip.getItemCount()==0?null:clip.getItemAt(0).getText();
+      result=JSONObject.quote(text==null?"":text.subSequence(0,Math.min(text.length(),6001)).toString());
+     }
+    }catch(SecurityException ignored){}
+    owner.evaluateJavascript("window.WordvilleDictionary?.onPaste("+id+","+result+");",null);
+   });
+  }
+ }
  private final class WordvilleSpeechBridge {
   @JavascriptInterface public void speak(String word,String accent,int id){
    if(word==null||word.trim().isEmpty()||word.length()>180||id<1)return;
@@ -277,6 +300,7 @@ public class MainActivity extends Activity {
   view.addJavascriptInterface(new WordvilleSpeechBridge(),"WordvilleSpeech");
   view.addJavascriptInterface(new WordvilleInterpretationBridge(view),"WordvilleInterpretationNative");
   view.addJavascriptInterface(new WordvilleTranslationBridge(),"WordvilleTranslate");
+  view.addJavascriptInterface(new WordvilleDictionaryClipboardBridge(view),"WordvilleDictionaryClipboard");
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder()
     .addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
   view.setWebViewClient(new WebViewClient(){
@@ -294,7 +318,7 @@ public class MainActivity extends Activity {
     if("https".equals(destination.getScheme())&&HOST.equals(destination.getHost()))return false;
     if(request.isForMainFrame()&&"https".equals(destination.getScheme())){
      String host=destination.getHost();
-     if(!("commons.wikimedia.org".equals(host)||SKELL_HOST.equals(host)||DICTIONARY_HOST.equals(host)||"translate.google.com".equals(host)))return true;
+     if(!("commons.wikimedia.org".equals(host)||SKELL_HOST.equals(host)||DICTIONARY_HOST.equals(host)||OXFORD_HOST.equals(host)||"translate.google.com".equals(host)))return true;
      try{startActivity(new Intent(Intent.ACTION_VIEW,destination));}catch(ActivityNotFoundException ignored){}
     }
     return true;

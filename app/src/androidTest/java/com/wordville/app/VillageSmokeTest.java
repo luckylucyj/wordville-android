@@ -153,6 +153,23 @@ public class VillageSmokeTest {
 
   assertEquals("false",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("true",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
+  assertEquals("true",eval(web,"new URL(document.getElementById('wv-dictionary-link').href).searchParams.get('q')===document.getElementById('detail-word').textContent.trim()"));
+  for(int i=0;i<30&&!"true".equals(eval(web,"!document.getElementById('wv-dictionary-paste').disabled"));i++){
+   Thread.sleep(100);
+  }
+  assertEquals("true",eval(web,"!document.getElementById('wv-dictionary-paste').disabled"));
+  inst.runOnMainSync(()->{
+   assertTrue("Wordville is focused before requesting clipboard text",web.hasWindowFocus());
+   android.content.ClipboardManager clipboard=activity.getSystemService(android.content.ClipboardManager.class);
+   clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Wordville test","dictionary selection"));
+  });
+  eval(web,"document.getElementById('wv-dictionary-toggle').click();document.getElementById('wv-dictionary-paste').click()");
+  boolean pasted=false;
+  for(int i=0;i<30;i++){
+   if("true".equals(eval(web,"document.getElementById('wv-dictionary-text').value==='dictionary selection'"))){pasted=true;break;}
+   Thread.sleep(100);
+  }
+  assertTrue("Android clipboard text reaches the current word card",pasted);
   assertEquals("\"night\"",eval(web,"document.getElementById('close-dialog').click();var mode=document.getElementById('village-time-mode');mode.value='night';mode.dispatchEvent(new Event('change'));WordvilleVillage.period"));
   assertEquals("true",eval(web,"WordvilleVillage.select('alex');!document.getElementById('village-dialogue').hidden"));
   assertEquals("true",eval(web,"WordvilleShell.activate('interpretation'); typeof WordvilleInterpretationNative.translate==='function' && !document.getElementById('wv-interpretation-view').hidden"));

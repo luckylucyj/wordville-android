@@ -1,0 +1,30 @@
+.wv-dictionary {
+  margin: 16px 0;
+  padding: 13px;
+  background: #fff5df;
+  border: 1px solid #b98c60;
+  border-radius: 12px;
+}
+.wv-dictionary h3 { margin: 0 0 10px; }
+.wv-dictionary-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.wv-dictionary-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  color: #694124;
+  font-weight: 700;
+}
+.wv-dictionary-actions button { min-height: 44px; margin: 0; }
+#wv-dictionary-editor { margin-top: 12px; }
+#wv-dictionary-help { margin: 0 0 8px; font-size: .88rem; }
+#wv-dictionary-text {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100px;
+  margin: 4px 0 8px;
+  font-size: 16px;
+  resize: vertical;
+}
+#wv-dictionary-status { margin: 8px 0 0; font-size: .88rem; }
+#wv-dictionary-status:empty { display: none; }

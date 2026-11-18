@@ -105,7 +105,7 @@ function renderWordConversations(w){
  details.open=false;
  $('word-examples-toggle').textContent='영어 대화 예시 '+examples.length+'개 펼치기';
 }
-async function openWord(w){active=w;globalThis.WordvilleUsage?.mount(w);globalThis.WordvillePronunciation?.mount(w);renderWordConversations(w);$('detail-source').textContent=(w.days?.length?'Day '+w.days.map(d=>d===0?'이디엄':d).join(', '):'기존 예시')+(w.pdfPages?.length?' · PDF '+w.pdfPages.join(', ')+'쪽':'');$('detail-word').textContent=w.word;globalThis.WordvilleVocabularyLocale?.bindText($('detail-meaning'),w.meaning,w.word);if(!globalThis.WordvilleVocabularyLocale)$('detail-meaning').textContent=w.meaning;$('detail-meaning').hidden=true;$('reveal').hidden=false;$('reveal').textContent='뜻 보기';$('reveal').setAttribute('aria-expanded','false');$('detail-example').textContent=w.example||'';globalThis.WordvilleVocabularyLocale?.bindText($('detail-translation'),w.translation||'',w.word);if(!globalThis.WordvilleVocabularyLocale)$('detail-translation').textContent=w.translation||'';globalThis.WordvilleVocabularyLocale?.bindText($('role'),w.role||'나의 기억 이미지');if(!globalThis.WordvilleVocabularyLocale)$('role').textContent=w.role||'나의 기억 이미지';globalThis.WordvilleVocabularyLocale?.bindText($('dialogue'),w.dialogue||'단어와 연결할 이미지를 직접 저장해 보세요.');if(!globalThis.WordvilleVocabularyLocale)$('dialogue').textContent=w.dialogue||'단어와 연결할 이미지를 직접 저장해 보세요.';$('detail-status').textContent='';$('image-input').value='';showImage(null);$('word-dialog').showModal();try{const blob=await readMemoryImage(w.id);if(active!==w)return;if(globalThis.WordvilleGallery)await globalThis.WordvilleGallery.mount(w,blob);else showImage(blob);}catch{$('detail-status').textContent='이미지 저장소를 사용할 수 없습니다.';}}
+async function openWord(w,dictionaryReturn){active=w;globalThis.WordvilleDictionary?.mount(w,dictionaryReturn);globalThis.WordvilleUsage?.mount(w);globalThis.WordvillePronunciation?.mount(w);renderWordConversations(w);$('detail-source').textContent=(w.days?.length?'Day '+w.days.map(d=>d===0?'이디엄':d).join(', '):'기존 예시')+(w.pdfPages?.length?' · PDF '+w.pdfPages.join(', ')+'쪽':'');$('detail-word').textContent=w.word;globalThis.WordvilleVocabularyLocale?.bindText($('detail-meaning'),w.meaning,w.word);if(!globalThis.WordvilleVocabularyLocale)$('detail-meaning').textContent=w.meaning;$('detail-meaning').hidden=true;$('reveal').hidden=false;$('reveal').textContent='뜻 보기';$('reveal').setAttribute('aria-expanded','false');$('detail-example').textContent=w.example||'';globalThis.WordvilleVocabularyLocale?.bindText($('detail-translation'),w.translation||'',w.word);if(!globalThis.WordvilleVocabularyLocale)$('detail-translation').textContent=w.translation||'';globalThis.WordvilleVocabularyLocale?.bindText($('role'),w.role||'나의 기억 이미지');if(!globalThis.WordvilleVocabularyLocale)$('role').textContent=w.role||'나의 기억 이미지';globalThis.WordvilleVocabularyLocale?.bindText($('dialogue'),w.dialogue||'단어와 연결할 이미지를 직접 저장해 보세요.');if(!globalThis.WordvilleVocabularyLocale)$('dialogue').textContent=w.dialogue||'단어와 연결할 이미지를 직접 저장해 보세요.';$('detail-status').textContent='';$('image-input').value='';showImage(null);$('word-dialog').showModal();try{const blob=await readMemoryImage(w.id);if(active!==w)return;if(globalThis.WordvilleGallery)await globalThis.WordvilleGallery.mount(w,blob);else showImage(blob);}catch{$('detail-status').textContent='이미지 저장소를 사용할 수 없습니다.';}}
 function renderConcepts(){$('concepts').replaceChildren();if(!state.concepts.length)$('concepts').append(make('p','아직 저장한 개념이 없습니다. 조합실에서 만들어 보세요.'));for(const c of state.concepts){const card=make('article',undefined,'card');card.append(make('h3',c.name,'wv-combined-sentence'),make('p',`${c.a} + ${c.b}`));$('concepts').append(card);}}
 function connection(){const a=words.find(w=>w.id===$('word-a').value),b=words.find(w=>w.id===$('word-b').value);if(!a||!b)return;const lang=globalThis.WordvilleI18n?.language||'ko';if(lang==='ko')$('connection').textContent=`${a.meaning} + ${b.meaning} — 두 뜻을 함께 사용하는 상황을 떠올리고 문장을 작성해 주세요.`;else $('connection').textContent=`${a.word} + ${b.word} — ${globalThis.WordvilleI18n?.translate('선택한 두 단어로 영어 문장을 작성하세요.')||'Write an English sentence using both words.'}`;globalThis.WordvilleVocabularyLocale?.requestGloss?.(a.meaning);globalThis.WordvilleVocabularyLocale?.requestGloss?.(b.meaning);}
 function nextQuestion(){reviewWord=queue.shift();$('answer-result').textContent='';$('next').hidden=true;$('answer').value='';$('answer-form').hidden=!reviewWord;if(!reviewWord){$('question').textContent='이번 복습을 마쳤어요.';return;}$('question').textContent=reviewWord.word;$('answer').focus();}
@@ -233,7 +233,7 @@ $('wv-rstudy-study-page').addEventListener('click',()=>{
 });
 
 async function init(){try{db=await openDatabase();}catch{notify('기억용 이미지 저장을 사용할 수 없습니다.');}try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option','');option.value=w.id;globalThis.WordvilleVocabularyLocale?.bindOption(option,w.word,w.meaning);if(!globalThis.WordvilleVocabularyLocale)option.textContent=w.word;$(id).append(option);}}$('word-b').selectedIndex=1;connection();restoreWordView();renderWords();renderStats();initResidentDayOptions();globalThis.WordvilleWords=words;document.dispatchEvent(new Event('wordville-words-ready'));}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
-init();
+const wordsReady=init();
 
 function authState(user){
  const changed=cloudUser?.id!==user?.id;cloudUser=user||null;
@@ -265,7 +265,20 @@ $('upload-local-images').addEventListener('click',async e=>{
  const {error}=await cloud.storage.from(bucket).upload(cloudPath(w.id,uid),file,{upsert:true,contentType:file.type});if(error)throw error;await imageAction('put',localImageKey(w.id,uid),file);count++;}authMessage(`${count}개 이미지를 서버에 복사했습니다. 기존 기기 원본은 유지됩니다.`);
  }catch{authMessage(`${count}개 저장 후 중단됐습니다. 연결을 확인하고 다시 시도해 주세요.`);}finally{e.currentTarget.disabled=false;}
 });
-if(cloud){cloud.auth.onAuthStateChange((_event,session)=>{authState(session?.user||null);});cloud.auth.getSession().then(({data,error})=>{if(error)authMessage('로그인 정보를 확인하지 못했습니다. 다시 로그인해 주세요.');else authState(data.session?.user||null);});}else{$('cloud-status').textContent='서버 모듈 로드 실패';}
+let initialAuth;
+if(cloud){
+ cloud.auth.onAuthStateChange((_event,session)=>{authState(session?.user||null);});
+ initialAuth=cloud.auth.getSession().then(({data,error})=>{
+  if(error)authMessage('로그인 정보를 확인하지 못했습니다. 다시 로그인해 주세요.');
+  else authState(data.session?.user||null);
+ });
+}else{$('cloud-status').textContent='서버 모듈 로드 실패';}
+Promise.allSettled([wordsReady,initialAuth]).then(()=>{
+ const pending=globalThis.WordvilleDictionary?.pendingReturn();
+ if(!pending||$('word-dialog').open)return;
+ const word=words.find(w=>E.wordIds(w).includes(pending.id));
+ if(word)openWord(word,pending);
+});
 document.addEventListener('village-study',e=>{if(e.detail?.choose||e.detail?.residentId){openResidentStudyPicker(e.detail.residentId);return;}const w=words.find(w=>E.wordIds(w).includes(e.detail?.word));if(w)openWord(w);});
 
 /* Explicit learning snapshot sync; existing device records stay untouched until chosen. */

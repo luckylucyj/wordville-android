@@ -28,7 +28,7 @@
  }
  function blank(id,day){
   return {key:key(id,day),wordId:id,day:Number(day),status:'N',hasStatus:false,legacyStatus:'',
-    statusChangedAt:'',checks:[false,false,false,false,false],overview:'',topic:'',category:'',notes:'',opinion:'',summary:'',updatedAt:''};
+    statusChangedAt:'',checks:[false,false,false,false,false],overview:'',topic:'',category:'',notes:'',opinion:'',summary:'',dictionaryNotes:'',updatedAt:''};
  }
  function clean(data,id,day){
   const v=blank(id,day),source=data&&typeof data==='object'?data:{};
@@ -41,6 +41,7 @@
   v.statusChangedAt=typeof source.statusChangedAt==='string'&&Number.isFinite(Date.parse(source.statusChangedAt))?source.statusChangedAt:'';
   v.checks=Array.from({length:5},(_,i)=>source.checks?.[i]===true);
   for(const n of FIELD_NAMES)v[n]=String(source[n]??'').slice(0,LIMITS[n]);
+  v.dictionaryNotes=typeof source.dictionaryNotes==='string'?source.dictionaryNotes.slice(0,LIMITS.notes):'';
   v.updatedAt=typeof source.updatedAt==='string'&&Number.isFinite(Date.parse(source.updatedAt))?source.updatedAt:'';
   return v;
  }
