@@ -52,7 +52,7 @@ const skyFor=phase=>({
 })[phase]||['#6cb5d6','#9ad3de','#d6eee4'];
 const lightFilter={dawn:'#f6bd9650',day:'#fff1d00a',sunset:'#e88e6550',night:'#101b3870'};
 let weather='clear';
-const weathers=new Set(['clear','clouds','overcast','rain']);
+const weathers=new Set(['clear','wind','clouds','overcast','rain']);
 function setWeather(value){if(!weathers.has(value))return false;weather=value;return true;}
 function drawSky(c,phase,skyY=45,weatherType=weather){
  const colors=skyFor(phase);
@@ -237,10 +237,26 @@ function pixelRoom(id,phase,weatherType){
  if(phase!=='day')rect(c,0,0,W,H,lightFilter[phase]);
  return canvas;
 }
+const venueArtIds=['library','greenhouse','cafe','bookstore','home','icecream','burger','pub','market','clinic','studio','museum','gym','workshop','pool','square','park','ranch'];
+const venueArt={};
+if(typeof Image!=='undefined'){
+ for(const id of venueArtIds){
+  const im=new Image();im.decoding='async';im.src='art/venues-v2/'+id+'.png';
+  venueArt[id]=im;
+ }
+}
 function paintVenue(c,p){
  const id=p?.id;if(!id||!themes[id])return false;
  const village=root.WordvilleVillage;
  const phase=phaseFor(village?.period||'day',village?.clockMinute??720);
+ const hd=venueArt[id];
+ if(hd&&hd.complete&&hd.naturalWidth>0&&hd.naturalHeight>0){
+  c.save();c.imageSmoothingEnabled=false;c.clearRect(0,0,c.canvas.width,c.canvas.height);
+  c.drawImage(hd,0,0,c.canvas.width,c.canvas.height);
+  if(weather==='overcast')rect(c,0,0,c.canvas.width,c.canvas.height,'#394e6540');
+  if(phase!=='day')rect(c,0,0,c.canvas.width,c.canvas.height,lightFilter[phase]);
+  c.restore();return true;
+ }
  const key=id+'/'+phase+'/'+weather;
  let scene=venueCache.get(key);
  if(!scene){scene=pixelRoom(id,phase,weather);venueCache.set(key,scene);}
@@ -257,12 +273,14 @@ function createTownCanvases(){
  townSource.width=600;townSource.height=800;townLow.width=300;townLow.height=400;
 }
 function paintTown(c,period,elapsed){
+ const hub=root.WordvilleHubMap;
+ if(hub?.paintBase){
+  return hub.paintBase(c,period,elapsed,weather);
+ }
  if(!baseTown)return false;createTownCanvases();if(!townLow)return false;
  const village=root.WordvilleVillage;
  const phase=phaseFor(period,village?.clockMinute??720);
  const key=period+'/'+phase;
- // Refresh the illustrated map for late-loading assets and any animated water;
- // intermediate frames use a cached nearest-neighbor pixel atlas.
  const now=Date.now();
  if(key!==townKey||now-townUpdated>1800){
   const a=townSource.getContext('2d',{alpha:false});a.clearRect(0,0,600,800);a.imageSmoothingEnabled=false;
@@ -270,8 +288,6 @@ function paintTown(c,period,elapsed){
   const small=townLow.getContext('2d',{alpha:false});
   small.imageSmoothingEnabled=false;small.clearRect(0,0,300,400);
   small.drawImage(townSource,0,0,300,400);
-  // A constrained per-channel palette avoids blurred pseudo-pixels while
-  // preserving the composition and the project's existing clickable landmarks.
   const pix=small.getImageData(0,0,300,400),buf=pix.data;
   for(let i=0;i<buf.length;i+=4){
    for(let k=0;k<3;k++)buf[i+k]=Math.min(255,Math.round(buf[i+k]/17)*17);
@@ -279,23 +295,17 @@ function paintTown(c,period,elapsed){
   small.putImageData(pix,0,0);townKey=key;townUpdated=now;
  }
  c.save();c.imageSmoothingEnabled=false;c.drawImage(townLow,0,0,600,800);
- if(phase==='dawn')rect(c,0,0,600,800,'#e8a78e20');
- if(phase==='sunset')rect(c,0,0,600,800,'#d5798438');
- if(phase==='night')rect(c,0,0,600,800,'#12213e40');
- if(weather==='overcast')rect(c,0,0,600,800,'#4c5f7650');
- if(weather==='rain'){
-  rect(c,0,0,600,800,'#334d6530');
-  const tick=Math.floor(elapsed*7);
-  for(let i=0;i<140;i++){
-   const x=Math.floor(seed(i,11,17)*300)*2, y=((Math.floor(seed(i,21,37)*400)+tick*(1+i%2))%400)*2;
-   rect(c,x,y,2,8,'#bedce666');
-  }
- }
- if(weather==='clouds')for(let i=0;i<7;i++){
-  const x=(Math.floor(seed(i,6,15)*300)+Math.floor(elapsed*2))%310*2-10,y=Math.floor(seed(i,2,29)*42)*2;
-  rect(c,x,y,34,4,'#f4f3ec60');rect(c,x+8,y-4,16,4,'#f4f3ec60');
- }
  c.restore();return true;
+}
+function paintTownOverlay(c,period,elapsed){
+ const hub=root.WordvilleHubMap;
+ const village=root.WordvilleVillage;
+ const phase=phaseFor(period,village?.clockMinute??720);
+ if(hub?.paintOverlay){
+  hub.paintOverlay(c,period,phase,elapsed,weather);
+  return true;
+ }
+ return false;
 }
 function mountWeather(){
  const controls=root.document?.querySelector?.('.village-controls');
@@ -304,12 +314,12 @@ function mountWeather(){
  label.textContent='픽셀 날씨';
  const sel=root.document.createElement('select');sel.id='wv-pixel-weather';
  sel.setAttribute('aria-label','마을 픽셀 날씨 미리보기');
- const entries=[['clear','맑음'],['clouds','구름'],['overcast','흐림'],['rain','비']];
+ const entries=[['clear','맑음'],['wind','바람'],['clouds','구름'],['overcast','흐림'],['rain','비']];
  for(const [id,name] of entries){const option=root.document.createElement('option');option.value=id;option.textContent=name;sel.append(option);}
  sel.addEventListener('change',()=>{setWeather(sel.value);root.WordvillePlaces?.pick?.(root.WordvillePlaces.active);});
  label.append(sel);controls.append(label);
 }
-const api={W,H,themes,phaseFor,skyFor,weathers,get weather(){return weather;},setWeather,paintVenue,paintTown,getLogicalFixtureRect:(id,f)=>{
+const api={W,H,themes,phaseFor,skyFor,weathers,hasVenueArt:id=>venueArtIds.includes(id),get weather(){return weather;},setWeather,paintVenue,paintTown,paintTownOverlay,getLogicalFixtureRect:(id,f)=>{
  const m=root.WordvilleVenueSpec?.getMap?.(id);return m?{x:Math.round(f.x*W/m.cols),y:Math.round(f.y*H/m.rows),w:Math.round(f.w*W/m.cols),h:Math.round(f.h*H/m.rows)}:null;
 }};
 root.WordvillePixelStyle=api;

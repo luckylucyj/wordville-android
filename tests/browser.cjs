@@ -196,8 +196,10 @@ const assert = require('node:assert/strict');
   await page.screenshot({path:'wordville-resident-walk-qa.png'});
 
   // Check user-facing preview, including the 12-resident comparison view.
+  // The legacy 48px walk preview panel is hidden by default on the remade town screen.
   const walkPreview=page.locator('#wv-walk-preview');
   assert.equal(await walkPreview.count(),1);
+  await page.evaluate(()=>{const el=document.getElementById('wv-walk-preview');if(el)el.hidden=false;});
   await walkPreview.locator('summary').click();
   assert.equal(await walkPreview.locator('select').count(),3);
   await walkPreview.locator('select').first().selectOption('emily');
@@ -211,6 +213,7 @@ const assert = require('node:assert/strict');
   assert.equal(await walkPreview.locator('canvas').nth(1).isVisible(),true);
   assert.equal(await walkPreview.locator('canvas').nth(1).getAttribute('width'),'320');
   await walkPreview.locator('summary').click();
+  await page.evaluate(()=>{const el=document.getElementById('wv-walk-preview');if(el)el.hidden=true;});
 
   assert.equal(await page.evaluate(()=>WordvilleHubMap.humanDecorations),0);
   await page.waitForFunction(()=>WordvilleHubMap.image.naturalWidth===600&&WordvilleHubMap.image.naturalHeight===800);
@@ -333,7 +336,7 @@ const assert = require('node:assert/strict');
   await page.locator('#wv-bottom-dock [data-screen="places"]').click();
   assert.equal(await page.locator('#wv-place-rail .wv-place-chip').count(),18);
   const poolScene=await page.locator('#wv-place-canvas').evaluate(el=>el.toDataURL());
-  assert.equal(await page.locator('#wv-place-canvas').getAttribute('width'),'512');
+  assert.equal(await page.locator('#wv-place-canvas').getAttribute('width'),'1024');
   await page.locator('#wv-place-filters [data-place-filter="culture"]').click();
   assert.equal(await page.locator('#wv-place-name').innerText(),'미술관');
   const museumScene=await page.locator('#wv-place-canvas').evaluate(el=>el.toDataURL());

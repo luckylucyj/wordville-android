@@ -9,32 +9,36 @@ const people=[
  ['abigail','애비게일','광장','reservation','#836aa1','#895995'],['emily','에밀리','재봉실','customer','#b96463','#4d74ab']
 ].map(([id,name,home,word,shirt,hair],i)=>({id,name,home,word,shirt,hair,skin:['#edbe98','#d19b78','#f0c8a2','#b9805e'][i%4]}));
 // Coordinates are the 600×800 authored hub scene. Routes and the fountain share world units.
-const fountain={x:303,y:470,rx:112,ry:73};
+const fountain={x:300,y:450,rx:66,ry:42};
 // All coordinates are in the same 600x800 units as the hub artwork.
 // A collision box covers the part touching the ground, not a tree crown,
 // floating foliage or the entire height of a building.
 const FOOT_RADIUS=6;
 const decorations=Object.freeze([
  {id:'fountain',kind:'ellipse',...fountain},
- {id:'academy-base',kind:'rect',x:189,y:173,w:223,h:10},
- {id:'cafe-base',kind:'rect',x:22,y:281,w:132,h:10},
- {id:'bookstore-base',kind:'rect',x:446,y:281,w:131,h:10},
- {id:'west-bench',kind:'rect',x:87,y:387,w:55,h:14},
- {id:'east-bench',kind:'rect',x:464,y:387,w:55,h:14},
- {id:'north-west-flowers',kind:'ellipse',x:210,y:228,rx:24,ry:7},
- {id:'north-east-flowers',kind:'ellipse',x:395,y:229,rx:24,ry:7},
- {id:'west-garden',kind:'ellipse',x:113,y:358,rx:45,ry:8},
- {id:'east-garden',kind:'ellipse',x:494,y:358,rx:45,ry:8},
- {id:'south-west-garden',kind:'ellipse',x:135,y:472,rx:22,ry:8},
- {id:'south-east-garden',kind:'ellipse',x:467,y:471,rx:22,ry:8},
- {id:'west-gate-flowers',kind:'ellipse',x:65,y:620,rx:40,ry:8},
- {id:'east-gate-flowers',kind:'ellipse',x:535,y:617,rx:40,ry:8},
- {id:'west-tree',kind:'ellipse',x:52,y:419,rx:7,ry:5},
- {id:'east-tree',kind:'ellipse',x:554,y:421,rx:7,ry:5},
- {id:'north-west-lamp',kind:'ellipse',x:162,y:331,rx:4,ry:4},
- {id:'north-east-lamp',kind:'ellipse',x:436,y:330,rx:4,ry:4},
- {id:'south-west-lamp',kind:'ellipse',x:142,y:521,rx:4,ry:4},
- {id:'south-east-lamp',kind:'ellipse',x:462,y:520,rx:4,ry:4}
+ {id:'academy-base',kind:'rect',x:162,y:214,w:276,h:12},
+ {id:'library-west-lawn',kind:'rect',x:166,y:226,w:80,h:98},
+ {id:'library-east-lawn',kind:'rect',x:354,y:226,w:88,h:98},
+ {id:'greenhouse-base',kind:'rect',x:0,y:218,w:162,h:112},
+ {id:'cafe-base',kind:'rect',x:454,y:244,w:146,h:94},
+ {id:'west-grass-north',kind:'rect',x:0,y:374,w:46,h:48},
+ {id:'east-grass-north',kind:'rect',x:554,y:340,w:46,h:82},
+ {id:'west-canal-bank',kind:'rect',x:0,y:586,w:242,h:118},
+ {id:'east-canal-bank',kind:'rect',x:358,y:586,w:242,h:118},
+ {id:'west-bench',kind:'rect',x:74,y:386,w:48,h:16},
+ {id:'east-bench',kind:'rect',x:478,y:386,w:48,h:16},
+ {id:'north-west-flowers',kind:'ellipse',x:196,y:324,rx:22,ry:9},
+ {id:'north-east-flowers',kind:'ellipse',x:404,y:324,rx:22,ry:9},
+ {id:'south-west-garden',kind:'ellipse',x:102,y:560,rx:24,ry:10},
+ {id:'south-east-garden',kind:'ellipse',x:498,y:560,rx:24,ry:10},
+ {id:'west-gate-flowers',kind:'ellipse',x:58,y:740,rx:52,ry:22},
+ {id:'east-gate-flowers',kind:'ellipse',x:528,y:748,rx:64,ry:24},
+ {id:'west-tree',kind:'ellipse',x:28,y:526,rx:14,ry:8},
+ {id:'east-tree',kind:'ellipse',x:572,y:526,rx:14,ry:8},
+ {id:'north-west-lamp',kind:'ellipse',x:232,y:336,rx:6,ry:4},
+ {id:'north-east-lamp',kind:'ellipse',x:368,y:336,rx:6,ry:4},
+ {id:'south-west-lamp',kind:'ellipse',x:226,y:568,rx:6,ry:4},
+ {id:'south-east-lamp',kind:'ellipse',x:374,y:568,rx:6,ry:4}
 ].map(item=>Object.freeze(item)));
 function collidesDecoration(x,y,radius=FOOT_RADIUS){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(radius)||radius<0)return true;
@@ -59,28 +63,28 @@ function segmentHitsDecoration(a,b,radius=FOOT_RADIUS){
 }
 
 const nodes=[
- {x:300,y:615},
- {x:178,y:601},
- {x:420,y:603},
- {x:146,y:667},
- {x:455,y:666},
- {x:190,y:335},
- {x:413,y:337},
- {x:410,y:310,stair:true},
- {x:400,y:289,stair:true},
- {x:354,y:310,stair:true},
- {x:165,y:433},
- {x:438,y:430},
- {x:181,y:544},
- {x:422,y:545},
- {x:301,y:692},
- {x:278,y:725},
- {x:309,y:765},
- {x:168,y:353},
- {x:437,y:350}
+ {x:300,y:544},
+ {x:180,y:542},
+ {x:420,y:542},
+ {x:148,y:514},
+ {x:452,y:514},
+ {x:196,y:372},
+ {x:404,y:372},
+ {x:300,y:356,stair:true},
+ {x:300,y:276,stair:true},
+ {x:300,y:242,stair:true},
+ {x:180,y:448},
+ {x:420,y:448},
+ {x:180,y:498},
+ {x:420,y:498},
+ {x:300,y:604},
+ {x:300,y:668},
+ {x:300,y:748},
+ {x:134,y:356},
+ {x:520,y:362}
 ];
 const links=[
- [0,1],[0,2],[0,14],[1,12],[1,3],[2,13],[2,4],[5,17],[6,18],[17,10],[18,7],[10,12],[11,13],[6,7],[7,8],[8,9],[9,11],[14,15],[15,16],[5,10]
+ [0,1],[0,2],[0,14],[1,12],[1,3],[2,13],[2,4],[12,10],[13,11],[10,5],[11,6],[5,17],[6,18],[5,7],[6,7],[7,8],[8,9],[14,15],[15,16],[5,6]
 ];
 const edges=nodes.map(()=>[]);
 for(const [a,b] of links){edges[a].push(b);edges[b].push(a);}
@@ -167,10 +171,12 @@ function tick(residents,dt,onMeet,options={}){
    }
    p.x=travel>=d?n.x:nx;p.y=travel>=d?n.y:ny;
    if(travel>=d){
-    p.node=p.route.shift();p.wait=.16;p.onStairs=false;
-    if(scheduled&&!p.route.length){p.atVenue=true;p.activityState='doing';}
+    p.node=p.route.shift();p.onStairs=false;
+    if(!p.route.length){
+     p.wait=.16;
+     if(scheduled){p.atVenue=true;p.activityState='doing';}
+    }
    }
-   if(p.direction!==facing)p.walkDistance=0;
    p.direction=p.facing=p.movementDirection=facing;p.isMoving=true;
    p.steps+=dt;p.walkDistance+=travel;
    p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;

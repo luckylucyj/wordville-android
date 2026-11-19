@@ -76,7 +76,7 @@ root.WordvilleWalk48={ids:residentIds,labels,directions,sheets,idleSheets,getFra
 function installPreview(){
  const zones=document.querySelector('.village-controls')||document.querySelector('.wv-map-zones');if(!zones)return;
  const old=document.getElementById('wv-walk-preview');if(old)old.remove();
- const panel=document.createElement('details');panel.id='wv-walk-preview';
+ const panel=document.createElement('details');panel.id='wv-walk-preview';panel.hidden=true;
  panel.style.cssText='margin:12px 0;padding:12px;border:2px solid #957c5b;border-radius:12px;background:#f7eed9;color:#45382e';
  const title=document.createElement('summary');title.textContent='주민 보행 검사 · 얼굴·발 동일 방향 · 8자 걸음 제거';title.style.cssText='font-weight:700;cursor:pointer';
  const inputs=document.createElement('div');inputs.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';

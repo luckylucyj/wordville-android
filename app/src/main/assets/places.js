@@ -139,11 +139,12 @@ function draw(p){
  // Keep the world-map scenes at their original resolution, but render Penny's
  // 896px-source furniture into a 1024x840 buffer before fitting the phone screen.
  const pennyHiRes=p.id==='home'&&globalThis.WordvilleVenueRuntime?.focusedResident==='penny';
- const targetWidth=pennyHiRes?1024:512,targetHeight=pennyHiRes?840:420;
+ const venueV2=!pennyHiRes&&Boolean(globalThis.WordvillePixelStyle?.hasVenueArt?.(p.id));
+ const targetWidth=venueV2?1024:(pennyHiRes?1024:512),targetHeight=venueV2?840:(pennyHiRes?840:420);
  if(canvas.width!==targetWidth||canvas.height!==targetHeight){
   canvas.width=targetWidth;canvas.height=targetHeight;
  }
- canvas.dataset.hires=pennyHiRes?'penny':'';
+ canvas.dataset.hires=pennyHiRes?'penny':(venueV2?'venue-v2':'');
  if(pennyHiRes&&globalThis.WordvillePennyHome?.paint){
   globalThis.WordvillePennyHome.paint(ctx);return;
  }
