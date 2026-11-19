@@ -96,7 +96,7 @@ function bindMissingCardGlosses(){
  // A missing binding must never leave source Korean in Chinese/Japanese UI.
  const root=document.getElementById('words');
  if(!root)return;
- root.querySelectorAll('.word span').forEach(el=>{
+ root.querySelectorAll('.word .wv-word-meaning').forEach(el=>{
   if(!Object.hasOwn(el.dataset,'wvOriginalGloss')){
    const word=el.closest('.word')?.querySelector('strong')?.textContent||'';
    bindText(el,el.textContent||'',word);
