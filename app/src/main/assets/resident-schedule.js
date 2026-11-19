@@ -17,6 +17,14 @@ const PRIMARY_PLACES=Object.freeze({
 });
 const PRIMARY_START=9;
 const PRIMARY_END=17;
+const mascotActivities=Object.freeze({
+ study:'제초 5급 시험 공부',
+ weed:'잡초 뽑기',
+ photo:'카메라를 들고 사진 찍기',
+ cook:'음식 만들어 먹기',
+ patrol:'토벌하러 가기',
+ rap:'우사기 랩 하기'
+});
 function daytime(id,[morning,lunch,afternoon]){
  const place=PRIMARY_PLACES[id];
  return [[PRIMARY_START,place,morning],[12,place,lunch],[14,place,afternoon]];
@@ -87,17 +95,19 @@ const BLOCKS={
   [18,'square','주민 행사 준비'],[20,'pub','친구들과 저녁'],
   [22,'home','옷 정리 후 취침']],
  chiikawa:[
-  [0,'home','잠자기'],[7,'park','풀밭에서 아침 산책'],
+  [0,'home','잠자기'],[6,'home',mascotActivities.study],[7,'park',mascotActivities.weed],
   ...daytime('chiikawa',['햄버거 메뉴 살펴보기','햄버거 먹기','따뜻한 빵과 감자튀김 정리']),
-  [17,'market','집에 가져갈 간식 고르기'],[19,'home','간식 정리 후 취침']],
+  [17,'park',mascotActivities.weed],[18,'market','집에 가져갈 간식 고르기'],
+  [19,'home',mascotActivities.study],[21,'home','간식 정리 후 취침']],
  hachiware:[
-  [0,'home','잠자기'],[7,'square','친구에게 인사하기'],
+  [0,'home','잠자기'],[6,'home',mascotActivities.cook],[7,'park',mascotActivities.photo],
   ...daytime('hachiware',['오늘의 아이스크림 맛 살펴보기','아이스크림 맛보기','새 맛을 친구에게 추천하기']),
-  [17,'park','산책하며 노래하기'],[21,'home','일기 쓰고 취침']],
+  [17,'square',mascotActivities.patrol],[18,'park',mascotActivities.photo],
+  [19,'home',mascotActivities.cook],[21,'home','일기 쓰고 취침']],
  usagi:[
   [0,'home','잠자기'],[7,'park','뜀뛰기'],
   ...daytime('usagi',['공방 재료 살펴보기','나무 장난감 만들기','장난감 색칠하고 공구 정리']),
-  [17,'icecream','아이스크림 고르기'],[20,'home','간식 먹고 취침']],
+  [17,'icecream','아이스크림 고르기'],[20,'park',mascotActivities.rap],[22,'home','간식 먹고 취침']],
  rakko:[
   [0,'home','잠자기'],[6,'gym','아침 체력 훈련'],
   ...daytime('rakko',['화분 흙 상태 확인','온실 꽃과 나무 살펴보기','어린 식물에 물 주기']),
@@ -141,9 +151,19 @@ const TASK_STEPS=Object.freeze({
  market:['상품 확인','판매·구매','재고 정리'],square:['주민 만나기','행사·놀이','주변 정리'],
  workshop:['작업 재료 준비','제작·수선','작업 도구 정리'],park:['산책','운동·관찰','쉬기']
 });
+const mascotSteps=new Map([
+ [mascotActivities.study,['제초 문제집 펴기','오답 다시 보기']],
+ [mascotActivities.weed,['잡초가 난 자리 살피기','뽑은 잡초 모으기']],
+ [mascotActivities.photo,['카메라 꺼내기','찍은 사진 확인하기']],
+ [mascotActivities.cook,['재료 손질하기','식기 정리하기']],
+ [mascotActivities.patrol,['토벌 준비하기','토벌 결과 기록하기']],
+ [mascotActivities.rap,['박자 맞추기','랩 마무리하기']]
+]);
 function behaviorStages(place,activity){
  if(!Object.hasOwn(TASK_STEPS,place))return [activity,activity,activity];
  if(place==='home'&&/잠|취침|수면/.test(activity))return ['잠자기','잠자기','잠자기'];
+ const steps=mascotSteps.get(activity);
+ if(steps)return [steps[0],activity,steps[1]];
  const stages=TASK_STEPS[place];
  return [stages[0],activity,stages[2]];
 }

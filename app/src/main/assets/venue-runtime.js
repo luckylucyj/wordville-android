@@ -82,7 +82,8 @@ function walkToActivity(a){
   museum:['exhibit','bench'],greenhouse:['planter','table'],market:['stall','counter'],
   square:['bench'],park:['bench']
  };
- const prefs=(typePref[scene]||[]).slice();
+ const homeTable=scene==='home'&&/시험 공부|음식 만들어 먹기/.test(a.activity);
+ const prefs=homeTable?['table']: (typePref[scene]||[]).slice();
  if(a.behaviorPhase===2&&scene!=='home')prefs.reverse();
  const byActivity=(a.behaviorText.includes('정리')||a.behaviorText.includes('장비')||a.behaviorText.includes('수리'))?
   ['counter','shelf','table','equipment',...prefs]:prefs;

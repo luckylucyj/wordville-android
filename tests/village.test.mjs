@@ -254,3 +254,21 @@ test('every indoor and outdoor venue has a meaningful three-phase action cycle',
  assert.deepEqual(S.behaviorStages('home','취침 준비'),['잠자기','잠자기','잠자기']);
  assert.ok(S.behaviorStages('clinic','환자 진료').includes('환자 진료'));
 });
+test('mascot routines populate the daily schedule and the matching places',()=>{
+ const activities=[
+  ['chiikawa',6,'home','시험 공부'],['chiikawa',7,'park','잡초 뽑기'],
+  ['chiikawa',17,'park','잡초 뽑기'],['chiikawa',19,'home','시험 공부'],
+  ['hachiware',6,'home','음식 만들어 먹기'],['hachiware',7,'park','사진 찍기'],
+  ['hachiware',17,'square','토벌'],['hachiware',18,'park','사진 찍기'],
+  ['hachiware',19,'home','음식 만들어 먹기'],
+  ['usagi',20,'park','우사기 랩'],['usagi',21,'park','우사기 랩']
+ ];
+ for(const [id,hour,place,activity] of activities){
+  const minute=hour*60;
+  const slot=S.at(id,minute);
+  assert.equal(slot.place,place);
+  assert.ok(slot.activity.includes(activity));
+  assert.ok(S.occupants(place,minute).includes(id));
+  assert.equal(S.behaviorStages(place,slot.activity)[1],slot.activity);
+ }
+});

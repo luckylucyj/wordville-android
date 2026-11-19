@@ -6,7 +6,7 @@
  const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리'];
  const guests=globalThis.VillageModel.people.filter(person=>!ids.includes(person.id));
  const guestOrder=new Map(guests.map(({id},i)=>[id,i]));
- const standalonePortraits=new Set(['momo','toshiro','aizen','madoka','homura','hachiware','chiikawa']);
+ const standalonePortraits=new Set(['momo','toshiro','aizen','madoka','homura','hachiware','chiikawa','usagi','rakko','kurimanju']);
  const galleryPeople=[...ids.map((id,i)=>({id,name:labels[i]})),...guests];
  const sheet='portraits/wordville-portraits-original.png';
  const spriteSheet='portraits/wordville-walk-4phase.png';

@@ -139,6 +139,9 @@ footer{color:#735940}
 .wv-homura-portrait{--wv-portrait-image:url('guest-residents/homura-portrait.webp')}
 .wv-hachiware-portrait{--wv-portrait-image:url('guest-residents/hachiware-portrait.webp')}
 .wv-chiikawa-portrait{--wv-portrait-image:url('guest-residents/chiikawa-portrait.webp')}
+.wv-usagi-portrait{--wv-portrait-image:url('guest-residents/usagi-portrait.webp')}
+.wv-rakko-portrait{--wv-portrait-image:url('guest-residents/rakko-portrait.webp')}
+.wv-kurimanju-portrait{--wv-portrait-image:url('guest-residents/kurimanju-portrait.webp')}
 .wv-portrait.wv-guest-portrait.wv-standalone-portrait,
 .wv-place-person .wv-portrait.wv-guest-portrait.wv-standalone-portrait{
  background-image:var(--wv-portrait-image)!important;
