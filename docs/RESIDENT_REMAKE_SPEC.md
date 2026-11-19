@@ -30,6 +30,9 @@
 모션 생성 전, 모든 캐릭터는 반드시 **정면 · 우측면 · 후면 3방향 턴어라운드 마스터 시트**를 먼저 생성·검수합니다.
 
 - **권장 캔버스 크기**: `16:9` 가로형 (`1680×936` 또는 `1672×941`)
+- **저장 경로 (신규 게스트 주민 10명 마스터 턴어라운드 시트)**:
+  - `app/src/main/assets/guest-residents/turnarounds/{chiikawa,hachiware,usagi,rakko,kurimanju,momo,toshiro,aizen,homura,madoka}_turnaround.png`
+  - 통합 프리뷰 시트: `app/src/main/assets/guest-residents/turnarounds/chiikawa_5_turnarounds.png`, `human_guests_5_turnarounds.png`
 - **배치 순서 (좌 → 우)**:
   1. **좌측**: 정면 (`Front view`, 카메라 정면 응시)
   2. **중앙**: 우측면 (`Right Side Profile`, **오른쪽(`+X`)** 을 완전히 바라보는 90도 측면)
