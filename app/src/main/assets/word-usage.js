@@ -2,7 +2,7 @@
 'use strict';
 
 const genreNames={
- academic:'교재·학술 글',blog:'블로그',conversation:'대화·인터뷰',email:'이메일·편지',
+ academic:'교재·학술 글',blog:'블로그 글',conversation:'대화·인터뷰',email:'이메일·편지',
  fiction:'소설',forum:'게시판·질문답변',guide:'사용법·여행 안내',legal:'법정 기록',
  news:'뉴스',reference:'전기·해설 글',review:'후기'
 };
@@ -57,7 +57,9 @@ async function render(word){
    genre.textContent=genreNames[item.id]||item.id;
    const count=document.createElement('strong');
    const language=root.WordvilleI18n?.language||'ko';
-   count.textContent=item.count.toLocaleString(language);
+   const number=item.count.toLocaleString(language);
+   const unit={ko:'회',en:item.count===1?' match':' matches','zh-CN':'次',ja:'回'}[language]||'';
+   count.textContent=number+unit;
    li.append(genre,count);
    list.append(li);
   }

@@ -56,10 +56,18 @@ const lines=[
 ["이 표본에서 확인되는 용례가 없습니다.","No instances found in this sample.","此样本中未找到用例。","このサンプルでは用例が見つかりませんでした。"],
 ["용례 자료를 불러오지 못했습니다.","Couldn't load the usage data.","无法加载用例数据。","用例データを読み込めませんでした。"],
 ["분야별 발견 횟수","Matches by category","各领域中的出现次数","分野別の出現回数"],
-["숫자는 영어 표본에서 찾은 횟수입니다. 자료의 분야별 크기를 고려해 정렬합니다. 여러 뜻의 사용 횟수가 합쳐질 수 있습니다. 자료: UD English EWT·GUM.","Counts are from two English samples. The order accounts for category size and counts may combine several meanings. Source: UD English EWT and GUM.","数字是英文样本中的出现次数。按领域大小调整后排序，可能合并多个词义。来源：UD English EWT 和 GUM。","数字は英語サンプルでの出現回数です。分野の規模に応じて並べており、複数の意味を含む場合があります。資料：UD English EWT・GUM。"],
+["숫자는 영어 예문 자료에서 단어를 찾은 횟수입니다. 여러 뜻과 활용형이 합산될 수 있습니다. 자료의 분야별 크기를 반영해 순서를 정합니다. 출처는 UD English EWT·GUM입니다.","Counts show matches in sampled English texts and may include multiple meanings and inflected forms. Categories are ranked relative to sample size. Source: UD English EWT and GUM.","数字是该词在英语样本文本中的出现次数，可能合计多种词义和词形。领域按样本规模调整后排序。来源为 UD English EWT 和 GUM。","数字は英語のサンプルで単語が見つかった回数です。複数の意味や活用形が含まれる場合があります。分野の資料量を考慮して並べています。出典は UD English EWT・GUM です。"],
 ["SKELL에서 실제 예문 더 보기","Find more examples on SKELL","在 SKELL 查看更多真实例句","SKELL で実例をもっと見る"],
 ["교재·학술 글","Textbooks and academic writing","教材与学术文章","教科書・学術文書"],
-["블로그","Blogs","博客","ブログ"],
+["블로그 글","Blog posts","博客文章","ブログ記事"],
+["명사","Noun","名词","名詞"],
+["동사","Verb","动词","動詞"],
+["형용사","Adjective","形容词","形容詞"],
+["부사","Adverb","副词","副詞"],
+["전치사","Preposition","介词","前置詞"],
+["관용 표현","Idiom","习语","慣用表現"],
+["구·표현","Phrase","短语","句・表現"],
+["품사 정보 없음","Part of speech unavailable","暂无词性信息","品詞情報なし"],
 ["대화·인터뷰","Conversation and interviews","对话与采访","会話・インタビュー"],
 ["이메일·편지","Emails and letters","邮件与书信","メール・手紙"],
 ["소설","Fiction","小说","小説"],
@@ -452,7 +460,7 @@ function translateText(text,lang=current){
 const api={translate:translateText,get language(){return current;},languages:[...LANGS],setLanguage};
 globalThis.WordvilleI18n=api;
 if(typeof document==='undefined')return;
-const skip='script,style,textarea,option[data-i18n-ignore],[contenteditable],[data-i18n-ignore],#detail-word,#detail-meaning,#detail-translation,#detail-example,#question,#answer-result,#connection,#concepts,.word strong,.word span,.example-en,.example-context,#resident-english,#resident-korean';
+const skip='script,style,textarea,option[data-i18n-ignore],[contenteditable],[data-i18n-ignore],#detail-word,#detail-meaning,#detail-translation,#detail-example,#question,#answer-result,#connection,#concepts,.word strong,.wv-word-meaning,.example-en,.example-context,#resident-english,#resident-korean';
 const textCache=new WeakMap(),attrCache=new WeakMap();
 const attributes=['placeholder','title','aria-label','alt'];
 function ignored(node){return !!node?.parentElement?.closest(skip);}

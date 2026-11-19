@@ -23,19 +23,44 @@ const assert = require('node:assert/strict');
     await page.evaluate(lang=>WordvilleI18n.setLanguage(lang),language);
     await page.locator('#wv-bottom-dock [data-screen="learn"]').click();
     await page.locator('#day-filter').selectOption('30');
-    const meanings=await page.locator('#words .word span').allTextContents();
+    const langBadge=language==='zh-CN'?'名词':'名詞';
+    const meanings=await page.locator('#words .word .wv-word-meaning').allTextContents();
     assert.ok(meanings.length>0,'Day 30 must render vocabulary cards');
     assert.ok(meanings.every(s=>!/[가-힣]/u.test(s)),language+' must not expose Korean source meanings: '+JSON.stringify(meanings.slice(0,7)));
     for(const [word,expected] of [['insurance',insurance],['nutrition',nutrition]]){
       await page.locator('#search').fill(word);
       await page.waitForFunction(term=>document.querySelector('#words .word strong')?.textContent?.toLowerCase()===term,word);
-      assert.equal((await page.locator('#words .word').first().locator('span').innerText()).trim(),expected,language+' '+word+' meaning');
+      const wordButton=page.locator('#words .word').first();
+      assert.equal((await wordButton.locator('.wv-word-meaning').innerText()).trim(),expected,language+' '+word+' meaning');
+      assert.deepEqual(await wordButton.locator('.wv-pos-badge').allTextContents(),[langBadge]);
     }
     await page.locator('#search').fill('');
     const phrase=await page.locator('#search').getAttribute('placeholder');
     assert.doesNotMatch(phrase,/[가-힣]/u,'search placeholder should also be localized');
   }
   await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
+  await page.locator('#day-filter').selectOption('');
+  for(const [term,parts] of [['reservation',['명사']],['available',['형용사']],['recently',['부사']],['resume',['명사','동사']]]) {
+    await page.locator('#search').fill(term);
+    const card=page.locator('#words .word').filter({has:page.getByText(term,{exact:true})});
+    assert.deepEqual(await card.locator('.wv-pos-badge').allTextContents(),parts,term);
+    await card.click();
+    assert.deepEqual(await page.locator('#detail-word-pos .wv-pos-badge').allTextContents(),parts,term);
+    await page.locator('#close-dialog').click();
+  }
+  await page.locator('#search').fill('article');
+  await page.locator('#words .word').filter({has:page.getByText('article',{exact:true})}).click();
+  await page.locator('#wv-word-usage summary').click();
+  const blogs=page.locator('#wv-usage-genres li').filter({hasText:'블로그 글'});
+  await blogs.waitFor();
+  assert.equal(await blogs.locator('strong').innerText(),'12회');
+  await page.evaluate(()=>WordvilleI18n.setLanguage('en'));
+  const blogPosts=page.locator('#wv-usage-genres li').filter({hasText:'Blog posts'});
+  await blogPosts.waitFor();
+  assert.equal(await blogPosts.locator('strong').innerText(),'12 matches');
+  await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
+  await page.locator('#close-dialog').click();
+  await page.locator('#search').fill('');
   await page.locator('#day-filter').selectOption(originalDay);
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
 
