@@ -95,3 +95,21 @@ test('Unmigrated villagers fall back cleanly to previous renderer', () => {
   );
   assert.equal(ctx.calls.length, 0);
 });
+
+// The four original 128px atlases were migrated from Wordville_Motion_Review.html.
+test('Four guest residents render their own 128px 12-frame walk/idle/talk/sit sheets', () => {
+ for(const id of ['momo','homura','aizen','madoka']){
+  assert.ok(R.has(id),id+' is not registered with the high-resolution renderer');
+  for(const action of R.actions){
+   const png=readFileSync(new URL(`../app/src/main/assets/residents128/${id}/${action}.png`,import.meta.url));
+   assert.equal(png.subarray(1,4).toString(),'PNG');
+   assert.equal(png.readUInt32BE(16),1536);
+   assert.equal(png.readUInt32BE(20),1024);
+   const ctx=mockContext();
+   assert.equal(W.paint(ctx,{id,direction:'down'},50,75,{width:64,height:64,walking:action==='walk',action,phase:3}),true);
+   assert.equal(ctx.calls.length,1);
+   assert.equal(ctx.calls[0][0].src,`residents128/${id}/${action}.png`);
+   assert.deepEqual(ctx.calls[0].slice(1,5),[384,0,128,128]);
+  }
+ }
+});
