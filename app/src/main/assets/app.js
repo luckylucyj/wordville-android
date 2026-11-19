@@ -32,6 +32,10 @@ function renderWordPartsOfSpeech(container, word) {
 
 let wordPage=0,studyPdfPage=null;
 const PAGE_SIZE=60;
+const wordPagers = [
+ { previous: $('prev-page-top'), info: $('page-info-top'), next: $('next-page-top') },
+ { previous: $('prev-page'), info: $('page-info'), next: $('next-page') },
+];
 const wordViewKey='wordville.word-tab.view.v1';
 // Save only display preferences here. XP, review answers, and saved memory
 // images remain under their existing independent storage keys.
@@ -97,9 +101,23 @@ function renderWords(){const scope=$('wv-study-pdf-scope');if(scope){scope.hidde
  const badges=make('span',undefined,'wv-word-pos');
  renderWordPartsOfSpeech(badges,w);
  title.append(make('strong',w.word),badges);
- button.append(title,meaningSpan);button.addEventListener('click',()=>openWord(w));const row=make('div',undefined,'wv-word-item');row.append(button);globalThis.WordvilleStudy?.attachCard(row,w,$('day-filter').value);fragment.append(row);}$('words').append(fragment);if(!filtered.length)$('words').append(make('p','검색 결과가 없습니다.'));$('filter-count').textContent=`검색 결과 ${filtered.length}개 · PDF 수록 순서 · 한 페이지 60개`;$('page-info').textContent=`${wordPage+1} / ${pages} 쪽`;$('prev-page').disabled=wordPage===0;$('next-page').disabled=wordPage>=pages-1;renderScope();globalThis.WordvilleStudy?.renderSummary();rememberWordView();}
-$('prev-page').addEventListener('click',()=>{wordPage--;renderWords();$('filter-count').scrollIntoView({block:'start'});});
-$('next-page').addEventListener('click',()=>{wordPage++;renderWords();$('filter-count').scrollIntoView({block:'start'});});
+ button.append(title,meaningSpan);button.addEventListener('click',()=>openWord(w));const row=make('div',undefined,'wv-word-item');row.append(button);globalThis.WordvilleStudy?.attachCard(row,w,$('day-filter').value);fragment.append(row);}$('words').append(fragment);if(!filtered.length)$('words').append(make('p','검색 결과가 없습니다.'));$('filter-count').textContent=`검색 결과 ${filtered.length}개 · PDF 수록 순서 · 한 페이지 60개`;renderWordPagers(pages);renderScope();globalThis.WordvilleStudy?.renderSummary();rememberWordView();}
+function renderWordPagers(pages) {
+ for (const { previous, info, next } of wordPagers) {
+  info.textContent = `${wordPage + 1} / ${pages} 쪽`;
+  previous.disabled = wordPage === 0;
+  next.disabled = wordPage >= pages - 1;
+ }
+}
+function moveWordPage(offset) {
+ wordPage += offset;
+ renderWords();
+ $('filter-count').scrollIntoView({ block: 'start' });
+}
+for (const { previous, next } of wordPagers) {
+ previous.addEventListener('click', () => moveWordPage(-1));
+ next.addEventListener('click', () => moveWordPage(1));
+}
 $('day-filter').addEventListener('change',()=>{wordPage=0;studyPdfPage=null;renderWords();});
 $('wv-status-filter').addEventListener('change',()=>{wordPage=0;renderWords();});
 $('wv-study-pdf-clear').addEventListener('click',()=>{studyPdfPage=null;wordPage=0;renderWords();});
