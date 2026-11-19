@@ -76,7 +76,7 @@ function speak(accent){
  try{
   const term=spokenText(word);
   if(root.WordvilleSpeech?.speak){
-   root.WordvilleSpeech.speak(term,accent,id);
+   root.WordvilleSpeech.speak(term,accent,id,word.id);
    return;
   }
   const synthesis=root.speechSynthesis;

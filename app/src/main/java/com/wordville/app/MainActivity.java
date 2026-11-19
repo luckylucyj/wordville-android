@@ -67,11 +67,11 @@ public class MainActivity extends Activity {
   }
  }
  private final class WordvilleSpeechBridge {
-  @JavascriptInterface public void speak(String word,String accent,int id){
+  @JavascriptInterface public void speak(String word,String accent,int id,String wordId){
    if(word==null||word.trim().isEmpty()||word.length()>180||id<1)return;
    if(!("en-US".equals(accent)||"en-GB".equals(accent)))return;
    runOnUiThread(()->{
-    if(foreground&&pageReady&&pronunciation!=null)pronunciation.speak(word,accent,id);
+    if(foreground&&pageReady&&pronunciation!=null)pronunciation.speak(word,accent,id,wordId);
    });
   }
   @JavascriptInterface public void stop(){
