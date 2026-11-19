@@ -35,6 +35,20 @@ public class VillageSmokeTest {
   }
   throw new AssertionError("WebView did not respond after cold-start retries");
  }
+ @Test public void bundledBritishPhraseDecodesOnAndroid() throws Exception {
+  android.content.Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+  try(android.content.res.AssetFileDescriptor clip=context.getAssets()
+    .openFd("pronunciation/uk/voca-in-commemoration-of.mp3")) {
+   android.media.MediaPlayer player=new android.media.MediaPlayer();
+   try {
+    player.setDataSource(clip.getFileDescriptor(),clip.getStartOffset(),clip.getLength());
+    player.prepare();
+    assertTrue("The bundled UK phrase has playable audio",player.getDuration()>0);
+   } finally {
+    player.release();
+   }
+  }
+ }
  @Test public void villageAndWordCardRunOnAndroid() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
   Activity activity=launchWordville(inst);

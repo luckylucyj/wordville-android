@@ -585,7 +585,7 @@ const assert = require('node:assert/strict');
   await page.evaluate(()=>{
    window.pronunciationCalls=[];
    window.WordvilleSpeech={
-    speak(term,accent,request){pronunciationCalls.push([term,accent,request]);WordvillePronunciation.onNativeResult(request,'playing');},
+    speak(term,accent,request,wordId){pronunciationCalls.push([term,accent,request,wordId]);WordvillePronunciation.onNativeResult(request,'playing');},
     stop(){}
    };
   });
@@ -595,6 +595,7 @@ const assert = require('node:assert/strict');
   }
   const calls=await page.evaluate(()=>pronunciationCalls);
   assert.deepEqual(calls.map(([word,locale])=>[word,locale]),[['reservation','en-US'],['reservation','en-GB']]);
+  assert.deepEqual(calls.map(call=>call[3]),['reservation','reservation']);
   await page.evaluate(ids=>{
    WordvillePronunciation.onNativeResult(ids[0],'done');
    WordvillePronunciation.onNativeResult(ids[1],'unavailable');

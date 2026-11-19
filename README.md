@@ -68,9 +68,10 @@ node tests/browser.cjs
 
 브라우저 테스트 전 `npm run serve`로 서버를 켜야 합니다. GitHub Actions는 Chrome을 지정해 같은 테스트를 실행합니다.
 
-Android: JDK 17, Gradle 8.9, SDK 35.
+Android: JDK 17, Gradle 8.9, SDK 35. 영국식 발음용 파일 생성에는 eSpeak NG와 LAME을 사용합니다. 기기의 영국식 음성을 재생할 수 없을 때 앱에 포함된 합성 음성을 재생합니다.
 
 ```sh
+python scripts/build-uk-pronunciation.py
 gradle assembleDebug assembleDebugAndroidTest lintDebug
 ```
 

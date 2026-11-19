@@ -9,3 +9,4 @@ node_modules/
 app/src/main/assets/vendor/
 
 .signing/
+app/src/main/assets/pronunciation/uk/
