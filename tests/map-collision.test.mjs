@@ -35,6 +35,23 @@ test('outside venues can place all residents on distinct paved positions',()=>{
   for(const [id,{x,y}] of spots)assert.equal(M.collidesDecoration(x,y),false,id);
  }
 });
+test('evening park and square residents walk in separated, collision-free spots',()=>{
+ const residents=M.freshResidents(),minuteOfDay=18*60;
+ M.syncSchedule(residents,minuteOfDay,{teleport:true});
+ const outside=residents.filter(p=>M.outdoorPlaces.has(p.schedulePlace));
+ const moved=new Set();
+ for(let i=0;i<250;i++){
+  M.tick(residents,.1,undefined,{minuteOfDay});
+  for(const p of outside){
+   assert.equal(M.collidesDecoration(p.x,p.y),false,p.id);
+   if(p.isMoving)moved.add(p.id);
+   for(const other of outside){
+    if(p!==other)assert.ok(Math.hypot(p.x-other.x,p.y-other.y)>=37,`${p.id} and ${other.id}`);
+   }
+  }
+ }
+ assert.equal(moved.size,outside.length);
+});
 test('all authored walking routes avoid decoration collision with foot clearance',()=>{
  for(const [i,n] of M.nodes.entries()){
   assert.equal(M.collidesDecoration(n.x,n.y),false,'node '+i+' is inside a decoration');

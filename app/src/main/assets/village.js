@@ -46,13 +46,11 @@ function ground(p){
  r(11,375,82,5,p.shade);r(21,358,43,16,'#8b7761');r(17,352,51,8,'#b86f64');for(let i=0;i<6;i++)r(25+i*6,361,4,7,['#d2ba73','#859e91','#a58f98'][i%3]);
  for(const [x,y] of [[527,370],[556,389]]){r(x-9,y-9,18,3,'#a88e67');r(x-1,y-6,2,10,'#665e55');r(x-15,y-4,5,3,'#778c70');r(x+10,y-4,5,3,'#778c70');}
 }
-let outdoorPositions=new Map();
-function displayPosition(p){return outdoorPositions.get(p.id)||p;}
 function sprite(p){
  // A scheduled villager inside a building (or asleep at home) is drawn in
  // that indoor place, not simultaneously outside in the town square.
  if(p.atVenue&&!M.outdoorPlaces.has(p.schedulePlace))return;
- const {x,y}=displayPosition(p),walking=!paused&&p.chat<=0&&p.isMoving===true;
+ const {x,y}=p,walking=!paused&&p.chat<=0&&p.isMoving===true;
  const assets=globalThis.WordvillePortraits,img=assets?.spriteImage,index=assets?.order?.[p.id];
  // Alex previews the hand-painted native 64px animation; others remain 48px.
  const hasHiRes=p.id==='alex'||globalThis.WordvilleResidents128?.has?.(p.id);
@@ -211,7 +209,7 @@ function currentMapView(){
  const scale=cover*(viewZone==='all'?1:1.25)*zoom;
  const follow=followId?residents.find(p=>p.id===followId):null;
  const target=!follow||!follow.atVenue?follow:
-  M.outdoorPlaces.has(follow.schedulePlace)?displayPosition(follow):null;
+  M.outdoorPlaces.has(follow.schedulePlace)?follow:null;
  const centerX=target?.x??mapWidth/2;
  const centerY=target?target.y-42:MAP_ZONES[viewZone];
  // Following a resident or selecting a zone must keep every viewport edge inside the map.
@@ -252,9 +250,9 @@ function drawMapCollision(){
  }
  ctx.restore();
 }
-function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();outdoorPositions=M.outdoorStandingPositions(residents);const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));const hub=globalThis.WordvilleHubMap,weather=globalThis.WordvillePixelStyle?.weather||'clear';const drawables=[];if(hub?.props&&hub?.drawProp){for(const prop of hub.props)drawables.push({y:prop.y,draw:()=>hub.drawProp(ctx,prop,period,t,weather)});}for(const p of residents){if(VISIBLE_RESIDENTS.has(p.id)||p.id===selected)drawables.push({y:displayPosition(p).y,draw:()=>sprite(p)});}drawables.sort((a,b)=>a.y-b.y);for(const item of drawables)item.draw();globalThis.WordvilleWalk?.drawPets(ctx,t);globalThis.WordvillePixelStyle?.paintTownOverlay?.(ctx,period,t);drawMapCollision();ctx.restore();frameHandle=requestAnimationFrame(frame);}
+function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));const hub=globalThis.WordvilleHubMap,weather=globalThis.WordvillePixelStyle?.weather||'clear';const drawables=[];if(hub?.props&&hub?.drawProp){for(const prop of hub.props)drawables.push({y:prop.y,draw:()=>hub.drawProp(ctx,prop,period,t,weather)});}for(const p of residents){if(VISIBLE_RESIDENTS.has(p.id)||p.id===selected)drawables.push({y:p.y,draw:()=>sprite(p)});}drawables.sort((a,b)=>a.y-b.y);for(const item of drawables)item.draw();globalThis.WordvilleWalk?.drawPets(ctx,t);globalThis.WordvillePixelStyle?.paintTownOverlay?.(ctx,period,t);drawMapCollision();ctx.restore();frameHandle=requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>{if(document.body.dataset.screen==='residents'&&globalThis.WordvilleVillage?.visitResident){globalThis.WordvilleVillage.visitResident(p.id);}else select(p.id);});document.getElementById('resident-list').append(b);}
-canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=residents.filter(p=>!p.atVenue||M.outdoorPlaces.has(p.schedulePlace)).map(p=>({id:p.id,...displayPosition(p)})).filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
+canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=residents.filter(p=>!p.atVenue||M.outdoorPlaces.has(p.schedulePlace)).filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 // The reference painting has different entrances from the generated fallback map.
 const art=globalThis.WordvilleWorldArt;
 const landmarks=art?.hubLandmarks?.length?art.hubLandmarks:(art?.reference?.complete&&art.reference.naturalWidth>0?art.referenceLandmarks:art?.landmarks)||[];

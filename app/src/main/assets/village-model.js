@@ -141,12 +141,16 @@ const entranceNode=Object.freeze({
  market:4,square:0,workshop:5,park:1
 });
 const outdoorPlaces=new Set(['square','park']);
-// These slots cover the paved apron south of the fountain and share one grid,
-// so residents at the park and square can never claim the same standing spot.
+const PATROL_RADIUS=9;
+// Park and square share the plaza grid. Check the whole walking lane against scenery.
 const standingSlots=[];
-for(let y=550;y<=670;y+=30){
- for(let x=145;x<=455;x+=30){
-  if(!collidesDecoration(x,y))standingSlots.push(Object.freeze({x,y}));
+for(const y of [382,435,488,541]){
+ for(let x=65;x<=521;x+=57){
+  if(!segmentHitsDecoration({x:x-PATROL_RADIUS,y},{x:x+PATROL_RADIUS,y})){
+   const road=nodes.map((n,i)=>({n,i,d:Math.hypot(n.x-x,n.y-y)})).sort((a,b)=>a.d-b.d)
+    .find(({n})=>!segmentHitsDecoration(n,{x:x-PATROL_RADIUS,y})&&!segmentHitsDecoration(n,{x:x+PATROL_RADIUS,y}));
+   if(road)standingSlots.push(Object.freeze({x,y,node:road.i}));
+  }
  }
 }
 const slotsByPlace=new Map([...outdoorPlaces].map(place=>{
@@ -156,15 +160,53 @@ const slotsByPlace=new Map([...outdoorPlaces].map(place=>{
 }));
 function outdoorStandingPositions(residents){
  const positions=new Map(),claimed=new Set();
+ for(const p of residents){
+  if(!p.atVenue||!outdoorPlaces.has(p.schedulePlace)||!p.outdoorSpot)continue;
+  positions.set(p.id,p.outdoorSpot);claimed.add(p.outdoorSpot);
+ }
  for(const place of outdoorPlaces){
   const slots=slotsByPlace.get(place);
   for(const p of residents){
-   if(!p.atVenue||p.schedulePlace!==place||p.isMoving)continue;
+   if(!p.atVenue||p.schedulePlace!==place||positions.has(p.id))continue;
    const slot=slots.find(point=>!claimed.has(point));
    if(slot){claimed.add(slot);positions.set(p.id,slot);}
   }
  }
  return positions;
+}
+function placeOutdoorResidents(residents){
+ if(!residents.some(p=>p.atVenue&&outdoorPlaces.has(p.schedulePlace)&&!p.outdoorSpot))return;
+ const positions=outdoorStandingPositions(residents);
+ residents.forEach((p,i)=>{
+  const spot=positions.get(p.id);
+  if(!spot||p.outdoorSpot)return;
+  p.outdoorSpot=spot;p.x=spot.x;p.y=spot.y;
+  p.patrolSide=i%2?1:-1;p.patrolWait=1+(i%7)*.55;
+  p.isMoving=false;
+ });
+}
+function recordWalk(p,dx,dy,travel,dt){
+ p.direction=p.facing=p.movementDirection=directionFromDelta(dx,dy,p.direction);
+ p.isMoving=true;p.steps+=dt;p.walkDistance+=travel;
+ p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;
+}
+function stroll(p,residents,dt){
+ if(p.patrolWait>0){p.patrolWait-=dt;return;}
+ const target=p.outdoorSpot.x+p.patrolSide*PATROL_RADIUS;
+ const dx=target-p.x,travel=Math.min(Math.abs(dx),16*dt);
+ if(travel===0){p.patrolSide*=-1;p.patrolWait=3;return;}
+ const x=p.x+Math.sign(dx)*travel;
+ if(!canTakeStep(p,residents,x,p.y,true))return;
+ p.x=x;
+ recordWalk(p,dx,0,travel,dt);
+}
+function canTakeStep(p,residents,x,y,scheduled){
+ return !collidesDecoration(x,y)&&!residents.some(other=>{
+  if(other===p||(scheduled&&other.atVenue&&!outdoorPlaces.has(other.schedulePlace)))return false;
+  const clearance=scheduled&&!other.atVenue?16:23;
+  const separation=Math.hypot(other.x-x,other.y-y);
+  return separation<clearance&&separation<Math.hypot(other.x-p.x,other.y-p.y);
+ });
 }
 const appointments=[
  {pair:['momo','toshiro'],hour:17,place:'park',chatDuration:3.5},
@@ -201,10 +243,16 @@ function syncSchedule(residents,minute,{teleport=false}={}){
   const key=slot.hour+'|'+slot.place+'|'+slot.activity;
   if(key===p.scheduleKey&&!teleport)continue;
   const goal=destinationFor(p,slot.place);
+  const spot=p.outdoorSpot;
+  if(!teleport&&p.schedulePlace===slot.place){
+   p.scheduleKey=key;p.scheduleHour=slot.hour;p.activity=slot.activity;
+   continue;
+  }
   // Arrive on time for the daytime venue or a shared appointment.
   const arrive=teleport||beginsPrimaryVisit(p,slot)||hasAppointment(p.id,slot);
   p.scheduleKey=key;p.scheduleHour=slot.hour;p.schedulePlace=slot.place;
   p.activity=slot.activity;p.targetNode=goal;
+  p.outdoorSpot=null;p.detour=null;
   p.chat=0;p.partner=null;p.wait=0;p.onStairs=false;
   p.isMoving=false;p.activityState='travel';
   if(arrive){
@@ -213,10 +261,11 @@ function syncSchedule(residents,minute,{teleport=false}={}){
    p.route=[];p.atVenue=true;p.activityState='doing';
    continue;
   }
-  p.route=path(p.node,goal).slice(1);
+  p.route=spot?[spot.node,...path(spot.node,goal).slice(1)]:path(p.node,goal).slice(1);
   p.atVenue=!p.route.length;
   if(p.atVenue)p.activityState='doing';
  }
+ placeOutdoorResidents(residents);
 }
 const spawnNodes=[0,1,2,3,4,5,6,7,10,11,12,13,8,9,14,15,16,17,18];
 const homeNodes=[3,4,15,16];
@@ -231,44 +280,73 @@ function tick(residents,dt,onMeet,options={}){
   if(p.chat>0){p.chat=Math.max(0,p.chat-dt);p.onStairs=false;continue;}
   if(p.wait>0){p.wait=Math.max(0,p.wait-dt);p.onStairs=false;continue;}
   if(!p.route.length){
-   if(scheduled){p.atVenue=true;p.activityState='doing';continue;}
+   if(scheduled){
+    p.atVenue=true;p.activityState='doing';
+    if(p.outdoorSpot&&dt>0)stroll(p,residents,dt);
+    continue;
+   }
    const goal=(p.node+5+p.id.length+(p.visits++*7))%nodes.length;p.route=path(p.node,goal).slice(1);p.wait=.25;continue;
   }
-  const nextIndex=p.route[0],n=nodes[nextIndex],dx=n.x-p.x,dy=n.y-p.y,d=Math.hypot(dx,dy);
+  const nextIndex=p.route[0],n=nodes[nextIndex];
+  const target=scheduled&&p.detour?p.detour:n;
+  const dx=target.x-p.x,dy=target.y-p.y,d=Math.hypot(dx,dy);
   p.onStairs=isStairEdge(p.node,nextIndex);
-  if(d<1e-6){p.node=p.route.shift();if(scheduled&&!p.route.length){p.atVenue=true;p.activityState='doing';}continue;}
+  if(d<1e-6){
+   if(p.detour){p.detour=null;continue;}
+   p.node=p.route.shift();
+   if(scheduled&&!p.route.length){p.atVenue=true;p.activityState='doing';}
+   continue;
+  }
   // Node-to-node direction remains identical for the whole leg. A new leg
   // may turn only after arriving at its node; blocked legs keep last facing.
-  const from=nodes[p.node];
-  const facing=directionFromDelta(n.x-from.x,n.y-from.y,p.direction);
   const speed=p.onStairs?12:18,step=speed*dt;
   if(step>0&&d>0){
    const travel=Math.min(step,d),nx=p.x+dx/d*travel,ny=p.y+dy/d*travel;
    // Check the actual foot position, including the final node snap.
    // Collision must not change facing or advance the walking sprite.
-   if(collidesDecoration(nx,ny)||
-      residents.some(other=>other!==p&&(!scheduled||!other.atVenue)&&Math.hypot(other.x-nx,other.y-ny)<23)){
+   if(!canTakeStep(p,residents,nx,ny,scheduled)){
+    if(scheduled&&!p.onStairs){
+     p.detour=null;
+     // Rounded corners can share the road without requiring everyone to step
+     // on the same pixel. Only use a clear connection to the next waypoint.
+     const next=nodes[p.route[1]];
+     if(Math.hypot(n.x-p.x,n.y-p.y)<26&&(!next||!segmentHitsDecoration(p,next))){
+      p.node=p.route.shift();
+      if(!p.route.length){p.atVenue=true;p.activityState='doing';}
+      continue;
+     }
+     for(const side of [1,-1]){
+      const sx=-dy/d*side,sy=dx/d*side;
+      const around={x:p.x+sx*24,y:p.y+sy*24};
+      if(segmentHitsDecoration(p,around)||!canTakeStep(p,residents,p.x+sx*step,p.y+sy*step,scheduled))continue;
+      p.detour=around;
+      break;
+     }
+    }
     p.wait=.16;p.onStairs=false;continue;
    }
-   p.x=travel>=d?n.x:nx;p.y=travel>=d?n.y:ny;
-   if(travel>=d){
+   p.x=travel>=d?target.x:nx;p.y=travel>=d?target.y:ny;
+   if(travel>=d&&p.detour)p.detour=null;
+   else if(travel>=d){
     p.node=p.route.shift();p.onStairs=false;
     if(!p.route.length){
      p.wait=.16;
      if(scheduled){p.atVenue=true;p.activityState='doing';}
     }
    }
-   p.direction=p.facing=p.movementDirection=facing;p.isMoving=true;
-   p.steps+=dt;p.walkDistance+=travel;
-   p.stairPhase=p.onStairs?(Math.sin(p.steps*12)+1)/2:0;
+   recordWalk(p,dx,dy,travel,dt);
   }
  }
+ if(scheduled)placeOutdoorResidents(residents);
  const available=p=>p&&!p.chat&&p.cooldown<=0&&!p.onStairs;
  function tryMeet(a,b){
   if(!available(a)||!available(b))return false;
   if(scheduled&&(!a.atVenue||!b.atVenue||!outdoorPlaces.has(a.schedulePlace)||a.schedulePlace!==b.schedulePlace))return false;
-  if(Math.hypot(a.x-b.x,a.y-b.y)>=29)return false;
   const relationship=relationships.get(a.id);
+  const appointment=scheduled&&relationship?.partner===b.id&&
+   a.scheduleHour===relationship.hour&&a.schedulePlace===relationship.place;
+  const nearby=scheduled?60:29;
+  if(!appointment&&Math.hypot(a.x-b.x,a.y-b.y)>=nearby)return false;
   a.chat=b.chat=relationship?.partner===b.id?relationship.chatDuration:3.5;
   a.cooldown=b.cooldown=15;
   a.partner=b.id;
