@@ -6,7 +6,7 @@
 const W=root.WordvilleWalk;if(!W)return;
 const actions=['walk','idle','talk','sit'];
 const directions=W.walk48Directions||['down','down-right','right','up-right','up','up-left','left','down-left'];
-const ids=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily','toshiro'];
+const ids=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily','toshiro','momo','aizen','madoka','homura'];
 const sheets={};
 for(const id of ids){
  sheets[id]={};
