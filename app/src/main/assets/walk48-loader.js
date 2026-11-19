@@ -11,6 +11,12 @@ const labels=['알렉스','엘리엇','하비','샘','세바스찬','셰인','�
 const guestIds=(root.VillageModel?.people||[]).filter(p=>!residentIds.includes(p.id)).map(p=>p.id);
 const guestOrder=new Map(guestIds.map((id,index)=>[id,index]));
 const guestSheets={};
+const chiikawaActions=['walk','idle','talk','sit'];
+const chiikawaSheets={};
+for(const action of chiikawaActions){
+ const image=new Image();image.decoding='async';image.src='guest-residents/chiikawa/'+action+'.png';
+ chiikawaSheets[action]=image;
+}
 if(guestIds.length){
  for(const kind of ['walk','idle']){
   const image=new Image();
@@ -68,6 +74,30 @@ function loadedSheet(id,walking){
  const image=walking?sheets[id]:idleSheets[id];
  return (walking?ready(image):idleReady(image))?image:null;
 }
+function chiikawaReady(action){
+ const image=chiikawaSheets[action];
+ return Boolean(image?.complete&&image.naturalWidth===frames*cell&&image.naturalHeight===3*cell);
+}
+function paintChiikawa(c,p,x,y,o,walking){
+ const action=walking?'walk':(chiikawaActions.includes(o.action)&&o.action!=='walk'?o.action:'idle');
+ if(!chiikawaReady(action))return false;
+ const direction=directionForSprite(p,walking);
+ const row=['down','down-right','down-left'].includes(direction)?0:
+  ['up','up-right','up-left'].includes(direction)?2:1;
+ const mirrored=['left'].includes(direction);
+ const time=Number.isFinite(o.timestampMs)?o.timestampMs:(typeof performance!=='undefined'?performance.now():Date.now());
+ const duration=action==='idle'?200:(action==='talk'?130:160);
+ const phase=walking
+  ?(Number.isInteger(o.phase)?((o.phase%frames)+frames)%frames:getFrame(p,true,time))
+  :(Number.isInteger(o.idlePhase)?((o.idlePhase%frames)+frames)%frames:Math.floor(Math.max(0,time)/duration)%frames);
+ const width=Math.round(o.width||48),height=Math.round(o.height||48);
+ c.save();c.imageSmoothingEnabled=false;
+ c.fillStyle='#26343838';c.beginPath();c.ellipse(Math.round(x),Math.round(y+1),Math.round(width*.21),2,0,0,Math.PI*2);c.fill();
+ if(mirrored){c.translate(Math.round(x)*2,0);c.scale(-1,1);}
+ c.drawImage(chiikawaSheets[action],phase*cell,row*cell,cell,cell,
+  Math.round(x-width/2),Math.round(y-anchorY*height/cell),width,height);
+ c.restore();return true;
+}
 function directionForSprite(p,walking=false){
  const move=p?.movementDirection;
  if(walking&&directions.includes(move))return move;
@@ -76,6 +106,7 @@ function directionForSprite(p,walking=false){
 }
 function paint(c,p,x,y,o={}){
  const id=p?.id||p,walking=o.walking===true;
+ if(id==='chiikawa'&&paintChiikawa(c,p,x,y,o,walking))return true;
  const img=loadedSheet(id,walking);
  // Neutral reference-frame fallback: never show a walking contact pose at rest.
  if(!img)return guestOrder.has(id)?(walking&&paint(c,p,x,y,{...o,walking:false})):existingPaint(c,p,x,y,o);
@@ -100,6 +131,7 @@ function directionFromDelta(dx,dy){
 }
 Object.assign(W,{paint,frameFor:getFrame,frameSize:{width:48,height:48},anchorY,groundY:anchorY,frameCount:frames,stepDistance,fps,walk48Sheets:sheets,walk48Directions:directions,walk48Cell:getCell,walk48Phases:phases,idle48Sheets:idleSheets,idle48Cell:getIdleCell,idle48Frame:idleFrameFor,idle48Phases:idlePhases,idle48FrameCount:idleFrameCount,directionForSprite,directionFromDelta});
 root.WordvilleWalk48={ids:residentIds,labels,directions,sheets,idleSheets,getFrame,getCell,getIdleCell,idleFrameFor,directionForSprite,directionFromDelta,paint,frameSize:{width:48,height:48},guestIds,guestSheets,anchorY,fps};
+root.WordvilleChiikawa={has:id=>id==='chiikawa',actions:chiikawaActions,sheets:chiikawaSheets,ready:chiikawaReady};
 function installPreview(){
  const zones=document.querySelector('.village-controls')||document.querySelector('.wv-map-zones');if(!zones)return;
  const old=document.getElementById('wv-walk-preview');if(old)old.remove();
@@ -129,11 +161,12 @@ function installPreview(){
    c.imageSmoothingEnabled=false;c.fillStyle='#dce9db';c.fillRect(0,0,256,168);
    c.fillStyle='#98aF92';c.fillRect(0,143,256,25);
    const moving=motion.value==='walk',id=person.value;
-   const beat=moving?Math.floor(ms/125)%frames:0;
    const action=(motion.value==='talk'||motion.value==='sit')?motion.value:(moving?'walk':'idle');
-   if(loadedSheet(id,moving)||root.WordvilleResidents128?.has?.(id)){
+   const beat=moving?Math.floor(ms/125)%frames:
+    id==='chiikawa'?Math.floor(ms/(action==='idle'?200:(action==='talk'?130:160)))%frames:0;
+   if(loadedSheet(id,moving)||root.WordvilleChiikawa?.has?.(id)||root.WordvilleResidents128?.has?.(id)){
     W.paint(c,{id,direction:facing.value,walkDistance:beat*stepDistance},128,142,{width:96,height:96,walking:moving,action,phase:beat,idlePhase:beat});
-    caption.textContent='PNG 시트에서 재생 · '+(moving?phases[beat]:idlePhases[beat])+' · '+(beat+1)+'/'+(moving?frames:idleFrameCount)+' · '+(moving?'8 FPS':'2.5 FPS');
+    caption.textContent='PNG 시트에서 재생 · '+(moving?phases[beat]:(id==='chiikawa'?action:idlePhases[beat]))+' · '+(beat+1)+'/'+(moving||id==='chiikawa'?frames:idleFrameCount)+' · '+(moving?'8 FPS':'2.5 FPS');
    }else caption.textContent='스프라이트시트 불러오는 중. 자산 누락 시 APK 빌드 결과를 확인하세요.';
    if(!gallery.hidden){
     const g=gallery.getContext('2d');

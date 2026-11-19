@@ -57,7 +57,7 @@ function sprite(p){
  // Alex previews the hand-painted native 64px animation; others remain 48px.
  const hasHiRes=p.id==='alex'||globalThis.WordvilleResidents128?.has?.(p.id);
  const width=hasHiRes?64:48,height=width;
- const action=hasHiRes&&!walking&&p.chat>0?'talk':undefined;
+ const action=(hasHiRes||globalThis.WordvilleChiikawa?.has?.(p.id))&&!walking&&p.chat>0?'talk':undefined;
  if(globalThis.WordvilleWalk?.paint(ctx,p,x,y,{width,height,walking,action})){}else if(index!==undefined&&img?.complete&&img.naturalWidth===2560&&img.naturalHeight===768){
   const col=index%4,row=Math.floor(index/4),time=p.steps*7.5+index*.19;
   // Two source-identical poses + two clean transitional variants = four animation slots.
