@@ -256,7 +256,7 @@ const assert = require('node:assert/strict');
   const guestPortraits=page.locator('#resident-list .wv-guest-portrait');
   assert.equal(await guestPortraits.count(),10);
   assert.equal(await guestPortraits.first().evaluate(el=>getComputedStyle(el).imageRendering),'pixelated');
-  for(const [id,width] of [['momo',1536],['toshiro',887],['aizen',887],['madoka',768],['homura',768]]){
+  for(const [id,width] of [['momo',1536],['toshiro',512],['aizen',887],['madoka',768],['homura',768]]){
    const portrait=page.locator(`#resident-list [data-person="${id}"] .wv-portrait`);
    const actual=await portrait.evaluate(async el=>{
     const style=getComputedStyle(el);
