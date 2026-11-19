@@ -4,7 +4,63 @@ import '../app/src/main/assets/resident-schedule.js';
 import '../app/src/main/assets/village-model.js';
 const S=globalThis.WordvilleSchedule;
 const M=globalThis.VillageModel;
-test('twelve named unique residents',()=>{assert.equal(M.people.length,12);assert.equal(new Set(M.people.map(p=>p.id)).size,12);assert.deepEqual(M.people.map(p=>p.name),['알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리']);});
+test('22 named unique residents, including all ten guests',()=>{
+ assert.equal(M.people.length,22);
+ assert.equal(new Set(M.people.map(p=>p.id)).size,22);
+ assert.deepEqual(M.people.map(p=>p.name),[
+  '알렉스','엘리엇','하비','샘','세바스찬','셰인','헤일리','레아','마루','페니','애비게일','에밀리',
+  '치이카와','하치와레','우사기','랏코','쿠리만쥬','히나모리 모모','히츠가야 토시로','아이젠','호무라','마도카'
+ ]);
+});
+test('Momo and Toshiro share an evening walk and seek each other first',()=>{
+ const residents=M.freshResidents();
+ const minuteOfDay=17*60;
+ M.syncSchedule(residents,minuteOfDay-1,{teleport:true});
+ const momo=residents.find(p=>p.id==='momo'),toshiro=residents.find(p=>p.id==='toshiro');
+ const meetings=[];
+ M.tick(residents,.1,(a,b)=>meetings.push([a.id,b.id]),{minuteOfDay});
+ assert.equal(momo.schedulePlace,'park');
+ assert.equal(toshiro.schedulePlace,'park');
+ assert.equal(momo.partner,toshiro.id);
+ assert.equal(toshiro.partner,momo.id);
+ assert.ok(meetings.some(([a,b])=>a===momo.id&&b===toshiro.id));
+});
+test('ten residents occupy their assigned venues from 09:00 until 17:00',()=>{
+ const assignments={
+  momo:'library',aizen:'bookstore',hachiware:'icecream',chiikawa:'burger',
+  toshiro:'pool',homura:'museum',rakko:'greenhouse',madoka:'cafe',kurimanju:'pub',usagi:'workshop'
+ };
+ const residents=M.freshResidents();
+ M.syncSchedule(residents,8*60,{teleport:true});
+ for(let hour=9;hour<17;hour++){
+  M.syncSchedule(residents,hour*60);
+  for(const [id,venue] of Object.entries(assignments)){
+   const resident=residents.find(person=>person.id===id);
+   assert.equal(S.at(id,hour*60+59).place,venue,id+' at '+hour);
+   assert.equal(resident.schedulePlace,venue,id+' scene');
+   assert.equal(resident.atVenue,true,id+' arrives on time');
+  }
+ }
+ assert.equal(S.at('usagi',17*60).place,'icecream');
+ assert.equal(S.at('kurimanju',17*60).place,'pub');
+});
+test('Homura waits first and shares a mutual conversation with Madoka at 18:00',()=>{
+ const residents=M.freshResidents();
+ M.syncSchedule(residents,16*60,{teleport:true});
+ M.syncSchedule(residents,17*60);
+ const homura=residents.find(p=>p.id==='homura'),madoka=residents.find(p=>p.id==='madoka');
+ assert.equal(homura.schedulePlace,'square');
+ assert.equal(homura.atVenue,true);
+ assert.match(homura.activity,/먼저 기다리기/);
+ assert.equal(madoka.schedulePlace,'workshop');
+ const meetings=[];
+ M.tick(residents,.1,(a,b)=>meetings.push([a.id,b.id]),{minuteOfDay:18*60});
+ assert.equal(madoka.schedulePlace,'square');
+ assert.equal(homura.partner,'madoka');
+ assert.equal(madoka.partner,'homura');
+ assert.equal(homura.chat,7);
+ assert.ok(meetings.some(([a,b])=>a==='homura'&&b==='madoka'));
+});
 test('device clock phase boundaries',()=>{for(const [hour,phase] of [[0,'night'],[5,'night'],[6,'day'],[17,'day'],[18,'dusk'],[19,'dusk'],[20,'night'],[23,'night']])assert.equal(M.period(hour),phase);});
 test('routes stay on connected walkways',()=>{for(let a=0;a<M.nodes.length;a++)for(let b=0;b<M.nodes.length;b++){const path=M.path(a,b);assert.equal(path.at(-1),b);for(let i=1;i<path.length;i++)assert.ok(M.edges[path[i-1]].includes(path[i]));}});
 test('residents move, meet and resume after conversations',()=>{const ps=M.freshResidents(),initial=ps.map(p=>[p.x,p.y]);let meets=0;for(let i=0;i<2000;i++)M.tick(ps,.1,()=>meets++);assert.ok(meets>2);assert.ok(ps.some((p,i)=>p.x!==initial[i][0]||p.y!==initial[i][1]));for(const p of ps){assert.ok(p.x>=135&&p.x<=465);assert.ok(p.y>=200&&p.y<=800);assert.ok(Number.isFinite(p.x));}});
@@ -97,7 +153,7 @@ test('heading, face and actual walking vector stay identical for every moving re
 });
 
 
-test('all 12 villagers have complete 00:00–24:00 schedules at 1-hour resolution',()=>{
+test('all villagers have complete 00:00–24:00 schedules at 1-hour resolution',()=>{
  const ids=M.people.map(p=>p.id);
  assert.deepEqual(Object.keys(S.BLOCKS).sort(),ids.slice().sort());
  const coveredPlaces=new Set();

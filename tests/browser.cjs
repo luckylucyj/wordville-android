@@ -23,19 +23,47 @@ const assert = require('node:assert/strict');
     await page.evaluate(lang=>WordvilleI18n.setLanguage(lang),language);
     await page.locator('#wv-bottom-dock [data-screen="learn"]').click();
     await page.locator('#day-filter').selectOption('30');
-    const meanings=await page.locator('#words .word span').allTextContents();
+    const langBadge=language==='zh-CN'?'名词':'名詞';
+    const meanings=await page.locator('#words .word .wv-word-meaning').allTextContents();
     assert.ok(meanings.length>0,'Day 30 must render vocabulary cards');
     assert.ok(meanings.every(s=>!/[가-힣]/u.test(s)),language+' must not expose Korean source meanings: '+JSON.stringify(meanings.slice(0,7)));
     for(const [word,expected] of [['insurance',insurance],['nutrition',nutrition]]){
       await page.locator('#search').fill(word);
       await page.waitForFunction(term=>document.querySelector('#words .word strong')?.textContent?.toLowerCase()===term,word);
-      assert.equal((await page.locator('#words .word').first().locator('span').innerText()).trim(),expected,language+' '+word+' meaning');
+      const wordButton=page.locator('#words .word').first();
+      assert.equal((await wordButton.locator('.wv-word-meaning').innerText()).trim(),expected,language+' '+word+' meaning');
+      assert.deepEqual(await wordButton.locator('.wv-pos-badge').allTextContents(),[langBadge]);
     }
     await page.locator('#search').fill('');
     const phrase=await page.locator('#search').getAttribute('placeholder');
     assert.doesNotMatch(phrase,/[가-힣]/u,'search placeholder should also be localized');
   }
   await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
+  await page.locator('#day-filter').selectOption('');
+  for(const [term,parts] of [['reservation',['명사']],['available',['형용사']],['recently',['부사']],['resume',['명사','동사']]]) {
+    await page.locator('#search').fill(term);
+    const card=page.locator('#words .word').filter({has:page.getByText(term,{exact:true})});
+    assert.deepEqual(await card.locator('.wv-pos-badge').allTextContents(),parts,term);
+    await card.click();
+    assert.deepEqual(await page.locator('#detail-word-pos .wv-pos-badge').allTextContents(),parts,term);
+    await page.locator('#close-dialog').click();
+  }
+  await page.locator('#search').fill('article');
+  await page.locator('#words .word').filter({has:page.getByText('article',{exact:true})}).click();
+  await page.locator('#wv-word-usage summary').click();
+  const blogs=page.locator('#wv-usage-genres li').filter({hasText:'블로그 글'});
+  await blogs.waitFor();
+  assert.equal(await blogs.locator('strong').innerText(),'12회');
+  await page.evaluate(()=>WordvilleI18n.setLanguage('en'));
+  const blogPosts=page.locator('#wv-usage-genres li').filter({hasText:'Blog posts'});
+  await blogPosts.waitFor();
+  assert.equal(await blogPosts.locator('strong').innerText(),'12 matches');
+  assert.deepEqual(await page.locator('#detail-word-pos .wv-pos-badge').allTextContents(),['Noun','Verb']);
+  await page.locator('#close-dialog').click();
+  const articleCard=page.locator('#words .word').filter({has:page.locator('strong',{hasText:/^article$/})});
+  assert.deepEqual(await articleCard.locator('.wv-pos-badge').allTextContents(),['Noun','Verb']);
+  await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
+  await page.locator('#search').fill('');
   await page.locator('#day-filter').selectOption(originalDay);
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
 
@@ -54,7 +82,7 @@ const assert = require('node:assert/strict');
   });
   await page.waitForFunction(()=>document.getElementById('wv-loading-cover')?.hidden===true);
   assert.equal(await page.evaluate(()=>WordvilleShell.screen),'town');
-  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
+  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),22);
   assert.ok(await page.evaluate(()=>document.getElementById('village-canvas').width>20));
 
 
@@ -87,7 +115,7 @@ const assert = require('node:assert/strict');
   assert.ok(pixelVenueQA.every(x=>x.ok&&x.painted>100&&Number.isInteger(x.signature)),'Every venue needs visible pixel-art artwork');
   assert.ok(new Set(pixelVenueQA.map(x=>x.signature)).size>=14,'Distinct venues require distinct scenery');
   await page.waitForFunction(()=>WordvilleWalk?.referenceAtlas?.naturalWidth===384&&WordvilleWalk.referenceAtlas.naturalHeight===576);
-  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),12);
+  assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),22);
   assert.equal(await page.evaluate(()=>WordvilleWalk.sourceFrameCount),3);
   assert.equal(await page.evaluate(()=>WordvilleWalk.frameCount),8);
   await page.waitForFunction(()=>WordvilleWalk.petSheets.cat.naturalWidth===128&&WordvilleWalk.petSheets.dog.naturalWidth===128&&WordvilleWalk.petSheets.cat.naturalHeight===192&&WordvilleWalk.petSheets.dog.naturalHeight===192);
@@ -136,10 +164,14 @@ const assert = require('node:assert/strict');
    assert.deepEqual(sheetQA.errors,[]);
    assert.equal(sheetQA.fps,8);
    await page.waitForFunction(()=>Object.keys(WordvilleWalk.walk48Sheets).length===12&&Object.values(WordvilleWalk.walk48Sheets).every(im=>im.complete&&im.naturalWidth===384&&im.naturalHeight===384));
-   const qaEight=await page.evaluate(()=>{
+   await page.waitForFunction(()=>WordvilleWalk48.guestSheets.walk.naturalWidth===384
+   &&WordvilleWalk48.guestSheets.idle.naturalWidth===48);
+  const qaEight=await page.evaluate(()=>{
     const issues=[],dirs=WordvilleWalk.walk48Directions;
     const c=document.createElement('canvas');c.width=48;c.height=48;const cx=c.getContext('2d',{willReadFrequently:true});
-    for(const [id,img] of Object.entries(WordvilleWalk.walk48Sheets))for(const di of dirs){
+    const sheets=[...Object.entries(WordvilleWalk.walk48Sheets),
+     ...WordvilleWalk48.guestIds.map(id=>[id,WordvilleWalk48.guestSheets.walk])];
+    for(const [id,img] of sheets)for(const di of dirs){
      const sig=new Set();
      for(let f=0;f<8;f++){
       const rect=WordvilleWalk.walk48Cell(id,di,f);
@@ -195,7 +227,7 @@ const assert = require('node:assert/strict');
   for(const [id,data] of sheetFiles)fs.writeFileSync(path.join(output,id+'.png'),Buffer.from(data,'base64'));
   await page.screenshot({path:'wordville-resident-walk-qa.png'});
 
-  // Check user-facing preview, including the 12-resident comparison view.
+  // Check user-facing preview, including the full resident comparison view.
   // The legacy 48px walk preview panel is hidden by default on the remade town screen.
   const walkPreview=page.locator('#wv-walk-preview');
   assert.equal(await walkPreview.count(),1);
@@ -208,7 +240,7 @@ const assert = require('node:assert/strict');
   assert.equal(await walkPreview.locator('select').nth(2).inputValue(),'idle');
   await page.waitForFunction(()=>WordvilleWalk.idle48Sheets.emily?.naturalWidth===192);
   assert.equal(await walkPreview.locator('canvas').nth(1).getAttribute('hidden'),'');
-  await walkPreview.getByRole('button',{name:'12명 한꺼번에 보기'}).click();
+  await walkPreview.getByRole('button',{name:'모든 주민 한꺼번에 보기'}).click();
   assert.equal(await walkPreview.locator('canvas').nth(1).getAttribute('hidden'),null);
   assert.equal(await walkPreview.locator('canvas').nth(1).isVisible(),true);
   assert.equal(await walkPreview.locator('canvas').nth(1).getAttribute('width'),'320');
@@ -220,11 +252,86 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))),true);
   assert.equal(await page.evaluate(()=>VillageModel.links.filter(([a,b])=>VillageModel.isStairEdge(a,b)).length),2);
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
-  assert.equal(await page.locator('.wv-residents-screen .wv-portrait').count(),12);
+  assert.equal(await page.locator('.wv-residents-screen .wv-portrait').count(),22);
+  const guestPortraits=page.locator('#resident-list .wv-guest-portrait');
+  assert.equal(await guestPortraits.count(),10);
+  assert.equal(await guestPortraits.first().evaluate(el=>getComputedStyle(el).imageRendering),'pixelated');
+  for(const [id,width] of [['momo',1536],['toshiro',887],['aizen',887],['madoka',768],['homura',768]]){
+   const portrait=page.locator(`#resident-list [data-person="${id}"] .wv-portrait`);
+   const actual=await portrait.evaluate(async el=>{
+    const style=getComputedStyle(el);
+    const url=style.backgroundImage.slice(5,-2);
+    const image=new Image();
+    image.src=url;
+    await image.decode();
+    return [new URL(url).pathname.split('/').pop(),style.backgroundSize,style.backgroundPosition,image.naturalWidth,image.naturalHeight];
+   });
+   assert.deepEqual(actual,[`${id}-portrait.${id==='momo'?'jpg':'webp'}`,'contain','50% 50%',width,width]);
+  }
+  assert.ok((await page.request.get('http://127.0.0.1:4173/guest-residents/portraits.png')).ok());
   assert.equal(await page.evaluate(()=>WordvillePortraits.spriteCell.frames),4);
   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.wv-residents-screen .wv-portrait')).imageRendering),'auto');
   await page.screenshot({path:'wordville-portraits-browser.png'});
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+  // A saved English locale translates labels before the shell initializes.
+  // The hidden learning controls must not consume room in the portrait gallery.
+  const narrow=await browser.newPage({viewport:{width:360,height:740},isMobile:true,hasTouch:true});
+  try{
+   await narrow.addInitScript(()=>localStorage.setItem('wordville.ui-language.v1','en'));
+   await narrow.goto('http://127.0.0.1:4173');
+   await narrow.locator('#wv-loading-cover').waitFor({state:'hidden'});
+   const dock=narrow.locator('#wv-bottom-dock');
+   const firstRow=narrow.locator('#resident-list :is([data-person="alex"],[data-person="elliott"]) .wv-portrait');
+   const checkFirstRow=async()=>{
+    await firstRow.first().waitFor({state:'visible'});
+    const bounds=await firstRow.evaluateAll(tiles=>{
+     const viewport=document.querySelector('main').getBoundingClientRect();
+     return tiles.map(tile=>{
+      const r=tile.getBoundingClientRect();
+      return r.top>=viewport.top&&r.bottom<=viewport.bottom&&r.left>=viewport.left&&r.right<=viewport.right;
+     });
+    });
+    assert.deepEqual(bounds,[true,true],'Alex and Elliott must be fully visible after opening Residents');
+    const layout=await narrow.evaluate(()=>{
+     const main=document.querySelector('main'),gallery=document.querySelector('.village-section');
+     return [main.scrollTop,getComputedStyle(gallery).overflowY];
+    });
+    assert.deepEqual(layout,[0,'visible'],'the gallery must use a single viewport scroller');
+    assert.equal(await narrow.locator('#wv-learning-nav').isHidden(),true);
+   };
+   await dock.locator('[data-screen="more"]').click();
+   await narrow.locator('#wv-more-panel [data-more="lab"]').click();
+   assert.equal(await narrow.locator('#combine-form textarea').isVisible(),true);
+   await narrow.locator('#combine-form textarea').fill('I can practice English in Wordville.');
+   await narrow.locator('#combine-form .primary').scrollIntoViewIfNeeded();
+   await dock.locator('[data-screen="residents"]').click();
+   await checkFirstRow();
+   const finalPortrait=narrow.locator('#resident-list [data-person="emily"] .wv-portrait');
+   await finalPortrait.scrollIntoViewIfNeeded();
+   assert.equal(await finalPortrait.evaluate(tile=>document.elementFromPoint(
+    tile.getBoundingClientRect().left+4,tile.getBoundingClientRect().bottom-4
+   )===tile),true,'the last portrait must be reachable above the dock');
+   await dock.locator('[data-screen="town"]').click();
+   await dock.locator('[data-screen="residents"]').click();
+   await checkFirstRow();
+   await narrow.evaluate(()=>WordvilleVillage.select('alex'));
+   await narrow.locator('#resident-study').click();
+   await narrow.locator('#wv-rstudy-close').click();
+   await checkFirstRow();
+   await dock.locator('[data-screen="more"]').click();
+   await narrow.locator('#wv-more-panel [data-more="lab"]').click();
+   assert.equal(await narrow.locator('#combine-form textarea').inputValue(),'I can practice English in Wordville.');
+   await narrow.setViewportSize({width:320,height:568});
+   await dock.locator('[data-screen="places"]').click();
+   const buttonsFit=await narrow.locator('#wv-place-rail').evaluate(rail=>{
+    const bounds=rail.getBoundingClientRect();
+    return ['home','pool'].every(id=>{
+     const chip=rail.querySelector('[data-place="'+id+'"]').getBoundingClientRect();
+     return chip.left>=bounds.left&&chip.right<=bounds.right;
+    });
+   });
+   assert.equal(buttonsFit,true,'Homes and Swimming pool must fit side by side at 320px');
+  }finally{await narrow.close();}
   // English locale: venue names and descriptions are localized, Korean-only
   // subtitles are suppressed, and changing screens preserves locale.
   await page.evaluate(()=>WordvilleI18n.setLanguage('en'));
@@ -246,6 +353,63 @@ const assert = require('node:assert/strict');
   await page.locator('#wv-map-tool-panel [data-map-zone="all"]').click();
   assert.equal(await page.evaluate(()=>WordvilleVillage.zone),'all');
   await page.locator('#wv-map-tools').click();
+  // Follow a resident near the map edge and repeatedly zoom out on mobile.
+  const zoomChecks=await page.evaluate(async()=>{
+   const village=WordvilleVillage,canvas=document.getElementById('village-canvas');
+   const resident=village.residents.find(p=>p.id==='sam');
+   const saved={x:resident.x,y:resident.y,atVenue:resident.atVenue};
+   const pause=document.getElementById('pause-village');
+   pause.click();
+   try{
+    Object.assign(resident,{x:535,y:690,atVenue:false});
+    village.visitResident('sam');
+    const minus=document.getElementById('zoom-out');
+    const valid=[];
+    for(let step=0;step<6;step++){
+     minus.click();
+     const {offsetX,offsetY,scale}=village.mapView();
+     const {width,height}=WordvilleHubMap.scale;
+     valid.push(offsetX<=0&&offsetY<=0&&offsetX+width*scale>=canvas.width-.01&&offsetY+height*scale>=canvas.height-.01);
+    }
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const context=canvas.getContext('2d');
+    const samples=[[0,0],[canvas.width-1,0],[0,canvas.height-1],[canvas.width-1,canvas.height-1]];
+    const noBlankCorners=samples.every(([x,y])=>Array.from(context.getImageData(x,y,1,1).data).join()!=='59,81,70,255');
+    const map=canvas.getBoundingClientRect();
+    const buttons=[...document.querySelectorAll('.wv-map-toolbar button')];
+    const controlsOutside=buttons.every(button=>button.getBoundingClientRect().top>=map.bottom)&&
+      document.getElementById('wv-map-tools').getBoundingClientRect().bottom<=map.top;
+    return {valid:valid.every(Boolean),noBlankCorners,controlsOutside,zoom:village.zoom,minimumDisabled:minus.disabled};
+   }finally{
+    Object.assign(resident,saved);
+    village.setZone('all');
+    pause.click();
+   }
+  });
+  assert.deepEqual(zoomChecks,{valid:true,noBlankCorners:true,controlsOutside:true,zoom:1,minimumDisabled:true});
+  // The coordinates handed to the renderer include the standing arrangement.
+  const standingCheck=await page.evaluate(async()=>{
+   const hour=document.getElementById('wv-schedule-hour');
+   const previous=hour.value;
+   const paint=WordvilleWalk.paint,spots=new Map();
+   try{
+    hour.value='18';hour.dispatchEvent(new Event('change'));
+    WordvilleWalk.paint=function(context,resident,x,y,options){
+     if(resident.atVenue&&VillageModel.outdoorPlaces.has(resident.schedulePlace))spots.set(resident.id,[x,y]);
+     return paint.call(this,context,resident,x,y,options);
+    };
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return {residents:spots.size,blocked:[...spots].filter(([,p])=>VillageModel.collidesDecoration(...p)).map(([id])=>id),
+     distinct:new Set([...spots.values()].map(p=>p.join(','))).size};
+   }finally{
+    WordvilleWalk.paint=paint;
+    hour.value=previous;hour.dispatchEvent(new Event('change'));
+   }
+  });
+  assert.ok(standingCheck.residents>4,'evening gathering must exercise multiple outdoor standing slots');
+  assert.deepEqual(standingCheck.blocked,[]);
+  assert.equal(standingCheck.distinct,standingCheck.residents);
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   // Clicking a map landmark must navigate the entire app to the corresponding venue.
   const visited=await page.evaluate(()=>{
     const c=document.getElementById('village-canvas'),r=c.getBoundingClientRect();
@@ -310,9 +474,9 @@ const assert = require('node:assert/strict');
   await page.evaluate(()=>{localStorage.setItem('wordville.rebuilt.v1',JSON.stringify(Wordville.fresh()));});
   await page.reload();await page.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelectorAll('.word').length>0);await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   const first=await page.locator('.word strong').first().innerText();await page.locator('#next-page').click();assert.notEqual(await page.locator('.word strong').first().innerText(),first);await page.locator('#day-filter').selectOption('2');assert.equal(await page.locator('#page-info').innerText().then(t=>t.startsWith('1 /')),true);await page.locator('#day-filter').selectOption('');
-  assert.equal(await page.locator('[data-person]').count(),12);
+  assert.equal(await page.locator('[data-person]').count(),22);
   await page.waitForFunction(()=>globalThis.WordvillePortraits?.image?.naturalWidth>0);
-  assert.equal(await page.locator('.resident-list .wv-portrait').count(),12);
+  assert.equal(await page.locator('.resident-list .wv-portrait').count(),22);
   assert.ok(await page.evaluate(()=>WordvillePortraits.image.naturalWidth>=128));
   assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('.resident-list .wv-portrait')).backgroundImage.includes('wordville-portraits-original.png')));
   assert.ok(await page.evaluate(()=>!!document.querySelector('link[href="stardew-ui.css"]')));
@@ -335,6 +499,17 @@ const assert = require('node:assert/strict');
   await page.waitForFunction(()=>WordvilleShell.screen==='town',null,{timeout:4000});
   await page.locator('#wv-bottom-dock [data-screen="places"]').click();
   assert.equal(await page.locator('#wv-place-rail .wv-place-chip').count(),18);
+  const homeChip=page.locator('#wv-place-rail [data-place="home"]');
+  const homePicker=page.locator('#wv-home-picker');
+  assert.equal(await homeChip.getAttribute('aria-haspopup'),'dialog');
+  assert.equal(await page.locator('#wv-place-rail [data-place="pool"]').isVisible(),true);
+  assert.equal(await page.locator('#wv-penny-home-entry,.wv-penny-home-shortcut').count(),0);
+  await homeChip.click();
+  await homePicker.waitFor({state:'visible'});
+  assert.equal(await homePicker.locator('button[data-home-resident]').count(),22);
+  await page.keyboard.press('Escape');
+  await homePicker.waitFor({state:'hidden'});
+  assert.equal(await page.evaluate(()=>WordvillePlaces.active),'pool','Cancel keeps the current venue');
   const poolScene=await page.locator('#wv-place-canvas').evaluate(el=>el.toDataURL());
   assert.equal(await page.locator('#wv-place-canvas').getAttribute('width'),'1024');
   await page.locator('#wv-place-filters [data-place-filter="culture"]').click();
@@ -407,6 +582,29 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('#wv-vstudy-answer').inputValue(),'');
   await page.locator('#wv-vstudy-card').click();
   assert.equal(await page.locator('#detail-word').innerText(),'reservation');
+  await page.evaluate(()=>{
+   window.pronunciationCalls=[];
+   window.WordvilleSpeech={
+    speak(term,accent,request){pronunciationCalls.push([term,accent,request]);WordvillePronunciation.onNativeResult(request,'playing');},
+    stop(){}
+   };
+  });
+  for(const [accent,status] of [['en-US','미국식 발음 재생 중'],['en-GB','영국식 발음 재생 중']]){
+   await page.locator('[data-accent="'+accent+'"]').click();
+   assert.equal(await page.locator('#wv-pronunciation-status').innerText(),status);
+  }
+  const calls=await page.evaluate(()=>pronunciationCalls);
+  assert.deepEqual(calls.map(([word,locale])=>[word,locale]),[['reservation','en-US'],['reservation','en-GB']]);
+  await page.evaluate(ids=>{
+   WordvillePronunciation.onNativeResult(ids[0],'done');
+   WordvillePronunciation.onNativeResult(ids[1],'unavailable');
+  },calls.map(call=>call[2]));
+  assert.equal(await page.locator('#wv-pronunciation-dictionary').isVisible(),true);
+  await page.evaluate(()=>{delete window.WordvilleSpeech;delete window.pronunciationCalls;});
+  await page.locator('#wv-word-usage summary').click();
+  await page.waitForFunction(()=>document.querySelector('#wv-usage-genres li'));
+  assert.match(await page.locator('#wv-usage-genres').innerText(),/[0-9]/);
+  assert.equal(await page.locator('#wv-usage-examples').getAttribute('href'),'https://skell.sketchengine.eu/#result?f=concordance&lang=en&query=reservation');
   await page.locator('#close-dialog').click();
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   assert.equal(await page.locator('#wv-map-view').isVisible(),true);
@@ -464,12 +662,24 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('#wv-study-pdf-scope').isHidden(),true);
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();await page.locator('#wv-map-tools').click();
   const before=await page.evaluate(()=>WordvilleVillage.residents.map(p=>[p.x,p.y]));
+  await page.locator('#wv-schedule-hour').selectOption('12');
+  await page.evaluate(()=>WordvilleVillage.visitResident('toshiro'));
+  assert.equal(await page.evaluate(()=>WordvillePlaces.active),'pool');
+  assert.equal(await page.evaluate(()=>WordvilleVenueRuntime.focusedResident),'toshiro');
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+  if(await page.locator('#wv-map-tool-panel').isHidden())await page.locator('#wv-map-tools').click();
+  await page.locator('#wv-schedule-hour').selectOption('18');
+  await page.waitForFunction(()=>document.querySelector('#village-feed').textContent.includes('말로 다 표현하기 어려울 만큼 네가 좋아'));
+  await page.evaluate(()=>WordvilleVillage.select('madoka'));
+  assert.match(await page.locator('#resident-english').textContent(),/I like you too, Homura/);
+  await page.locator('#wv-bottom-dock [data-screen="town"]').click();
+  if(await page.locator('#wv-map-tool-panel').isHidden())await page.locator('#wv-map-tools').click();
   await page.locator('#wv-schedule-hour').selectOption('17');
   assert.notDeepEqual(await page.evaluate(()=>WordvilleVillage.residents.map(p=>[p.x,p.y])),before,'clock preview must place residents at scheduled venues');
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.find(p=>p.id==='sam').schedulePlace),'square');
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.find(p=>p.id==='harvey').schedulePlace),'clinic');
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
-  assert.equal(await page.locator('.wv-residents-screen .resident-list .wv-portrait').count(),12);
+  assert.equal(await page.locator('.wv-residents-screen .resident-list .wv-portrait').count(),22);
   assert.equal(await page.locator('.wv-residents-screen .village-dialogue').isVisible(),false);
   await page.locator('#wv-bottom-dock [data-screen="more"]').click();
   await page.locator('#wv-more-panel [data-more="schedule"]').click();
@@ -531,6 +741,43 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleVenueRuntime.focusedResident),'harvey');
   assert.equal(await page.locator('#wv-place-name').innerText(),'하비의 집','23:00에는 하비의 개인 집을 방문해야 합니다.');
   assert.ok(await page.evaluate(()=>WordvilleVenueRuntime.actors.some(a=>a.id==='harvey')));
+  await homeChip.click();
+  const ownerButtons=homePicker.locator('button[data-home-resident]');
+  const owners=await ownerButtons.evaluateAll(choices=>choices.map(choice=>choice.dataset.homeResident));
+  assert.equal(await homePicker.locator('[aria-current=true]').innerText(),'하비');
+  await homePicker.locator('#wv-home-close').click();
+  const roomPictures=new Set();
+  assert.equal(owners.length,22);
+  await page.waitForFunction(()=>WordvillePennyHome.ready);
+  for(const owner of owners){
+   await homeChip.click();
+   await homePicker.locator('[data-home-resident="'+owner+'"]').click();
+   await homePicker.waitFor({state:'hidden'});
+   const room=await page.evaluate(()=>{
+    const canvas=document.getElementById('wv-place-canvas');
+    const bounds=canvas.getBoundingClientRect();
+    const actors=document.getElementById('wv-venue-actors').getBoundingClientRect();
+    return {
+     map:WordvilleVenueRuntime.dimensions.id,
+     visibleResidents:WordvilleVenueRuntime.actors.filter(a=>!a.player).map(a=>a.id),
+     bounds:[bounds.x,bounds.y,bounds.width,bounds.height],
+     overlay:[actors.x,actors.y,actors.width,actors.height],
+     image:canvas.toDataURL()
+    };
+   });
+   assert.equal(room.map,owner+'Home');
+   assert.ok(room.visibleResidents.every(id=>id===owner));
+   assert.deepEqual(room.bounds,room.overlay,owner+' canvas and movement overlay must align');
+   roomPictures.add(room.image);
+  }
+  assert.equal(roomPictures.size,22,'each home displays a distinct illustration');
+  await page.evaluate(()=>WordvilleI18n.setLanguage('en'));
+  await homeChip.click();
+  assert.equal(await homePicker.locator('[data-home-resident="penny"]').innerText(),'Penny');
+  await homePicker.locator('[data-home-resident="penny"]').click();
+  assert.equal(await page.locator('#wv-place-canvas').getAttribute('width'),'1024');
+  assert.equal(await page.locator('#wv-place-name').innerText(),"Penny's home");
+  await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
   await page.locator('#wv-bottom-dock [data-screen="town"]').click();
   for(const width of [360,390,768,1280]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow at ${width}`);}
   await page.setViewportSize({width:1280,height:1000});await page.locator('#wv-bottom-dock [data-screen="town"]').click();if(await page.locator('#wv-map-tool-panel').isHidden())await page.locator('#wv-map-tools').click();await page.locator('#village-time-mode').selectOption('day');await page.screenshot({path:process.env.WORDVILLE_SCREENSHOT_DIR?`${process.env.WORDVILLE_SCREENSHOT_DIR}/wordville-day.png`:'/tmp/wordville-day.png',fullPage:true});

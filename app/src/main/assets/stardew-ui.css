@@ -71,12 +71,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .village-dialogue p{font-size:14px;line-height:1.6;color:#5d4533}
 .village-dialogue [lang=en]{font-size:17px;color:#356847}
 .conversation-feed li{color:#6c4b30;border-bottom:2px dashed #cda875}
-nav[aria-label="학습 메뉴"]{
- position:sticky;z-index:4;top:0;padding:12px 5px;margin:24px 0 20px;
- background:#b5864b;border:5px solid #74502d;border-radius:4px;box-shadow:0 4px #594025;gap:7px;
-}
-nav[aria-label="학습 메뉴"] button{min-height:48px;flex:1;padding:8px 10px;border:3px solid #76502c;background:#f7e0ac}
-nav[aria-label="학습 메뉴"] button[aria-selected=true]{color:white;background:#50794d;border-color:#3a5635}
 main>section:not(.village-section),main>.cloud-panel{
  scroll-margin-top:90px
 }
@@ -111,8 +105,6 @@ footer{color:#735940}
  .resident-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
  .resident-list button{font-size:12px;padding:7px 4px}
  .wv-portrait-small{max-width:100%}
- nav[aria-label="학습 메뉴"]{margin:18px 0;padding:8px 4px;gap:4px}
- nav[aria-label="학습 메뉴"] button{font-size:12px;padding:7px 5px;white-space:nowrap}
  .village-dialogue{padding:13px;margin:12px}
  .wv-dialog-portrait{width:82px;margin-right:10px}
  #learn,#review,#lab,#book{padding:14px}
@@ -133,4 +125,22 @@ footer{color:#735940}
 /* v2.0: original 384×384 portraits at native fidelity, with browser-quality downsampling. */
 .wv-portrait,.wv-place-person .wv-portrait{background-image:url('portraits/wordville-portraits-original.png')!important;background-size:400% 300%!important;image-rendering:auto!important;filter:none!important;transform:none!important;background-color:#fff7e8}
 #village-canvas{image-rendering:auto!important}
-@media(max-width:699px){.wv-residents-screen .resident-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px}.wv-residents-screen .wv-portrait{max-width:none}.wv-residents-screen .resident-list button{min-height:185px;padding:8px}}
+@media(max-width:699px){.wv-residents-screen .resident-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px}.wv-residents-screen .wv-portrait{max-width:none}.wv-residents-screen:not([data-mode="portraits"]) .resident-list button{min-height:185px;padding:8px}}
+.wv-portrait.wv-guest-portrait,.wv-place-person .wv-portrait.wv-guest-portrait{
+ background-image:url('guest-residents/portraits.png')!important;
+ background-size:500% 200%!important;
+ image-rendering:pixelated!important;
+}
+
+.wv-momo-portrait{--wv-portrait-image:url('guest-residents/momo-portrait.jpg')}
+.wv-toshiro-portrait{--wv-portrait-image:url('guest-residents/toshiro-portrait.webp')}
+.wv-aizen-portrait{--wv-portrait-image:url('guest-residents/aizen-portrait.webp')}
+.wv-madoka-portrait{--wv-portrait-image:url('guest-residents/madoka-portrait.webp')}
+.wv-homura-portrait{--wv-portrait-image:url('guest-residents/homura-portrait.webp')}
+.wv-portrait.wv-guest-portrait.wv-standalone-portrait,
+.wv-place-person .wv-portrait.wv-guest-portrait.wv-standalone-portrait{
+ background-image:var(--wv-portrait-image)!important;
+ background-size:contain!important;
+ background-position:center;
+ image-rendering:auto!important;
+}

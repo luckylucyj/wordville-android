@@ -13,8 +13,8 @@ body>header .brand{color:#fff3d4;font-size:18px;text-shadow:2px 2px #3c2b21;lett
 #balance{font-size:12px;padding:6px 8px;background:#dfc18b;border:2px solid #4e3e26;box-shadow:none;max-width:54%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body>main{max-width:none;width:100%;min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 0 16px;margin:0;background:linear-gradient(0deg,#f6e8ca,#f7ead4)}
 body[data-screen="town"]>main{overflow:hidden;padding:0}
-body[data-screen="places"]>main,body[data-screen="residents"]>main{overflow:hidden;padding:0}
-body .wv-legacy-nav{display:none!important}
+body[data-screen="places"]>main{overflow:hidden;padding:0}
+body[data-screen="residents"]>main{padding:0;overscroll-behavior:contain}
 .village-section{
  margin:0 auto;max-width:1100px;width:100%;
  border:0;border-radius:0;box-shadow:none;
@@ -25,34 +25,37 @@ body .wv-legacy-nav{display:none!important}
 body[data-screen="town"] .village-section{height:100%;max-width:none;overflow:hidden;background:#344b48}
 body[data-screen="town"] #wv-map-view{height:100%;min-height:0;display:block}
 body[data-screen="town"] .canvas-wrap{
- position:relative;display:block;height:100%;min-height:0;max-height:100%;
+ position:relative;display:grid;grid-template-columns:minmax(0,1fr);
+ grid-template-rows:auto minmax(0,1fr) auto;height:100%;min-height:0;
  border:0;overflow:hidden;background:#557b67
 }
 body[data-screen="town"] #village-canvas{
- display:block;width:100%;height:100%;margin:0;padding:0;
+ display:block;width:100%;height:100%;min-height:0;margin:0;padding:0;
  image-rendering:pixelated;image-rendering:crisp-edges;
- object-fit:contain;touch-action:manipulation;
+ touch-action:manipulation;
 }
-body[data-screen="town"] .map-label{position:absolute;bottom:15px;left:13px;top:auto;
- font-size:10px;opacity:.85;background:#2a4038df;color:#fff0c9;border:2px solid #b69667;
- box-shadow:2px 2px #293d33;padding:5px 9px;letter-spacing:.8px}
+body[data-screen="town"] .map-label{display:none}
+.wv-map-header,.wv-map-toolbar{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ padding:3px 10px;background:#344b48;
+}
 .village-section .wv-world-clock{
- position:absolute;top:14px;left:14px;right:auto;z-index:2;
- display:flex;flex-direction:column;align-items:flex-start;gap:0;
- border:2px solid #bc9d66;background:#f8e5bcd9;padding:7px 11px;
- box-shadow:2px 3px 0 #37473978;max-width:145px;text-shadow:none
+ display:flex;flex-direction:row;align-items:baseline;gap:6px;
+ border:2px solid #bc9d66;background:#f8e5bcd9;padding:4px 7px;
+ box-shadow:none;text-shadow:none
 }
 .village-section .wv-world-clock b{font-size:16px;color:#483523}
 .village-section .wv-world-clock span{font-size:10px;line-height:1.3;color:#64472a}
-body[data-screen="town"] .zoom-controls{z-index:3;position:absolute;right:12px;bottom:68px;display:flex;gap:7px}
-body[data-screen="town"] .zoom-controls button{background:#f7e2afed;font-weight:900;border:3px solid #916642;min-width:43px;min-height:43px}
+body[data-screen="town"] .zoom-controls{position:static;display:flex;flex:none;gap:5px}
+body[data-screen="town"] .zoom-controls button{background:#f7e2afed;font-weight:900;border:3px solid #916642;min-width:44px;min-height:44px}
+body[data-screen="town"] .zoom-controls button:disabled{opacity:.5;cursor:default}
 #wv-map-tools{
- position:absolute;top:13px;right:13px;z-index:4;min-width:44px;min-height:44px;
+ flex:none;min-width:44px;min-height:44px;
  background:#f8e4b9ef;border:3px solid #8d633b;color:#4c3925;
  font-size:21px;padding:4px 8px;box-shadow:2px 3px #4c3a27;
 }
 #wv-map-tool-panel{
- position:absolute;top:66px;right:12px;z-index:4;max-width:min(340px,calc(100% - 24px));
+ position:absolute;top:50px;right:12px;z-index:4;max-width:min(340px,calc(100% - 24px));
  background:#fff0cadf;border:4px solid #976840;padding:12px;box-shadow:4px 4px #3c3a2d;
  border-radius:3px;backdrop-filter:blur(4px);font-size:12px;color:#4b3928
 }
@@ -60,11 +63,12 @@ body[data-screen="town"] .zoom-controls button{background:#f7e2afed;font-weight:
 #wv-map-tool-panel .time-select{margin:0}
 #wv-map-tool-panel .time-note{font-size:10px;color:#5b4c35;line-height:1.45;margin:8px 0 0}
 #wv-map-tool-panel #pause-village{min-height:42px}
-body[data-screen="places"] .village-section,body[data-screen="residents"] .village-section{
+body[data-screen="places"] .village-section{
  height:100%;max-width:930px;overflow-y:auto;overscroll-behavior:contain;box-shadow:none
 }
 body[data-screen="places"] .wv-places-view{overflow:visible;min-height:100%;padding:17px 15px 35px}
-body[data-screen="residents"] .wv-residents-screen{min-height:100%;display:block;background:#f2e0b8;padding:17px 15px 35px}
+body[data-screen="residents"] .village-section{min-height:100%;max-width:930px;overflow:visible}
+body[data-screen="residents"] .wv-residents-screen{display:block;background:#f2e0b8;padding:17px 15px 35px}
 .wv-residents-header{padding:13px 14px;background:#e8cf99;border:4px solid #a97942;box-shadow:inset 0 0 0 2px #fff0c5,3px 3px #775333;margin-bottom:14px}
 .wv-residents-header small{font-size:10px;font-weight:850;letter-spacing:1px;color:#84613d}
 .wv-residents-header h2{font-size:24px;color:#4e311e;margin:6px 0}
@@ -106,6 +110,7 @@ body[data-screen="book"] #book{
 .wv-dock-label{font-size:11px;white-space:nowrap}
 .wv-more-panel{
  position:fixed;z-index:21;bottom:var(--wv-bottom);right:7px;min-width:190px;
+ max-width:calc(100% - 14px);max-height:calc(100dvh - var(--wv-top) - var(--wv-bottom));overflow-y:auto;
  padding:8px;background:#f7e7bf;border:4px solid #895d39;box-shadow:4px -4px #4c3526;
  display:flex;flex-direction:column;gap:7px;border-radius:5px
 }
@@ -138,12 +143,11 @@ html[lang="en"] #resident-korean{display:none!important}
 body[data-screen="town"] #village-canvas{image-rendering:auto!important}
 /* Town-screen QA: reliable entry to all venues without guessing artwork locations. */
 body[data-screen="town"] #wv-visit-places{
- position:absolute;left:12px;bottom:69px;z-index:3;
+ min-width:0;
  min-height:46px;padding:8px 12px;border:3px solid #916642;
  background:#f7e2aff2;color:#4c3925;font-size:12px;font-weight:850;
  box-shadow:2px 3px #4c3a27;
 }
-body[data-screen="town"] .zoom-controls button{min-width:46px;min-height:46px}
 body[data-screen="town"] #wv-map-tools:focus-visible,
 body[data-screen="town"] #wv-visit-places:focus-visible,
 body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #fff8e4;outline-offset:3px}
@@ -164,7 +168,6 @@ body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #
 /* Residents gallery: show only the 12 original portraits by default.
    Schedule editing and study options remain accessible from explicit actions. */
 #wv-residents-view[data-mode="portraits"] > :not(.neighbors),
-#wv-residents-view[data-mode="schedule"] > :not(#wv-resident-schedule),
 #wv-residents-view[data-mode="study"] > :not(#wv-resident-study-picker){display:none!important}
 #wv-residents-view[data-mode="portraits"]{padding:14px 13px 36px;background:#f2e0b8}
 #wv-residents-view[data-mode="portraits"] .neighbors{display:block;margin:0;padding:0}
@@ -178,21 +181,6 @@ body[data-screen="town"] .zoom-controls button:focus-visible{outline:3px solid #
 
 /* Explicit resident selection may reveal dialogue while the default gallery remains portraits-only. */
 body[data-screen="residents"] #wv-residents-view[data-mode="dialogue"] > #village-dialogue:not([hidden]){display:block!important;visibility:visible!important}
-
-/* Show expanded schedules in the dedicated More screen even when the portrait gallery is otherwise simplified. */
-body[data-screen="residents"] #wv-residents-view[data-mode="schedule"] > #wv-resident-schedule{display:block!important;visibility:visible!important}
-
-/* Avoid nested 325px scrolling for the 24-hour schedule: the Residents panel owns scrolling. */
-body[data-screen="residents"] #wv-residents-view[data-mode="schedule"] #wv-sched-rows{
- max-height:none!important;overflow-y:visible!important;overscroll-behavior:auto!important;
-}
-body[data-screen="residents"] #wv-residents-view[data-mode="schedule"]{min-height:100%;height:auto;overflow:visible}
-body[data-screen="residents"] .village-section{overflow-y:auto!important;scrollbar-gutter:stable}
-
-/* Remove the hidden town/venue siblings from the Residents document flow.
-   They were still occupying ~900px above the resident schedule editor. */
-body[data-screen="residents"] .village-section > :not(#wv-residents-view){display:none!important}
-body[data-screen="residents"] .village-section > #wv-residents-view{margin-top:0!important}
 
 /* Standalone 24-hour schedule editor (More → Resident schedules). */
 body[data-screen="schedule"] > main{overflow-y:auto!important;overflow-x:hidden;scroll-behavior:auto;padding:0 0 24px}

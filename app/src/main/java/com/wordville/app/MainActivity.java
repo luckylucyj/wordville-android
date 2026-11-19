@@ -1,11 +1,14 @@
 package com.wordville.app;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ActivityNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Build;
-import android.os.SystemClock;
+import android.os.Handler;
+import android.os.Looper;
 import android.graphics.Color;
 import android.view.WindowInsets;
 import android.view.ViewGroup;
@@ -30,6 +33,8 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Arrays;
+import java.util.function.BiConsumer;
 
 
 public class MainActivity extends Activity {
@@ -37,12 +42,58 @@ public class MainActivity extends Activity {
  private static final String HOST="appassets.androidplatform.net";
  private static final String HOME="https://"+HOST+"/assets/index.html";
  private WebView web;
+ private WordvillePronunciation pronunciation;
+ private static final String SKELL_HOST="skell.sketchengine.eu";
+ private static final String DICTIONARY_HOST="dictionary.cambridge.org";
+ private static final String OXFORD_HOST="www.oxfordlearnersdictionaries.com";
+ private final class WordvilleDictionaryClipboardBridge {
+  private final WebView owner;
+  WordvilleDictionaryClipboardBridge(WebView owner){this.owner=owner;}
+  @JavascriptInterface public void paste(int id){
+   if(id<1)return;
+   runOnUiThread(()->{
+    if(owner!=web||!pageReady||!foreground)return;
+    String result="null";
+    try{
+     if(owner.hasWindowFocus()){
+      ClipboardManager clipboard=getSystemService(ClipboardManager.class);
+      ClipData clip=clipboard==null?null:clipboard.getPrimaryClip();
+      CharSequence text=clip==null||clip.getItemCount()==0?null:clip.getItemAt(0).getText();
+      result=JSONObject.quote(text==null?"":text.subSequence(0,Math.min(text.length(),6001)).toString());
+     }
+    }catch(SecurityException ignored){}
+    owner.evaluateJavascript("window.WordvilleDictionary?.onPaste("+id+","+result+");",null);
+   });
+  }
+ }
+ private final class WordvilleSpeechBridge {
+  @JavascriptInterface public void speak(String word,String accent,int id){
+   if(word==null||word.trim().isEmpty()||word.length()>180||id<1)return;
+   if(!("en-US".equals(accent)||"en-GB".equals(accent)))return;
+   runOnUiThread(()->{
+    if(foreground&&pageReady&&pronunciation!=null)pronunciation.speak(word,accent,id);
+   });
+  }
+  @JavascriptInterface public void stop(){
+   runOnUiThread(()->{if(pronunciation!=null)pronunciation.stop();});
+  }
+ }
+ private void onPronunciationResult(int id,String state){
+  WebView current=web;
+  if(current!=null&&pageReady&&foreground){
+   current.evaluateJavascript("window.WordvillePronunciation?.onNativeResult("+id+","+JSONObject.quote(state)+");",null);
+  }
+ }
  private FrameLayout root;
  private ValueCallback<Uri[]> chooser;
- private long previousRendererRecovery=0L;
- private boolean pageReady=false;
- private int pageLoadGeneration=0;
- private int recoveryReloads=0;
+ private static final long STARTUP_TIMEOUT_MS=20000;
+ private static final long RESUME_TIMEOUT_MS=5000;
+ private final Handler mainHandler=new Handler(Looper.getMainLooper());
+ private boolean foreground;
+ private boolean pageReady;
+ private boolean recoveryAttempted;
+ private long screenCheckId;
+ private Runnable screenTimeout;
  private LinearLayout recoveryPanel=null;
  // Native backup is independent of WebView's localStorage and survives WebView
  // renderer recreation, app process restarts, and compatible APK upgrades.
@@ -92,9 +143,80 @@ public class MainActivity extends Activity {
 
 
 
- // Only Korean vocabulary glosses (not notes, search terms, or personal data)
- // are translated. ML Kit runs the translation on device after a model download.
+ // ML Kit translates vocabulary glosses and explicitly submitted source text
+ // on device. Translation models can be downloaded on first use.
  private final HashMap<String,Translator> wordTranslators=new HashMap<>();
+ private static final List<String> INTERPRETATION_SOURCES=Arrays.asList("en","ja","zh","es","fr","de");
+
+ private Translator translationClient(String source,String target){
+  String key=source+">"+target;
+  Translator client=wordTranslators.get(key);
+  if(client==null){
+   TranslatorOptions options=new TranslatorOptions.Builder()
+    .setSourceLanguage(source).setTargetLanguage(target).build();
+   client=Translation.getClient(options);
+   wordTranslators.put(key,client);
+  }
+  return client;
+ }
+
+ private void translateOnDevice(List<String> originals,String source,String target,BiConsumer<JSONArray,String> finish){
+  Translator client=translationClient(source,target);
+  DownloadConditions conditions=new DownloadConditions.Builder().build();
+  client.downloadModelIfNeeded(conditions).addOnSuccessListener(unused->{
+   String[] results=new String[originals.size()];
+   int[] finished={0};
+   for(int i=0;i<originals.size();i++){
+    final int index=i;
+    client.translate(originals.get(i)).addOnCompleteListener(task->{
+     results[index]=task.isSuccessful()?task.getResult():"";
+     if(++finished[0]==originals.size()){
+      JSONArray output=new JSONArray();
+      for(String value:results)output.put(value==null?"":value);
+      finish.accept(output,"");
+     }
+    });
+   }
+  }).addOnFailureListener(error->finish.accept(new JSONArray(),"model-download-failed"));
+ }
+
+ private final class WordvilleInterpretationBridge {
+  private final WebView owner;
+  WordvilleInterpretationBridge(WebView owner){this.owner=owner;}
+  @JavascriptInterface public void translate(String json,String language,int id){
+   if(language==null||!INTERPRETATION_SOURCES.contains(language)||id<1||json==null||json.length()>10000)return;
+   final List<String> originals=new ArrayList<>();
+   try {
+    JSONArray items=new JSONArray(json);
+    if(items.length()<1||items.length()>8)return;
+    int total=0;
+    for(int i=0;i<items.length();i++){
+     Object item=items.get(i);
+     if(!(item instanceof String))return;
+     String text=((String)item).trim();
+     total+=text.length();
+     if(text.isEmpty()||total>1600)return;
+     originals.add(text);
+    }
+   }catch(Exception ignored){return;}
+   runOnUiThread(()->{
+    if(owner!=web||!pageReady)return;
+    try{
+     translateOnDevice(originals,language,TranslateLanguage.KOREAN,
+      (values,error)->sendInterpretation(owner,id,values,error));
+    }catch(Exception e){sendInterpretation(owner,id,new JSONArray(),"translation-error");}
+   });
+  }
+ }
+ private void sendInterpretation(WebView owner,int id,JSONArray values,String error){
+  if(owner!=web||!pageReady)return;
+  JSONObject payload=new JSONObject();
+  try{
+   payload.put("id",id);payload.put("values",values);payload.put("error",error);
+  }catch(Exception ignored){return;}
+  String js="window.WordvilleInterpretation?.onNativeResult("+JSONObject.quote(payload.toString())+");";
+  owner.evaluateJavascript(js,null);
+ }
  private final class WordvilleTranslationBridge {
   @JavascriptInterface public void translateBatch(String json,String locale,int requestId){
    if(requestId<1||requestId>2147483000||json==null||json.length()>7000)return;
@@ -111,31 +233,8 @@ public class MainActivity extends Activity {
      }
      String target="en".equals(locale)?TranslateLanguage.ENGLISH:
         "ja".equals(locale)?TranslateLanguage.JAPANESE:TranslateLanguage.CHINESE;
-     Translator translator=wordTranslators.get(locale);
-     if(translator==null){
-      TranslatorOptions options=new TranslatorOptions.Builder()
-        .setSourceLanguage(TranslateLanguage.KOREAN).setTargetLanguage(target).build();
-      translator=Translation.getClient(options);
-      wordTranslators.put(locale,translator);
-     }
-     final Translator client=translator;
-     DownloadConditions conditions=new DownloadConditions.Builder().build();
-     client.downloadModelIfNeeded(conditions).addOnSuccessListener(v->{
-      JSONArray output=new JSONArray();
-      String[] results=new String[originals.size()];
-      int[] finished={0};
-      for(int i=0;i<originals.size();i++){
-       final int index=i;
-       client.translate(originals.get(i)).addOnCompleteListener(task->{
-        results[index]=task.isSuccessful()?task.getResult():"";
-        finished[0]++;
-        if(finished[0]==originals.size()){
-         for(String value:results)output.put(value==null?"":value);
-         sendTranslations(requestId,locale,output,"");
-        }
-       });
-      }
-     }).addOnFailureListener(e->sendTranslations(requestId,locale,new JSONArray(),"model-download-failed"));
+     translateOnDevice(originals,TranslateLanguage.KOREAN,target,
+      (values,error)->sendTranslations(requestId,locale,values,error));
     }catch(Exception e){sendTranslations(requestId,locale,new JSONArray(),"translation-error");}
    });
   }
@@ -154,6 +253,7 @@ public class MainActivity extends Activity {
 
  @Override public void onCreate(Bundle saved) {
   super.onCreate(saved);
+  pronunciation=new WordvillePronunciation(this,this::onPronunciationResult);
   // Keep the status and navigation bar insets outside of the WebView.
   getWindow().setStatusBarColor(Color.rgb(83,55,34));
   getWindow().setNavigationBarColor(Color.rgb(83,55,34));
@@ -181,7 +281,6 @@ public class MainActivity extends Activity {
  }
 
  private void createWebView(){
-  pageLoadGeneration++;
   pageReady=false;
   web=new WebView(this);
   final WebView view=web;
@@ -198,7 +297,10 @@ public class MainActivity extends Activity {
   // The bridge exposes only validated display preferences, never credentials
   // or progress, and the WebView restricts page navigation to bundled assets.
   view.addJavascriptInterface(new WordvilleSettingsBridge(),"WordvilleSettings");
+  view.addJavascriptInterface(new WordvilleSpeechBridge(),"WordvilleSpeech");
+  view.addJavascriptInterface(new WordvilleInterpretationBridge(view),"WordvilleInterpretationNative");
   view.addJavascriptInterface(new WordvilleTranslationBridge(),"WordvilleTranslate");
+  view.addJavascriptInterface(new WordvilleDictionaryClipboardBridge(view),"WordvilleDictionaryClipboard");
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder()
     .addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
   view.setWebViewClient(new WebViewClient(){
@@ -214,40 +316,23 @@ public class MainActivity extends Activity {
    @Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest request){
     Uri destination=request.getUrl();
     if("https".equals(destination.getScheme())&&HOST.equals(destination.getHost()))return false;
-    if("https".equals(destination.getScheme())&&"commons.wikimedia.org".equals(destination.getHost())){
+    if(request.isForMainFrame()&&"https".equals(destination.getScheme())){
+     String host=destination.getHost();
+     if(!("commons.wikimedia.org".equals(host)||SKELL_HOST.equals(host)||DICTIONARY_HOST.equals(host)||OXFORD_HOST.equals(host)||"translate.google.com".equals(host)))return true;
      try{startActivity(new Intent(Intent.ACTION_VIEW,destination));}catch(ActivityNotFoundException ignored){}
     }
     return true;
    }
-   @Override public void onPageFinished(WebView w,String url){
-    super.onPageFinished(w,url);
-    if(w!=web||url==null||!url.startsWith(HOME))return;
-    pageReady=true;
-    if(!isFinishing()&&!isDestroyed()){
-     notifyJsResume();
-     scheduleWebViewHealthCheck(2500);
-    }
+   @Override public void onPageStarted(WebView w,String url,android.graphics.Bitmap favicon){
+    if(w==web)pageReady=false;
    }
-   @Override public void onReceivedError(WebView w,WebResourceRequest req,WebResourceError error){
-    super.onReceivedError(w,req,error);
-    if(req.isForMainFrame()&&w==web)showRecovery("마을 화면을 읽지 못했습니다.");
+   @Override public void onPageFinished(WebView w,String url){
+    if(w!=web||!HOME.equals(url))return;
+    pageReady=true;
+    if(foreground&&screenTimeout==null)watchScreen(STARTUP_TIMEOUT_MS);
    }
    @Override public boolean onRenderProcessGone(WebView w,RenderProcessGoneDetail detail){
-    // Android may kill a background WebView renderer without killing the Activity.
-    // The old WebView is unusable and MUST be removed/destroyed before re-creating it.
-    if(w!=web)return true;
-    if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
-    root.removeView(w);
-    w.destroy();
-    web=null;
-    pageReady=false;
-    long now=SystemClock.elapsedRealtime();
-    if(now-previousRendererRecovery<8000){
-     showRecovery("화면 처리기가 반복 종료되었습니다.");
-     return true;
-    }
-    previousRendererRecovery=now;
-    createWebView();
+    if(w==web)recoverScreen("화면 처리기가 반복 종료되었습니다.");
     return true;
    }
   });
@@ -264,48 +349,80 @@ public class MainActivity extends Activity {
    }
   });
   view.loadUrl(HOME);
-  // A missing document or a failed deferred script can leave a beige WebView
-  // without firing onRenderProcessGone. Check that the navigation actually mounted.
-  scheduleWebViewHealthCheck(8500);
+  if(foreground)watchScreen(STARTUP_TIMEOUT_MS);
  }
 
- private void scheduleWebViewHealthCheck(long delayMs){
-  final WebView expected=web;
-  final int generation=pageLoadGeneration;
-  if(expected==null)return;
-  expected.postDelayed(()->{
-   if(expected!=web||generation!=pageLoadGeneration||isFinishing()||isDestroyed())return;
-   if(!pageReady){handleUnresponsiveWebView(expected);return;}
-   // No user content is read or uploaded. Only check the static app shell.
-   String probe="(function(){return document.readyState==='complete' && !!document.body && !!document.body.dataset.screen && !!document.getElementById('wv-bottom-dock') && !!window.WordvilleShell;})()";
-   expected.evaluateJavascript(probe,result->{
-    if(expected!=web||generation!=pageLoadGeneration||isFinishing()||isDestroyed())return;
-    if("true".equals(result)){
-     recoveryReloads=0;
-     if(recoveryPanel!=null){root.removeView(recoveryPanel);recoveryPanel=null;}
-    }else handleUnresponsiveWebView(expected);
+ private void watchScreen(long timeoutMs){
+  cancelScreenCheck();
+  WebView expected=web;
+  long checkId=screenCheckId;
+  // The native deadline also runs when JavaScript or the compositor never calls back.
+  screenTimeout=()->{
+   if(isCurrentCheck(expected,checkId))recoverScreen("마을 화면이 정상적으로 열리지 않았습니다.");
+  };
+  mainHandler.postDelayed(screenTimeout,timeoutMs);
+  checkScreen(expected,checkId);
+ }
+
+ private boolean isCurrentCheck(WebView expected,long checkId){
+  return foreground&&expected==web&&checkId==screenCheckId&&!isFinishing()&&!isDestroyed();
+ }
+
+ private void cancelScreenCheck(){
+  screenCheckId++;
+  if(screenTimeout!=null)mainHandler.removeCallbacks(screenTimeout);
+  screenTimeout=null;
+ }
+
+ private void checkScreen(WebView expected,long checkId){
+  if(!isCurrentCheck(expected,checkId))return;
+  if(!pageReady){
+   mainHandler.postDelayed(()->checkScreen(expected,checkId),250);
+   return;
+  }
+  String probe="(function(){document.dispatchEvent(new Event('wordville-app-resume'));"
+    +"var cover=document.getElementById('wv-loading-cover'),dock=document.getElementById('wv-bottom-dock');"
+    +"return !!window.WordvilleShell && !!cover && cover.hidden && !!dock && dock.getBoundingClientRect().height>0;})()";
+  expected.evaluateJavascript(probe,result->{
+   if(!isCurrentCheck(expected,checkId))return;
+   if(!"true".equals(result)){
+    mainHandler.postDelayed(()->checkScreen(expected,checkId),250);
+    return;
+   }
+   expected.postVisualStateCallback(checkId,new WebView.VisualStateCallback(){
+    @Override public void onComplete(long requestId){
+     if(!isCurrentCheck(expected,requestId))return;
+     expected.invalidate();
+     recoveryAttempted=false;
+     cancelScreenCheck();
+    }
    });
-  },delayMs);
- }
-
- private void handleUnresponsiveWebView(WebView expected){
-  if(expected!=web||isFinishing()||isDestroyed())return;
-  if(recoveryReloads<1){
-   recoveryReloads++;
-   pageReady=false;
-   pageLoadGeneration++;
-   expected.reload(); // reload retains localStorage, IndexedDB and study records
-   scheduleWebViewHealthCheck(8500);
-  }else showRecovery("마을 화면이 정상적으로 열리지 않았습니다.");
- }
-
- private void notifyJsResume(){
-  WebView current=web;
-  if(current==null)return;
-  current.post(()->{
-   if(current!=web||!pageReady)return;
-   current.evaluateJavascript("document.dispatchEvent(new Event('wordville-app-resume'));",null);
   });
+ }
+
+ private void closeWebView(){
+  if(pronunciation!=null)pronunciation.stop();
+  cancelScreenCheck();
+  if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
+  if(web!=null){
+   WebView previous=web;
+   web=null;
+   root.removeView(previous);
+   previous.destroy();
+  }
+  pageReady=false;
+ }
+
+ private void recoverScreen(String message){
+  closeWebView();
+  if(isFinishing()||isDestroyed())return;
+  if(recoveryAttempted){
+   showRecovery(message);
+  }else if(foreground){
+   recoveryAttempted=true;
+   // Recreate the view without clearing the origin's storage or native preferences.
+   createWebView();
+  }
  }
 
  private void showRecovery(String message){
@@ -322,9 +439,8 @@ public class MainActivity extends Activity {
   retry.setOnClickListener(v->{
    root.removeView(panel);
    recoveryPanel=null;
-   if(web!=null){root.removeView(web);web.destroy();web=null;}
-   previousRendererRecovery=0;
-   recoveryReloads=0;
+   closeWebView();
+   recoveryAttempted=false;
    createWebView();
   });
   panel.addView(label);
@@ -336,10 +452,21 @@ public class MainActivity extends Activity {
 
  @Override protected void onResume(){
   super.onResume();
-  if(web!=null){web.onResume();web.resumeTimers();notifyJsResume();scheduleWebViewHealthCheck(3800);}
+  foreground=true;
+  if(recoveryPanel!=null)return;
+  if(web==null){
+   recoveryAttempted=true;
+   createWebView();
+  }else{
+   web.onResume();
+   watchScreen(pageReady?RESUME_TIMEOUT_MS:STARTUP_TIMEOUT_MS);
+  }
  }
  @Override protected void onPause(){
-  if(web!=null){web.onPause();web.pauseTimers();}
+  foreground=false;
+  if(pronunciation!=null)pronunciation.stop();
+  cancelScreenCheck();
+  if(web!=null)web.onPause();
   super.onPause();
  }
  @Override protected void onActivityResult(int request,int result,Intent data){
@@ -350,10 +477,10 @@ public class MainActivity extends Activity {
   }
  }
  @Override protected void onDestroy(){
+  if(pronunciation!=null)pronunciation.close();
   for(Translator translator:wordTranslators.values())translator.close();
   wordTranslators.clear();
-  if(chooser!=null){chooser.onReceiveValue(null);chooser=null;}
-  if(web!=null){root.removeView(web);web.destroy();web=null;}
+  closeWebView();
   recoveryPanel=null;
   super.onDestroy();
  }

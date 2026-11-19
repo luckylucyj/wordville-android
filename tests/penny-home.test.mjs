@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 globalThis.Image=class{set src(_value){}};
 await import('../app/src/main/assets/penny-home.js');
+await import('../app/src/main/assets/resident-homes.js');
 await import('../app/src/main/assets/venue-config.js');
 const home=globalThis.WordvillePennyHome;
 const spec=globalThis.WordvilleVenueSpec;
-test('Penny owns a separate 10-item furnished room with a bundled WebP scene',()=>{
+test('Penny owns a 10-item furnished room and the original WebP is available',()=>{
  assert.equal(home.furniture.length,10);
  const image=readFileSync(new URL('../app/src/main/assets/art/penny-room.webp',import.meta.url));
  assert.equal(image.toString('ascii',0,4),'RIFF');
@@ -14,7 +15,7 @@ test('Penny owns a separate 10-item furnished room with a bundled WebP scene',()
  const m=spec.getMap('pennyHome');
  assert.equal(m.fixtures.length,10);
  assert.equal(m.cols,24);assert.equal(m.rows,18);
- assert.ok(spec.getMap('home').fixtures.length>=5&&spec.getMap('home').fixtures.length!==m.fixtures.length,'other homes keep a separate floor plan from Penny');
+ assert.notDeepEqual(spec.getMap('alexHome').fixtures,m.fixtures);
 });
 test('Penny home exit and all 10 furniture edges stay reachable without clipping',()=>{
  const m=spec.getMap('pennyHome'),footprints=new Set();
@@ -30,22 +31,6 @@ test('Penny home exit and all 10 furniture edges stay reachable without clipping
  }
  assert.equal(spec.tile('pennyHome',m.door.x,m.door.y),'exit');
 });
-test('Penny shortcut and private collision map are wired into the existing venue',()=>{
- const p=readFileSync(new URL('../app/src/main/assets/places.js',import.meta.url),'utf8');
- const r=readFileSync(new URL('../app/src/main/assets/venue-runtime.js',import.meta.url),'utf8');
- const page=readFileSync(new URL('../app/src/main/assets/index.html',import.meta.url),'utf8');
- assert.ok(page.includes('src="penny-home.js"'));
- assert.ok(page.includes('id="wv-penny-home-entry"'),'Penny entry must be visible on the village screen');
- assert.ok(p.includes("ids('wv-penny-home-entry')?.addEventListener('click',visitPenny)"));
- assert.ok(p.includes("globalThis.WordvilleShell.activate('places')"));
- assert.ok(p.includes("WordvillePlaces={places,filters,show,pick,step,redraw,visitPenny"));
- assert.ok(p.includes("'wv-place-chip wv-penny-home-shortcut',visitPenny"));
-
- assert.ok(p.includes('페니의 집')&&p.includes("focusResident?.('penny')"));
- assert.ok(r.includes("?'pennyHome':scene"));
- assert.ok(r.includes('places.redraw?.()'));
-});
-
 test('Penny original assets are all unique 896px transparent PNGs, not upscaled lossy room art',()=>{
  const unique=new Set();
  for(const f of home.furniture){

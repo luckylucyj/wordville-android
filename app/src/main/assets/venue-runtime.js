@@ -33,31 +33,27 @@ const guestStatus=document.createElement('div');guestStatus.id='wv-venue-schedul
 function person(id){return people.find(p=>p.id===id)||{id,name:id,shirt:'#765ca6',hair:'#443452'};}
 const occupiedExcept=a=>actors.filter(b=>b!==a).map(b=>({x:Math.round(b.x),y:Math.round(b.y)}));
 let actors=[],scene='',last=0,rosterKey='',focusedResidentId=null;
-function mapId(){return scene==='home'&&focusedResidentId==='penny'?'pennyHome':scene;}
+function mapId(){return scene==='home'?root.WordvilleHomes.mapId(places.homeOwner):scene;}
 function scheduleRosterKey(){const m=clockMinute();return places.active+'|'+schedule.hourOf(m)+'|'+schedule.occupants(places.active,m).map(id=>id+':'+schedule.at(id,m).activity).join('|');}
 function reset(){
- const next=places.active;
- scene=next;
+ scene=places.active;
  rosterKey=scheduleRosterKey();
- const s=spec.forPlace(mapId());
+ const m=spec.getMap(mapId());
  const scheduled=schedule.occupants(scene,clockMinute());
  // Each villager lives in their own home; never show all sleepers in one room.
- const guests=scene==='home'&&focusedResidentId?(scheduled.includes(focusedResidentId)?[focusedResidentId]:[]):scheduled;
- if(scene==='home'&&focusedResidentId){
-  const title=document.getElementById('wv-place-name');
-  if(title)title.textContent=person(focusedResidentId).name+'의 집';
- }
+ const owner=places.homeOwner;
+ const guests=owner?scheduled.filter(id=>id===owner):scheduled;
  // The visitor is not a scheduled villager. Resident NPCs show up here ONLY
  // during their actual scheduled activity; no default always-present NPC.
  const prioritized=focusedResidentId&&guests.includes(focusedResidentId)?[focusedResidentId,...guests.filter(id=>id!==focusedResidentId)]:guests;
  const roster=['visitor',...prioritized];
  const spots=[[.50,.86],[.84,.81],[.19,.89],[.78,.87],[.38,.80],
-              [.65,.78],[.30,.65],[.7,.65],[.47,.87],[.53,.65]];
+              [.65,.78],[.30,.65],[.7,.65],[.47,.87],[.53,.65],[.4,.53],[.62,.54]];
  actors=[];announce('');
  for(let i=0;i<Math.min(spots.length,roster.length);i++){
   const id=roster[i],npc=id!=='visitor';
-  const target=spots[i],q=spec.nearest(mapId(),Math.floor(target[0]*s.cols),
-    Math.floor(target[1]*s.rows),actors);
+  const target=spots[i],q=owner&&!npc?m.entrance:spec.nearest(mapId(),Math.floor(target[0]*m.cols),
+    Math.floor(target[1]*m.rows),actors);
   if(!q)continue;
   const slot=npc?schedule.at(id,clockMinute()):null;
   actors.push({...person(id),id,x:q.x,y:q.y,route:[],target:null,steps:0,
@@ -176,12 +172,16 @@ function update(dt){
 }
 function focusResident(id){
  const guests=schedule.occupants(places.active,clockMinute());
- const pennyHome=places.active==='home'&&id==='penny';
- if(!guests.includes(id)&&!pennyHome)return false;
+ if(places.active==='home'&&root.WordvilleHomes.get(id)){
+  places.pick('home',id);
+  return true;
+ }
+ if(!guests.includes(id))return false;
  focusedResidentId=id;reset();places.redraw?.();
- return pennyHome||actors.some(a=>a.id===id);
+ return actors.some(a=>a.id===id);
 }
 function clearFocus(){focusedResidentId=null;reset();places.redraw?.();}
+function placeChanged(){focusedResidentId=places.homeOwner;reset();}
 function pixelCreature(a,x,y,scale){ctx.fillStyle=a.id==='cat'?'#db9b62':'#ead4af';
  ctx.fillRect(Math.round(x-scale*.25),Math.round(y-scale*.4),Math.round(scale*.5),Math.round(scale*.3));
  ctx.fillRect(Math.round(x-scale*.15),Math.round(y-scale*.6),Math.round(scale*.28),Math.round(scale*.25));
@@ -197,6 +197,7 @@ function draw(){
  if(showCollision){
   const m=spec.getMap(mapId()),tw=overlay.width/m.cols,th=overlay.height/m.rows;
   ctx.save();ctx.fillStyle='#9e2e2780';ctx.strokeStyle='#f9d87a';ctx.lineWidth=Math.max(1,1.2*uiScale);
+  if(places.homeOwner)ctx.fillRect(0,0,overlay.width,root.WordvilleHomes.BACK_WALL_ROWS*th);
   for(const f of m.fixtures){ctx.fillRect(f.x*tw,f.y*th,f.w*tw,f.h*th);ctx.strokeRect(f.x*tw,f.y*th,f.w*tw,f.h*th);}
   ctx.fillStyle='#f8d447bb';ctx.fillRect(m.door.x*tw,m.door.y*th,tw,th);ctx.restore();
  }
@@ -267,10 +268,11 @@ canvas.addEventListener('keydown',e=>{
 });
 function frame(ms){
  const dt=last?Math.min((ms-last)/1000,.04):0;last=ms;
- if(places.active!==scene||rosterKey!==scheduleRosterKey())reset();
+ if(places.active!==scene)placeChanged();
+ else if(rosterKey!==scheduleRosterKey())reset();
  if(!document.hidden&&!document.getElementById('wv-places-view')?.hidden){update(dt);draw();}
  requestAnimationFrame(frame);
 }
 reset();requestAnimationFrame(frame);
-root.WordvilleVenueRuntime={get actors(){return actors;},get scene(){return scene;},get focusedResident(){return focusedResidentId;},focusResident,clearFocus,moveTo,get dimensions(){return spec.forPlace(mapId());},get showCollision(){return showCollision;}};
+root.WordvilleVenueRuntime={get actors(){return actors;},get scene(){return scene;},get focusedResident(){return focusedResidentId;},focusResident,clearFocus,placeChanged,moveTo,get dimensions(){return spec.forPlace(mapId());},get showCollision(){return showCollision;}};
 })(globalThis);

@@ -1,4 +1,4 @@
-/* Deterministic 24-hour daily routines for all 12 Wordville residents.
+/* Deterministic 24-hour daily routines for Wordville residents.
  * One slot per local clock hour (00:00 through 24:00); no network data.
  * Custom overrides belong to the current device, not another user's account.
  */
@@ -11,6 +11,16 @@ const PLACE_NAMES={
  studio:'음악 작업실',market:'시장',square:'마을 광장',
  workshop:'공방',park:'공원'
 };
+const PRIMARY_PLACES=Object.freeze({
+ momo:'library',aizen:'bookstore',hachiware:'icecream',chiikawa:'burger',
+ toshiro:'pool',homura:'museum',rakko:'greenhouse',madoka:'cafe',kurimanju:'pub',usagi:'workshop'
+});
+const PRIMARY_START=9;
+const PRIMARY_END=17;
+function daytime(id,[morning,lunch,afternoon]){
+ const place=PRIMARY_PLACES[id];
+ return [[PRIMARY_START,place,morning],[12,place,lunch],[14,place,afternoon]];
+}
 // [hour, place, concrete action]; a new block ends when the next begins.
 const BLOCKS={
  alex:[
@@ -75,7 +85,49 @@ const BLOCKS={
   [10,'market','원단과 소품 구입'],[12,'cafe','점심 식사'],
   [13,'workshop','옷 수선과 제작'],[17,'icecream','휴식과 디저트'],
   [18,'square','주민 행사 준비'],[20,'pub','친구들과 저녁'],
-  [22,'home','옷 정리 후 취침']]
+  [22,'home','옷 정리 후 취침']],
+ chiikawa:[
+  [0,'home','잠자기'],[7,'park','풀밭에서 아침 산책'],
+  ...daytime('chiikawa',['햄버거 메뉴 살펴보기','햄버거 먹기','따뜻한 빵과 감자튀김 정리']),
+  [17,'market','집에 가져갈 간식 고르기'],[19,'home','간식 정리 후 취침']],
+ hachiware:[
+  [0,'home','잠자기'],[7,'square','친구에게 인사하기'],
+  ...daytime('hachiware',['오늘의 아이스크림 맛 살펴보기','아이스크림 맛보기','새 맛을 친구에게 추천하기']),
+  [17,'park','산책하며 노래하기'],[21,'home','일기 쓰고 취침']],
+ usagi:[
+  [0,'home','잠자기'],[7,'park','뜀뛰기'],
+  ...daytime('usagi',['공방 재료 살펴보기','나무 장난감 만들기','장난감 색칠하고 공구 정리']),
+  [17,'icecream','아이스크림 고르기'],[20,'home','간식 먹고 취침']],
+ rakko:[
+  [0,'home','잠자기'],[6,'gym','아침 체력 훈련'],
+  ...daytime('rakko',['화분 흙 상태 확인','온실 꽃과 나무 살펴보기','어린 식물에 물 주기']),
+  [17,'park','후배와 산책'],[21,'home','장비 정리 후 취침']],
+ kurimanju:[
+  [0,'home','잠자기'],[8,'market','펍에 가져갈 간식 고르기'],
+  ...daytime('kurimanju',['펍의 테이블 정리','따뜻한 안주 맛보기','친구들과 펍에서 한잔하기']),
+  [18,'park','저녁 산책'],[22,'home','컵 정리 후 취침']],
+ momo:[
+  [0,'home','잠자기'],[7,'greenhouse','꽃에 물 주기'],
+  ...daytime('momo',['반납 도서 정리','창가에서 책 읽기','토시로에게 추천할 책 고르기']),
+  [17,'park','토시로와 약속한 산책'],[20,'home','편지를 쓰고 취침']],
+ toshiro:[
+  [0,'home','잠자기'],[6,'gym','아침 수련'],
+  ...daytime('toshiro',['준비 운동과 수영 연습','수영 후 휴식','기록 측정과 수건 정리']),
+  [17,'park','모모와 약속한 산책'],[20,'home','하루를 기록하고 취침']],
+ aizen:[
+  [0,'home','잠자기'],[7,'library','서예 자료 읽기'],
+  ...daytime('aizen',['신간과 오래된 책 정리','서예 책 읽기','책 고르는 손님 돕기']),
+  [17,'cafe','차를 마시며 생각 정리'],[22,'home','서예 연습 후 취침']],
+ homura:[
+  [0,'home','잠자기'],[7,'bookstore','전시 도록 고르기'],
+  ...daytime('homura',['오래된 시계 전시 관람','마도카가 좋아할 그림 찾아보기','마도카에게 줄 엽서 고르기']),
+  [17,'square','마도카에게 줄 엽서를 들고 먼저 기다리기'],
+  [18,'square','마도카에게 먼저 마음을 전하기'],[21,'home','만남을 일기에 쓰고 취침']],
+ madoka:[
+  [0,'home','잠자기'],[8,'ranch','작은 동물 돌보기'],
+  ...daytime('madoka',['오늘의 디저트 고르기','딸기 케이크 먹기','호무라에게 줄 차 고르기']),
+  [17,'workshop','호무라에게 줄 리본 묶기'],
+  [18,'square','호무라를 만나 마음에 답하기'],[21,'home','리본 정리 후 취침']]
 };
 // Visible three-step behavior loops while NPCs remain at each venue.
 const TASK_STEPS=Object.freeze({
@@ -162,7 +214,7 @@ for(const [id,blocks] of Object.entries(BLOCKS)){
  }
 }
 load();
-const api={PLACE_NAMES,BLOCKS,TASK_STEPS,behaviorStages,STORAGE_KEY,at,day,setHour,resetHour,occupants,
+const api={PLACE_NAMES,BLOCKS,PRIMARY_PLACES,PRIMARY_START,PRIMARY_END,TASK_STEPS,behaviorStages,STORAGE_KEY,at,day,setHour,resetHour,occupants,
  hourOf,formatHour,minuteNow};
 root.WordvilleSchedule=api;
 if(typeof module!=='undefined')module.exports=api;

@@ -1,0 +1,22 @@
+.wv-word-top-actions .wv-pronounce{
+ border-color:#9a7958;background:#f8e8c9;color:#503623;min-height:42px
+}
+.wv-word-top-actions .wv-pronounce[aria-pressed="true"]{
+ border-color:#587747;background:#e0ebcb;color:#334b31
+}
+#wv-pronunciation-status{margin:0 0 6px;font-size:.85rem;color:#66513a}
+#wv-pronunciation-status:empty{display:none}
+#wv-word-usage{
+ border:1px solid #ba9a72;border-radius:10px;background:#fff8ea;color:#493322;margin:12px 0;padding:0 12px
+}
+#wv-word-usage summary{cursor:pointer;padding:11px 0;font-size:.96rem;font-weight:800}
+#wv-word-usage .wv-usage-content{padding:0 0 12px}
+#wv-word-usage p{margin:4px 0 7px}
+.wv-usage-topics{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+.wv-usage-topics>div{display:flex;gap:5px;flex-wrap:wrap}
+.wv-usage-topics span{background:#ecdcbf;padding:2px 6px;border-radius:4px;font-size:.82rem}
+#wv-usage-genres{list-style:none;padding:0;margin:0 0 6px;display:grid;gap:4px}
+#wv-usage-genres li{display:flex;justify-content:space-between;gap:8px;background:#f4ebdb;border-radius:5px;padding:4px 8px}
+#wv-word-usage small{display:block;line-height:1.5;margin-bottom:8px}
+#wv-word-usage small[hidden]{display:none}
+#wv-word-usage a,#wv-pronunciation-dictionary{color:#72512c;text-decoration:underline;font-weight:700}

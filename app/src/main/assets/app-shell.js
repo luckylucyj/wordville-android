@@ -50,8 +50,10 @@ const studyPicker=get('wv-resident-study-picker');if(studyPicker)residents.appen
 const jumpStatus=get('wv-visit-feedback');if(jumpStatus)residents.append(jumpStatus);
 village.append(residents);
 const wrap=document.querySelector('.canvas-wrap');
+const mapHeader=document.createElement('div');mapHeader.className='wv-map-header';
+wrap.prepend(mapHeader);
 const timeBadge=document.querySelector('.time-badge');
-if(timeBadge){timeBadge.classList.add('wv-world-clock');wrap.append(timeBadge);}
+if(timeBadge){timeBadge.classList.add('wv-world-clock');mapHeader.append(timeBadge);}
 const controls=document.querySelector('.village-controls');
 const timeNote=document.querySelector('.time-note');
 const toolButton=document.createElement('button');
@@ -61,13 +63,15 @@ toolButton.textContent='⚙';
 toolButton.title='마을 시간과 주민 움직임';
 toolButton.setAttribute('aria-label','마을 설정 펼치기');
 toolButton.setAttribute('aria-expanded','false');
-wrap.append(toolButton);
+mapHeader.append(toolButton);
+const mapToolbar=document.createElement('div');mapToolbar.className='wv-map-toolbar';
 const exploreButton=document.createElement('button');
 exploreButton.id='wv-visit-places';exploreButton.type='button';
 exploreButton.textContent='🏠 장소 둘러보기';
 exploreButton.setAttribute('aria-label','마을의 장소 17곳과 주민의 집 선택하기');
 exploreButton.addEventListener('click',()=>activate('places'));
-wrap.append(exploreButton);
+mapToolbar.append(exploreButton,wrap.querySelector('.zoom-controls'));
+wrap.append(mapToolbar);
 const toolPanel=document.createElement('div');
 toolPanel.id='wv-map-tool-panel';toolPanel.hidden=true;
 if(controls)toolPanel.append(controls);
@@ -81,8 +85,7 @@ toolButton.addEventListener('click',()=>{
  toolPanel.hidden=!toolPanel.hidden;
  toolButton.setAttribute('aria-expanded',String(!toolPanel.hidden));
 });
-const oldNav=document.querySelector('nav[aria-label="학습 메뉴"]');
-oldNav?.classList.add('wv-legacy-nav');
+const oldNav=get('wv-learning-nav');
 const account=document.createElement('section');
 account.id='wv-account-view';account.hidden=true;account.className='wv-account-screen';
 const accHeading=document.createElement('div');accHeading.innerHTML='<h2>계정과 기록</h2><p>기존 학습 기록과 저장 이미지를 안전하게 관리합니다.</p>';
@@ -107,7 +110,7 @@ for(const [key,icon,label] of tabDefs){
 document.body.append(dock);
 const more=document.createElement('div');more.id='wv-more-panel';more.className='wv-more-panel';
 more.setAttribute('aria-label','Wordville 추가 기능');more.hidden=true;
-for(const [key,icon,label] of [['sentences','✍','나의 영어 문장'],['notes','📝','Day별 생각코딩 노트'],['gallery','🖼️','기억 이미지 보관함'],['schedule','🕒','주민 일정 관리'],['lab','✦','단어 조합실'],['book','▧','개념 도감'],['account','⚙','계정·동기화']]){
+for(const [key,icon,label] of [['sentences','✍','나의 영어 문장'],['interpretation','✓','해석 피드백'],['notes','📝','Day별 생각코딩 노트'],['gallery','🖼️','기억 이미지 보관함'],['schedule','🕒','주민 일정 관리'],['lab','✦','단어 조합실'],['book','▧','개념 도감'],['account','⚙','계정·동기화']]){
  const b=document.createElement('button');b.type='button';b.dataset.more=key;
  const symbol=document.createElement('span');symbol.textContent=icon+' ';symbol.setAttribute('aria-hidden','true');
  const title=document.createElement('span');title.className='wv-more-text';title.dataset.sourceLabel=label;
@@ -131,7 +134,7 @@ function openResidentSchedule(){
  scheduleScreen.scrollTop=0;
 }
 function activate(screen){
- if(!['town','places','residents','learn','review','lab','book','notes','gallery','account','sentences','schedule'].includes(screen))return;
+ if(!['town','places','residents','learn','review','lab','book','notes','gallery','account','sentences','interpretation','schedule'].includes(screen))return;
  current=screen;lastScreen=screen;
  // Restore the Word tab only when it was the last active screen. Other tabs
  // still use their normal startup behavior without resuming unfinished quizzes.
@@ -152,7 +155,7 @@ function activate(screen){
    map.hidden=true;places.hidden=true;residents.hidden=false;residents.dataset.mode='portraits';
    if(oldDialogue)oldDialogue.hidden=true;
  }
- if(['town','places','residents'].includes(screen)){
+ if(screen==='town'||screen==='places'){
    try{globalThis.WordvillePlaces?.show(screen==='places'?'places':'map');}
    catch(error){console.error('Wordville screen transition failed',screen,error);}
  }
@@ -165,12 +168,13 @@ function activate(screen){
  }
  get('wv-notes-view').hidden=screen!=='notes';
  get('wv-sentences-view').hidden=screen!=='sentences';
+ get('wv-interpretation-view').hidden=screen!=='interpretation';
  scheduleScreen.hidden=screen!=='schedule';
   get('wv-gallery-view').hidden=screen!=='gallery';
   if(screen==='gallery')globalThis.WordvilleGallery?.renderArchive();
  account.hidden=screen!=='account';
  for(const [key,b] of buttons){
-  const active=key===screen||(key==='more'&&['notes','gallery','lab','book','account','sentences','schedule'].includes(screen));
+  const active=key===screen||(key==='more'&&['notes','gallery','lab','book','account','sentences','interpretation','schedule'].includes(screen));
   b.setAttribute('aria-current',active?'page':'false');
   b.setAttribute('aria-selected',String(active));
  }
@@ -180,6 +184,8 @@ function activate(screen){
   logo.src='favicon.svg';logo.alt='';logo.className='wv-logo';
   brand.replaceChildren(logo,document.createTextNode('WORDVILLE'));
  }
+ main.scrollTop=0;
+ if(screen==='places')village.scrollTop=0;
  window.scrollTo({top:0,behavior:'instant'});
  if(screen==='town'){
    requestAnimationFrame(resizeVillage);

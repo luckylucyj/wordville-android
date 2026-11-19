@@ -3,6 +3,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.webkit.WebView;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.runner.lifecycle.Stage;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +37,7 @@ public class VillageSmokeTest {
  }
  @Test public void villageAndWordCardRunOnAndroid() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
-  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  Activity activity=launchWordville(inst);
   android.view.ViewGroup content=activity.findViewById(android.R.id.content);
   WebView web=findWebView(content);
   assertNotNull("WebView is present inside the safe-inset container",web);
@@ -44,7 +46,7 @@ public class VillageSmokeTest {
   assertEquals("32",eval(web,"document.getElementById('day-filter').options.length"));
   assertEquals("true",eval(web,"document.getElementById('next-page').click();document.getElementById('page-info').textContent.startsWith('2 /')"));
   assertEquals("true",eval(web,"var day=document.getElementById('day-filter');day.value='2';day.dispatchEvent(new Event('change'));document.getElementById('page-info').textContent.startsWith('1 /')"));
-  assertEquals("12",eval(web,"WordvilleVillage.residents.length"));
+  assertEquals("22",eval(web,"WordvilleVillage.residents.length"));
   boolean artReady=false;
   for(int i=0;i<55;i++){
    if("true".equals(eval(web,"globalThis.WordvilleWorldArt?.reference?.naturalWidth===840&&Object.keys(globalThis.WordvilleWorldArt?.venueImages||{}).length===17&&Object.values(globalThis.WordvilleWorldArt.venueImages).every(img=>img.complete&&img.naturalWidth===640)"))){artReady=true;break;}
@@ -72,10 +74,10 @@ public class VillageSmokeTest {
   assertEquals("true",eval(web,"WordvilleWalk.walkAtlas.width===256&&WordvilleWalk.walkAtlas.height===2304"));
   boolean idleSpritesReady=false;
   for(int i=0;i<60;i++){
-   if("true".equals(eval(web,"Object.values(WordvilleWalk.idle48Sheets).length===12&&Object.values(WordvilleWalk.idle48Sheets).every(im=>im.complete&&im.naturalWidth===192&&im.naturalHeight===384)"))){idleSpritesReady=true;break;}
+   if("true".equals(eval(web,"Object.values(WordvilleWalk.idle48Sheets).length===12&&Object.values(WordvilleWalk.idle48Sheets).every(im=>im.complete&&im.naturalWidth===192&&im.naturalHeight===384)&&WordvilleWalk48.guestIds.length===10&&WordvilleWalk48.guestSheets.idle.naturalHeight===3840&&WordvilleWalk48.guestSheets.walk.naturalHeight===3840"))){idleSpritesReady=true;break;}
    Thread.sleep(150);
   }
-  assertTrue("All 12 anchored idle sprite sheets decode in Android WebView",idleSpritesReady);
+  assertTrue("Original and guest sprite sheets decode in Android WebView",idleSpritesReady);
   assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:48,width:48,walking:false,idlePhase:2});})()"));
   assertEquals("true",eval(web,"(function(){var c=document.createElement('canvas').getContext('2d');return WordvilleWalk.paint(c,{id:'alex',direction:'down',steps:0},30,90,{height:48,width:48,walking:true,phase:2});})()"));
   // Freeze the schedule at 13:00: Penny is working in the bookstore then.
@@ -97,6 +99,28 @@ public class VillageSmokeTest {
 
   assertEquals("true",eval(web,"(function(){var a=WordvilleVenueRuntime.actors[0],q=WordvilleVenueSpec.nearest('bookstore',1,1);return WordvilleVenueRuntime.moveTo(a,q.x,q.y)&&a.route.length>0&&a.route.every(t=>!WordvilleVenueSpec.isBlocked('bookstore',t.x,t.y));})()"));
   assertEquals("true",eval(web,"WordvilleShell.activate('town');document.getElementById('wv-map-view').hidden===false&&document.getElementById('wv-places-view').hidden"));
+  assertEquals("true",eval(web,"""
+   (()=>{
+    const village=WordvilleVillage, canvas=document.getElementById('village-canvas');
+    const resident=village.residents.find(p=>p.id==='sam');
+    const previous={x:resident.x,y:resident.y,atVenue:resident.atVenue};
+    try{
+     Object.assign(resident,{x:535,y:690,atVenue:false});
+     village.visitResident('sam');
+     const zoomOut=document.getElementById('zoom-out');
+     for(let i=0;i<6;i++)zoomOut.click();
+     const {offsetX,offsetY,scale}=village.mapView();
+     const {width,height}=WordvilleHubMap.scale;
+     const controlsOutside=[...document.querySelectorAll('.wv-map-toolbar button')].every(
+      button=>button.getBoundingClientRect().top>=canvas.getBoundingClientRect().bottom);
+     return controlsOutside&&zoomOut.disabled&&village.zoom===1&&offsetX<=0&&offsetY<=0&&
+      offsetX+width*scale>=canvas.width-.01&&offsetY+height*scale>=canvas.height-.01;
+    }finally{
+     Object.assign(resident,previous);
+     village.setZone('all');
+    }
+   })()
+   """));
 
   assertEquals("true",eval(web,"VillageModel.links.every(([a,b])=>!VillageModel.segmentHitsFountain(VillageModel.nodes[a],VillageModel.nodes[b]))"));
   assertEquals("true",eval(web,"VillageModel.isStairEdge(7,8)&&VillageModel.isStairEdge(8,9)"));
@@ -124,16 +148,37 @@ public class VillageSmokeTest {
   bitmap.recycle();
   assertTrue("PNG screenshot created",screenshot.length()>120000);
   assertEquals("true",eval(web,"document.querySelector('.word').click();document.getElementById('detail-meaning').hidden"));
+  assertEquals("true",eval(web,"typeof WordvilleSpeech.speak==='function' && document.querySelectorAll('#wv-pronunciation [data-accent]').length===2"));
+  assertEquals("true",eval(web,"document.getElementById('wv-word-usage').open=true; !!document.getElementById('wv-usage-examples').href"));
+
   assertEquals("false",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
   assertEquals("true",eval(web,"document.getElementById('reveal').click();document.getElementById('detail-meaning').hidden"));
+  assertEquals("true",eval(web,"new URL(document.getElementById('wv-dictionary-link').href).searchParams.get('q')===document.getElementById('detail-word').textContent.trim()"));
+  for(int i=0;i<30&&!"true".equals(eval(web,"!document.getElementById('wv-dictionary-paste').disabled"));i++){
+   Thread.sleep(100);
+  }
+  assertEquals("true",eval(web,"!document.getElementById('wv-dictionary-paste').disabled"));
+  inst.runOnMainSync(()->{
+   assertTrue("Wordville is focused before requesting clipboard text",web.hasWindowFocus());
+   android.content.ClipboardManager clipboard=activity.getSystemService(android.content.ClipboardManager.class);
+   clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Wordville test","dictionary selection"));
+  });
+  eval(web,"document.getElementById('wv-dictionary-toggle').click();document.getElementById('wv-dictionary-paste').click()");
+  boolean pasted=false;
+  for(int i=0;i<30;i++){
+   if("true".equals(eval(web,"document.getElementById('wv-dictionary-text').value==='dictionary selection'"))){pasted=true;break;}
+   Thread.sleep(100);
+  }
+  assertTrue("Android clipboard text reaches the current word card",pasted);
   assertEquals("\"night\"",eval(web,"document.getElementById('close-dialog').click();var mode=document.getElementById('village-time-mode');mode.value='night';mode.dispatchEvent(new Event('change'));WordvilleVillage.period"));
   assertEquals("true",eval(web,"WordvilleVillage.select('alex');!document.getElementById('village-dialogue').hidden"));
+  assertEquals("true",eval(web,"WordvilleShell.activate('interpretation'); typeof WordvilleInterpretationNative.translate==='function' && !document.getElementById('wv-interpretation-view').hidden"));
+
   inst.runOnMainSync(activity::finish);
  }
  @Test public void resumesWithoutBrownScreenAndHasLauncherIcon() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
-  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class)
-   .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  Activity activity=launchWordville(inst);
   WebView web=findWebView(activity.findViewById(android.R.id.content));
   assertNotNull("WebView exists after cold start",web);
   assertTrue("Wordville has a custom launcher icon",activity.getPackageManager()
@@ -146,11 +191,9 @@ public class VillageSmokeTest {
    Thread.sleep(180);
   }
   assertTrue("Initial loading screen finishes",ready);
-  // Exercise the same onPause/onResume callbacks used when switching Android apps.
-  inst.runOnMainSync(()->{
-   ((MainActivity)activity).onPause();
-   ((MainActivity)activity).onResume();
-  });
+  assertEquals("true",eval(web,"WordvilleShell.activate('town');window.appSwitchMarker=true"));
+  switchToHomeAndBack(inst,activity);
+  assertEquals("true",eval(web,"window.appSwitchMarker===true"));
   boolean recovered=false;
   for(int i=0;i<50;i++){
    if("true".equals(eval(web,"document.getElementById('wv-loading-cover').hidden&&WordvilleShell.screen==='town'&&document.querySelector('#village-canvas').width>20"))){
@@ -164,10 +207,82 @@ public class VillageSmokeTest {
   inst.runOnMainSync(activity::finish);
  }
 
+ @Test public void replacesBlankScreenAfterReturningFromHome() throws Exception {
+  android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
+  Activity activity=launchWordville(inst);
+  android.view.ViewGroup content=activity.findViewById(android.R.id.content);
+  try{
+   WebView original=findWebView(content);
+   assertNotNull(original);
+   for(int i=0;i<80&&!"true".equals(eval(original,
+     "!!window.WordvilleShell&&document.getElementById('wv-loading-cover').hidden"));i++)Thread.sleep(200);
+   assertEquals("true",eval(original,"(function(){var dock=document.getElementById('wv-bottom-dock');"
+    +"if(!dock)return false;localStorage.setItem('wordville.android-recovery-test','saved');"
+    +"dock.remove();return true;})()"));
+
+   switchToHomeAndBack(inst,activity);
+   WebView replacement=null;
+   for(int i=0;i<80;i++){
+    AtomicReference<WebView> current=new AtomicReference<>();
+    inst.runOnMainSync(()->current.set(findWebView(content)));
+    if(current.get()!=null&&current.get()!=original){replacement=current.get();break;}
+    Thread.sleep(200);
+   }
+   assertNotNull("A blank Wordville screen is replaced after returning",replacement);
+   String restored="!!window.WordvilleShell&&document.getElementById('wv-loading-cover').hidden"
+    +"&&document.getElementById('wv-bottom-dock').getBoundingClientRect().height>0"
+    +"&&localStorage.getItem('wordville.android-recovery-test')==='saved'";
+   for(int i=0;i<60&&!"true".equals(eval(replacement,restored));i++)Thread.sleep(200);
+   assertEquals("Restores settings and a visible screen after replacement","true",eval(replacement,restored));
+   eval(replacement,"localStorage.removeItem('wordville.android-recovery-test')");
+  }finally{
+   inst.runOnMainSync(activity::finish);
+  }
+ }
+
+ private Activity launchWordville(android.app.Instrumentation inst){
+  android.content.Context context=inst.getTargetContext();
+  Intent launch=context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+  assertNotNull("Wordville has a launcher entry",launch);
+  return inst.startActivitySync(launch);
+ }
+
+ private void switchToHomeAndBack(android.app.Instrumentation inst,Activity activity) throws Exception {
+  awaitResumed(inst,activity,true);
+  runShell(inst,"input keyevent KEYCODE_HOME");
+  awaitResumed(inst,activity,false);
+  String result=runShell(inst,"am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER"
+    +" -f 0x30020000 -n "+activity.getComponentName().flattenToString());
+  assertFalse(result,result.contains("Error"));
+  awaitResumed(inst,activity,true);
+ }
+
+ private void awaitResumed(android.app.Instrumentation inst,Activity activity,boolean expected)
+   throws InterruptedException {
+  AtomicReference<Stage> stage=new AtomicReference<>();
+  for(int i=0;i<100;i++){
+   inst.runOnMainSync(()->stage.set(ActivityLifecycleMonitorRegistry.getInstance()
+     .getLifecycleStageOf(activity)));
+   if((stage.get()==Stage.RESUMED)==expected)return;
+   Thread.sleep(150);
+  }
+  fail("Wordville activity expected resumed="+expected+", actual "+stage.get());
+ }
+
+ private String runShell(android.app.Instrumentation inst,String command) throws java.io.IOException {
+  try(java.io.InputStream output=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
+    inst.getUiAutomation().executeShellCommand(command))){
+   java.io.ByteArrayOutputStream result=new java.io.ByteArrayOutputStream();
+   byte[] buffer=new byte[1024];
+   int count;
+   while((count=output.read(buffer))!=-1)result.write(buffer,0,count);
+   return result.toString(java.nio.charset.StandardCharsets.UTF_8.name());
+  }
+ }
+
  @Test public void wordTabRestoresDayThirtyAfterWebViewReload() throws Exception {
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
-  Activity activity=inst.startActivitySync(new Intent(inst.getTargetContext(), MainActivity.class)
-   .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  Activity activity=launchWordville(inst);
   WebView web=findWebView(activity.findViewById(android.R.id.content));
   assertNotNull("Wordville WebView present",web);
   boolean initialized=false;

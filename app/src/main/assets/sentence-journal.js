@@ -55,7 +55,7 @@
  if(!main)return;
  const view=element('section','wv-sentences-view');
  view.id='wv-sentences-view';view.hidden=true;
- view.innerHTML='<header class="wv-sentence-head"><h2 id="wv-sentences-title"></h2><p id="wv-sentences-intro"></p></header>'+
+ view.innerHTML='<header class="wv-sentence-head"><h2 id="wv-sentences-title"></h2><p id="wv-sentences-intro"></p><button type="button" id="wv-open-interpretation">해석 피드백 열기</button></header>'+
   '<form id="wv-sentence-form" class="card"><label for="wv-sentence-text" id="wv-sentence-input-label"></label>'+
   '<textarea id="wv-sentence-text" maxlength="1200" rows="4" required></textarea><div class="wv-sentence-actions">'+
   '<button type="submit" class="primary" id="wv-sentence-save"></button><button type="button" id="wv-sentence-check"></button>'+
@@ -130,6 +130,7 @@
  }
  $('wv-sentence-form').addEventListener('submit',e=>{e.preventDefault();const item=saveEntry();if(item)setStatus(t('saved'));});
  $('wv-sentence-new').addEventListener('click',()=>{reset();input.focus();});
+ $('wv-open-interpretation').addEventListener('click',()=>globalThis.WordvilleShell?.activate('interpretation'));
  $('wv-sentence-check').addEventListener('click',async()=>{
   if(busy)return;
   const item=saveEntry();if(!item)return;
