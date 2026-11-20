@@ -75,11 +75,18 @@ jobs:
           CHROME_PATH="$(command -v google-chrome)" node tests/backup-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/sentence-journal-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/map-trends-browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/board-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: wordville-portraits-browser-qa
           path: wordville-portraits-browser.png
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wordville-board-mobile-qa
+          path: wordville-board-browser.png
           if-no-files-found: ignore
       - uses: actions/setup-java@v4
         with:
