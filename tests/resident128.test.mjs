@@ -53,7 +53,7 @@ const mockContext = () => {
 };
 
 test('Migrated residents have 128px 8-direction x 12-frame PNG atlases', () => {
-  assert.deepEqual(R.actions, ['walk', 'idle', 'talk', 'sit']);
+  assert.deepEqual(R.actions, ['walk', 'idle', 'talk', 'sit', 'write']);
   assert.equal(R.cell, 128);
   assert.equal(R.groundY, 120);
   assert.equal(R.frameCount, 12);

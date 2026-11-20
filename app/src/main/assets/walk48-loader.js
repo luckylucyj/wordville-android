@@ -12,7 +12,7 @@ const guestIds=(root.VillageModel?.people||[]).filter(p=>!residentIds.includes(p
 const guestOrder=new Map(guestIds.map((id,index)=>[id,index]));
 const guestSheets={};
 const chiikawaIds=['chiikawa','hachiware','usagi','rakko','kurimanju'];
-const chiikawaActions=['walk','idle','talk','sit'];
+const chiikawaActions=['walk','idle','talk','sit','write'];
 const chiikawaSheetsById={};
 for(const id of chiikawaIds){
  chiikawaSheetsById[id]={};
@@ -94,7 +94,7 @@ function paintChiikawa(c,p,x,y,o,walking){
   ['up','up-right','up-left'].includes(direction)?2:1;
  const mirrored=['left'].includes(direction);
  const time=Number.isFinite(o.timestampMs)?o.timestampMs:(typeof performance!=='undefined'?performance.now():Date.now());
- const duration=action==='idle'?200:(action==='talk'?130:160);
+ const duration=action==='idle'?200:(action==='write'?140:(action==='talk'?130:160));
  const phase=walking
   ?(Number.isInteger(o.phase)?((o.phase%frames)+frames)%frames:getFrame(p,true,time))
   :(Number.isInteger(o.idlePhase)?((o.idlePhase%frames)+frames)%frames:Math.floor(Math.max(0,time)/duration)%frames);

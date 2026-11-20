@@ -1,10 +1,10 @@
-/* Remade 3-head-tall native-128px resident animations (walk, idle, talk, sit).
- * Assets: residents128/<id>/{walk,idle,talk,sit}.png (1536x1024 = 12 frames x 8 directions @ 128x128).
+/* Remade 3-head-tall native-128px resident animations (walk, idle, talk, sit, write).
+ * Assets: residents128/<id>/{walk,idle,talk,sit,write}.png (1536x1024 = 12 frames x 8 directions @ 128x128).
  * Unmigrated residents fall back cleanly to the previous 48px/64px renderer.
  */
 (function(root){'use strict';
 const W=root.WordvilleWalk;if(!W)return;
-const actions=['walk','idle','talk','sit'];
+const actions=['walk','idle','talk','sit','write'];
 const directions=W.walk48Directions||['down','down-right','right','up-right','up','up-left','left','down-left'];
 const ids=['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily','toshiro','momo','homura','aizen','madoka'];
 const sheets={};
@@ -35,7 +35,7 @@ function frameFor(p,action,ms){
   return Math.floor(Math.max(0,time)/83)%frameCount;
  }
  const time=clock(ms);
- const stepMs=action==='idle'?200:(action==='talk'?110:100);
+ const stepMs=action==='idle'?200:(action==='write'?140:(action==='talk'?110:100));
  if(!p||typeof p!=='object')return action==='sit'?frameCount-1:Math.floor(Math.max(0,time)/stepMs)%frameCount;
  const current=state.get(p);
  if(!current||current.action!==action){
