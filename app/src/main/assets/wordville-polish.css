@@ -85,6 +85,11 @@ body[data-screen="lab"] #lab,
 body[data-screen="book"] #book{margin:8px auto 18px;padding:13px 11px 22px;box-shadow:none;border-width:3px;width:calc(100% - 14px)}
 #learn label,#wv-notes-view label{line-height:1.45}
 #learn input,#learn select,#wv-notes-view select{min-height:40px;padding:8px 10px}
+/* Keep an explicit, touch-sized search action beside the Android search field. */
+#learn .wv-word-search{display:grid;gap:6px;margin:8px 0 12px}
+#learn .wv-word-search-row{display:flex;align-items:stretch;gap:8px;min-width:0}
+#learn .wv-word-search-row input{flex:1;min-width:0;width:100%;margin:0}
+#learn .wv-word-search-row button{flex:none;min-width:74px;min-height:42px;padding:8px 12px;font-size:14px}
 .wv-study-filters,.wv-notes-toolbar{gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
 .wv-day-summary{gap:7px;margin:6px 0 10px;padding:7px;border-width:2px}
 .words{gap:7px;margin-top:8px}
