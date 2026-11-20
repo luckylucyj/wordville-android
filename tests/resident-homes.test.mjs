@@ -47,3 +47,20 @@ test('every resident has a distinct, fully navigable 24 × 18 home',()=>{
  assert.equal(themes.size,22);
  assert.equal(layouts.size,22);
 });
+
+test('reference-home collision matches furnishings and keeps the cave mat walkable',()=>{
+ const chiikawa=spec.getMap('chiikawaHome');
+ const hachiware=spec.getMap('hachiwareHome');
+ assert.equal(chiikawa.fixtures.length,6);
+ assert.equal(hachiware.fixtures.length,6);
+ assert.equal(spec.tile('chiikawaHome',9,11),'sofa');
+ assert.equal(spec.tile('chiikawaHome',18,11),'sofa');
+ assert.equal(spec.tile('hachiwareHome',12,6),'floor','woven mat must remain walkable');
+ assert.equal(spec.tile('hachiwareHome',6,11),'counter','cardboard box is blocking');
+ assert.equal(spec.tile('hachiwareHome',19,9),'planter','cave rock is blocking');
+ assert.ok(spec.route('hachiwareHome',hachiware.entrance,{x:12,y:6}).length);
+ for(const id of ['chiikawaHome','hachiwareHome']){
+  const map=spec.getMap(id);
+  assert.ok(spec.route(id,map.entrance,{x:12,y:8}).length,id+' central route');
+ }
+});
