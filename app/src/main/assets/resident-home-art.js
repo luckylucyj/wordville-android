@@ -22,7 +22,7 @@ function coverImage(ctx,image){
  const W=ctx.canvas.width,H=ctx.canvas.height;
  const factor=Math.max(W/image.naturalWidth,H/image.naturalHeight);
  const width=image.naturalWidth*factor,height=image.naturalHeight*factor;
- ctx.save();ctx.imageSmoothingEnabled=false;
+ ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  ctx.clearRect(0,0,W,H);
  ctx.drawImage(image,(W-width)/2,(H-height)/2,width,height);
  ctx.restore();
