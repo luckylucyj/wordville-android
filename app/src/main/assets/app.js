@@ -152,7 +152,20 @@ function renderConcepts(){$('concepts').replaceChildren();if(!state.concepts.len
 function connection(){const a=words.find(w=>w.id===$('word-a').value),b=words.find(w=>w.id===$('word-b').value);if(!a||!b)return;const lang=globalThis.WordvilleI18n?.language||'ko';if(lang==='ko')$('connection').textContent=`${a.meaning} + ${b.meaning} — 두 뜻을 함께 사용하는 상황을 떠올리고 문장을 작성해 주세요.`;else $('connection').textContent=`${a.word} + ${b.word} — ${globalThis.WordvilleI18n?.translate('선택한 두 단어로 영어 문장을 작성하세요.')||'Write an English sentence using both words.'}`;globalThis.WordvilleVocabularyLocale?.requestGloss?.(a.meaning);globalThis.WordvilleVocabularyLocale?.requestGloss?.(b.meaning);}
 function nextQuestion(){reviewWord=queue.shift();$('answer-result').textContent='';$('next').hidden=true;$('answer').value='';$('answer-form').hidden=!reviewWord;if(!reviewWord){$('question').textContent='이번 복습을 마쳤어요.';return;}$('question').textContent=reviewWord.word;$('answer').focus();}
 document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('click',()=>{for(const id of ['learn','review','lab','book'])$(id).hidden=button.dataset.tab!==id;document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b===button)));renderDue();renderConcepts();}));
-$('search').addEventListener('input',()=>{wordPage=0;renderWords();});
+let searchRenderTimer=null;
+$('search').addEventListener('input',()=>{
+ clearTimeout(searchRenderTimer);
+ searchRenderTimer=setTimeout(()=>{wordPage=0;renderWords();},180);
+});
+$('wv-word-search-form').addEventListener('submit',event=>{
+ event.preventDefault();
+ clearTimeout(searchRenderTimer);searchRenderTimer=null;
+ // A submitted query searches all days, regardless of saved filters.
+ $('day-filter').value='';$('wv-status-filter').value='all';studyPdfPage=null;
+ wordPage=0;renderWords();
+ $('search').blur();
+ $('filter-count').scrollIntoView({block:'start'});
+});
 $('close-dialog').addEventListener('click',()=>{$('word-dialog').close();active=null;globalThis.WordvilleGallery?.clear();showImage(null);});
 $('reveal').addEventListener('click',()=>{const show=$('detail-meaning').hidden;$('detail-meaning').hidden=!show;$('reveal').textContent=show?'뜻 숨기기':'뜻 보기';$('reveal').setAttribute('aria-expanded',String(show));});
 $('learned').addEventListener('click',()=>{if(!active)return;if(save({...state,reviews:{...state.reviews,[active.id]:state.reviews[active.id]||{streak:0,attempts:0,due:Date.now()}}}))$('detail-status').textContent='학습을 기록했습니다. 복습 메뉴에서 뜻을 입력해 보세요.';});
