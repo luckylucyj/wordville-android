@@ -242,6 +242,9 @@ for(const tab of [ids('wv-map-tab'),ids('wv-places-tab')]){
  });
 }
 document.addEventListener('wordville-art-ready',e=>{if(e.detail?.id===active&&siteView&&!siteView.hidden)draw(current());});
+ document.addEventListener('wordville-home-art-ready',e=>{
+  if(active==='home'&&e.detail?.id===homeOwner&&siteView&&!siteView.hidden)draw(current());
+ });
 render();
 show('map');
 globalThis.WordvillePlaces={places,filters,show,pick,step,redraw,visitHome,get homeOwner(){return active==='home'?homeOwner:null;},get active(){return active;},get filter(){return filter;}};
