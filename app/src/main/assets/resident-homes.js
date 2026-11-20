@@ -89,12 +89,33 @@ const rooms={
   wall:'quilt',window:'arch',windowX:155,floor:'plank',rug:[7,8,12,7],
   fixtures:[prop('desk',2,5,7,3,'재봉틀 작업대','sewing'),prop('shelf',16,4,6,3,'직물과 색실 수납장','display'),prop('table',10,10,5,3,'천을 재단하는 테이블','photos'),bed(17,10),prop('sofa',2,12,5,3,'쿠션 소파'),plant(21,8)]
  },
- chiikawa:guestRoom(['작은 풀밭 오두막','Meadow cottage','草地小屋','草原の小屋'],
-  ['#edddcf','#bfaa9f','#e9c09b','#c89b7c','#875d55','#dc9ead','#ad7581','#f9e7a8'],
-  'landscape','arch',(x,y)=>prop('shelf',x,y,5,3,'간식 선반','display'),0),
- hachiware:guestRoom(['파란 책 읽는 방','Blue reading room','蓝色读书房','青い読書部屋'],
-  ['#adc7dd','#779cbe','#c7ac97','#9f8370','#765d57','#658fbe','#456da0','#f1dfac'],
-  'landscape','plain',(x,y)=>prop('desk',x,y,5,3,'모험 일기 책상','writer'),1),
+ // Reference interiors supplied for Chiikawa and Hachiware: room illustrations
+ // and these collision footprints must describe the SAME furniture placement.
+ chiikawa:{
+  theme:['둥근 하얀 침실','Round white bedroom','圆形白色卧室','丸い白い寝室'],
+  referenceArt:'art/resident-homes/chiikawa-room.webp',
+  colors:['#f4f0e9','#e2d5cc','#f8f6ee','#e0d6ce','#a97c60','#efb9cc','#cda5b3','#f7e4ad'],
+  wall:'landscape',window:'arch',windowX:104,floor:'tile',rug:[9,9,9,5],
+  fixtures:[
+   prop('bed',8,4,8,4,'하얀 침대와 곰 인형'),
+   prop('shelf',17,4,4,5,'오른쪽 책장','display'),
+   prop('shelf',4,10,4,2,'펼쳐진 공부책','writer'),
+   prop('table',12,10,4,2,'쿠키와 찻잔','tea')
+  ]
+ },
+ hachiware:{
+  theme:['덩굴이 드리운 돌굴','Vine-covered stone den','藤蔓石洞','つるの石の隠れ家'],
+  referenceArt:'art/resident-homes/hachiware-room.webp',
+  colors:['#d8d4c6','#b6b3a5','#f2eee0','#d4cbb9','#af8057','#e6c785','#90a879','#f8db95'],
+  wall:'landscape',window:'plain',windowX:110,floor:'tile',rug:[9,6,8,5],
+  fixtures:[
+   prop('shelf',4,4,4,3,'책과 작은 서랍장','display'),
+   prop('bed',9,5,7,3,'베이지색 담요'),
+   prop('shelf',18,4,3,2,'꽃병과 파란 상자','display'),
+   prop('table',11,9,4,3,'램프와 독서 테이블','tea'),
+   prop('sofa',6,10,3,3,'작은 의자')
+  ]
+ },
  usagi:guestRoom(['노란 놀이방','Sunny playroom','黄色游戏室','黄色い遊び部屋'],
   ['#e9cd8d','#c69d58','#e5bc86','#bd9565','#905e43','#dfab50','#b37a3e','#fff0aa'],
   'record','wide',(x,y)=>prop('equipment',x,y,5,3,'놀이 도구','kit'),2),
