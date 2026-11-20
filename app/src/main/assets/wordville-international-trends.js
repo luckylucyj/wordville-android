@@ -17,6 +17,12 @@ const WORDS={
  heading:['날짜별 해외 트렌드','Daily international trends','海外每日趋势','日付別海外トレンド'],
  trendTab:['급상승 검색어','Trending searches','热门搜索','急上昇検索'],
  memeTab:['밈·바이럴 기사','Meme & viral news','迷因与热门报道','ミーム・話題のニュース'],
+ instagramTab:['Instagram 탐색','Instagram discovery','Instagram 探索','Instagram 探索'],
+ instagramNote:['Instagram에 직접 검색할 주제를 Google Trends·뉴스에서 가져옵니다. Instagram 자체의 유행 순위·게시물 수가 아닙니다. 국가와 날짜는 원본 자료의 기준이며 Instagram 검색 결과를 제한하지 않습니다. 로그인 필요할 수 있습니다.','Find Instagram topics using Google Trends and Google News. These are NOT Instagram popularity rankings or counts. Country and date describe the original Google sources, not Instagram search filters. Sign-in may be required.','根据 Google 趋势和新闻发现可在 Instagram 搜索的话题。并非 Instagram 热度排名或发帖量。国家和日期仅适用于来源，Instagram 搜索可能需要登录。','GoogleトレンドとニュースからInstagramで探す話題を表示します。Instagram独自の人気順位や投稿数ではありません。国・日付は元情報の条件で、Instagram検索には適用されません。ログインが必要な場合があります。'],
+ instagramOpen:['Instagram에서 검색','Search on Instagram','在 Instagram 搜索','Instagramで検索'],
+ instagramSource:['관련 주제의 원본 데이터: Google Trends·뉴스','Topic sources: Google Trends & News','话题来源：Google 趋势与新闻','話題の出典：Googleトレンド・ニュース'],
+ instagramOrigin:['주제 확인 출처','Topic source','话题数据来源','話題の元データ'],
+ instagramEmpty:['해당 날짜에 수집된 주제가 없습니다. 검색어를 입력해 Instagram에서 직접 찾아볼 수 있습니다.','No source topics for this date. Enter a keyword to search directly on Instagram.','该日期无来源话题。输入关键词可直接在 Instagram 搜索。','この日付の話題はありません。キーワードを入力してInstagramで直接探せます。'],
  memeNote:['Google 뉴스에서 검색된 밈·바이럴 관련 기사입니다. 밈 유행 순위가 아닙니다.','Google News coverage mentioning memes or viral topics, not a ranked meme chart.','Google 新闻中的迷因与热门报道，不是迷因排行榜。','Googleニュースのミーム関連記事で、流行順位ではありません。'],
  search:['날짜별 기록 검색','Search dated records','搜索历史记录','日付別記録を検索'],
  searchHint:['밈, 유행어, 인물, 주제 입력','Search a meme, phrase or topic','输入迷因、流行语或话题','ミーム・流行語・話題を入力'],
@@ -107,6 +113,25 @@ function datedNews(archive,country,date){
  if(!GEO[country]||!validDate(date))return [];
  return archive?.memeNews?.[country]?.[date]||[];
 }
+function instagramTopics(archive,country,date){
+ const raw=[
+  ...datedRows(archive,country,date).map(item=>({title:item.title, date, source:'Google Trends',
+   publishedAt:item.publishedAt, url:'https://trends.google.com/trending?geo='+country})),
+  ...datedNews(archive,country,date).map(item=>({title:item.title, date, source:'Google News',
+   publishedAt:item.publishedAt, url:item.url}))
+ ];
+ const seen=new Set();
+ return raw.filter(item=>{
+  const key=item.title.trim().toLocaleLowerCase();
+  if(!key||seen.has(key))return false;
+  seen.add(key);return true;
+ }).slice(0,20);
+}
+function instagramSearchUrl(query=''){
+ const term=String(query??'').trim().slice(0,100);
+ return term?'https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(term):
+  'https://www.instagram.com/explore/';
+}
 function filterRows(items,needle=''){
  const query=String(needle).trim().toLocaleLowerCase();
  return query?items.filter(row=>(row.title+' '+(row.publisher||'')).toLocaleLowerCase().includes(query)):items;
@@ -123,7 +148,7 @@ function googleSearchUrl(country,query,mode='trends',date=''){
  return 'https://trends.google.com/trends/explore?'+new URLSearchParams({geo:country,q:term,date:dates});
 }
 function safeLink(url){return isHttps(url)?url:'';}
-const api={GEO,WORDS,URL:ARCHIVE_URL,normalizeArchive,countryDate,datedRows,datedNews,filterRows,googleSearchUrl,safeLink};
+const api={GEO,WORDS,URL:ARCHIVE_URL,normalizeArchive,countryDate,datedRows,datedNews,instagramTopics,instagramSearchUrl,filterRows,googleSearchUrl,safeLink};
 root.WordvilleInternationalTrends=api;
 if(typeof document==='undefined'){
  if(typeof module!=='undefined')module.exports=api;
@@ -143,6 +168,7 @@ const countries=tag('select'),datepicker=tag('input'),fetchButton=tag('button','
   area=tag('section','wv-trends-area'),
   modeTabs=tag('div','wv-trends-tabs'),
   trendTab=tag('button','wv-social-outline'),memeTab=tag('button','wv-social-outline'),
+  instagramTab=tag('button','wv-social-outline'),
   searchField=tag('input','wv-trend-query'),searchLabel=tag('label','wv-trend-search'),
   external=tag('a','wv-trend-external');
 countries.id='wv-trend-country';countries.setAttribute('aria-label','Country');
@@ -151,10 +177,11 @@ for(const country of Object.keys(GEO)){
 }
 datepicker.id='wv-trend-date';datepicker.type='date';datepicker.setAttribute('aria-label','Date');
 fetchButton.type='button';
-trendTab.type='button';memeTab.type='button';
+trendTab.type='button';memeTab.type='button';instagramTab.type='button';
 trendTab.id='wv-trend-mode-search';memeTab.id='wv-trend-mode-memes';
+instagramTab.id='wv-trend-mode-instagram';
 trendTab.setAttribute('aria-pressed','true');memeTab.setAttribute('aria-pressed','false');
-modeTabs.append(trendTab,memeTab);
+modeTabs.append(trendTab,memeTab,instagramTab);
 searchField.id='wv-trend-query';searchField.type='search';searchField.maxLength=100;
 searchField.autocomplete='off';searchField.setAttribute('aria-label','Search overseas trends');
 const queryLabel=tag('span');searchLabel.append(queryLabel,searchField);
@@ -176,7 +203,9 @@ dialog.append(older);
 let country='US',requestedDate='',archive=null,fetchedAt=0,busy=false,usingCached=false,mode='trends';
 countries.value=country;
 function latestDay(data,geo){
- return Object.keys((mode==='memes'?data?.memeNews:data?.countries)?.[geo]||{}).sort().reverse()[0]||countryDate(geo);
+ const a=Object.keys((mode==='memes'?data?.memeNews:data?.countries)?.[geo]||{});
+ if(mode==='instagram')a.push(...Object.keys(data?.memeNews?.[geo]||{}));
+ return [...new Set(a)].sort().reverse()[0]||countryDate(geo);
 }
 function applyDate(newCountry,preferLatest=true){
  country=newCountry;countries.value=country;
@@ -188,25 +217,28 @@ function sourceAnchor(text,url,className){
  const a=tag('a',className,text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;
 }
 function render(){
- heading.textContent=tr('heading');lead.textContent=tr('subtitle');
+ heading.textContent=tr('heading');lead.textContent=tr(mode==='instagram'?'instagramNote':'subtitle');
  countryLabel.textContent=tr('country');dateLabel.textContent=tr('date');
  fetchButton.textContent=tr('update');summary.textContent=tr('otherPosts');
- trendTab.textContent=tr('trendTab');memeTab.textContent=tr('memeTab');
+ trendTab.textContent=tr('trendTab');memeTab.textContent=tr('memeTab');instagramTab.textContent=tr('instagramTab');
  trendTab.setAttribute('aria-pressed',String(mode==='trends'));
  memeTab.setAttribute('aria-pressed',String(mode==='memes'));
+ instagramTab.setAttribute('aria-pressed',String(mode==='instagram'));
  queryLabel.textContent=tr('search');searchField.placeholder=tr('searchHint');
- external.textContent=tr('external');
- external.href=googleSearchUrl(country,searchField.value,mode,requestedDate);
+ external.textContent=tr(mode==='instagram'?'instagramOpen':'external');
+ external.href=mode==='instagram'?instagramSearchUrl(searchField.value):
+  googleSearchUrl(country,searchField.value,mode,requestedDate);
  external.setAttribute('aria-label',tr('external'));
  for(const option of countries.options)option.textContent=GEO[option.value].names[loc()];
  const when=archive?.countryUpdatedAt?.[country];
  const updated=when?new Date(when).toLocaleString(language(),{dateStyle:'medium',timeStyle:'short'}):'—';
  const stale=when&&(Date.now()-Date.parse(when)>48*3600*1000);
- info.textContent=(archive?tr('fetched')+': '+updated+' · '+tr('collect')+(usingCached?' · '+tr('stale'):'')+(stale?' · '+tr('stale'):''):tr(busy?'loading':'offline'));
+ info.textContent=(archive?tr('fetched')+': '+updated+' · '+tr(mode==='instagram'?'instagramSource':'collect')+(usingCached?' · '+tr('stale'):'')+(stale?' · '+tr('stale'):''):tr(busy?'loading':'offline'));
  list.replaceChildren();
- const records=filterRows(mode==='memes'?datedNews(archive,country,requestedDate):datedRows(archive,country,requestedDate),searchField.value);
+ const records=filterRows(mode==='instagram'?instagramTopics(archive,country,requestedDate):
+ mode==='memes'?datedNews(archive,country,requestedDate):datedRows(archive,country,requestedDate),searchField.value);
  if(!records.length){
-  const p=tag('p','wv-trends-empty',busy?tr('loading'):tr('empty'));
+  const p=tag('p','wv-trends-empty',busy?tr('loading'):tr(mode==='instagram'?'instagramEmpty':'empty'));
   list.append(p);return;
  }
  const title=tag('p','wv-trends-day',requestedDate+' · '+GEO[country].names[loc()]+' · '+tr('results')+': '+records.length);
@@ -226,6 +258,14 @@ function render(){
   top.append(tag('strong','',item.title),tag('small','',new Date(item.publishedAt).toLocaleTimeString(language(),
    {timeZone:GEO[country].zone,hour:'2-digit',minute:'2-digit'})));
   article.append(top);
+  if(mode==='instagram'){
+   const source=tag('small','wv-instagram-origin',tr('instagramOrigin')+': '+item.source);
+   article.append(source);
+   const refs=tag('div','wv-trends-links');
+   refs.append(sourceAnchor(tr('instagramOpen'),instagramSearchUrl(item.title),'wv-instagram-link'));
+   if(safeLink(item.url))refs.append(sourceAnchor(item.source,item.url,''));
+   article.append(refs);list.append(article);return;
+  }
   if(mode==='memes'){
    if(item.publisher)article.append(tag('span','wv-trends-traffic',tr('pub')+': '+item.publisher));
    const refs=tag('div','wv-trends-links');
@@ -277,7 +317,8 @@ async function fetchData(){
    const small=JSON.stringify(compact);
    if(small.length<MAX_CACHE_BYTES)localStorage.setItem(CACHE,small);
   }catch{}
-  if(!requestedDate||!(mode==='memes'?datedNews(archive,country,requestedDate):datedRows(archive,country,requestedDate)).length)applyDate(country,true);
+  if(!requestedDate||!(mode==='instagram'?instagramTopics(archive,country,requestedDate):
+  mode==='memes'?datedNews(archive,country,requestedDate):datedRows(archive,country,requestedDate)).length)applyDate(country,true);
  }catch(e){
   usingCached=!!archive;
   console.warn('Wordville verified trends unavailable:',e);
@@ -293,7 +334,7 @@ function open(){
  if(!fetchedAt||Date.now()-fetchedAt>5*60*1000)void fetchData();
 }
 countries.addEventListener('change',()=>{applyDate(countries.value,true);render();});
-for(const [name,button] of [['trends',trendTab],['memes',memeTab]])
+for(const [name,button] of [['trends',trendTab],['memes',memeTab],['instagram',instagramTab]])
  button.addEventListener('click',()=>{mode=name;applyDate(country,true);render();});
 searchField.addEventListener('input',render);
 datepicker.addEventListener('change',()=>{requestedDate=datepicker.value;render();});
