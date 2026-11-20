@@ -66,10 +66,13 @@ function reset(){
  for(const a of actors){
   if(!a.player)walkToActivity(a);
  }
- const when=schedule.formatHour(schedule.hourOf(clockMinute()));
- guestStatus.textContent=when+' 이 장소에 있는 주민: '+(guests.length?
-  guests.map(id=>{const p=person(id);return p.name+' · '+schedule.at(id,clockMinute()).activity;}).join(' / '):
-  '현재 예약된 활동이 없습니다.');
+ const when=schedule.formatHour(schedule.hourOf(clockMinute())),L=root.WordvilleScheduleLocale;
+ const locale=root.WordvilleI18n?.language||'ko';
+ const prefix={ko:' 이 장소에 있는 주민: ',en:' Residents here: ','zh-CN':' 此处居民：',ja:' この場所の住民：'};
+ const empty={ko:'현재 예약된 활동이 없습니다.',en:'No scheduled residents at this time.','zh-CN':'目前没有安排居民活动。',ja:'現在予定されている住民はいません。'};
+ guestStatus.textContent=when+prefix[locale]+(guests.length?
+  guests.map(id=>{const p=person(id),slot=schedule.at(id,clockMinute());return (root.WordvilleI18n?.translate(p.name)||p.name)+' · '+(L?.activity(slot.activity)||slot.activity);}).join(' / '):
+  empty[locale]);
 }
 function walkToActivity(a){
  const m=spec.getMap(mapId()),fx=m.fixtures;
@@ -210,7 +213,8 @@ function draw(){
   const height=(a.id==='cat'||a.id==='dog')?Math.round(residentHeight*.52):(hasHiRes?residentHeight:Math.round(residentHeight*.78)),width=height;
   // Residents with 128px/64px action artwork share the same stable world-space foot anchor.
   const action=(hasHiRes||root.WordvilleChiikawa?.has?.(a.id))&&!moving&&a.activityState==='doing'
-   ?(/대화|이야기|잡담/.test(a.behaviorText||'')?'talk':
+   ?(/쓰기|필기|기록|집필|일기|편지|메모|공부/.test(a.behaviorText||'')?'write':
+     /대화|이야기|잡담/.test(a.behaviorText||'')?'talk':
      (/식사|음료|커피|독서|읽기|앉|휴식|쉬기/.test(a.behaviorText||'')?'sit':'idle')):undefined;
   if(!walk?.paint(ctx,a,x,y,{height,width,walking:moving,action})){
    if(a.id==='cat'||a.id==='dog')pixelCreature(a,x,y,Math.min(48,height));
@@ -230,11 +234,12 @@ function draw(){
    ctx.font='bold '+fontPx+'px sans-serif';ctx.textAlign='center';
    const fw=Math.round(70*uiScale),fh=Math.round(15*uiScale);
    ctx.fillStyle='#fff3c9';ctx.fillRect(x-fw/2,headY-Math.round(32*uiScale),fw,fh);
-   ctx.fillStyle='#59412e';ctx.fillText('현재 위치',x,headY-Math.round(21*uiScale));
+   ctx.fillStyle='#59412e';ctx.fillText(({ko:'현재 위치',en:'Here','zh-CN':'当前位置',ja:'現在地'})[root.WordvilleI18n?.language||'ko'],x,headY-Math.round(21*uiScale));
   }
   if(!a.player&&!moving&&a.activityState==='doing'){
    ctx.fillStyle='#fff6dfed';
-   const label=a.behaviorText.length>11?a.behaviorText.slice(0,11)+'…':a.behaviorText;
+   const localized=root.WordvilleScheduleLocale?.activity(a.behaviorText)||a.behaviorText;
+   const label=localized.length>20?localized.slice(0,20)+'…':localized;
    ctx.font='bold '+fontPx+'px sans-serif';ctx.textAlign='center';
    const w=Math.min(Math.round(145*uiScale),Math.max(Math.round(55*uiScale),ctx.measureText(label).width+Math.round(12*uiScale)));
    const lh=Math.round(16*uiScale);
