@@ -150,14 +150,47 @@ function buildDialog(id,title){
  close.setAttribute('aria-label',tr(lex.close));add(head,heading,close);d.append(head);
  document.body.append(d);return {d,heading,close};
 }
+const BOARD_PIN_KEY='wordville.board.pins.v1';
+const pinned=new Set();
+try{
+ const old=JSON.parse(root.localStorage?.getItem(BOARD_PIN_KEY)||'[]');
+ if(Array.isArray(old))for(const id of old)if(ids.has(id))pinned.add(id);
+}catch{}
+function boardNoticeCount(){return pinned.size;}
+function boardPin(id,enabled=!pinned.has(id)){
+ if(!ids.has(id))return false;
+ if(enabled)pinned.add(id);else pinned.delete(id);
+ try{root.localStorage?.setItem(BOARD_PIN_KEY,JSON.stringify([...pinned]));}catch{}
+ root.document?.dispatchEvent(new CustomEvent('wordville-board-notices-changed',{detail:{count:pinned.size}}));
+ return true;
+}
+function boardClear(){
+ for(const id of [...pinned])pinned.delete(id);
+ try{root.localStorage?.setItem(BOARD_PIN_KEY,'[]');}catch{}
+ root.document?.dispatchEvent(new CustomEvent('wordville-board-notices-changed',{detail:{count:0}}));
+}
+const boardWords={
+ pins:['게시판에 붙인 공지','Pinned notices','固定公告','貼り付けたお知らせ'],
+ pin:['게시판에 붙이기','Pin to board','固定到公告板','掲示板に貼る'],
+ unpin:['게시판에서 떼기','Unpin from board','从公告板移除','掲示板から外す'],
+ clear:['공지 모두 떼기','Clear board','清空公告板','掲示板を空にする'],
+ helper:['주민 글의 붙이기 버튼을 누르면 마을 게시판 그림이 비어 있음(0) → 일부(1~4) → 가득 참(5개 이상) 순서로 바뀝니다.','Pin resident posts to change the town sprite: empty (0), partial (1–4), full (5+).','点击固定帖子可切换公告板：空（0）、部分（1–4）、满（5个以上）。','住民の投稿を貼ると掲示板が空（0）、一部（1～4）、満杯（5件以上）に変わります。']
+};
 const board=buildDialog('wv-town-board',tr(lex.board));
 const boardHint=el('p','wv-social-hint'),boardSwitch=button('',()=>{showAll=!showAll;renderBoard();},'wv-social-outline');
+const boardPinsBar=el('div','wv-board-pins-bar'),boardPinsCount=el('strong','wv-board-pins-count'),
+ boardPinsClear=button('',()=>{boardClear();renderBoard();},'wv-social-outline'),boardPinsHint=el('p','wv-social-hint');
+boardPinsBar.append(boardPinsCount,boardPinsClear);
 const boardList=el('div','wv-town-posts');
-add(board.d,boardHint,boardSwitch,boardList);
+add(board.d,boardHint,boardPinsHint,boardPinsBar,boardSwitch,boardList);
 let showAll=false;
 function renderBoard(){
  board.heading.textContent=tr(lex.board);boardHint.textContent=tr(lex.boardHint);
  boardSwitch.textContent=tr(showAll?lex.boardToday:lex.boardAll);
+ boardPinsCount.textContent=tr(boardWords.pins)+': '+boardNoticeCount();
+ boardPinsClear.textContent=tr(boardWords.clear);
+ boardPinsClear.disabled=!pinned.size;
+ boardPinsHint.textContent=tr(boardWords.helper);
  const f=document.createDocumentFragment();
  for(const p of posts(new Date(),showAll)){
   const resident=person(p[0]),card=el('article','wv-town-post');
@@ -165,7 +198,11 @@ function renderBoard(){
   add(head,name,tag);
   const phrase=el('b','wv-post-phrase',p[1]),example=el('p','wv-post-example',p[2]);example.lang='en';
   const meaning=el('p','wv-post-meaning',tr(lex.origin)+': '+p[3+idx()]);
-  add(card,head,phrase,example,meaning);f.append(card);
+  const pin=button(tr(pinned.has(p[0])?boardWords.unpin:boardWords.pin),()=>{
+   boardPin(p[0]);renderBoard();
+  },'wv-post-pin');
+  pin.setAttribute('aria-pressed',String(pinned.has(p[0])));
+  add(card,head,phrase,example,meaning,pin);f.append(card);
  }
  boardList.replaceChildren(f);
 }
@@ -246,6 +283,8 @@ document.addEventListener('wordville-language-changed',()=>{
 });
 document.addEventListener('wordville-social-updated',()=>{if(statusDialog.d.open)renderStatus();});
 api.openBoard=openBoard;api.openResident=openResident;
+api.boardPinnedCount=boardNoticeCount;api.boardPin=boardPin;api.boardClear=boardClear;
+api.boardIsPinned=id=>pinned.has(id);api.boardState=()=>boardNoticeCount()===0?0:boardNoticeCount()<=4?1:2;
 api.boardHit=(x,y)=>x>=423&&x<=471&&y>=333&&y<=388;
 api.drawTownBoard=(ctx)=>{
  ctx.save();ctx.fillStyle='#65442d';ctx.fillRect(430,354,4,29);ctx.fillRect(464,354,4,29);
