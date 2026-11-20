@@ -131,8 +131,10 @@ function render(){
  ids('wv-place-name').textContent=locale==='en'?p.en:(L?.place(p.id)||globalThis.WordvilleI18n?.translate(p.name)||p.name);
  ids('wv-place-en').textContent=p.en;
  const desc=ids('wv-place-description');
- if(locale!=='ko'&&globalThis.WordvilleVocabularyLocale?.bindText)globalThis.WordvilleVocabularyLocale.bindText(desc,p.desc);
- else desc.textContent=p.desc;
+ const translated=globalThis.WordvilleI18n?.translate(p.desc)||p.desc;
+ if(locale!=='ko'&&translated===p.desc&&globalThis.WordvilleVocabularyLocale?.bindText)
+  globalThis.WordvilleVocabularyLocale.bindText(desc,p.desc);
+ else desc.textContent=translated;
  ids('wv-place-category').textContent=globalThis.WordvilleI18n?.translate(filters.find(x=>x[0]===p.type)?.[1]||'마을')||'마을';
  ids('wv-place-canvas').setAttribute('aria-label',p.name+' 픽셀아트 장소 풍경');
  ids('wv-place-rail').replaceChildren();
