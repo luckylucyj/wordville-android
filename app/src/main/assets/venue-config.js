@@ -11,6 +11,14 @@ function forPlace(id){const tier=id==='pennyHome'||homeFor(id)?'medium':SIZES[id
 function build(id){
  const room=homeFor(id),backWall=room?root.WordvilleHomes.BACK_WALL_ROWS:1;
  const s=forPlace(id),{cols:w,rows:h}=s,tiles=Array.from({length:h},(_,y)=>Array.from({length:w},(_,x)=>x===0||y<backWall||x===w-1||y===h-1?'wall':'floor'));
+ // The supplied homes have circular playable interiors. Keep residents within
+ // the illustrated floor instead of allowing them to stand on the black border.
+ if(room?.referenceArt){
+  for(let y=backWall;y<h-1;y++)for(let x=1;x<w-1;x++){
+   const dx=(x-(w-1)/2)/11.2,dy=(y-8.5)/8.8;
+   if(dx*dx+dy*dy>1)tiles[y][x]='wall';
+  }
+ }
  const fixtures=[],door={x:Math.floor(w/2),y:h-1},labels={pool:'온실 수영장',burger:'마법학교 햄버거 가게',bookstore:'마법서점',library:'중앙 도서관'};
  function add(kind,x,y,width,height,label,art){x=Math.round(x);y=Math.round(y);width=Math.round(width);height=Math.round(height);
   const f={kind,x,y,w:width,h:height,label:label||kind,art};fixtures.push(f);
