@@ -94,11 +94,11 @@ function openHomePicker(){
  initial?.focus();
 }
 ids('wv-home-close').addEventListener('click',()=>homePicker.close());
-document.addEventListener('wordville-language-changed',()=>{if(active==='home')redraw();});
+document.addEventListener('wordville-language-changed',()=>{if(siteView&&!siteView.hidden)render();else if(active==='home')redraw();});
 function button(label,className,handler){const b=document.createElement('button');b.type='button';b.textContent=label;b.className=className;b.addEventListener('click',handler);return b;}
 function appendPortrait(parent,id,small=false){
  const p=people[id];if(!p)return;
- const b=button(p.name,'wv-place-person',()=>{speakerId=id;lineIndex=0;renderConversation();});
+ const b=button(globalThis.WordvilleI18n?.translate(p.name)||p.name,'wv-place-person',()=>{speakerId=id;lineIndex=0;renderConversation();});
  b.setAttribute('aria-pressed',String((speakerId||current().people[0])===id));
  if(portraits?.portrait){
   const picture=portraits.portrait(id,small?'wv-venue-mini':'wv-venue-portrait');
@@ -112,7 +112,10 @@ function renderConversation(){
  const p=current(),person=p.id==='home'?people[homeOwner]:people[speakerId||p.people[0]];
  ids('wv-place-speaker').textContent=(person?.name||'주민')+'의 이야기';
  ids('wv-place-dialogue-en').textContent=p.lines[lineIndex][0];
- ids('wv-place-dialogue-ko').textContent=p.lines[lineIndex][1];
+ const translation=ids('wv-place-dialogue-ko'),locale=globalThis.WordvilleI18n?.language||'ko';
+ if(locale!=='ko'&&globalThis.WordvilleVocabularyLocale?.bindText)
+  globalThis.WordvilleVocabularyLocale.bindText(translation,p.lines[lineIndex][1]);
+ else translation.textContent=p.lines[lineIndex][1];
  ids('wv-place-study').textContent='원하는 단어 선택해 주민과 대화';
  ids('wv-place-people').replaceChildren();
  const roster=globalThis.WordvilleSchedule?.occupants(p.id,globalThis.WordvilleVillage?.clockMinute??globalThis.WordvilleSchedule.minuteNow())||[];
@@ -124,15 +127,19 @@ function render(){
  const items=listed();if(!items.find(p=>p.id===active))active=items[0].id;
  const p=current(),idx=items.findIndex(x=>x.id===active);
  ids('wv-place-count').textContent=(idx+1)+' / '+items.length+'곳';
- ids('wv-place-name').textContent=p.name;
+ const locale=globalThis.WordvilleI18n?.language||'ko',L=globalThis.WordvilleScheduleLocale;
+ ids('wv-place-name').textContent=locale==='en'?p.en:(L?.place(p.id)||globalThis.WordvilleI18n?.translate(p.name)||p.name);
  ids('wv-place-en').textContent=p.en;
- ids('wv-place-description').textContent=p.desc;
- ids('wv-place-category').textContent=filters.find(x=>x[0]===p.type)?.[1]||'마을';
+ const desc=ids('wv-place-description');
+ if(locale!=='ko'&&globalThis.WordvilleVocabularyLocale?.bindText)globalThis.WordvilleVocabularyLocale.bindText(desc,p.desc);
+ else desc.textContent=p.desc;
+ ids('wv-place-category').textContent=globalThis.WordvilleI18n?.translate(filters.find(x=>x[0]===p.type)?.[1]||'마을')||'마을';
  ids('wv-place-canvas').setAttribute('aria-label',p.name+' 픽셀아트 장소 풍경');
  ids('wv-place-rail').replaceChildren();
  for(const place of items){
    const isHome=place.id==='home';
-   const b=button(place.name,'wv-place-chip',isHome?openHomePicker:()=>pick(place.id));
+   const label=locale==='en'?place.en:(L?.place(place.id)||globalThis.WordvilleI18n?.translate(place.name)||place.name);
+   const b=button(label,'wv-place-chip',isHome?openHomePicker:()=>pick(place.id));
    if(isHome){b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls',homePicker.id);}
    b.dataset.place=place.id;
    b.setAttribute('aria-pressed',String(place.id===p.id));
