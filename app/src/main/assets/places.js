@@ -39,6 +39,7 @@ function pick(id,owner){
  const changed=active!==id||id==='home'&&homes.get(owner)&&homeOwner!==owner;
  if(id==='home'&&homes.get(owner))homeOwner=owner;
  active=id;speakerId=null;lineIndex=0;render();
+ if(changed)globalThis.WordvilleMapNavigation?.resetPlace?.();
  if(changed)globalThis.WordvilleVenueRuntime?.placeChanged();
 }
 function show(view){
