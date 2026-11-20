@@ -43,6 +43,10 @@ const assert = require('node:assert/strict');
   for(const [term,parts] of [['reservation',['명사']],['available',['형용사']],['recently',['부사']],['resume',['명사','동사']]]) {
     await page.locator('#search').fill(term);
     const card=page.locator('#words .word').filter({has:page.getByText(term,{exact:true})});
+    // Search results render on a short debounce; allTextContents() itself does
+    // not wait for a matching card, so wait before reading the badges.
+    await card.waitFor({state:'visible'});
+    await card.locator('.wv-pos-badge').first().waitFor({state:'visible'});
     assert.deepEqual(await card.locator('.wv-pos-badge').allTextContents(),parts,term);
     await card.click();
     assert.deepEqual(await page.locator('#detail-word-pos .wv-pos-badge').allTextContents(),parts,term);
