@@ -11,7 +11,7 @@ const GEO={
  CA:{zone:'America/Toronto',names:['캐나다','Canada','加拿大','カナダ']},
  AU:{zone:'Australia/Sydney',names:['호주','Australia','澳大利亚','オーストラリア']}
 };
-const URL='https://raw.githubusercontent.com/luckylucyj/wordville-android/trend-data/trends/archive.json';
+const ARCHIVE_URL='https://raw.githubusercontent.com/luckylucyj/wordville-android/trend-data/trends/archive.json';
 const CACHE='wordville:international-trends:archive:v1',MAX_CACHE_BYTES=1_500_000,MAX_REMOTE_BYTES=8_000_000;
 const WORDS={
  heading:['날짜별 해외 트렌드','Daily international trends','海外每日趋势','日付別海外トレンド'],
@@ -123,7 +123,7 @@ function googleSearchUrl(country,query,mode='trends',date=''){
  return 'https://trends.google.com/trends/explore?'+new URLSearchParams({geo:country,q:term,date:dates});
 }
 function safeLink(url){return isHttps(url)?url:'';}
-const api={GEO,WORDS,URL,normalizeArchive,countryDate,datedRows,datedNews,filterRows,googleSearchUrl,safeLink};
+const api={GEO,WORDS,URL:ARCHIVE_URL,normalizeArchive,countryDate,datedRows,datedNews,filterRows,googleSearchUrl,safeLink};
 root.WordvilleInternationalTrends=api;
 if(typeof document==='undefined'){
  if(typeof module!=='undefined')module.exports=api;
@@ -258,7 +258,7 @@ async function fetchData(){
  busy=true;fetchButton.disabled=true;
  if(!archive)render();
  try{
-  const path=URL+'?period='+Math.floor(Date.now()/3600000);
+  const path=ARCHIVE_URL+'?period='+Math.floor(Date.now()/3600000);
   const response=await fetch(path,{mode:'cors',cache:'no-store'});
   if(!response.ok)throw Error('HTTP '+response.status);
   const body=await response.text();
