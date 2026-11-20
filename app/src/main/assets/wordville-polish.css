@@ -219,3 +219,13 @@ body[data-screen="book"] #book{margin:8px auto 18px;padding:13px 11px 22px;box-s
 #wv-venue-zoom-controls button:disabled{opacity:.52}
 #wv-venue-zoom-controls button:focus-visible{outline:3px solid #35765a;outline-offset:2px}
 @media(max-width:380px){#wv-venue-zoom-controls button{min-height:32px;height:32px;min-width:32px;width:32px}}
+
+/* Real Google trends/viral-news search beside the archive calendar. */
+.wv-trends-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0 7px}
+.wv-trends-tabs button{min-height:37px;line-height:1.3;white-space:normal;padding:5px;font-size:12px;font-weight:800}
+.wv-trends-tabs [aria-pressed=true]{color:#fff8e5;background:#4d795c;border-color:#30563c}
+.wv-trend-search{display:grid;gap:4px;font-size:11px;font-weight:800;margin:9px 0 3px}
+.wv-trend-query{box-sizing:border-box;width:100%;min-width:0;min-height:39px;padding:8px 10px;font-size:13px;
+ border:2px solid #aa8258;border-radius:7px;background:#fffdf7;color:#493322}
+.wv-trend-external{display:inline-block;margin:4px 0 8px;color:#265d4e;font-size:12px;font-weight:800;
+ text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
