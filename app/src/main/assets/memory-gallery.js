@@ -7,6 +7,21 @@
  const maximum=5*1024*1024;
  const searchPageSize=10,searchResultLimit=200,searchBatchSize=50;
  let connection=null,selectedId=null,wordUrls=[],archiveUrls=[],queryResults=[],searchSerial=0,searchPage=0,archiveSerial=0;
+ let returnToCard=null;
+ const labels={
+  ko:['← 단어 카드로 돌아가기','← 단어장으로 돌아가기'],
+  en:['← Back to word card','← Back to words'],
+  'zh-CN':['← 返回单词卡','← 返回单词列表'],
+  ja:['← 単語カードに戻る','← 単語一覧に戻る']
+ };
+ function backLabel(){
+  const lang=globalThis.WordvilleI18n?.language||'ko';
+  const label=labels[lang]||labels.ko;
+  const button=$('wv-gallery-back');
+  if(button){button.textContent=label[returnToCard?0:1];button.setAttribute('aria-label',button.textContent);}
+ }
+ document.addEventListener('wordville-language-changed',backLabel);
+
  function owner(){return cloudUser?.id||'';}
  function ownerKey(){return owner()||'local';}
  function key(w){return 'legacy:'+ownerKey()+':'+w.id;}
@@ -410,8 +425,37 @@
  });
  $('wv-memory-search-form').addEventListener('submit',event=>{event.preventDefault();search();});
  $('wv-memory-open-archive').addEventListener('click',()=>{
-  $('word-dialog').close();active=null;clear();showImage(null);
+  const modal=$('word-dialog');
+  returnToCard=active?{
+   id:active.id, scrollTop:modal.scrollTop,
+   meaningShown:!$('detail-meaning').hidden,
+   examplesOpen:!!$('word-examples-details')?.open,
+   usageOpen:!!$('wv-word-usage')?.open,
+   dictionaryOpen:!$('wv-dictionary-editor')?.hidden
+  }:null;
+  backLabel();
+  modal.close();active=null;clear();showImage(null);
   globalThis.WordvilleShell?.activate('gallery');
+ });
+ $('wv-gallery-back').addEventListener('click',async()=>{
+  const state=returnToCard;
+  returnToCard=null;
+  globalThis.WordvilleShell?.activate('learn');
+  if(state){
+   const word=words.find(w=>w.id===state.id);
+   if(word){
+    await openWord(word);
+    if(state.meaningShown&&$('detail-meaning').hidden)$('reveal').click();
+    if($('word-examples-details'))$('word-examples-details').open=state.examplesOpen;
+    if($('wv-word-usage'))$('wv-word-usage').open=state.usageOpen;
+    if(state.dictionaryOpen&&$('wv-dictionary-editor')?.hidden)
+     $('wv-dictionary-toggle')?.click();
+    $('word-dialog').scrollTop=state.scrollTop;
+    $('wv-memory-open-archive').focus({preventScroll:true});
+    return;
+   }
+  }
+  $('search')?.focus({preventScroll:true});
  });
  $('wv-gallery-date').addEventListener('change',renderArchive);
  $('wv-gallery-refresh').addEventListener('click',renderArchive);
