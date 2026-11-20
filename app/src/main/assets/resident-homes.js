@@ -100,7 +100,10 @@ const rooms={
    prop('bed',8,4,8,4,'하얀 침대와 곰 인형'),
    prop('shelf',17,4,4,5,'오른쪽 책장','display'),
    prop('shelf',4,10,4,2,'펼쳐진 공부책','writer'),
-   prop('table',12,10,4,2,'쿠키와 찻잔','tea')
+   prop('table',12,10,4,2,'쿠키와 찻잔','tea'),
+   // Cushions are separate obstacles: keep the path between them open.
+   prop('sofa',9,11,2,2,'분홍색 바닥 방석'),
+   prop('sofa',18,11,2,2,'파란색 바닥 방석')
   ]
  },
  hachiware:{
@@ -110,10 +113,12 @@ const rooms={
   wall:'landscape',window:'plain',windowX:110,floor:'tile',rug:[9,6,8,5],
   fixtures:[
    prop('shelf',4,4,4,3,'책과 작은 서랍장','display'),
-   prop('bed',9,5,7,3,'베이지색 담요'),
+   // The woven floor mat is walkable; blocking it trapped the resident needlessly.
    prop('shelf',18,4,3,2,'꽃병과 파란 상자','display'),
    prop('table',11,9,4,3,'램프와 독서 테이블','tea'),
-   prop('sofa',6,10,3,3,'작은 의자')
+   prop('counter',6,10,3,3,'바닥의 작은 상자','kit'),
+   prop('planter',2,9,2,2,'왼쪽 동굴 바위와 덩굴'),
+   prop('planter',19,9,2,2,'오른쪽 동굴 바위와 덩굴')
   ]
  },
  usagi:guestRoom(['노란 놀이방','Sunny playroom','黄色游戏室','黄色い遊び部屋'],
