@@ -12,7 +12,7 @@ const GEO={
  AU:{zone:'Australia/Sydney',names:['호주','Australia','澳大利亚','オーストラリア']}
 };
 const URL='https://raw.githubusercontent.com/luckylucyj/wordville-android/trend-data/trends/archive.json';
-const CACHE='wordville:international-trends:archive:v1',MAX_CACHE_BYTES=1_500_000;
+const CACHE='wordville:international-trends:archive:v1',MAX_CACHE_BYTES=1_500_000,MAX_REMOTE_BYTES=8_000_000;
 const WORDS={
  heading:['날짜별 해외 트렌드','Daily international trends','海外每日趋势','日付別海外トレンド'],
  subtitle:['Google 검색 관심 급상승 주제 · SNS 밈 순위가 아닙니다.','Rising Google searches · Not a social meme ranking.','Google 热门搜索 · 非社交媒体迷因榜。','Googleの急上昇検索・SNSミームの順位ではありません。'],
@@ -197,11 +197,18 @@ async function fetchData(){
   const response=await fetch(path,{mode:'cors',cache:'no-store'});
   if(!response.ok)throw Error('HTTP '+response.status);
   const body=await response.text();
-  if(body.length>MAX_CACHE_BYTES)throw Error('Archive size limit exceeded');
+  if(body.length>MAX_REMOTE_BYTES)throw Error('Archive size limit exceeded');
   const next=normalizeArchive(JSON.parse(body));
   if(!next)throw Error('Invalid source archive');
   archive=next;usingCached=false;fetchedAt=Date.now();
-  try{localStorage.setItem(CACHE,body);}catch{}
+  // Cache only two weeks, so Wordville vocabulary and diary localStorage remain intact.
+  try{
+   const compact={...next,countries:{}};
+   for(const [geo,days] of Object.entries(next.countries))
+    compact.countries[geo]=Object.fromEntries(Object.entries(days).sort(([a],[b])=>b.localeCompare(a)).slice(0,14).map(([d,rows])=>[d,rows.slice(0,10)]));
+   const small=JSON.stringify(compact);
+   if(small.length<MAX_CACHE_BYTES)localStorage.setItem(CACHE,small);
+  }catch{}
   if(!requestedDate||!datedRows(archive,country,requestedDate).length)applyDate(country,true);
  }catch(e){
   usingCached=!!archive;
