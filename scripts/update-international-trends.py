@@ -16,7 +16,7 @@ import sys
 import time
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlencode
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 from zoneinfo import ZoneInfo
@@ -26,6 +26,55 @@ COUNTRIES = {"US": "America/New_York", "GB": "Europe/London",
              "CA": "America/Toronto", "AU": "Australia/Sydney"}
 FEED = "https://trends.google.com/trending/rss?geo={country}"
 DISPLAY = "https://trends.google.com/trending?geo={country}"
+NEWS_SEARCH = '"meme" OR "viral trend" OR "internet slang" when:2d'
+MAX_NEWS_DAY = 12
+
+
+def google_news_url(country: str) -> str:
+    if country not in COUNTRIES:
+        raise ValueError("Unsupported geography")
+    return "https://news.google.com/rss/search?" + urlencode({
+        "q": NEWS_SEARCH, "hl": "en-US", "gl": country, "ceid": country + ":en"
+    })
+
+
+def parse_news_feed(country: str, xml: bytes) -> list[dict[str, Any]]:
+    """Google News search headlines about memes/viral topics, not popularity ranks."""
+    if country not in COUNTRIES:
+        raise ValueError("Unsupported geography")
+    root = ET.fromstring(xml)
+    channel = root.find("channel")
+    if channel is None:
+        raise ValueError("Google News RSS channel missing")
+    found, seen = [], set()
+    for entry in channel.findall("item"):
+        title = re.sub(r"\s+", " ", text_of(entry, "title"))[:MAX_TEXT].strip()
+        link = safe_url(text_of(entry, "link"))
+        date_string = text_of(entry, "pubDate")
+        if not title or not link or not date_string:
+            continue
+        try:
+            when = parsedate_to_datetime(date_string)
+            if when.tzinfo is None:
+                continue
+            when = when.astimezone(timezone.utc)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        day = when.astimezone(ZoneInfo(COUNTRIES[country])).date().isoformat()
+        key = (day, title.casefold())
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append({
+            "title": title,
+            "url": link,
+            "date": day,
+            "publishedAt": when.isoformat().replace("+00:00", "Z"),
+            "publisher": text_of(entry, "source")[:70],
+            "source": "Google News search RSS",
+        })
+    return found
+
 MAX_DAYS = 90
 MAX_PER_DAY = 20
 MAX_TEXT = 160
@@ -116,6 +165,7 @@ def merge(
     old: dict[str, Any],
     updates: dict[str, list[dict[str, Any]]],
     collected_at: datetime,
+    news_updates: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """Merge without inventing dates, preserve earlier snapshots and bound size."""
     result = {
@@ -124,6 +174,7 @@ def merge(
         "updatedAt": collected_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
         "countryUpdatedAt": dict(old.get("countryUpdatedAt") or {}),
         "countries": {},
+        "memeNews": {},
     }
     min_date = (collected_at.date() - timedelta(days=MAX_DAYS)).isoformat()
     max_date = (collected_at.date() + timedelta(days=2)).isoformat()
@@ -156,6 +207,30 @@ def merge(
         result["countries"][country] = dict(sorted(cleaned.items(), reverse=True))
         if new_rows:
             result["countryUpdatedAt"][country] = result["updatedAt"]
+        old_news = old.get("memeNews", {}).get(country) or {}
+        if not isinstance(old_news, dict):
+            old_news = {}
+        cleaned_news = {day: list(rows) for day, rows in old_news.items()
+                        if isinstance(day, str) and min_date <= day <= max_date and isinstance(rows, list)}
+        for item in (news_updates or {}).get(country, []):
+            if min_date <= item.get("date", "") <= max_date:
+                cleaned_news.setdefault(item["date"], []).insert(0, item)
+        for day in list(cleaned_news):
+            news_unique = {}
+            for item in cleaned_news[day]:
+                if not isinstance(item, dict):
+                    continue
+                title = str(item.get("title", "")).strip()
+                when = str(item.get("publishedAt", ""))
+                if title and item.get("date") == day and safe_url(item.get("url", "")) and when:
+                    key = title.casefold()
+                    if key not in news_unique or when > str(news_unique[key].get("publishedAt", "")):
+                        news_unique[key] = item
+            cleaned_news[day] = sorted(news_unique.values(),
+                key=lambda row: row["publishedAt"], reverse=True)[:MAX_NEWS_DAY]
+            if not cleaned_news[day]:
+                del cleaned_news[day]
+        result["memeNews"][country] = dict(sorted(cleaned_news.items(), reverse=True))
     return result
 
 
@@ -184,7 +259,16 @@ def main() -> int:
     if not updates:
         print("No country feeds available; refusing to publish an unverified update.", file=sys.stderr)
         return 1
-    final = merge(previous, updates, now)
+    news_updates = {}
+    for country in COUNTRIES:
+        try:
+            stories = parse_news_feed(country, download(google_news_url(country)))
+            if stories:
+                news_updates[country] = stories
+            print(f"{country}: {len(stories)} Google News meme/viral articles", file=sys.stderr)
+        except (HTTPError, URLError, TimeoutError, ValueError, ET.ParseError, OSError) as exc:
+            print(f"{country}: meme news unavailable: {exc}", file=sys.stderr)
+    final = merge(previous, updates, now, news_updates)
     with open(args.output, "w", encoding="utf-8") as output:
         json.dump(final, output, ensure_ascii=False, separators=(",", ":"))
         output.write("\n")
