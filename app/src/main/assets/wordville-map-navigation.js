@@ -61,6 +61,7 @@ const rename=()=>{const l=language();for(const b of [zoomIn,zoomOut,reset]){b.ti
  town.title=l.hint;place.title=l.hint;};
 rename();document.addEventListener('wordville-language-changed',rename);
 root.addEventListener('resize',redrawPlace);
+if(typeof ResizeObserver!=='undefined')new ResizeObserver(redrawPlace).observe(stage);
 const pointers=new Map(), clickBlocked=new WeakMap();
 api.consumeClick=el=>{
  if((clickBlocked.get(el)||0)>Date.now()){clickBlocked.delete(el);return true;}
