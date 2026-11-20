@@ -217,7 +217,7 @@ jobs:
             for attempt in 1 2 3; do
               rm -f wordville-map-emulator.png
               if timeout 45s adb pull "$SCREENSHOT" wordville-map-emulator.png; then
-                if python3 -c 'import pathlib,sys; p=pathlib.Path("wordville-map-emulator.png"); a=p.read_bytes(); sys.exit(not (len(a)>120000 and a[:8]==b"\\x89PNG\\r\\n\\x1a\\n" and a[-8:]==b"IEND\\xaeB\\x60\\x82"))'; then
+                if python3 -c 'import pathlib,sys; p=pathlib.Path("wordville-map-emulator.png"); a=p.read_bytes(); sys.exit(not (len(a)>120000 and a[:8]==b"\x89PNG\r\n\x1a\n" and a[-8:]==b"IEND\xaeB\x60\x82"))'; then
                   captured=true
                   echo "Emulator screenshot verified; bytes=$(stat -c%s wordville-map-emulator.png)"
                   break
