@@ -252,6 +252,7 @@ function draw(){
  }
 }
 canvas.addEventListener('click',e=>{
+ if(root.WordvilleMapNavigation?.consumeClick?.(canvas))return;
  if(document.getElementById('wv-places-view')?.hidden||!actors.length)return;
  const rect=canvas.getBoundingClientRect(),s=spec.forPlace(mapId());
  const x=Math.max(0,Math.min(s.cols-1,Math.floor((e.clientX-rect.left)/rect.width*s.cols)));
