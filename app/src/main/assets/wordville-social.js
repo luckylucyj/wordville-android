@@ -217,7 +217,7 @@ function renderStatus(){
  greetStatus.classList.add('wv-social-greet-feedback');
  add(f,talkHead,log,greet,greetStatus);statusBody.replaceChildren(f);
 }
-function openBoard(){showAll=false;renderBoard();if(!board.d.open)board.d.showModal();}
+function openBoard(){showAll=false;renderBoard();if(!board.d.open)board.d.showModal();document.dispatchEvent(new Event('wordville-board-open'));}
 function openResident(id){if(ids.has(id))selected=id;renderStatus();if(!statusDialog.d.open)statusDialog.d.showModal();}
 board.d.addEventListener('close',()=>boardButton?.focus());
 personSelect.addEventListener('change',()=>{selected=personSelect.value;renderStatus();});
