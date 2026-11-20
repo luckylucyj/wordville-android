@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/international-trends.yml"
       - "scripts/update-international-trends.py"
+      - "tests/test_international_trends.py"
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
