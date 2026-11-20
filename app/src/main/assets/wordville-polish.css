@@ -167,3 +167,41 @@ body[data-screen="book"] #book{margin:8px auto 18px;padding:13px 11px 22px;box-s
 .wv-social-resident-toolbar button{width:100%}
 .wv-dialog-status{width:100%;margin-top:9px;box-shadow:none!important}
 #village-dialogue .wv-dialog-status{clear:both}
+
+/* Verified search trends: compact country/date controls and readable sources */
+.wv-trends-area{padding:2px 0 10px;border-bottom:2px solid #dfc99c;margin:6px 0 12px;min-width:0}
+.wv-trends-area>h3{font-size:18px;color:#4c3222;margin:4px 0}
+.wv-trends-area>.wv-social-hint{font-size:12px;line-height:1.45}
+.wv-trends-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px;align-items:end}
+.wv-trend-field{display:block;min-width:0;font-size:11px;font-weight:800;margin:0}
+.wv-trend-field>span{display:block;margin:0 0 3px;line-height:1.4}
+.wv-trend-field select,.wv-trend-field input{
+ box-sizing:border-box;width:100%;min-width:0;min-height:40px;
+ padding:5px 6px;font-size:13px;border:2px solid #ac8757;
+ border-radius:7px;background:#fffdf5;color:#493522
+}
+.wv-trends-controls>button{box-shadow:none;min-height:40px;align-self:end;padding:5px 9px;white-space:nowrap}
+.wv-trends-area>.wv-social-hint{margin:8px 0}
+.wv-trends-list{display:grid;gap:7px;margin:8px 0 0;min-height:44px}
+.wv-trends-day{font-size:12px;font-weight:800;color:#4b664a;margin:2px 0}
+.wv-trend-card{padding:11px;overflow-wrap:anywhere}
+.wv-trend-card .wv-post-head{gap:7px;align-items:start}
+.wv-trend-card .wv-post-head strong{font-size:15px;line-height:1.35;color:#473124}
+.wv-trend-card .wv-post-head small{font-size:11px;white-space:nowrap}
+.wv-trends-traffic{display:inline-block;font-size:11px;color:#596e4a;margin:6px 0}
+.wv-trends-example{background:#f1f5e9;border-left:3px solid #6a976f;padding:8px;margin:4px 0 8px;display:grid;gap:4px}
+.wv-trends-example small{font-size:10px;color:#5f7757}
+.wv-trends-example p{font-weight:750;font-size:14px;line-height:1.45;margin:0;color:#285b48}
+.wv-trends-example span{font-size:12px;color:#59604d;line-height:1.45}
+.wv-trends-links{display:flex;flex-wrap:wrap;gap:6px}
+.wv-trends-links a{display:inline-block;font-size:12px;color:#315e47;line-height:1.4;text-decoration:underline;text-underline-offset:2px;padding:3px 0}
+.wv-trends-empty{background:#fff8e7;padding:12px;border:1px dashed #b89b75;border-radius:8px;font-size:12px;color:#856747;line-height:1.6}
+.wv-trends-older{margin:8px 0 3px;padding:9px;border:1px solid #c7a981;border-radius:8px;background:#fbf0d8}
+.wv-trends-older>summary{font-size:13px;font-weight:800;cursor:pointer}
+.wv-trends-older>.wv-social-hint{margin:8px 0}
+.wv-trends-older>.wv-social-outline{margin:4px 0}
+@media(max-width:420px){
+ .wv-trends-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .wv-trends-controls>button{grid-column:1/-1;justify-self:stretch}
+ .wv-trend-card .wv-post-head{display:flex;flex-direction:column;gap:2px}
+}
