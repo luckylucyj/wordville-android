@@ -60,13 +60,22 @@
 #wv-place-canvas[data-hires='venue-v2']{aspect-ratio:1024/840;image-rendering:pixelated;image-rendering:crisp-edges}
 
 .wv-place-chip[aria-haspopup="dialog"]::after{content:"";display:inline-block;width:.42em;height:.42em;margin:0 1px .19em .5em;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg)}
-#wv-home-picker{width:min(420px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:16px;overflow:auto}
-#wv-home-picker[open]{display:grid;gap:12px}
-#wv-home-picker-title{margin:0}
-#wv-home-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-#wv-home-options button{min-width:0;padding:8px;background:#fff6df;border:2px solid #a98960;color:#543a26;overflow-wrap:anywhere}
-#wv-home-options button[aria-current="true"]{background:#527d5a;border-color:#375941;color:#fff5d7}
-#wv-home-close{justify-self:end}
+/* Roomier two-column resident picker; three light pastel themes match the approved mockup. */
+#wv-home-picker{box-sizing:border-box;width:min(450px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:clamp(12px,3.5vw,20px);overflow-x:hidden;overflow-y:auto}
+#wv-home-picker[open]{display:grid;gap:14px;align-content:start}
+#wv-home-picker-title{margin:0 0 2px;line-height:1.25}
+#wv-home-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;row-gap:12px}
+#wv-home-options button{box-sizing:border-box;min-width:0;min-height:46px;padding:10px 7px;background:#fff6df;border:2px solid #987653;border-radius:5px;color:#493326;font-size:clamp(12px,3.4vw,16px);font-weight:800;line-height:1.25;text-align:center;white-space:normal;overflow-wrap:normal;word-break:normal;hyphens:none;box-shadow:inset 0 0 0 1px #ffffffb8,2px 3px 0 #77563e}
+#wv-home-options button[data-home-palette="stardew"]{background:#eff4e2}
+#wv-home-options button[data-home-palette="chiikawa"]{background:#e6f6fb}
+#wv-home-options button[data-home-palette="peach"]{background:#fce9e2}
+#wv-home-options button[data-home-palette="stardew"][aria-current="true"]{background:#d2e5c1;border-color:#64865f;color:#2e5035}
+#wv-home-options button[data-home-palette="chiikawa"][aria-current="true"]{background:#b4deeb;border-color:#5c98a7;color:#234956}
+#wv-home-options button[data-home-palette="peach"][aria-current="true"]{background:#f5d0c5;border-color:#b88479;color:#603c36}
+#wv-home-options button[aria-current="true"]{box-shadow:inset 0 0 0 2px #fffdf5,2px 3px 0 #77563e}
+#wv-home-options button:focus-visible{outline:3px solid #6f87a0;outline-offset:2px}
+#wv-home-close{justify-self:end;min-height:44px}
+@media(max-width:360px){#wv-home-options{column-gap:9px;row-gap:10px}#wv-home-options button{min-height:44px;padding:9px 5px;font-size:12px}}
 
 @media(max-width:360px){
  #wv-place-rail:has(> [data-place="home"] + [data-place="pool"]) > :is([data-place="home"],[data-place="pool"]){
