@@ -44,6 +44,8 @@ test('Penny original assets are all unique 896px transparent PNGs, not upscaled 
  }
  assert.equal(unique.size,10);
  const placesSource=readFileSync(new URL('../app/src/main/assets/places.js',import.meta.url),'utf8');
- assert.ok(placesSource.includes('pennyHiRes?1024:512'));
- assert.ok(placesSource.includes('pennyHiRes?840:420'));
+ // Both Penny and the illustrated guest homes now use the shared hires buffer.
+ assert.ok(placesSource.includes("const pennyHiRes=p.id==='home'&&homeOwner==='penny'"));
+ assert.ok(placesSource.includes('const hires=pennyHiRes||referenceHiRes||venueV2;'));
+ assert.ok(placesSource.includes('const targetWidth=hires?1024:512,targetHeight=hires?840:420;'));
 });
