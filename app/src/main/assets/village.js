@@ -55,7 +55,10 @@ function sprite(p){
  // Alex previews the hand-painted native 64px animation; others remain 48px.
  const hasHiRes=p.id==='alex'||globalThis.WordvilleResidents128?.has?.(p.id);
  const width=hasHiRes?64:48,height=width;
- const action=(hasHiRes||globalThis.WordvilleChiikawa?.has?.(p.id))&&!walking&&p.chat>0?'talk':undefined;
+ const writingBoard=p.atVenue&&p.schedulePlace==='square'&&!walking&&!p.chat&&
+  (S.hourOf(scheduleMinute())+p.id.length)%3===0;
+ const action=(hasHiRes||globalThis.WordvilleChiikawa?.has?.(p.id))&&!walking
+  ?(p.chat>0?'talk':writingBoard?'write':undefined):undefined;
  if(globalThis.WordvilleWalk?.paint(ctx,p,x,y,{width,height,walking,action})){}else if(index!==undefined&&img?.complete&&img.naturalWidth===2560&&img.naturalHeight===768){
   const col=index%4,row=Math.floor(index/4),time=p.steps*7.5+index*.19;
   // Two source-identical poses + two clean transitional variants = four animation slots.
@@ -98,9 +101,12 @@ function sprite(p){
 function syncTime(){
  const now=new Date(),clock=scheduleMinute(),h=Math.floor(clock/60)%24;
  period=mode==='auto'?M.period(h):mode;
- const stamp=schedulePreview==='auto'?now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}):S.formatHour(Math.floor(clock/60));
+ const L=globalThis.WordvilleScheduleLocale;
+ const stamp=schedulePreview==='auto'?now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false}):S.formatHour(Math.floor(clock/60));
  document.getElementById('village-clock').textContent=stamp;
- document.getElementById('village-period').textContent=({day:'낮',dusk:'저녁',night:'밤'})[period]+(schedulePreview==='auto'?' · 실제 시각':' · 일정 미리보기');
+ document.getElementById('village-period').textContent=L
+  ?L.tr(period==='day'?'morning':period)+' · '+L.tr(schedulePreview==='auto'?'clock':'preview')
+  :({day:'낮',dusk:'저녁',night:'밤'})[period];
  document.querySelector('.village-section').dataset.period=period;
  document.documentElement.dataset.period=period;minute=now.getMinutes();
  if(document.getElementById('wv-resident-schedule')?.open)renderScheduleRows();
@@ -118,7 +124,10 @@ function meetingStatus(id){
 }
 function writeDialogue([english,korean]){
  document.getElementById('resident-english').textContent=english;
- document.getElementById('resident-korean').textContent=korean;
+ const ko=document.getElementById('resident-korean'),locale=globalThis.WordvilleI18n?.language||'ko';
+ if(locale!=='ko'&&globalThis.WordvilleVocabularyLocale?.bindText)
+  globalThis.WordvilleVocabularyLocale.bindText(ko,korean);
+ else ko.textContent=korean;
 }
 function select(id){
  selected=id;
@@ -129,13 +138,27 @@ function select(id){
  const partner=residents.find(r=>r.id===p.partner);
  const slot=S.at(id,scheduleMinute());
  document.getElementById('speaker').textContent=p.name;
- document.getElementById('resident-home').textContent='📍 '+slot.placeName+' · '+slot.activity;
+ const L=globalThis.WordvilleScheduleLocale,homeLine=document.getElementById('resident-home');
+ if(L){L.appendSlot(homeLine,slot);homeLine.prepend(document.createTextNode('📍 '));}
+ else homeLine.textContent='📍 '+slot.placeName+' · '+slot.activity;
  const special=sharedFeelings(p);
  const chatting=p.chat>0&&partner;
  let status=`${slot.placeName}(으)로 이동하고 있어요.`;
  if(p.atVenue)status=`${slot.placeName}에서 ${slot.activity} 중이에요.`;
  if(chatting)status=`${partner.name}와 대화 중이에요.`;
  if(special)status=meetingStatus(id);
+ const locale=globalThis.WordvilleI18n?.language||'ko';
+ if(locale!=='ko'){
+  const L=globalThis.WordvilleScheduleLocale,friend=globalThis.WordvilleI18n?.translate(partner?.name)||partner?.name;
+  const specialLabels={
+   en:'Sharing feelings with someone important.',
+   'zh-CN':'正在向重要的人表达心意。',
+   ja:'大切な相手に気持ちを伝えています。'
+  };
+  const talkLabels={en:'Talking with ', 'zh-CN':'正在与…交谈：',ja:'会話中：'};
+  status=special?specialLabels[locale]:chatting?talkLabels[locale]+friend
+   :L.place(slot.place)+' · '+L.activity(slot.activity);
+ }
  document.getElementById('resident-line').textContent=status;
  if(special)writeDialogue(meetingLines[id]);
  else if(chatting)writeDialogue(['Would you like to study together?','함께 공부할래요?']);
@@ -158,7 +181,12 @@ function meet(a,b){
  const [first,second]=special&&M.relationships.get(a.id).pair[0]===b.id?[b,a]:[a,b];
  const dialogue=special?meetingLines[first.id][1]+' / '+meetingLines[second.id][1]:line[1];
  const li=document.createElement('li');
- li.textContent=`${first.name} ↔ ${second.name} · ${dialogue}`;
+ const locale=globalThis.WordvilleI18n?.language||'ko';
+ const translatedFirst=globalThis.WordvilleI18n?.translate(first.name)||first.name;
+ const translatedSecond=globalThis.WordvilleI18n?.translate(second.name)||second.name;
+ li.textContent=locale==='ko'?`${first.name} ↔ ${second.name} · ${dialogue}`:
+  `${translatedFirst} ↔ ${translatedSecond} · ${special?meetingLines[first.id][0]+' / '+meetingLines[second.id][0]:line[0]}`;
+ globalThis.WordvilleSocial?.meeting(first.id,second.id,special?meetingLines[first.id][0]:line[0],dialogue);
  feed.prepend(li);
  while(feed.children.length>5)feed.lastChild.remove();
  document.getElementById('conversation-count').textContent=chatCount+'번의 대화';
@@ -250,9 +278,11 @@ function drawMapCollision(){
  }
  ctx.restore();
 }
-function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));const hub=globalThis.WordvilleHubMap,weather=globalThis.WordvillePixelStyle?.weather||'clear';const drawables=[];if(hub?.props&&hub?.drawProp){for(const prop of hub.props)drawables.push({y:prop.y,draw:()=>hub.drawProp(ctx,prop,period,t,weather)});}for(const p of residents){if(VISIBLE_RESIDENTS.has(p.id)||p.id===selected)drawables.push({y:p.y,draw:()=>sprite(p)});}drawables.sort((a,b)=>a.y-b.y);for(const item of drawables)item.draw();globalThis.WordvilleWalk?.drawPets(ctx,t);globalThis.WordvillePixelStyle?.paintTownOverlay?.(ctx,period,t);drawMapCollision();ctx.restore();frameHandle=requestAnimationFrame(frame);}
+function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));const hub=globalThis.WordvilleHubMap,weather=globalThis.WordvillePixelStyle?.weather||'clear';const drawables=[];if(hub?.props&&hub?.drawProp){for(const prop of hub.props)drawables.push({y:prop.y,draw:()=>hub.drawProp(ctx,prop,period,t,weather)});}for(const p of residents){if(VISIBLE_RESIDENTS.has(p.id)||p.id===selected)drawables.push({y:p.y,draw:()=>sprite(p)});}globalThis.WordvilleSocial?.drawTownBoard?.(ctx);
+ drawables.sort((a,b)=>a.y-b.y);for(const item of drawables)item.draw();globalThis.WordvilleWalk?.drawPets(ctx,t);globalThis.WordvillePixelStyle?.paintTownOverlay?.(ctx,period,t);drawMapCollision();ctx.restore();frameHandle=requestAnimationFrame(frame);}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>{if(document.body.dataset.screen==='residents'&&globalThis.WordvilleVillage?.visitResident){globalThis.WordvilleVillage.visitResident(p.id);}else select(p.id);});document.getElementById('resident-list').append(b);}
-canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;const found=residents.filter(p=>!p.atVenue||M.outdoorPlaces.has(p.schedulePlace)).filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
+canvas.addEventListener('click',e=>{const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;if(globalThis.WordvilleSocial?.boardHit?.(wx,wy)){globalThis.WordvilleSocial.openBoard();return;}
+ const found=residents.filter(p=>!p.atVenue||M.outdoorPlaces.has(p.schedulePlace)).filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
 // The reference painting has different entrances from the generated fallback map.
 const art=globalThis.WordvilleWorldArt;
 const landmarks=art?.hubLandmarks?.length?art.hubLandmarks:(art?.reference?.complete&&art.reference.naturalWidth>0?art.referenceLandmarks:art?.landmarks)||[];
@@ -273,7 +303,7 @@ syncCanvasResolution();
 // Interactive resident timetable, available offline and persisted per device.
 const scheduleHourSelect=document.getElementById('wv-schedule-hour');
 for(let hour=0;hour<=24;hour++){
- const o=document.createElement('option');o.value=String(hour);o.textContent=S.formatHour(hour)+(hour===24?' (다음 날)':'');
+ const o=document.createElement('option');o.value=String(hour);o.textContent=S.formatHour(hour)+(hour===24?' ('+(globalThis.WordvilleScheduleLocale?.tr('nextDay')||'다음 날')+')':'');
  scheduleHourSelect.add(o);
 }
 scheduleHourSelect.addEventListener('change',()=>{
@@ -297,13 +327,18 @@ function renderScheduleRows(){
   item.dataset.current=String(slot.hour===currentHour);
   const when=document.createElement('span');when.className='when';when.textContent=S.formatHour(slot.hour);
   const detail=document.createElement('span');detail.className='what';
-  const name=document.createElement('strong');name.textContent=slot.placeName;
-  detail.append(name,document.createTextNode(slot.activity+(slot.custom?' · 수정됨':'')));
-  const edit=document.createElement('button');edit.type='button';edit.textContent='수정';
+  const L=globalThis.WordvilleScheduleLocale;
+  if(L)L.appendSlot(detail,slot);
+  else detail.textContent=slot.placeName+' · '+slot.activity;
+  if(slot.custom)detail.append(document.createTextNode(' · '+(L?.tr('edited')||'수정됨')));
+  const edit=document.createElement('button');edit.type='button';edit.textContent=globalThis.WordvilleScheduleLocale?.tr('edit')||'수정';
   edit.setAttribute('aria-label',S.formatHour(slot.hour)+' 일정 수정');
   edit.addEventListener('click',()=>{
    editHour=slot.hour;editor.hidden=false;placeSelect.value=slot.place;
-   activityInput.value=slot.activity;
+   const L=globalThis.WordvilleScheduleLocale;
+   activityInput.dataset.originalActivity=slot.activity;
+   activityInput.value=(globalThis.WordvilleI18n?.language||'ko')==='ko'?slot.activity:(L?.knownAction(slot.activity)||'');
+   activityInput.placeholder=(globalThis.WordvilleI18n?.language||'ko')==='ko'?'예: 책 읽기':(L?.tr('pending')||'Enter activity');
    document.getElementById('wv-sched-edit-title').textContent=S.formatHour(slot.hour)+'–'+S.formatHour(slot.hour+1)+' 일정 수정';
    activityInput.focus();
   });
@@ -311,7 +346,9 @@ function renderScheduleRows(){
  }
  container.replaceChildren(list);
  const now=S.at(id,scheduleMinute());
- document.getElementById('wv-sched-now').textContent='현재 '+now.placeName+' · '+now.activity;
+ const L=globalThis.WordvilleScheduleLocale,nowElement=document.getElementById('wv-sched-now');
+ if(L){nowElement.replaceChildren(document.createTextNode(L.tr('current')+' '));const rest=document.createElement('span');L.appendSlot(rest,now);nowElement.append(rest);}
+ else nowElement.textContent='현재 '+now.placeName+' · '+now.activity;
 }
 personSelect.addEventListener('change',()=>{editor.hidden=true;renderScheduleRows();});
 scheduleBox.addEventListener('toggle',renderScheduleRows);
@@ -326,7 +363,7 @@ function updateAfterEdit(saved){
 document.getElementById('wv-sched-save').addEventListener('click',()=>{
  if(editHour===null)return;
  try{
-  const saved=S.setHour(personSelect.value,editHour,placeSelect.value,activityInput.value);
+  const saved=S.setHour(personSelect.value,editHour,placeSelect.value,activityInput.value.trim()||activityInput.dataset.originalActivity);
   updateAfterEdit(saved);
  }catch(e){msg.textContent=e.message;}
 });
@@ -341,7 +378,12 @@ document.getElementById('village-time-mode').addEventListener('change',e=>{mode=
 zoomIn.addEventListener('click',()=>setZoom(zoom+ZOOM_STEP));
 zoomOut.addEventListener('click',()=>setZoom(zoom-ZOOM_STEP));
 setZoom(zoom);
-document.getElementById('pause-village').addEventListener('click',e=>{paused=!paused;e.currentTarget.textContent=paused?'주민 움직이기':'잠시 멈추기';e.currentTarget.setAttribute('aria-pressed',String(paused));});
+document.getElementById('pause-village').addEventListener('click',e=>{paused=!paused;const label=paused?'주민 움직이기':'잠시 멈추기';e.currentTarget.textContent=globalThis.WordvilleI18n?.translate(label)||label;e.currentTarget.setAttribute('aria-pressed',String(paused));});
+document.addEventListener('wordville-language-changed',()=>{
+ syncTime();renderScheduleRows();
+ for(const option of scheduleHourSelect.options)if(option.value!=='auto')option.textContent=S.formatHour(Number(option.value))+(option.value==='24'?' ('+(globalThis.WordvilleScheduleLocale?.tr('nextDay')||'다음 날')+')':'');
+ if(selected&&document.body.dataset.screen==='residents')select(selected);
+});
 document.getElementById('resident-study').addEventListener('click',()=>{if(selected)document.dispatchEvent(new CustomEvent('village-study',{detail:{residentId:selected,choose:true}}));});
 function resumeVillage(){
  last=0;
