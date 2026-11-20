@@ -300,4 +300,4 @@ datepicker.addEventListener('change',()=>{requestedDate=datepicker.value;render(
 fetchButton.addEventListener('click',()=>{void fetchData();});
 document.addEventListener('wordville-board-open',open);
 document.addEventListener('wordville-language-changed',()=>{render();});
-})();
+})(globalThis);
