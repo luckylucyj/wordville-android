@@ -310,14 +310,27 @@ function paintTownOverlay(c,period,elapsed){
 function mountWeather(){
  const controls=root.document?.querySelector?.('.village-controls');
  if(!controls||root.document.getElementById('wv-pixel-weather'))return;
- const label=root.document.createElement('label');label.className='time-select';
- label.textContent='픽셀 날씨';
+ const label=root.document.createElement('label');label.className='time-select';label.id='wv-pixel-weather-label';
+ const title=root.document.createElement('span');title.id='wv-pixel-weather-title';
  const sel=root.document.createElement('select');sel.id='wv-pixel-weather';
- sel.setAttribute('aria-label','마을 픽셀 날씨 미리보기');
- const entries=[['clear','맑음'],['wind','바람'],['clouds','구름'],['overcast','흐림'],['rain','비']];
- for(const [id,name] of entries){const option=root.document.createElement('option');option.value=id;option.textContent=name;sel.append(option);}
+ const translations={
+  ko:{title:'픽셀 날씨',aria:'마을 픽셀 날씨 미리보기',clear:'맑음',wind:'바람',clouds:'구름',overcast:'흐림',rain:'비'},
+  en:{title:'Pixel weather',aria:'Preview village pixel weather',clear:'Sunny',wind:'Windy',clouds:'Cloudy',overcast:'Overcast',rain:'Rainy'},
+  'zh-CN':{title:'像素天气',aria:'预览村庄像素天气',clear:'晴朗',wind:'有风',clouds:'多云',overcast:'阴天',rain:'下雨'},
+  ja:{title:'ピクセル天気',aria:'村のピクセル天気プレビュー',clear:'晴れ',wind:'風',clouds:'雲',overcast:'曇り',rain:'雨'}
+ };
+ for(const value of ['clear','wind','clouds','overcast','rain']){
+  const option=root.document.createElement('option');option.value=value;sel.append(option);
+ }
+ function refreshWeatherLabels(){
+  const tr=translations[root.WordvilleI18n?.language]||translations.ko;
+  title.textContent=tr.title;sel.setAttribute('aria-label',tr.aria);
+  for(const option of sel.options)option.textContent=tr[option.value];
+ }
  sel.addEventListener('change',()=>{setWeather(sel.value);root.WordvillePlaces?.pick?.(root.WordvillePlaces.active);});
- label.append(sel);controls.append(label);
+ label.append(title,sel);controls.append(label);
+ root.document.addEventListener('wordville-language-changed',refreshWeatherLabels);
+ refreshWeatherLabels();
 }
 const api={W,H,themes,phaseFor,skyFor,weathers,hasVenueArt:id=>venueArtIds.includes(id),get weather(){return weather;},setWeather,paintVenue,paintTown,paintTownOverlay,getLogicalFixtureRect:(id,f)=>{
  const m=root.WordvilleVenueSpec?.getMap?.(id);return m?{x:Math.round(f.x*W/m.cols),y:Math.round(f.y*H/m.rows),w:Math.round(f.w*W/m.cols),h:Math.round(f.h*H/m.rows)}:null;
