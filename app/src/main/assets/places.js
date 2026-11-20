@@ -128,7 +128,7 @@ function render(){
  const p=current(),idx=items.findIndex(x=>x.id===active);
  ids('wv-place-count').textContent=(idx+1)+' / '+items.length+'곳';
  const locale=globalThis.WordvilleI18n?.language||'ko',L=globalThis.WordvilleScheduleLocale;
- ids('wv-place-name').textContent=locale==='en'?p.en:(L?.place(p.id)||globalThis.WordvilleI18n?.translate(p.name)||p.name);
+ ids('wv-place-name').textContent=globalThis.WordvilleI18n?.translate(p.name)||(L?.place(p.id)||p.name);
  ids('wv-place-en').textContent=p.en;
  const desc=ids('wv-place-description');
  const translated=globalThis.WordvilleI18n?.translate(p.desc)||p.desc;
