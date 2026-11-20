@@ -13,18 +13,18 @@ Object.assign(overlay.style,{position:'absolute',inset:'0',width:'100%',height:'
 stage.append(overlay);
 const ctx=overlay.getContext('2d',{alpha:true});ctx.imageSmoothingEnabled=false;
 canvas.tabIndex=0;canvas.setAttribute('aria-label','장소 안에서 이동하기. 원하는 곳을 터치하거나 화살표 키를 누르세요.');
-const toggle=document.createElement('button');toggle.type='button';toggle.textContent='충돌 영역';toggle.setAttribute('aria-pressed','false');
+const toggle=document.createElement('button');toggle.type='button';toggle.textContent='▦';toggle.title='충돌 영역';toggle.setAttribute('aria-pressed','false');
 toggle.setAttribute('aria-label','가구와 벽의 충돌 영역 표시');Object.assign(toggle.style,{position:'absolute',right:'8px',top:'8px',zIndex:'3',fontSize:'11px',padding:'5px 7px',background:'#f3e4bc',color:'#563920',border:'2px solid #8c6a43'});
 stage.append(toggle);let showCollision=false;
 toggle.addEventListener('click',()=>{showCollision=!showCollision;toggle.setAttribute('aria-pressed',String(showCollision));});
 // Walk through the actual exit tile before returning to the village.
 const exitButton=document.createElement('button');
-exitButton.id='wv-venue-exit';exitButton.type='button';exitButton.textContent='🚪 마을로 나가기';
+exitButton.id='wv-venue-exit';exitButton.type='button';exitButton.textContent='🚪 ↩';exitButton.title='마을로 나가기';
 exitButton.setAttribute('aria-label','출입구까지 걸어서 마을로 돌아가기');
 Object.assign(exitButton.style,{position:'absolute',right:'8px',bottom:'8px',zIndex:'3',fontSize:'11px',padding:'5px 7px',background:'#f3e4bc',color:'#563920',border:'2px solid #8c6a43'});
 stage.append(exitButton);
 const notice=document.createElement('div');notice.id='wv-venue-movement-status';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');notice.hidden=true;
-Object.assign(notice.style,{position:'absolute',bottom:'5px',left:'8px',right:'133px',zIndex:'3',pointerEvents:'none',background:'#fff1dce8',color:'#4c3426',fontSize:'12px',padding:'5px',borderRadius:'3px'});
+Object.assign(notice.style,{position:'absolute',bottom:'5px',left:'8px',right:'68px',zIndex:'3',pointerEvents:'none',background:'#fff1dce8',color:'#4c3426',fontSize:'12px',padding:'5px',borderRadius:'3px'});
 stage.append(notice);
 const announce=message=>{notice.textContent=message;notice.hidden=!message;};
 const people=root.VillageModel?.people||[];
