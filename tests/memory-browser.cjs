@@ -22,6 +22,11 @@ const assert=require('node:assert/strict');
   assert.equal(await page.locator('#wv-memory-photo-list .wv-photo-card').count(),2);
   assert.equal(await page.locator('#memory-image').isVisible(),true);
   assert.match(await page.locator('#detail-status').innerText(),/기기에 저장했습니다/);
+  // Buttons appear in the requested vertical order: album above search.
+  const buttons=await page.evaluate(()=>[...document.querySelectorAll('.wv-memory-actions button')].map(x=>x.id));
+  assert.deepEqual(buttons,['wv-memory-open-archive','wv-memory-search-toggle']);
+  await page.locator('#reveal').click();
+  await page.locator('#word-examples-details').evaluate(x=>x.open=true);
   await page.locator('#wv-memory-open-archive').click();
   await page.waitForFunction(()=>WordvilleShell.screen==='gallery');
   assert.equal(await page.locator('#wv-gallery-view').isVisible(),true);
@@ -29,6 +34,15 @@ const assert=require('node:assert/strict');
   await page.waitForFunction(()=>document.querySelectorAll('#wv-gallery-archive-list .wv-photo-card').length===2);
   assert.equal(await page.locator('#wv-gallery-archive-list .wv-photo-card').count(),2);
   assert.notEqual(await page.locator('#wv-gallery-date option').count(),1);
+  // Back returns to the exact previously opened Word Card and its reading state.
+  await page.locator('#wv-gallery-back').click();
+  await page.waitForFunction(()=>WordvilleShell.screen==='learn'&&document.getElementById('word-dialog').open);
+  assert.equal(await page.locator('#detail-word').textContent(),'comprehensive');
+  assert.equal(await page.locator('#detail-meaning').isVisible(),true);
+  assert.equal(await page.locator('#word-examples-details').evaluate(x=>x.open),true);
+  // Reopen the album and verify the existing album-to-card navigation still works.
+  await page.locator('#wv-memory-open-archive').click();
+  await page.waitForFunction(()=>WordvilleShell.screen==='gallery');
   // Opening a saved image returns to its vocabulary card.
   await page.locator('#wv-gallery-archive-list .wv-photo-choice').first().click();
   assert.equal(await page.locator('#word-dialog').isVisible(),true);
