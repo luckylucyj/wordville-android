@@ -26,7 +26,37 @@ RSS = b"""<?xml version="1.0" encoding="utf-8"?>
 </rss>"""
 
 
+
+NEWS_RSS = b"""<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+ <item><title>Internet meme mentioned in a news story</title>
+ <link>https://news.google.com/rss/articles/example</link>
+ <pubDate>Fri, 20 Nov 2026 13:10:00 -0500</pubDate>
+ <source url="https://example.com">Example Publisher</source></item>
+ <item><title>Unsafe</title><link>javascript:alert(1)</link>
+ <pubDate>Fri, 20 Nov 2026 13:10:00 -0500</pubDate></item>
+</channel></rss>"""
+
+
 class InternationalTrendsTest(unittest.TestCase):
+    def test_google_news_meme_feed_has_timestamped_source_but_no_ranking_claim(self):
+        news = module.parse_news_feed("US", NEWS_RSS)
+        self.assertEqual(len(news), 1)
+        self.assertEqual(news[0]["date"], "2026-11-20")
+        self.assertEqual(news[0]["publisher"], "Example Publisher")
+        self.assertTrue(news[0]["url"].startswith("https://news.google.com/"))
+        url = module.google_news_url("US")
+        self.assertIn("news.google.com/rss/search", url)
+        self.assertIn("gl=US", url)
+
+    def test_meme_news_archive_retains_only_true_story_dates(self):
+        now = datetime(2026, 11, 20, 18, 0, tzinfo=timezone.utc)
+        story = module.parse_news_feed("US", NEWS_RSS)[0]
+        combined = module.merge({"countries": {}}, {}, now, {"US": [story, story]})
+        self.assertEqual(len(combined["memeNews"]["US"]["2026-11-20"]), 1)
+        self.assertEqual(combined["memeNews"]["GB"], {})
+        self.assertNotIn("2026-11-19", combined["memeNews"]["US"])
+
     def test_rss_deduplicates_and_preserves_sources(self):
         records = module.parse_feed("US", RSS)
         self.assertEqual(len(records), 2)
