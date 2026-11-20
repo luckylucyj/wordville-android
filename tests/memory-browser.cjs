@@ -38,6 +38,10 @@ const assert=require('node:assert/strict');
   await page.locator('#wv-gallery-back').click();
   await page.waitForFunction(()=>WordvilleShell.screen==='learn'&&document.getElementById('word-dialog').open);
   assert.equal(await page.locator('#detail-word').textContent(),'comprehensive');
+  // Card opens before IndexedDB photo loading finishes. Wait for the
+  // saved reading state to be restored, not merely for dialog.open.
+  await page.waitForFunction(()=>!document.getElementById('detail-meaning').hidden&&
+   document.getElementById('word-examples-details').open,{timeout:10000});
   assert.equal(await page.locator('#detail-meaning').isVisible(),true);
   assert.equal(await page.locator('#word-examples-details').evaluate(x=>x.open),true);
   // Reopen the album and verify the existing album-to-card navigation still works.
