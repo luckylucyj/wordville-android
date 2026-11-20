@@ -1,0 +1,56 @@
+name: Refresh international trends archive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/international-trends.yml"
+      - "scripts/update-international-trends.py"
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wordville-international-trends
+  cancel-in-progress: false
+
+jobs:
+  collect-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Verify collector with offline fixture tests
+        run: python3 -m unittest discover -s tests -p 'test_international_trends.py'
+      - name: Retrieve live public country RSS feeds
+        env:
+          PREVIOUS_URL: https://raw.githubusercontent.com/luckylucyj/wordville-android/trend-data/trends/archive.json
+        run: |
+          python3 scripts/update-international-trends.py \
+            --previous-url "$PREVIOUS_URL" --output "$RUNNER_TEMP/wordville-trends.json"
+          python3 -m json.tool "$RUNNER_TEMP/wordville-trends.json" >/dev/null
+      - name: Publish dated archive on separate trend-data branch
+        run: |
+          git config user.name "wordville-trends-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code origin refs/heads/trend-data >/dev/null; then
+            git fetch origin trend-data
+            git checkout -B trend-data origin/trend-data
+          else
+            git checkout --orphan trend-data
+            git rm -rf --quiet . || true
+          fi
+          mkdir -p trends
+          cp "$RUNNER_TEMP/wordville-trends.json" trends/archive.json
+          git add trends/archive.json
+          if git diff --cached --quiet; then
+            echo "No updated trends"
+          else
+            git commit -m "data: refresh verified international trends archive"
+            git push origin HEAD:refs/heads/trend-data
+          fi
