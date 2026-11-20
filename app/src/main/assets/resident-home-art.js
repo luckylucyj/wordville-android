@@ -2,6 +2,31 @@
 'use strict';
 const W=256,H=210,INK='#3c293b',CREAM='#fff0d1';
 const roomArt=new Map();
+const referenceArt=new Map();
+// Load only the two supplied scene assets, keep the procedural room as a
+// graceful fallback if an older APK or cached webview lacks either asset.
+function referenceFor(id,room){
+ if(!room.referenceArt||typeof Image==='undefined')return null;
+ let image=referenceArt.get(id);
+ if(!image){
+  image=new Image();
+  image.decoding='async';
+  image.onload=()=>document.dispatchEvent(new CustomEvent('wordville-home-art-ready',{detail:{id}}));
+  image.onerror=()=>{image.datasetFailed=true;};
+  image.src=room.referenceArt;
+  referenceArt.set(id,image);
+ }
+ return image.complete&&image.naturalWidth>0&&!image.datasetFailed?image:null;
+}
+function coverImage(ctx,image){
+ const W=ctx.canvas.width,H=ctx.canvas.height;
+ const factor=Math.max(W/image.naturalWidth,H/image.naturalHeight);
+ const width=image.naturalWidth*factor,height=image.naturalHeight*factor;
+ ctx.save();ctx.imageSmoothingEnabled=false;
+ ctx.clearRect(0,0,W,H);
+ ctx.drawImage(image,(W-width)/2,(H-height)/2,width,height);
+ ctx.restore();
+}
 
 function painter(c,room,map){
  const [wall,panel,floor,seam,wood,cloth,shade,gold]=room.colors;
@@ -236,6 +261,9 @@ function painter(c,room,map){
 
 function paint(ctx,id,map){
  const room=root.WordvilleHomes.get(id);
+ if(!room)return;
+ const reference=referenceFor(id,room);
+ if(reference){coverImage(ctx,reference);return;}
  const penny=id==='penny'&&root.WordvillePennyHome;
  let base=roomArt.get(id);
  if(!base){
