@@ -178,9 +178,35 @@ function paint(c,p,x,y,opt={}){
  }
  c.restore();return true;
 }
+/* Long, collision-checked walks instead of two fixed 36px oscillations.
+ * The pet's foot point follows village sidewalks around the canal and hedges. */
+const petRoutes=Object.freeze({
+ cat:[[255,520],[315,532],[395,525],[480,506],[500,530],[440,548],[350,540],[305,600],[298,690],[310,760],[300,616],[260,550],[255,520]],
+ dog:[[440,540],[486,535],[522,500],[502,467],[445,482],[400,529],[332,538],[307,603],[310,721],[292,748],[292,607],[370,540],[440,540]]
+});
+function petPose(id,seconds){
+ const points=petRoutes[id];if(!points)return null;
+ const speed=id==='dog'?19:15;
+ const lengths=points.slice(1).map(([x,y],i)=>Math.hypot(x-points[i][0],y-points[i][1]));
+ const distance=lengths.reduce((a,b)=>a+b,0);
+ let remain=(((Math.max(0,Number(seconds)||0)*speed)+(id==='dog'?distance*.37:0))%distance+distance)%distance;
+ for(let i=0;i<lengths.length;i++){
+  if(remain<=lengths[i]||i===lengths.length-1){
+   const a=points[i],b=points[i+1],fraction=lengths[i]?remain/lengths[i]:0;
+   const dx=b[0]-a[0],dy=b[1]-a[1];
+   return {id,x:a[0]+dx*fraction,y:a[1]+dy*fraction,
+    direction:Math.abs(dx)>Math.abs(dy)?(dx>=0?'right':'left'):(dy>=0?'down':'up'),
+    walkDistance:Math.max(0,seconds)*speed,walking:true};
+  }
+  remain-=lengths[i];
+ }
+ return null;
+}
 function drawPets(c,t){
- for(const pet of [{id:'cat',x:250+Math.sin(t*.25)*18,y:548+Math.cos(t*.25)*5,direction:Math.cos(t*.25)>=0?'right':'left',walkDistance:t*3.6},{id:'dog',x:448+Math.sin(t*.2)*18,y:545+Math.cos(t*.2)*5,direction:Math.cos(t*.2)>=0?'right':'left',walkDistance:t*3.2}])
-  paintPet(c,pet,Math.round(pet.x),Math.round(pet.y),{width:32,height:32,walking:true});
+ for(const id of ['cat','dog']){
+  const pet=petPose(id,t);
+  if(pet)paintPet(c,pet,Math.round(pet.x),Math.round(pet.y),{width:32,height:32,walking:true});
+ }
 }
 // This preview runs the same paint() renderer used in the village itself.
 function installWalkPreview(){
@@ -251,5 +277,5 @@ if(typeof document!=='undefined'){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installWalkPreview,{once:true});
  else installWalkPreview();
 }
-root.WordvilleWalk={auditedSheets,auditedCell,auditedFrame,paintAudited,auditedFrameSize:{width:32,height:32},auditedFPS:8,auditedGroundY:30,images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,petCell,petFrameSize:{width:PET_W,height:PET_H},petGroundY:PET_GROUND_Y,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,residentSheets,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
+root.WordvilleWalk={petRoutes,petPose,auditedSheets,auditedCell,auditedFrame,paintAudited,auditedFrameSize:{width:32,height:32},auditedFPS:8,auditedGroundY:30,images,referenceAtlas,atlas:perResidentAtlas,petSheets,petFrame,petCell,petFrameSize:{width:PET_W,height:PET_H},petGroundY:PET_GROUND_Y,paintPet,paint,drawPets,frameFor,generateAtlas,stride,frameCount:FRAME_COUNT,sourceFrameCount:3,residentSheets,fps:8,stepDistance:STEP_DISTANCE,frameSize:{width:FRAME_W,height:FRAME_H},atlasSize:{width:ATLAS_W,height:ATLAS_H},groundY:GROUND_Y,atlasCell,alignForGroundRow,get groundOffsets(){return sourceGroundOffsets;},get walkAtlas(){return walkAtlas;}};
 })(globalThis);
