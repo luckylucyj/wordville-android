@@ -291,7 +291,10 @@ public class MainActivity extends Activity {
   settings.setJavaScriptEnabled(true);
   settings.setDomStorageEnabled(true);
   settings.setAllowFileAccess(false);
-  settings.setAllowContentAccess(false);
+  // The system photo picker returns content:// Uris. Permit only content provider
+  // access so WebView can read photos explicitly selected by the user; keep
+  // arbitrary file:// access disabled and continue loading app assets via HTTPS.
+  settings.setAllowContentAccess(true);
   settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
   settings.setCacheMode(WebSettings.LOAD_DEFAULT);
   // The bridge exposes only validated display preferences, never credentials
@@ -341,8 +344,10 @@ public class MainActivity extends Activity {
     if(chooser!=null)chooser.onReceiveValue(null);
     chooser=callback;
     Intent intent=new Intent(Intent.ACTION_GET_CONTENT);
-    intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("image/*");
-     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,params.getMode()==FileChooserParams.MODE_OPEN_MULTIPLE);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("image/*");
+    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,params.getMode()==FileChooserParams.MODE_OPEN_MULTIPLE);
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
     try{startActivityForResult(intent,100);}
     catch(ActivityNotFoundException e){chooser.onReceiveValue(null);chooser=null;}
     return true;
@@ -469,11 +474,42 @@ public class MainActivity extends Activity {
   if(web!=null)web.onPause();
   super.onPause();
  }
+ // Some Android/Samsung photo pickers provide a multi-selection only as
+ // ClipData; read that explicitly before falling back to WebView's parser.
+ private Uri[] selectedImageUris(int result,Intent data){
+  if(result!=Activity.RESULT_OK||data==null)return null;
+  ArrayList<Uri> images=new ArrayList<>();
+  ClipData clips=data.getClipData();
+  if(clips!=null){
+   for(int i=0;i<clips.getItemCount();i++){
+    Uri uri=clips.getItemAt(i).getUri();
+    if(uri!=null&&"content".equals(uri.getScheme())&&!images.contains(uri))images.add(uri);
+   }
+  }
+  Uri single=data.getData();
+  if(single!=null&&"content".equals(single.getScheme())&&!images.contains(single))images.add(single);
+  if(images.isEmpty()){
+   Uri[] parsed=WebChromeClient.FileChooserParams.parseResult(result,data);
+   if(parsed!=null)for(Uri uri:parsed){
+    if(uri!=null&&"content".equals(uri.getScheme())&&!images.contains(uri))images.add(uri);
+   }
+  }
+  return images.isEmpty()?null:images.toArray(new Uri[0]);
+ }
  @Override protected void onActivityResult(int request,int result,Intent data){
   super.onActivityResult(request,result,data);
   if(request==100&&chooser!=null){
-   chooser.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));
+   ValueCallback<Uri[]> pending=chooser;
    chooser=null;
+   pending.onReceiveValue(selectedImageUris(result,data));
+   if(result==Activity.RESULT_OK&&data!=null&&web!=null){
+    // A completed pick without a usable Uri should not silently appear as a
+    // cancelled upload in the Wordville word-card dialog.
+    Uri[] selected=selectedImageUris(result,data);
+    if(selected==null){
+     web.evaluateJavascript("(function(){var e=document.getElementById('detail-status');if(e)e.textContent='선택한 사진을 앱으로 전달받지 못했습니다. 사진을 다시 선택해 주세요.';})()",null);
+    }
+   }
   }
  }
  @Override protected void onDestroy(){
