@@ -22,6 +22,11 @@ const assert=require('node:assert/strict');
   assert.equal(board.props.width,148);
   await page.evaluate(()=>WordvilleSocial.openBoard());
   assert.equal(await page.locator('#wv-town-board').isVisible(),true);
+  // Overseas-trend board intentionally groups the fictional resident posts in a
+  // collapsed <details>. Expand it as an actual mobile user would.
+  const residentDisclosure=page.locator('#wv-town-board .wv-trends-older > summary');
+  await residentDisclosure.click();
+  assert.equal(await page.locator('#wv-town-board .wv-trends-older').evaluate(e=>e.open),true);
   assert.equal(await page.locator('.wv-town-post .wv-post-pin').count(),8);
   for(let i=0;i<4;i++){
    await page.locator('.wv-town-post .wv-post-pin').nth(i).click();
