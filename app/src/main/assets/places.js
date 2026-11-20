@@ -163,15 +163,17 @@ function scenery(p){
  }
 }
 function draw(p){
- // Keep the world-map scenes at their original resolution, but render Penny's
- // 896px-source furniture into a 1024x840 buffer before fitting the phone screen.
+ // Keep furnished homes and reference illustrations at 1024x840 native canvas
+ // resolution, then let CSS fit the whole map to the phone without cropping.
  const pennyHiRes=p.id==='home'&&homeOwner==='penny';
+ const referenceHiRes=p.id==='home'&&Boolean(homes.get(homeOwner)?.referenceArt);
  const venueV2=p.id!=='home'&&Boolean(globalThis.WordvillePixelStyle?.hasVenueArt?.(p.id));
- const targetWidth=venueV2?1024:(pennyHiRes?1024:512),targetHeight=venueV2?840:(pennyHiRes?840:420);
+ const hires=pennyHiRes||referenceHiRes||venueV2;
+ const targetWidth=hires?1024:512,targetHeight=hires?840:420;
  if(canvas.width!==targetWidth||canvas.height!==targetHeight){
   canvas.width=targetWidth;canvas.height=targetHeight;
  }
- canvas.dataset.hires=pennyHiRes?'penny':(venueV2?'venue-v2':'');
+ canvas.dataset.hires=referenceHiRes?'resident-home':(pennyHiRes?'penny':(venueV2?'venue-v2':''));
  if(p.id==='home'){
   const map=globalThis.WordvilleVenueSpec.getMap(homes.mapId(homeOwner));
   globalThis.WordvilleHomeArt.paint(ctx,homeOwner,map);return;
