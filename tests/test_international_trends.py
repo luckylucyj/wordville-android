@@ -39,7 +39,7 @@ class InternationalTrendsTest(unittest.TestCase):
     def test_archive_retains_valid_dates_and_never_fills_missing_dates(self):
         now = datetime(2026, 11, 20, 18, 0, tzinfo=timezone.utc)
         records = module.parse_feed("US", RSS)
-        archive = module.merge({"countries": {"US": {"2026-09-01": records}}},
+        archive = module.merge({"countries": {"US": {"2026-09-01": [{**records[0], "date": "2026-09-01", "publishedAt": "2026-09-01T14:30:00Z"}]}}},
                                {"US": records}, now)
         self.assertEqual(len(archive["countries"]["US"]["2026-11-20"]), 2)
         self.assertNotIn("2026-11-19", archive["countries"]["US"])
