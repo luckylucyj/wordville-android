@@ -183,6 +183,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -209,28 +210,7 @@ jobs:
             adb shell am instrument -w com.wordville.app.village.vocabulary.safeinstall.test/androidx.test.runner.AndroidJUnitRunner > android-test-result.txt
             cat android-test-result.txt
             grep -Eq 'OK \([0-9]+ tests?\)' android-test-result.txt
-            # The instrumentation test already asserts that the PNG was captured.
-            # Pulling a large PNG from an emulator can intermittently reset ADB;
-            # do not turn a passed 5/5 test suite into a failed job for transport errors.
-            SCREENSHOT=/sdcard/Android/data/com.wordville.app.village.vocabulary.safeinstall/files/wordville-map-emulator.png
-            captured=false
-            for attempt in 1 2 3; do
-              rm -f wordville-map-emulator.png
-              if timeout 45s adb pull "$SCREENSHOT" wordville-map-emulator.png; then
-                if python3 -c 'import pathlib,sys; p=pathlib.Path("wordville-map-emulator.png"); a=p.read_bytes(); sys.exit(not (len(a)>120000 and a[:8]==b"\x89PNG\r\n\x1a\n" and a[-8:]==b"IEND\xaeB\x60\x82"))'; then
-                  captured=true
-                  echo "Emulator screenshot verified; bytes=$(stat -c%s wordville-map-emulator.png)"
-                  break
-                fi
-              fi
-              echo "::warning::Screenshot ADB transfer attempt $attempt failed or returned a partial file"
-              adb reconnect || true
-              sleep 3
-            done
-            if [ "$captured" != true ]; then
-              rm -f wordville-map-emulator.png
-              echo "::warning::Screenshot artifact unavailable: passed instrumentation tests and PNG capture assertion remain authoritative"
-            fi
+            bash scripts/verify-emulator-screenshot.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
