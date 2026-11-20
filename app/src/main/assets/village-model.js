@@ -29,6 +29,22 @@ function hedge(id,points){
  return {id,kind:'polygon',points:Object.freeze(points.map(point=>Object.freeze(point))),
   left:Math.min(...xs),right:Math.max(...xs),top:Math.min(...ys),bottom:Math.max(...ys)};
 }
+/* Bulletin board world coordinates are authored at 600×800; render at 2×
+ * to match the 1200×1600 art pipeline without changing NPC path positions.
+ * Image canopy is NOT a collider: only two feet and the ground-contact rail.
+ * The sorting anchor is the lowest visible plank/post at y=385.
+ */
+const bulletin=Object.freeze({
+ x:408,y:305,width:74,height:80,anchorY:385,
+ worldX2:Object.freeze({x:816,y:610,width:148,height:160,anchorY:770}),
+ colliderFootRects:Object.freeze([
+  Object.freeze({id:'board-left-foot',kind:'rect',x:418,y:377,w:7,h:8}),
+  Object.freeze({id:'board-right-foot',kind:'rect',x:462,y:377,w:7,h:8}),
+  Object.freeze({id:'board-ground-rail',kind:'rect',x:426,y:383,w:35,h:3})
+ ]),
+ trigger:Object.freeze({x:403,y:369,w:72,h:43}),
+ sprite:Object.freeze({frameWidth:128,frameHeight:128,frames:3})
+});
 const decorations=Object.freeze([
  {id:'fountain',kind:'ellipse',...fountain},
  {id:'academy-base',kind:'rect',x:162,y:214,w:276,h:12},
@@ -54,6 +70,7 @@ const decorations=Object.freeze([
  {id:'north-east-lamp',kind:'ellipse',x:368,y:336,rx:6,ry:4},
  {id:'south-west-lamp',kind:'ellipse',x:226,y:568,rx:6,ry:4},
  {id:'south-east-lamp',kind:'ellipse',x:374,y:568,rx:6,ry:4}
+,...bulletin.colliderFootRects
 ].map(item=>Object.freeze(item)));
 function hitsHedge(hedge,x,y,radius){
  if(x<hedge.left-radius||x>hedge.right+radius||y<hedge.top-radius||y>hedge.bottom+radius)return false;
@@ -365,6 +382,6 @@ function tick(residents,dt,onMeet,options={}){
  }
  for(const p of residents)p.cooldown=Math.max(0,(p.cooldown||0)-dt);
 }
-const api={people,nodes,edges,links,fountain,FOOT_RADIUS,decorations,collidesDecoration,segmentHitsDecoration,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,outdoorStandingPositions,relationships,destinationFor,syncSchedule};
+const api={people,nodes,edges,links,fountain,bulletin,FOOT_RADIUS,decorations,collidesDecoration,segmentHitsDecoration,inFountain,segmentHitsFountain,isStairEdge,period,path,directions,directionFromDelta,freshResidents,tick,entranceNode,outdoorPlaces,outdoorStandingPositions,relationships,destinationFor,syncSchedule};
 root.VillageModel=api;
 })(globalThis);
