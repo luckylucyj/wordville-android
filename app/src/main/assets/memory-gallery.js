@@ -21,6 +21,7 @@
   if(button){button.textContent=label[returnToCard?0:1];button.setAttribute('aria-label',button.textContent);}
  }
  document.addEventListener('wordville-language-changed',backLabel);
+ backLabel();
 
  function owner(){return cloudUser?.id||'';}
  function ownerKey(){return owner()||'local';}
