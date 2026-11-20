@@ -78,6 +78,13 @@ function visitHome(id){
  return true;
 }
 function homeGuests(roster){return roster.filter(id=>id===homeOwner);}
+// The home selector uses the approved three-color pastel palette. Homura and
+// Madoka share the peach UI color, but are not classified as Bleach characters.
+const homePaletteByResident=Object.freeze(Object.fromEntries([
+ ['stardew',['alex','elliott','harvey','sam','sebastian','shane','haley','leah','maru','penny','abigail','emily']],
+ ['chiikawa',['chiikawa','hachiware','usagi','rakko','kurimanju']],
+ ['peach',['momo','toshiro','aizen','homura','madoka']]
+].flatMap(([palette,ids])=>ids.map(id=>[id,palette]))));
 function openHomePicker(){
  if(homePicker.open)return;
  homeOptions.replaceChildren(...Object.values(people).map(person=>{
@@ -87,6 +94,7 @@ function openHomePicker(){
    ids('wv-place-rail').querySelector('[data-place="home"]').focus({preventScroll:true});
   });
   choice.dataset.homeResident=person.id;
+  choice.dataset.homePalette=homePaletteByResident[person.id]||'neutral';
   if(active==='home'&&homeOwner===person.id)choice.setAttribute('aria-current','true');
   return choice;
  }));
