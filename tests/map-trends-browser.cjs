@@ -85,6 +85,16 @@ const snapshot={schema:1,updatedAt:day+'T11:00:00Z',
   assert.match(await page.locator('#wv-trend-google-search').getAttribute('href'),/news.google.com\/search/);
   await page.locator('#wv-trend-date').fill('2026-11-19');
   assert.equal(await page.locator('.wv-trend-card').count(),0,'uncollected historical dates must be blank');
+  await page.locator('#wv-trend-mode-instagram').click();
+  assert.equal(await page.locator('#wv-trend-date').inputValue(),day);
+  await page.locator('#wv-trend-query').fill('viral');
+  assert.equal(await page.locator('.wv-trend-card').count(),1);
+  const instagramLink=await page.locator('.wv-trend-card .wv-instagram-link').getAttribute('href');
+  assert.match(instagramLink,/^https:\/\/www\.instagram\.com\/explore\/search\/keyword\/\?q=/);
+  assert.match(await page.locator('#wv-trend-google-search').getAttribute('href'),/instagram\.com/);
+  assert.match(await page.locator('#wv-town-board').textContent(),/Instagram/);
+  await page.locator('#wv-trend-query').fill('#viral meme');
+  assert.match(await page.locator('#wv-trend-google-search').getAttribute('href'),/q=%23viral%20meme/);
   assert.deepEqual(errs,[],'browser must not produce JavaScript runtime exceptions');
   console.log('Wordville browser QA passed: 4 languages, town camera, indoor/home camera, real-versus-meme Google search');
  }finally{await browser.close();}
