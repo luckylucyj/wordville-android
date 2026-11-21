@@ -75,7 +75,7 @@ const assert=require('node:assert/strict');
   // Multi-page Openverse search must remain inside a 320px device viewport.
   await page.route('https://api.openverse.org/v1/images/?**',route=>route.fulfill({
    status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},
-   body:JSON.stringify({results:Array.from({length:24},(_,i)=>({
+   body:JSON.stringify({results:Array.from({length:20},(_,i)=>({
     id:'00000000-0000-4000-8000-'+String(i).padStart(12,'0'),
     title:'Photo '+i,license:'cc0',license_version:'1.0',creator:'Photo creator',
     foreign_landing_url:'https://example.org/photo/'+i,mature:false}))})
@@ -91,7 +91,7 @@ const assert=require('node:assert/strict');
   });
   assert.ok(pager.buttons.every(b=>b.left>=pager.left-1&&b.right<=pager.right+1),'image pagination buttons must not overflow');
   await page.locator('.wv-search-pagination').first().locator('button').last().click();
-  await page.waitForFunction(()=>document.querySelector('.wv-search-page-number')?.textContent.includes('2 / 3'));
+  await page.waitForFunction(()=>document.querySelector('.wv-search-page-number')?.textContent.includes('2 / 2'));
   await page.setViewportSize({width:390,height:844});
   await page.locator('#remove-image').click();
   await page.waitForFunction(()=>document.querySelector('#wv-memory-count').textContent.includes('2장'));

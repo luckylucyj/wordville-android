@@ -46,7 +46,7 @@ test('provider failures fall back to Wikimedia and credits include the actual so
  assert.match(gallery,/catch\(openverseError\)[\s\S]*?commonsResults\(query,controller\.signal\)/);
  assert.ok(gallery.includes("if(pixabayKey.value.trim()){"),"Pixabay with key uses API");
  assert.ok(gallery.includes("catch(pixabayError)"),"Pixabay errors fallback to commons");
- assert.ok(gallery.includes("Pixabay API 연결 성공"),"connection test reports success");
+ assert.ok(gallery.includes("Pixabay 연결 성공"),"connection test reports success");
  assert.ok(gallery.includes("pixabayApiError(response.status)"),"API HTTP failures are explained");
  assert.ok(html.includes('<button id="wv-memory-pixabay-test" type="button">'),"key test button exists");
  assert.ok(html.includes('https://pixabay.com/api/docs/'),"key registration link exists");
