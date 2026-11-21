@@ -74,6 +74,7 @@ test('town event hooks support write pose and social board interactions',()=>{
  assert.ok(village.includes("'write'"));
  assert.ok(village.includes('WordvilleSocial?.drawTownBoard'));
  assert.ok(village.includes('WordvilleSocial?.boardHit'));
- assert.ok(venue.includes("?\'write\'")||venue.includes("'write'"));
+ assert.ok(village.includes('nearBoard'),'town writer must be physically beside the bulletin board');
+ assert.ok(!venue.includes("'write'"),'indoor residents must never use write motion');
  for(const file of ['wordville-social.js','wordville-schedule-locale.js','wordville-polish.css'])assert.ok(shell.includes(file),file);
 });
