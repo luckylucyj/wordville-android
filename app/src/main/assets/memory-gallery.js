@@ -391,8 +391,53 @@
   return senseHints[word.toLowerCase()]?.find(([re])=>re.test(meaning))?.[1]||word;
  }
  const sourceSelect=$('wv-memory-search-source'),pixabayKey=$('wv-memory-pixabay-key');
+ const pixabayStatus=$('wv-memory-pixabay-status');
+ const rememberPixabay=$('wv-memory-pixabay-remember');
+ const pixabaySecure=location.origin==='https://appassets.androidplatform.net'
+  && typeof globalThis.WordvillePixabaySecure?.getSavedKey==='function'
+  ? globalThis.WordvillePixabaySecure:null;
  sourceSelect.addEventListener('change',()=>{
   $('wv-memory-pixabay-field').hidden=sourceSelect.value!=='pixabay';
+ });
+ function restorePixabayKey(){
+  if(!pixabaySecure){
+   rememberPixabay.checked=false;rememberPixabay.disabled=true;
+   pixabayStatus.textContent='이 환경에서는 암호화 자동 저장을 사용할 수 없습니다. 현재 실행 중에는 입력한 키로 검색할 수 있습니다.';
+   return;
+  }
+  try{
+   const saved=pixabaySecure.getSavedKey();
+   if(saved){
+    pixabayKey.value=saved;
+    pixabayStatus.textContent='저장된 Pixabay 키를 자동으로 불러왔습니다. 다시 입력하지 않아도 검색할 수 있습니다.';
+   }
+  }catch(error){
+   pixabayStatus.textContent='저장된 키를 불러오지 못했습니다. 연결 테스트 후 다시 저장해 주세요.';
+  }
+ }
+ restorePixabayKey();
+ rememberPixabay.addEventListener('change',()=>{
+  if(rememberPixabay.checked){
+   pixabayStatus.textContent='연결 테스트에 성공하면 키가 이 기기에 암호화 저장됩니다.';
+   return;
+  }
+  if(!pixabaySecure)return;
+  try{
+   if(!pixabaySecure.clearSavedKey())throw Error('delete failed');
+   pixabayStatus.textContent='저장된 키를 삭제했습니다. 현재 입력창의 키는 앱을 닫을 때까지 사용할 수 있습니다.';
+  }catch(error){
+   rememberPixabay.checked=true;
+   pixabayStatus.textContent='키 삭제에 실패했습니다. 저장된 키 삭제 버튼을 다시 눌러주세요.';
+  }
+ });
+ $('wv-memory-pixabay-clear').addEventListener('click',()=>{
+  if(pixabaySecure){
+   try{
+    if(!pixabaySecure.clearSavedKey())throw Error('delete failed');
+   }catch(error){pixabayStatus.textContent='키를 삭제하지 못했습니다. 다시 시도해 주세요.';return;}
+  }
+  pixabayKey.value='';rememberPixabay.checked=!!pixabaySecure;
+  pixabayStatus.textContent='이 기기에 저장된 Pixabay 키와 현재 입력한 키를 삭제했습니다.';
  });
  function pixabayApiError(status){
   if(status===400||status===401||status===403)return 'Pixabay API 키를 확인하세요 (HTTP '+status+').';
@@ -400,7 +445,7 @@
   return 'Pixabay 서버 응답 '+status;
  }
  $('wv-memory-pixabay-test').addEventListener('click',async()=>{
-  const status=$('wv-memory-pixabay-status'),button=$('wv-memory-pixabay-test');
+  const status=pixabayStatus,button=$('wv-memory-pixabay-test');
   const key=pixabayKey.value.trim();
   if(!key){status.textContent='Pixabay API 키를 먼저 입력해 주세요.';pixabayKey.focus();return;}
   button.disabled=true;status.textContent='Pixabay 연결을 확인하는 중…';
@@ -410,9 +455,18 @@
    if(!response.ok)throw Error(pixabayApiError(response.status));
    const data=await response.json();
    if(!Array.isArray(data.hits))throw Error('Pixabay 응답 형식이 올바르지 않습니다.');
-   status.textContent='Pixabay API 연결 성공. 검색 출처를 Pixabay로 두고 단어를 검색하세요.';
-  }catch(error){status.textContent='연결 실패: '+(error.message||'네트워크 오류')+' · 키 또는 네트워크 연결을 확인하세요.';}
-  finally{button.disabled=false;}
+   if(rememberPixabay.checked&&pixabaySecure){
+    let saved=false;
+    try{saved=pixabaySecure.saveKey(key);}catch(error){saved=false;}
+    status.textContent=saved?
+     'Pixabay 연결 성공. API 키를 암호화 저장했습니다. 다음에 앱을 실행하면 자동 연결됩니다.':
+     'Pixabay 연결 성공. 하지만 암호화 저장에 실패했습니다. 다시 시도해 주세요.';
+   }else{
+    status.textContent='Pixabay 연결 성공. 키는 저장되지 않았고 현재 실행 중에만 사용할 수 있습니다.';
+   }
+  }catch(error){
+   status.textContent='연결 실패: '+(error.message||'네트워크 오류')+' · 키 또는 네트워크 연결을 확인하세요. 실패한 키는 저장하지 않았습니다.';
+  }finally{button.disabled=false;}
  });
  function externalLinks(q){
   const term=encodeURIComponent(q);
