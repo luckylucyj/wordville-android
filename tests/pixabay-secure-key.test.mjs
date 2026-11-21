@@ -109,3 +109,9 @@ test('a verified key is not persisted when remember is disabled',async()=>{
  assert.equal(s.saveCalls,0);
  assert.match(s.el('wv-memory-pixabay-status').textContent,/키는 저장되지 않았고/);
 });
+
+test('secure key input validation is defined natively for release builds',()=>{
+ assert.match(java,/value\.length\(\)>256/);
+ assert.match(java,/value\.matches\("\[A-Za-z0-9_-\]\+"\)/);
+ assert.match(java,/getApplicationContext\(\)\.getSharedPreferences\(STORE,MODE_PRIVATE\)/);
+});
