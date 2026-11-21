@@ -88,3 +88,24 @@ test('non-Android browser does not persist a secret',async()=>{
  assert.equal(s.saveCalls,0);
  assert.match(s.el('wv-memory-pixabay-status').textContent,/키는 저장되지 않았고/);
 });
+
+
+test('turning off remember deletes saved key but keeps the current input for this session',()=>{
+ const s=session({saved:'PERSISTEDPIXABAYKEY'});
+ s.el('wv-memory-pixabay-remember').checked=false;
+ s.el('wv-memory-pixabay-remember').handlers.change();
+ assert.equal(s.secret,'');
+ assert.equal(s.el('wv-memory-pixabay-key').value,'PERSISTEDPIXABAYKEY');
+ const restarted=session();
+ assert.equal(restarted.el('wv-memory-pixabay-key').value,'');
+});
+
+test('a verified key is not persisted when remember is disabled',async()=>{
+ const s=session();
+ s.el('wv-memory-pixabay-remember').checked=false;
+ s.el('wv-memory-pixabay-key').value='TEMPORARYPIXABAYKEY';
+ await s.el('wv-memory-pixabay-test').handlers.click();
+ assert.equal(s.secret,'');
+ assert.equal(s.saveCalls,0);
+ assert.match(s.el('wv-memory-pixabay-status').textContent,/키는 저장되지 않았고/);
+});
