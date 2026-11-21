@@ -5,7 +5,7 @@
  const databaseName='wordville-memory-album-v1';
  const types=new Set(['image/png','image/jpeg','image/webp','image/gif']);
  const maximum=5*1024*1024;
- const searchPageSize=10,searchResultLimit=60,searchBatchSize=50;
+ const searchPageSize=10,searchResultLimit=60,searchBatchSize=50,openversePageSize=20;
  const searchCache=new Map();
  let connection=null,selectedId=null,wordUrls=[],archiveUrls=[],queryResults=[],searchSerial=0,searchPage=0,archiveSerial=0;
  let returnToCard=null;
@@ -353,7 +353,7 @@
    if(sources.length)img.src=sources[0];
    else{img.hidden=true;const failure=document.createElement('small');failure.textContent='이미지 주소가 지원되지 않습니다.';article.append(failure);}
    const rights=document.createElement('small');rights.className='wv-search-license';
-   rights.textContent=(result.license||'라이선스 정보 확인 필요')+(result.author?' · 업로더 '+result.author:'');
+   rights.textContent=(result.source||'출처 미상')+' · '+(result.license||'라이선스 정보 확인 필요')+(result.author?' · 업로더 '+result.author:'');
    const save=document.createElement('button');save.type='button';save.textContent='이 이미지 저장';
    save.addEventListener('click',async()=>{
     if(!current(w)||imageBusy)return;
@@ -400,20 +400,22 @@
   $('wv-memory-pixabay-link').href='https://pixabay.com/images/search/'+term+'/';
  }
  async function openverseResults(query,signal){
-  const params=new URLSearchParams({q:query,page_size:String(searchResultLimit),mature:'false'});
+  // Anonymous Openverse requests must use the default maximum page size (20).
+  // Larger page_size values cause HTTP 401 without registered OAuth credentials.
+  const params=new URLSearchParams({q:query,page_size:String(openversePageSize),mature:'false'});
   const response=await fetch('https://api.openverse.org/v1/images/?'+params,{signal,credentials:'omit'});
   if(!response.ok)throw Error('Openverse 응답 '+response.status);
   const data=await response.json();
   if(!Array.isArray(data.results))throw Error('Openverse 검색 형식 오류');
   return data.results.filter(x=>!x.mature&&/^[a-f0-9-]{36}$/i.test(x.id||''))
-   .slice(0,searchResultLimit).map(x=>({
+   .slice(0,openversePageSize).map(x=>({
     id:x.id,title:x.title||query,
     thumbnail:'https://api.openverse.org/v1/images/'+x.id+'/thumb/',
     sourceUrl:safeLink(x.foreign_landing_url)||'https://openverse.org/image/'+x.id,
     license:[x.license?.toUpperCase(),x.license_version].filter(Boolean).join(' '),
     author:String(x.creator||'').slice(0,120),source:'Openverse'
    }));
- }
+  }
  async function commonsResults(query,signal){
   const params=new URLSearchParams({action:'query',format:'json',formatversion:'2',generator:'search',
    gsrsearch:query,gsrnamespace:'6',gsrlimit:String(searchBatchSize),gsrsort:'relevance',
@@ -454,14 +456,44 @@
   externalLinks(query);
   $('wv-memory-search-status').textContent='이미지 검색 중…';
   $('wv-memory-search-results').replaceChildren();
-  const cacheKey=source+'|'+query.toLowerCase(),cache=searchCache.get(cacheKey);
   try{
+   // The official Google Custom Search JSON API is closed to new customers.
+   // Link to Google's image results rather than scrape or claim API access.
+   if(source==='google'){
+    const destination=$('wv-memory-search-results');
+    const notice=document.createElement('p');notice.className='wv-search-empty';
+    notice.textContent='Google 이미지 검색은 Google 웹사이트에서 표시됩니다. 이미지를 저장하려면 원본 이용 조건을 확인한 후 파일을 내려받아 위의 파일 선택을 이용하세요.';
+    const link=document.createElement('a');link.href=$('wv-memory-google-link').href;
+    link.textContent='Google 이미지 검색 결과 열기';link.rel='noopener noreferrer';
+    destination.append(notice,link);
+    $('wv-memory-search-status').textContent='Google 이미지 웹 검색으로 연결할 수 있습니다. 앱 내부 결과 API는 제공되지 않습니다.';
+    return;
+   }
+   const cacheKey=source+'|'+query.toLowerCase(),cache=searchCache.get(cacheKey);
    let results=source==='pixabay'?null:(cache&&Date.now()-cache.saved<600000?cache.results:null);
+   let explanation='';
    if(!results){
-    results=source==='commons'?await commonsResults(query,controller.signal)
-     :source==='pixabay'?await pixabayResults(query,controller.signal)
-     :await openverseResults(query,controller.signal);
-    if(source==='openverse'&&!results.length)results=await commonsResults(query,controller.signal);
+    if(source==='commons')results=await commonsResults(query,controller.signal);
+    else if(source==='pixabay'){
+     if(pixabayKey.value.trim())results=await pixabayResults(query,controller.signal);
+     else{
+      results=await commonsResults(query,controller.signal);
+      explanation='Pixabay API는 계정별 키가 필요합니다. 키 없이 Wikimedia Commons 이미지를 표시합니다. Pixabay 원본은 아래 사이트 링크에서 검색할 수 있습니다. ';
+     }
+    }else{
+     try{results=await openverseResults(query,controller.signal);}
+     catch(openverseError){
+      if(openverseError.name==='AbortError')throw openverseError;
+      try{
+       results=await commonsResults(query,controller.signal);
+       explanation='Openverse 연결 오류 ('+openverseError.message+')로 Wikimedia Commons 결과를 표시합니다. ';
+      }catch(commonsError){throw Error('Openverse: '+openverseError.message+' / Commons: '+commonsError.message);}
+     }
+     if(!results.length){
+      results=await commonsResults(query,controller.signal);
+      explanation='Openverse 검색 결과가 없어 Wikimedia Commons 결과로 전환했습니다. ';
+     }
+    }
     if(source!=='pixabay'){
      if(searchCache.size>12)searchCache.delete(searchCache.keys().next().value);
      searchCache.set(cacheKey,{saved:Date.now(),results});
@@ -469,9 +501,10 @@
    }
    if(serial!==searchSerial||!current(w))return;
    queryResults=results;renderResults(w,results);
+   if(explanation)$('wv-memory-search-status').textContent=explanation+$('wv-memory-search-status').textContent;
   }catch(error){
    if(serial===searchSerial&&current(w)&&error.name!=='AbortError')
-    $('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 다른 검색 출처나 외부 검색을 이용해 주세요.';
+    $('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 아래 Google·Pixabay 웹 검색 링크를 이용할 수 있습니다.';
   }finally{if(serial===searchSerial){button.disabled=false;imageSearchController=null;}}
  }
 
