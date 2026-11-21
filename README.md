@@ -30,6 +30,17 @@ Wordville 전용 Supabase 프로젝트(서울), 비공개 `wordville-images` 버
 공개 클라이언트에는 publishable key만 포함합니다. service-role key는 포함하지 않습니다.
 서버 설정 SQL: `server/storage.sql`. Wordville 전용 프로젝트에 적용되어 있습니다.
 
+## Pixabay 이미지 검색 키 저장 (2026-11-21)
+
+- 단어 카드 → 이미지 검색 → Pixabay → 무료 API 키 입력 → **연결 테스트 및 저장**을 누릅니다.
+- 연결에 성공하고 저장 체크가 켜져 있으면 Android Keystore(AES-256-GCM)로 암호화한 뒤 앱 전용 SharedPreferences에 보관합니다.
+- 같은 Android 앱을 다시 실행하면 저장된 키를 자동으로 불러오므로 검색마다 다시 입력할 필요가 없습니다.
+- **저장된 키 삭제** 버튼으로 키와 입력값을 지울 수 있습니다. 저장 체크를 끄면 저장된 키는 지우고, 현재 화면에서만 사용할 수 있습니다.
+- 잘못된 키나 네트워크 오류는 새 키로 저장하지 않습니다. Pixabay 실패 시 Wikimedia Commons 결과로 전환합니다.
+- 키는 GitHub·Supabase·웹 LocalStorage에 저장하지 않으며, 앱 데이터 삭제·재설치 시 키가 사라질 수 있습니다.
+- 일반 모바일 브라우저에서는 Android Keystore를 사용할 수 없어 키를 자동 저장하지 않습니다. 앱의 경우에만 암호화 자동 저장이 작동합니다.
+- 실제 Pixabay API 연결 성공 여부는 사용자가 발급받은 유효한 개인 키와 네트워크가 필요합니다.
+
 ## 기존 앱과 설치
 
 이전 1.0 설치본의 서명 키를 이어받을 수 없어서 새 테스트 앱 ID는 `com.wordville.app.village`, 이름은 **Wordville Village**입니다. 기존 Wordville을 삭제할 필요가 없습니다. 기존 앱의 기기 저장 기록은 새 앱으로 자동 이전되지 않습니다.
