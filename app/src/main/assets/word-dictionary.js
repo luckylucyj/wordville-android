@@ -46,6 +46,11 @@
   field.setSelectionRange(draft.start,draft.end);
  }
  async function mount(word,returned){
+  // A restored word card can open while deferred modules are still initializing.
+  // Wait for the notes store rather than permanently disabling its Save button.
+  if(!globalThis.WordvilleStudy&&document.readyState!=='complete'){
+   await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
+  }
   const study=globalThis.WordvilleStudy;
   const requestedDay=returned?.day??$('day-filter').value;
   const day=String(study?.get(word,requestedDay).day??requestedDay);
