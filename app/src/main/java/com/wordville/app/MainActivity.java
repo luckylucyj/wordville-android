@@ -22,6 +22,15 @@ import androidx.webkit.WebViewAssetLoader;
 import java.io.ByteArrayInputStream;
 import android.webkit.JavascriptInterface;
 import android.content.SharedPreferences;
+import android.util.Base64;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
+import java.security.KeyStore;
+import java.nio.charset.StandardCharsets;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 import org.json.JSONObject;
 import com.google.mlkit.nl.translate.Translation;
 import com.google.mlkit.nl.translate.TranslateLanguage;
@@ -64,6 +73,64 @@ public class MainActivity extends Activity {
     }catch(SecurityException ignored){}
     owner.evaluateJavascript("window.WordvilleDictionary?.onPaste("+id+","+result+");",null);
    });
+  }
+ }
+ // Pixabay API credentials are encrypted at rest with a non-exportable
+ // Android Keystore key. Never put credentials in WebView localStorage,
+ // JavaScript bundles, GitHub code, logs, or an Android backup.
+ private final class WordvillePixabaySecureBridge {
+  private static final String STORE="wordville_pixabay_private_v1";
+  private static final String KEY_ALIAS="wordville_pixabay_aes_gcm_v1";
+  private static final String ENTRY_IV="iv";
+  private static final String ENTRY_CIPHER="cipher";
+  private SharedPreferences storage(){
+   return getApplicationContext().getSharedPreferences(STORE,MODE_PRIVATE);
+  }
+  private SecretKey key() throws Exception {
+   KeyStore store=KeyStore.getInstance("AndroidKeyStore");
+   store.load(null);
+   if(store.containsAlias(KEY_ALIAS)){
+    KeyStore.Entry entry=store.getEntry(KEY_ALIAS,null);
+    if(!(entry instanceof KeyStore.SecretKeyEntry))throw new IllegalStateException("Invalid keystore entry");
+    return ((KeyStore.SecretKeyEntry)entry).getSecretKey();
+   }
+   KeyGenerator generator=KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,"AndroidKeyStore");
+   generator.init(new KeyGenParameterSpec.Builder(KEY_ALIAS,
+    KeyProperties.PURPOSE_ENCRYPT|KeyProperties.PURPOSE_DECRYPT)
+    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+    .setRandomizedEncryptionRequired(true)
+    .setKeySize(256)
+    .build());
+   return generator.generateKey();
+  }
+  @JavascriptInterface public synchronized boolean saveKey(String value){
+   if(value==null||value.length()<1||value.length()>256||!value.matches("[A-Za-z0-9_-]+"))return false;
+   try{
+    Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
+    cipher.init(Cipher.ENCRYPT_MODE,key());
+    byte[] ciphertext=cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
+    String iv=Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP);
+    String encrypted=Base64.encodeToString(ciphertext,Base64.NO_WRAP);
+    return storage().edit().putString(ENTRY_IV,iv).putString(ENTRY_CIPHER,encrypted).commit();
+   }catch(Exception error){return false;}
+  }
+  @JavascriptInterface public synchronized String getSavedKey(){
+   try{
+    String iv=storage().getString(ENTRY_IV,"");
+    String encrypted=storage().getString(ENTRY_CIPHER,"");
+    if(iv.isEmpty()||encrypted.isEmpty())return "";
+    byte[] nonce=Base64.decode(iv,Base64.NO_WRAP);
+    if(nonce.length!=12)return "";
+    Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
+    cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,nonce));
+    byte[] clear=cipher.doFinal(Base64.decode(encrypted,Base64.NO_WRAP));
+    String value=new String(clear,StandardCharsets.UTF_8);
+    return value.length()<=256&&value.matches("[A-Za-z0-9_-]+")?value:"";
+   }catch(Exception error){return "";}
+  }
+  @JavascriptInterface public synchronized boolean clearSavedKey(){
+   return storage().edit().remove(ENTRY_IV).remove(ENTRY_CIPHER).commit();
   }
  }
  private final class WordvilleSpeechBridge {
@@ -297,9 +364,10 @@ public class MainActivity extends Activity {
   settings.setAllowContentAccess(true);
   settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
   settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-  // The bridge exposes only validated display preferences, never credentials
-  // or progress, and the WebView restricts page navigation to bundled assets.
+  // Trusted local app assets only: block untrusted frames and remote scripts via CSP.
+  // Credential bridge stores encrypted secrets; external pages open in the browser.
   view.addJavascriptInterface(new WordvilleSettingsBridge(),"WordvilleSettings");
+  view.addJavascriptInterface(new WordvillePixabaySecureBridge(),"WordvillePixabaySecure");
   view.addJavascriptInterface(new WordvilleSpeechBridge(),"WordvilleSpeech");
   view.addJavascriptInterface(new WordvilleInterpretationBridge(view),"WordvilleInterpretationNative");
   view.addJavascriptInterface(new WordvilleTranslationBridge(),"WordvilleTranslate");
