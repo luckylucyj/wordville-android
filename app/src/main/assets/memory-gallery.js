@@ -275,6 +275,7 @@
    if(['thumb.wikimedia.org','upload.wikimedia.org'].includes(u.hostname)&&u.pathname.startsWith('/wikipedia/commons/'))return u;
    if(u.hostname==='api.openverse.org'&&/^\/v1\/images\/[0-9a-f-]{36}\/thumb\/?$/.test(u.pathname))return u;
    if(u.hostname==='cdn.pixabay.com'&&u.pathname.startsWith('/photo/'))return u;
+   if(u.hostname==='pixabay.com'&&u.pathname.startsWith('/get/'))return u;
    return null;
   }catch{return null;}
  }
@@ -437,8 +438,8 @@
   if(!response.ok)throw Error('Pixabay 응답 '+response.status);
   const data=await response.json();
   return (Array.isArray(data.hits)?data.hits:[])
-   .filter(x=>approvedMediaUrl(x.webformatURL))
-   .map(x=>({title:x.tags||query,thumbnail:x.webformatURL,
+   .filter(x=>approvedMediaUrl(x.webformatURL)||approvedMediaUrl(x.previewURL))
+   .map(x=>({title:x.tags||query,thumbnail:approvedMediaUrl(x.webformatURL)?x.webformatURL:x.previewURL,
      sourceUrl:'https://pixabay.com/photos/id-'+x.id+'/',
      license:'Pixabay Content License',author:String(x.user||''),source:'Pixabay'}));
  }
