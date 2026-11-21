@@ -389,12 +389,12 @@ public class MainActivity extends Activity {
   // foreground cycle, not on each 250ms poll: repeated cancellation of
   // requestAnimationFrame can prevent the first new frame from being drawn.
   String probe="(function(){"
-    +(signalResume?"document.dispatchEvent(new Event('wordville-app-resume'));":"")
+    +(signalResume?"window.__wordvilleResumeProbeAt=performance.now();document.dispatchEvent(new Event('wordville-app-resume'));":"")
     +"var cover=document.getElementById('wv-loading-cover'),dock=document.getElementById('wv-bottom-dock');"
     +"var village=window.WordvilleVillage;"
     +"return !!window.WordvilleShell && !!cover && cover.hidden && !!dock"
     +" && dock.getBoundingClientRect().height>0 && !!village"
-    +" && village.lastFrameAgeMs<2200;})()";
+    +" && village.lastFrameAgeMs<2200 && village.lastFrameAt>window.__wordvilleResumeProbeAt;})()";
   try{
    expected.evaluateJavascript(probe,result->{
     if(!isCurrentCheck(expected,checkId))return;
