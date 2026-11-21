@@ -415,6 +415,6 @@ function resumeVillage(){
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeVillage();else last=0;});
 document.addEventListener('wordville-app-resume',resumeVillage);
-globalThis.WordvilleVillage={residents,select,visitResident,get visitingPlace(){return selectedPlace();},get clockMinute(){return scheduleMinute();},get schedulePreview(){return schedulePreview;},get period(){return period;},get lastFrameAgeMs(){return lastDrawAt?performance.now()-lastDrawAt:Number.POSITIVE_INFINITY;},get conversations(){return chatCount;},get zoom(){return zoom;},get zone(){return viewZone;},setZone:setMapZone,resize:syncCanvasResolution,mapView:currentMapView,panBy,zoomAt,visibleResidents:[...VISIBLE_RESIDENTS]};
+globalThis.WordvilleVillage={residents,select,visitResident,get visitingPlace(){return selectedPlace();},get clockMinute(){return scheduleMinute();},get schedulePreview(){return schedulePreview;},get period(){return period;},get lastFrameAt(){return lastDrawAt;},get lastFrameAgeMs(){return lastDrawAt?performance.now()-lastDrawAt:Number.POSITIVE_INFINITY;},get conversations(){return chatCount;},get zoom(){return zoom;},get zone(){return viewZone;},setZone:setMapZone,resize:syncCanvasResolution,mapView:currentMapView,panBy,zoomAt,visibleResidents:[...VISIBLE_RESIDENTS]};
 syncTime();frameHandle=requestAnimationFrame(frame);
 })();
