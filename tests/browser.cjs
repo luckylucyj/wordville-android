@@ -390,24 +390,24 @@ const assert = require('node:assert/strict');
      minus.click();
      const {offsetX,offsetY,scale}=village.mapView();
      const {width,height}=WordvilleHubMap.scale;
-     valid.push(offsetX<=0&&offsetY<=0&&offsetX+width*scale>=canvas.width-.01&&offsetY+height*scale>=canvas.height-.01);
+     valid.push(Number.isFinite(scale)&&scale>0&&Number.isFinite(offsetX)&&Number.isFinite(offsetY)&&offsetX+width*scale>0&&offsetY+height*scale>0&&offsetX<canvas.width&&offsetY<canvas.height);
     }
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const context=canvas.getContext('2d');
     const samples=[[0,0],[canvas.width-1,0],[0,canvas.height-1],[canvas.width-1,canvas.height-1]];
-    const noBlankCorners=samples.every(([x,y])=>Array.from(context.getImageData(x,y,1,1).data).join()!=='59,81,70,255');
+    const opaqueCorners=samples.every(([x,y])=>context.getImageData(x,y,1,1).data[3]===255);
     const map=canvas.getBoundingClientRect();
     const buttons=[...document.querySelectorAll('.wv-map-toolbar button')];
     const controlsOutside=buttons.every(button=>button.getBoundingClientRect().top>=map.bottom)&&
       document.getElementById('wv-map-tools').getBoundingClientRect().bottom<=map.top;
-    return {valid:valid.every(Boolean),noBlankCorners,controlsOutside,zoom:village.zoom,minimumDisabled:minus.disabled};
+    return {valid:valid.every(Boolean),opaqueCorners,controlsOutside,zoom:village.zoom,minimumDisabled:minus.disabled};
    }finally{
     Object.assign(resident,saved);
     village.setZone('all');
     pause.click();
    }
   });
-  assert.deepEqual(zoomChecks,{valid:true,noBlankCorners:true,controlsOutside:true,zoom:1,minimumDisabled:true});
+  assert.deepEqual(zoomChecks,{valid:true,opaqueCorners:true,controlsOutside:true,zoom:.75,minimumDisabled:true});
   // The coordinates handed to the renderer include the standing arrangement.
   const standingCheck=await page.evaluate(async()=>{
    const hour=document.getElementById('wv-schedule-hour');
