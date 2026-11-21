@@ -127,8 +127,13 @@ public class VillageSmokeTest {
      const {width,height}=WordvilleHubMap.scale;
      const controlsOutside=[...document.querySelectorAll('.wv-map-toolbar button')].every(
       button=>button.getBoundingClientRect().top>=canvas.getBoundingClientRect().bottom);
-     return controlsOutside&&zoomOut.disabled&&village.zoom===1&&offsetX<=0&&offsetY<=0&&
-      offsetX+width*scale>=canvas.width-.01&&offsetY+height*scale>=canvas.height-.01;
+     // The 0.75x contain view may show letterboxed margins. Verify that the
+     // map stays visible and the zoom controls remain accessible instead of
+     // requiring an obsolete 1x cover crop.
+     return controlsOutside&&zoomOut.disabled&&village.zoom===0.75&&
+      Number.isFinite(scale)&&scale>0&&Number.isFinite(offsetX)&&Number.isFinite(offsetY)&&
+      offsetX<canvas.width&&offsetY<canvas.height&&
+      offsetX+width*scale>0&&offsetY+height*scale>0;
     }finally{
      Object.assign(resident,previous);
      village.setZone('all');
