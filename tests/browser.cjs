@@ -96,9 +96,10 @@ const assert = require('node:assert/strict');
    await otherApp.goto('about:blank');
    await otherApp.bringToFront();
    await page.bringToFront();
+   const before=await page.evaluate(()=>WordvilleVillage.lastFrameAt);
    await page.evaluate(()=>document.dispatchEvent(new Event('wordville-app-resume')));
-   await page.waitForFunction(()=>WordvilleVillage?.lastFrameAgeMs<2200&&
-     globalThis.WordvilleShell?.screen==='town',{timeout:5000});
+   await page.waitForFunction(before=>WordvilleVillage?.lastFrameAt>before&&
+     WordvilleVillage.lastFrameAgeMs<2200&&globalThis.WordvilleShell?.screen==='town',before,{timeout:5000});
    assert.ok(await page.evaluate(()=>Number.isFinite(WordvilleVillage.lastFrameAgeMs)),
      'App return must produce a fresh painted frame');
    assert.equal(await page.locator('#wv-bottom-dock [data-screen="learn"]').isEnabled(),true);
