@@ -85,3 +85,19 @@
 .wv-search-pagination button{display:block;width:100%;min-width:0!important;max-width:100%;padding:9px 4px!important;font-size:12px;white-space:normal;overflow-wrap:break-word;box-shadow:none}
 .wv-search-page-number{min-width:0;text-align:center;white-space:normal;overflow-wrap:anywhere;font-size:11px}
 @media(max-width:350px){.wv-search-pagination{grid-template-columns:minmax(0,1fr) 60px minmax(0,1fr);gap:4px}}
+
+/* Secure Pixabay key settings stay readable in compact Android WebView dialogs. */
+#wv-memory-pixabay-field{min-width:0;max-width:100%;padding:7px 0}
+#wv-memory-pixabay-field>label:first-child{display:block;max-width:100%;font-size:12px}
+#wv-memory-pixabay-key{display:block;width:100%;min-width:0;max-width:100%;margin-top:4px}
+#wv-memory-pixabay-field .wv-memory-key-remember{
+ display:flex;align-items:flex-start;gap:8px;margin:8px 0;
+ font-size:12px;line-height:1.5;overflow-wrap:anywhere
+}
+#wv-memory-pixabay-remember{flex:0 0 18px;width:18px;height:18px;margin:1px 0 0}
+#wv-memory-pixabay-field .wv-memory-external-links{align-items:center;gap:8px}
+#wv-memory-pixabay-field .wv-memory-external-links button{
+ max-width:100%;min-width:0;padding:7px 9px;white-space:normal;
+ overflow-wrap:anywhere;font-size:12px
+}
+#wv-memory-pixabay-status{font-size:12px;line-height:1.55;overflow-wrap:anywhere}
