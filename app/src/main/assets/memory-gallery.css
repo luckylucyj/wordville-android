@@ -71,3 +71,17 @@
 .wv-memory-actions{display:grid;grid-template-columns:1fr;gap:7px}
 .wv-memory-actions>#wv-memory-open-archive{order:0}
 .wv-memory-actions>#wv-memory-search-toggle{order:1}
+
+/* Narrow Android dialogs: keep search page controls inside the card width. */
+#word-dialog,#word-dialog *{box-sizing:border-box}
+#wv-memory-search-panel{max-width:100%;min-width:0;overflow-x:hidden}
+.wv-memory-source-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+.wv-memory-source-row label{flex:1 1 150px;margin:0}
+.wv-memory-source-row select{width:100%;min-width:0;max-width:100%}
+.wv-memory-external-links{display:flex;flex-wrap:wrap;gap:9px;margin:7px 0}
+.wv-memory-external-links a,.wv-search-credit{color:#235f53;text-decoration:underline;overflow-wrap:anywhere;font-size:11px}
+#wv-memory-pixabay-field[hidden]{display:none}
+.wv-search-pagination{display:grid;grid-template-columns:minmax(0,1fr) minmax(66px,auto) minmax(0,1fr);width:100%;max-width:100%;gap:6px;overflow:hidden}
+.wv-search-pagination button{display:block;width:100%;min-width:0!important;max-width:100%;padding:9px 4px!important;font-size:12px;white-space:normal;overflow-wrap:break-word;box-shadow:none}
+.wv-search-page-number{min-width:0;text-align:center;white-space:normal;overflow-wrap:anywhere;font-size:11px}
+@media(max-width:350px){.wv-search-pagination{grid-template-columns:minmax(0,1fr) 60px minmax(0,1fr);gap:4px}}

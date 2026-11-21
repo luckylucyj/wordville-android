@@ -5,7 +5,8 @@
  const databaseName='wordville-memory-album-v1';
  const types=new Set(['image/png','image/jpeg','image/webp','image/gif']);
  const maximum=5*1024*1024;
- const searchPageSize=10,searchResultLimit=200,searchBatchSize=50;
+ const searchPageSize=10,searchResultLimit=60,searchBatchSize=50;
+ const searchCache=new Map();
  let connection=null,selectedId=null,wordUrls=[],archiveUrls=[],queryResults=[],searchSerial=0,searchPage=0,archiveSerial=0;
  let returnToCard=null;
  const labels={
@@ -83,7 +84,7 @@
   }
  }
  function safeLink(url){
-  try{const parsed=new URL(url);return parsed.protocol==='https:'&&parsed.hostname==='commons.wikimedia.org'?parsed.href:null;}catch{return null;}
+  try{const parsed=new URL(url);return parsed.protocol==='https:'&&!parsed.username&&!parsed.password?parsed.href:null;}catch{return null;}
  }
  function photoCard(item,urls,action){
   const article=document.createElement('article');article.className='wv-photo-card';
@@ -129,7 +130,8 @@
   selectedId=null;queryResults=[];searchSerial++;revoked(wordUrls);
   $('wv-memory-search-results').replaceChildren();
   $('wv-memory-search-panel').hidden=true;
-  $('wv-memory-search-query').value=w.word;
+  $('wv-memory-search-query').value=suggestImageQuery(w);
+  externalLinks($('wv-memory-search-query').value);
   $('wv-memory-search-status').textContent='';
   try{
    await ensurePrimary(w,legacyBlob);
@@ -265,18 +267,21 @@
   const temporary=document.createElement('div');
   temporary.textContent=String(text||'');return temporary.textContent.slice(0,150);
  }
+
  function approvedMediaUrl(href){
   try{
    const u=new URL(href);
-   return u.protocol==='https:'&&['thumb.wikimedia.org','upload.wikimedia.org'].includes(u.hostname)&&
-    u.pathname.startsWith('/wikipedia/commons/')?u:null;
+   if(u.protocol!=='https:')return null;
+   if(['thumb.wikimedia.org','upload.wikimedia.org'].includes(u.hostname)&&u.pathname.startsWith('/wikipedia/commons/'))return u;
+   if(u.hostname==='api.openverse.org'&&/^\/v1\/images\/[0-9a-f-]{36}\/thumb\/?$/.test(u.pathname))return u;
+   if(u.hostname==='cdn.pixabay.com'&&u.pathname.startsWith('/photo/'))return u;
+   return null;
   }catch{return null;}
  }
  function imageSources(result){
-  const original=approvedMediaUrl(result.thumbnail);
-  if(!original)return [];
+  const original=approvedMediaUrl(result.thumbnail);if(!original)return [];
   const sources=[original.href];
-  if(original.pathname.includes('/thumb/')){
+  if(original.pathname.includes('/thumb/')&&original.hostname.endsWith('wikimedia.org')){
    const backup=new URL(original.href);
    backup.hostname=original.hostname==='thumb.wikimedia.org'?'upload.wikimedia.org':'thumb.wikimedia.org';
    sources.push(backup.href);
@@ -285,20 +290,19 @@
  }
  async function fetchImage(result){
   const urls=imageSources(result);
-  if(!urls.length)throw new Error('허용되지 않은 이미지 URL입니다.');
-  let errorMessage='';
-  for(const href of urls){
+  if(!urls.length)throw new Error('지원하지 않는 이미지 주소입니다.');
+  let problem='';
+  for(const url of urls){
    try{
-    const response=await fetch(href,{credentials:'omit',cache:'default'});
-    if(!response.ok){errorMessage='이미지 서버 응답 '+response.status;continue;}
-    const contentLength=Number(response.headers.get('content-length')||0);
-    if(contentLength>maximum)throw new Error('이미지가 5MB를 초과합니다.');
+    const response=await fetch(url,{credentials:'omit',cache:'default'});
+    if(!response.ok){problem='이미지 서버 응답 '+response.status;continue;}
+    if(Number(response.headers.get('content-length')||0)>maximum)throw Error('이미지가 5MB를 초과합니다.');
     const blob=await response.blob();
-    if(!valid(blob)){errorMessage='파일 형식 또는 5MB 용량 제한을 확인하세요.';continue;}
-    return blob;
-   }catch(error){errorMessage=error.message||'이미지 네트워크 오류';}
+    if(valid(blob))return blob;
+    problem='이미지 형식 또는 용량이 지원되지 않습니다.';
+   }catch(e){problem=e.message||'이미지 네트워크 오류';}
   }
-  throw new Error(errorMessage||'이미지 서버에서 파일을 가져올 수 없습니다.');
+  throw new Error(problem||'이미지 가져오기 실패. 원본 사이트에서 파일을 저장한 뒤 첨부해 주세요.');
  }
 
  function renderResults(w,results){
@@ -356,69 +360,120 @@
     try{
      const blob=await fetchImage(result);
      const image=new File([blob],result.title.replace(/^File:/,'').slice(0,100),{type:blob.type});
-     image.source='Wikimedia Commons';image.sourceUrl=result.sourceUrl;image.license=result.license;image.author=result.author;
+     image.source=result.source||'Wikimedia Commons';image.sourceUrl=result.sourceUrl;image.license=result.license;image.author=result.author;
      await addFiles([image],w);
      $('wv-memory-search-status').textContent='기억 이미지로 저장했습니다.';
     }catch(error){$('wv-memory-search-status').textContent='저장하지 못했습니다: '+error.message;}
     finally{save.disabled=false;}
    });
-   article.append(img,rights,save);destination.append(article);
+   
+   const origin=document.createElement('a');origin.className='wv-search-credit';origin.textContent='출처·라이선스 확인';
+   const href=safeLink(result.sourceUrl);origin.hidden=!href;
+   if(href){origin.href=href;origin.target='_blank';origin.rel='noopener noreferrer';}
+   article.append(img,rights,origin,save);destination.append(article);
   }
   destination.append(pagination());
  }
+
+ const senseHints={
+  bank:[[/강둑|강가|제방/,'river bank'],[/은행|금융/,'bank building']],
+  bat:[[/박쥐/,'bat animal'],[/방망이|야구/,'baseball bat']],
+  bark:[[/수피|나무껍질/,'tree bark'],[/짖/,'barking dog']],
+  spring:[[/봄/,'spring flowers'],[/용수철|스프링/,'metal coil spring']],
+  seal:[[/바다표범|물개/,'seal animal'],[/도장|봉인/,'wax seal']],
+  match:[[/성냥/,'matchsticks'],[/경기|시합/,'sports match']],
+  plant:[[/공장/,'industrial plant'],[/식물/,'green plant']]
+ };
+ function suggestImageQuery(w){
+  const word=String(w.word||'').trim();
+  const meaning=String(w.meaning||'');
+  return senseHints[word.toLowerCase()]?.find(([re])=>re.test(meaning))?.[1]||word;
+ }
+ const sourceSelect=$('wv-memory-search-source'),pixabayKey=$('wv-memory-pixabay-key');
+ sourceSelect.addEventListener('change',()=>{
+  $('wv-memory-pixabay-field').hidden=sourceSelect.value!=='pixabay';
+ });
+ function externalLinks(q){
+  const term=encodeURIComponent(q);
+  $('wv-memory-google-link').href='https://www.google.com/search?tbm=isch&q='+term;
+  $('wv-memory-pixabay-link').href='https://pixabay.com/images/search/'+term+'/';
+ }
+ async function openverseResults(query,signal){
+  const params=new URLSearchParams({q:query,page_size:String(searchResultLimit),mature:'false'});
+  const response=await fetch('https://api.openverse.org/v1/images/?'+params,{signal,credentials:'omit'});
+  if(!response.ok)throw Error('Openverse 응답 '+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data.results))throw Error('Openverse 검색 형식 오류');
+  return data.results.filter(x=>!x.mature&&/^[a-f0-9-]{36}$/i.test(x.id||''))
+   .slice(0,searchResultLimit).map(x=>({
+    id:x.id,title:x.title||query,
+    thumbnail:'https://api.openverse.org/v1/images/'+x.id+'/thumb/',
+    sourceUrl:safeLink(x.foreign_landing_url)||'https://openverse.org/image/'+x.id,
+    license:[x.license?.toUpperCase(),x.license_version].filter(Boolean).join(' '),
+    author:String(x.creator||'').slice(0,120),source:'Openverse'
+   }));
+ }
+ async function commonsResults(query,signal){
+  const params=new URLSearchParams({action:'query',format:'json',formatversion:'2',generator:'search',
+   gsrsearch:query,gsrnamespace:'6',gsrlimit:String(searchBatchSize),gsrsort:'relevance',
+   prop:'imageinfo',iiprop:'url|mime|extmetadata|user',iiurlwidth:'800',origin:'*'});
+  const response=await fetch('https://commons.wikimedia.org/w/api.php?'+params,{signal,credentials:'omit'});
+  if(!response.ok)throw Error('Commons 응답 '+response.status);
+  const data=await response.json();
+  if(data.error)throw Error(data.error.info||'Commons 검색 오류');
+  return (Array.isArray(data.query?.pages)?data.query.pages:[])
+   .sort((x,y)=>(x.index??0)-(y.index??0))
+   .filter(x=>x.title&&types.has(x.imageinfo?.[0]?.mime)&&approvedMediaUrl(x.imageinfo?.[0]?.thumburl))
+   .map(x=>({title:x.title,thumbnail:x.imageinfo[0].thumburl,
+     sourceUrl:'https://commons.wikimedia.org/wiki/'+encodeURIComponent(x.title.replace(/ /g,'_')),
+     license:cleanMeta(x.imageinfo[0].extmetadata?.LicenseShortName?.value),
+     author:cleanMeta(x.imageinfo[0].user),source:'Wikimedia Commons'}));
+ }
+ async function pixabayResults(query,signal){
+  const key=pixabayKey.value.trim();
+  if(!key)throw Error('Pixabay API 키를 입력하세요. 키 없이 검색하려면 Openverse를 선택하세요.');
+  const params=new URLSearchParams({key,q:query,image_type:'all',safesearch:'true',per_page:String(searchBatchSize)});
+  const response=await fetch('https://pixabay.com/api/?'+params,{signal,credentials:'omit'});
+  if(!response.ok)throw Error('Pixabay 응답 '+response.status);
+  const data=await response.json();
+  return (Array.isArray(data.hits)?data.hits:[])
+   .filter(x=>approvedMediaUrl(x.webformatURL))
+   .map(x=>({title:x.tags||query,thumbnail:x.webformatURL,
+     sourceUrl:'https://pixabay.com/photos/id-'+x.id+'/',
+     license:'Pixabay Content License',author:String(x.user||''),source:'Pixabay'}));
+ }
+ let imageSearchController=null;
  async function search(w=active){
   if(!w)return;
-  const searchText=$('wv-memory-search-query').value.trim().slice(0,120);
-  if(!searchText){$('wv-memory-search-status').textContent='검색어를 입력하세요.';return;}
-  const serial=++searchSerial,button=$('wv-memory-search-submit');
+  const query=$('wv-memory-search-query').value.trim().slice(0,120);
+  if(!query){$('wv-memory-search-status').textContent='검색어를 입력하세요.';return;}
+  const serial=++searchSerial,button=$('wv-memory-search-submit'),source=sourceSelect.value;
+  imageSearchController?.abort();const controller=new AbortController();imageSearchController=controller;
   button.disabled=true;searchPage=0;queryResults=[];
-  $('wv-memory-search-status').textContent='Wikimedia Commons에서 여러 이미지를 검색 중…';
+  externalLinks(query);
+  $('wv-memory-search-status').textContent='이미지 검색 중…';
   $('wv-memory-search-results').replaceChildren();
-  let incomplete=false,problem='';
-  const results=[],seen=new Set();
-  let continuation=null;
+  const cacheKey=source+'|'+query.toLowerCase(),cache=searchCache.get(cacheKey);
   try{
-   for(let batch=0;batch<8&&results.length<searchResultLimit;batch++){
-    if(serial!==searchSerial||!current(w))return;
-    const params=new URLSearchParams({
-     action:'query',format:'json',formatversion:'2',generator:'search',
-     gsrsearch:searchText,gsrnamespace:'6',gsrlimit:String(searchBatchSize),gsrsort:'relevance',
-     prop:'imageinfo',iiprop:'url|mime|extmetadata|user',iiurlwidth:'800',origin:'*'
-    });
-    if(continuation)for(const [name,value] of Object.entries(continuation))params.set(name,String(value));
-    let data;
-    try{
-     const response=await fetch('https://commons.wikimedia.org/w/api.php?'+params.toString(),{credentials:'omit'});
-     if(!response.ok)throw new Error('검색 서비스 접속 실패 ('+response.status+')');
-     data=await response.json();
-     if(data.error)throw new Error(data.error.info||'검색 API 응답 오류');
-    }catch(error){
-     if(!results.length)throw error;
-     incomplete=true;problem=error.message||'일부 검색 결과를 불러오지 못했습니다.';break;
+   let results=source==='pixabay'?null:(cache&&Date.now()-cache.saved<600000?cache.results:null);
+   if(!results){
+    results=source==='commons'?await commonsResults(query,controller.signal)
+     :source==='pixabay'?await pixabayResults(query,controller.signal)
+     :await openverseResults(query,controller.signal);
+    if(source==='openverse'&&!results.length)results=await commonsResults(query,controller.signal);
+    if(source!=='pixabay'){
+     if(searchCache.size>12)searchCache.delete(searchCache.keys().next().value);
+     searchCache.set(cacheKey,{saved:Date.now(),results});
     }
-    if(serial!==searchSerial||!current(w))return;
-    const pages=Array.isArray(data.query?.pages)?data.query.pages:[];
-    pages.sort((a,b)=>(a.index??0)-(b.index??0));
-    for(const page of pages){
-     const info=page.imageinfo?.[0],title=page.title||'';
-     if(!title||seen.has(title)||!info||!types.has(info.mime)||!info.thumburl)continue;
-     seen.add(title);
-     results.push({title,thumbnail:info.thumburl,
-      sourceUrl:'https://commons.wikimedia.org/wiki/'+encodeURIComponent(title.replace(/ /g,'_')),
-      license:cleanMeta(info.extmetadata?.LicenseShortName?.value),author:cleanMeta(info.user)});
-     if(results.length>=searchResultLimit)break;
-    }
-    $('wv-memory-search-status').textContent=results.length+'개 이미지 검색됨 · 추가 결과 확인 중…';
-    continuation=data.continue&&typeof data.continue==='object'?data.continue:null;
-    if(!continuation)break;
    }
    if(serial!==searchSerial||!current(w))return;
    queryResults=results;renderResults(w,results);
-   if(incomplete)$('wv-memory-search-status').textContent=results.length+'개 표시 중 · 추가 검색 실패: '+problem;
   }catch(error){
-   if(serial===searchSerial&&current(w))$('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 인터넷 연결을 확인해 주세요.';
-  }finally{if(serial===searchSerial)button.disabled=false;}
+   if(serial===searchSerial&&current(w)&&error.name!=='AbortError')
+    $('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 다른 검색 출처나 외부 검색을 이용해 주세요.';
+  }finally{if(serial===searchSerial){button.disabled=false;imageSearchController=null;}}
  }
+
  $('wv-memory-search-toggle').addEventListener('click',()=>{
   const panel=$('wv-memory-search-panel');panel.hidden=!panel.hidden;
   $('wv-memory-search-toggle').setAttribute('aria-expanded',String(!panel.hidden));
@@ -461,7 +516,7 @@
  $('wv-gallery-date').addEventListener('change',renderArchive);
  $('wv-gallery-refresh').addEventListener('click',renderArchive);
  function clear(){
-  searchSerial++;selectedId=null;queryResults=[];searchPage=0;
+  searchSerial++;imageSearchController?.abort();selectedId=null;queryResults=[];searchPage=0;
   revoked(wordUrls);
   $('wv-memory-photo-list').replaceChildren();
   $('wv-memory-search-results').replaceChildren();
