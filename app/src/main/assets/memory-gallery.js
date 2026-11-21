@@ -394,6 +394,26 @@
  sourceSelect.addEventListener('change',()=>{
   $('wv-memory-pixabay-field').hidden=sourceSelect.value!=='pixabay';
  });
+ function pixabayApiError(status){
+  if(status===400||status===401||status===403)return 'Pixabay API 키를 확인하세요 (HTTP '+status+').';
+  if(status===429)return 'Pixabay 요청 한도를 초과했습니다 (HTTP 429).';
+  return 'Pixabay 서버 응답 '+status;
+ }
+ $('wv-memory-pixabay-test').addEventListener('click',async()=>{
+  const status=$('wv-memory-pixabay-status'),button=$('wv-memory-pixabay-test');
+  const key=pixabayKey.value.trim();
+  if(!key){status.textContent='Pixabay API 키를 먼저 입력해 주세요.';pixabayKey.focus();return;}
+  button.disabled=true;status.textContent='Pixabay 연결을 확인하는 중…';
+  try{
+   const params=new URLSearchParams({key,q:'flower',per_page:'3',safesearch:'true'});
+   const response=await fetch('https://pixabay.com/api/?'+params,{credentials:'omit'});
+   if(!response.ok)throw Error(pixabayApiError(response.status));
+   const data=await response.json();
+   if(!Array.isArray(data.hits))throw Error('Pixabay 응답 형식이 올바르지 않습니다.');
+   status.textContent='Pixabay API 연결 성공. 검색 출처를 Pixabay로 두고 단어를 검색하세요.';
+  }catch(error){status.textContent='연결 실패: '+(error.message||'네트워크 오류')+' · 키 또는 네트워크 연결을 확인하세요.';}
+  finally{button.disabled=false;}
+ });
  function externalLinks(q){
   const term=encodeURIComponent(q);
   $('wv-memory-google-link').href='https://www.google.com/search?tbm=isch&q='+term;
@@ -437,7 +457,7 @@
   if(!key)throw Error('Pixabay API 키를 입력하세요. 키 없이 검색하려면 Openverse를 선택하세요.');
   const params=new URLSearchParams({key,q:query,image_type:'all',safesearch:'true',per_page:String(searchBatchSize)});
   const response=await fetch('https://pixabay.com/api/?'+params,{signal,credentials:'omit'});
-  if(!response.ok)throw Error('Pixabay 응답 '+response.status);
+  if(!response.ok)throw Error(pixabayApiError(response.status));
   const data=await response.json();
   return (Array.isArray(data.hits)?data.hits:[])
    .filter(x=>approvedMediaUrl(x.webformatURL)||approvedMediaUrl(x.previewURL))
@@ -475,8 +495,14 @@
    if(!results){
     if(source==='commons')results=await commonsResults(query,controller.signal);
     else if(source==='pixabay'){
-     if(pixabayKey.value.trim())results=await pixabayResults(query,controller.signal);
-     else{
+     if(pixabayKey.value.trim()){
+      try{results=await pixabayResults(query,controller.signal);}
+      catch(pixabayError){
+       if(pixabayError.name==='AbortError')throw pixabayError;
+       results=await commonsResults(query,controller.signal);
+       explanation='Pixabay 검색 연결 실패 ('+pixabayError.message+')로 Wikimedia Commons 이미지를 표시합니다. API 키를 확인하고 연결 테스트를 실행하세요. ';
+      }
+     }else{
       results=await commonsResults(query,controller.signal);
       explanation='Pixabay API는 계정별 키가 필요합니다. 키 없이 Wikimedia Commons 이미지를 표시합니다. Pixabay 원본은 아래 사이트 링크에서 검색할 수 있습니다. ';
      }
