@@ -88,6 +88,21 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleShell.screen),'town');
   assert.equal(await page.evaluate(()=>WordvilleVillage.residents.length),22);
   assert.ok(await page.evaluate(()=>document.getElementById('village-canvas').width>20));
+  // Switching to another app (background tab in browser QA) and back must
+  // paint a NEW village frame, without resetting the current screen.
+  await page.waitForFunction(()=>WordvilleVillage?.lastFrameAgeMs<2200);
+  const otherApp=await browser.newPage();
+  try {
+   await otherApp.goto('about:blank');
+   await otherApp.bringToFront();
+   await page.bringToFront();
+   await page.evaluate(()=>document.dispatchEvent(new Event('wordville-app-resume')));
+   await page.waitForFunction(()=>WordvilleVillage?.lastFrameAgeMs<2200&&
+     globalThis.WordvilleShell?.screen==='town',{timeout:5000});
+   assert.ok(await page.evaluate(()=>Number.isFinite(WordvilleVillage.lastFrameAgeMs)),
+     'App return must produce a fresh painted frame');
+   assert.equal(await page.locator('#wv-bottom-dock [data-screen="learn"]').isEnabled(),true);
+  } finally {await otherApp.close();}
 
 
   assert.equal(await page.evaluate(()=>document.querySelector('#village-canvas').getBoundingClientRect().height>innerHeight*.68),true);
