@@ -366,7 +366,7 @@ public class MainActivity extends Activity {
    if(isCurrentCheck(expected,checkId))recoverScreen("마을 화면이 정상적으로 열리지 않았습니다.");
   };
   mainHandler.postDelayed(screenTimeout,timeoutMs);
-  checkScreen(expected,checkId);
+  checkScreen(expected,checkId,true);
  }
 
  private boolean isCurrentCheck(WebView expected,long checkId){
@@ -379,30 +379,41 @@ public class MainActivity extends Activity {
   screenTimeout=null;
  }
 
- private void checkScreen(WebView expected,long checkId){
+ private void checkScreen(WebView expected,long checkId,boolean signalResume){
   if(!isCurrentCheck(expected,checkId))return;
   if(!pageReady){
-   mainHandler.postDelayed(()->checkScreen(expected,checkId),250);
+   mainHandler.postDelayed(()->checkScreen(expected,checkId,signalResume),250);
    return;
   }
-  String probe="(function(){document.dispatchEvent(new Event('wordville-app-resume'));"
+  // A resume signal resets the village animation loop. Send it ONCE per
+  // foreground cycle, not on each 250ms poll: repeated cancellation of
+  // requestAnimationFrame can prevent the first new frame from being drawn.
+  String probe="(function(){"
+    +(signalResume?"document.dispatchEvent(new Event('wordville-app-resume'));":"")
     +"var cover=document.getElementById('wv-loading-cover'),dock=document.getElementById('wv-bottom-dock');"
-    +"return !!window.WordvilleShell && !!cover && cover.hidden && !!dock && dock.getBoundingClientRect().height>0;})()";
-  expected.evaluateJavascript(probe,result->{
-   if(!isCurrentCheck(expected,checkId))return;
-   if(!"true".equals(result)){
-    mainHandler.postDelayed(()->checkScreen(expected,checkId),250);
-    return;
-   }
-   expected.postVisualStateCallback(checkId,new WebView.VisualStateCallback(){
-    @Override public void onComplete(long requestId){
-     if(!isCurrentCheck(expected,requestId))return;
-     expected.invalidate();
-     recoveryAttempted=false;
-     cancelScreenCheck();
+    +"var village=window.WordvilleVillage;"
+    +"return !!window.WordvilleShell && !!cover && cover.hidden && !!dock"
+    +" && dock.getBoundingClientRect().height>0 && !!village"
+    +" && village.lastFrameAgeMs<2200;})()";
+  try{
+   expected.evaluateJavascript(probe,result->{
+    if(!isCurrentCheck(expected,checkId))return;
+    if(!"true".equals(result)){
+     mainHandler.postDelayed(()->checkScreen(expected,checkId,false),250);
+     return;
     }
+    expected.postVisualStateCallback(checkId,new WebView.VisualStateCallback(){
+     @Override public void onComplete(long requestId){
+      if(!isCurrentCheck(expected,requestId))return;
+      expected.postInvalidateOnAnimation();
+      recoveryAttempted=false;
+      cancelScreenCheck();
+     }
+    });
    });
-  });
+  }catch(RuntimeException failed){
+   if(isCurrentCheck(expected,checkId))recoverScreen("앱 복귀 후 화면 연결이 끊어졌습니다.");
+  }
  }
 
  private void closeWebView(){
@@ -464,6 +475,12 @@ public class MainActivity extends Activity {
    createWebView();
   }else{
    web.onResume();
+   // Wake the WebView renderer and request a fresh compositor frame without
+   // clearing the user's local storage or current word-study position.
+   web.resumeTimers();
+   web.setVisibility(View.VISIBLE);
+   web.requestLayout();
+   web.postInvalidateOnAnimation();
    watchScreen(pageReady?RESUME_TIMEOUT_MS:STARTUP_TIMEOUT_MS);
   }
  }
