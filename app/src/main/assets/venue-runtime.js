@@ -213,8 +213,7 @@ function draw(){
   const height=(a.id==='cat'||a.id==='dog')?Math.round(residentHeight*.52):(hasHiRes?residentHeight:Math.round(residentHeight*.78)),width=height;
   // Residents with 128px/64px action artwork share the same stable world-space foot anchor.
   const action=(hasHiRes||root.WordvilleChiikawa?.has?.(a.id))&&!moving&&a.activityState==='doing'
-   ?(/쓰기|필기|기록|집필|일기|편지|메모|공부/.test(a.behaviorText||'')?'write':
-     /대화|이야기|잡담/.test(a.behaviorText||'')?'talk':
+   ?(/대화|이야기|잡담/.test(a.behaviorText||'')?'talk':
      (/식사|음료|커피|독서|읽기|앉|휴식|쉬기/.test(a.behaviorText||'')?'sit':'idle')):undefined;
   if(!walk?.paint(ctx,a,x,y,{height,width,walking:moving,action})){
    if(a.id==='cat'||a.id==='dog')pixelCreature(a,x,y,Math.min(48,height));

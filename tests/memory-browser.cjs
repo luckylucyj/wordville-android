@@ -62,6 +62,7 @@ const assert=require('node:assert/strict');
   await page.route('https://thumb.wikimedia.org/**',route=>route.fulfill({
    status:200,contentType:'image/png',headers:{'access-control-allow-origin':'*'},body:png
   }));
+  await page.locator('#wv-memory-search-source').selectOption('commons');
   await page.locator('#wv-memory-search-query').fill('comprehensive');
   await page.locator('#wv-memory-search-submit').click();
   await page.waitForFunction(()=>document.querySelectorAll('.wv-search-result').length===1);
@@ -71,6 +72,27 @@ const assert=require('node:assert/strict');
   await page.locator('.wv-search-result button').click();
   await page.waitForFunction(()=>document.querySelector('#wv-memory-count').textContent.includes('3장'));
   assert.equal(await page.evaluate(async()=>{const items=await WordvilleGallery.getAll();return items.some(i=>i.source==='Wikimedia Commons'&&i.license==='CC BY-SA 4.0'&&i.sourceUrl.startsWith('https://commons.wikimedia.org/'));}),true);
+  // Multi-page Openverse search must remain inside a 320px device viewport.
+  await page.route('https://api.openverse.org/v1/images/?**',route=>route.fulfill({
+   status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},
+   body:JSON.stringify({results:Array.from({length:24},(_,i)=>({
+    id:'00000000-0000-4000-8000-'+String(i).padStart(12,'0'),
+    title:'Photo '+i,license:'cc0',license_version:'1.0',creator:'Photo creator',
+    foreign_landing_url:'https://example.org/photo/'+i,mature:false}))})
+  }));
+  await page.locator('#wv-memory-search-source').selectOption('openverse');
+  await page.locator('#wv-memory-search-query').fill('bank');
+  await page.locator('#wv-memory-search-submit').click();
+  await page.waitForFunction(()=>document.querySelectorAll('.wv-search-result').length===10);
+  await page.setViewportSize({width:320,height:740});
+  const pager=await page.locator('.wv-search-pagination').first().evaluate(nav=>{
+   const a=nav.getBoundingClientRect();
+   return {left:a.left,right:a.right,buttons:[...nav.querySelectorAll('button')].map(b=>{const r=b.getBoundingClientRect();return {left:r.left,right:r.right};})};
+  });
+  assert.ok(pager.buttons.every(b=>b.left>=pager.left-1&&b.right<=pager.right+1),'image pagination buttons must not overflow');
+  await page.locator('.wv-search-pagination').first().locator('button').last().click();
+  await page.waitForFunction(()=>document.querySelector('.wv-search-page-number')?.textContent.includes('2 / 3'));
+  await page.setViewportSize({width:390,height:844});
   await page.locator('#remove-image').click();
   await page.waitForFunction(()=>document.querySelector('#wv-memory-count').textContent.includes('2장'));
   await page.locator('#close-dialog').click();

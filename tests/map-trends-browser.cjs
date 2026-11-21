@@ -34,6 +34,15 @@ const snapshot={schema:1,updatedAt:day+'T11:00:00Z',
    assert.deepEqual(labels,expected,lang);
   }
   await page.evaluate(()=>WordvilleShell.activate('town'));
+  // On mobile, 1x uses contain rather than cropping the map.
+  const zoomLimits=await page.evaluate(()=>{
+   const v=WordvilleVillage;
+   v.zoomAt(.75);const low=v.zoom;
+   v.zoomAt(3);const high=v.zoom;
+   v.zoomAt(1);return {low,high,defaultScale:v.mapView().scale};
+  });
+  assert.equal(zoomLimits.low,.75);
+  assert.equal(zoomLimits.high,3);
   const world=await page.evaluate(()=>{
    const v=WordvilleVillage;
    v.zoomAt(1.7);

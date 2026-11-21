@@ -3,7 +3,7 @@
 const M=VillageModel,S=globalThis.WordvilleSchedule,canvas=document.getElementById('village-canvas'),ctx=canvas.getContext('2d');
 const panel=document.getElementById('village-dialogue'),feed=document.getElementById('village-feed');
 const zoomIn=document.getElementById('zoom-in'),zoomOut=document.getElementById('zoom-out');
-const MIN_ZOOM=1,MAX_ZOOM=2,ZOOM_STEP=.25;
+const MIN_ZOOM=.75,MAX_ZOOM=3,ZOOM_STEP=.25;
 const residents=M.freshResidents();let mode='auto',schedulePreview='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day',viewZone='all',followId=null,frameHandle=null,lastDrawAt=0,panX=0,panY=0;
 const scheduleMinute=()=>schedulePreview==='auto'?S.minuteNow():Number(schedulePreview)*60;
 
@@ -55,8 +55,11 @@ function sprite(p){
  // Alex previews the hand-painted native 64px animation; others remain 48px.
  const hasHiRes=p.id==='alex'||globalThis.WordvilleResidents128?.has?.(p.id);
  const width=hasHiRes?64:48,height=width;
- const writingBoard=p.atVenue&&p.schedulePlace==='square'&&!walking&&!p.chat&&
-  (S.hourOf(scheduleMinute())+p.id.length)%3===0;
+ const board=M.bulletin;
+ const nearBoard=board&&Math.abs(p.x-(board.x+board.width/2))<37&&
+  p.y>=board.anchorY-3&&p.y<=board.anchorY+46;
+ const writingBoard=nearBoard&&p.atVenue&&p.schedulePlace==='square'&&
+  /게시판|게시글|공지 작성/.test(p.activity||'')&&!walking&&!p.chat;
  const action=(hasHiRes||globalThis.WordvilleChiikawa?.has?.(p.id))&&!walking
   ?(p.chat>0?'talk':writingBoard?'write':undefined):undefined;
  if(globalThis.WordvilleWalk?.paint(ctx,p,x,y,{width,height,walking,action})){}else if(index!==undefined&&img?.complete&&img.naturalWidth===2560&&img.naturalHeight===768){
@@ -234,26 +237,33 @@ function setZoom(value){
 function currentMapView(){
  const {width:mapWidth,height:mapHeight}=globalThis.WordvilleHubMap.scale;
  const {width,height}=canvas;
- const cover=Math.max(width/mapWidth,height/mapHeight);
- const scale=cover*(viewZone==='all'?1:1.25)*zoom;
+ // Fit the entire map at 1x. Cover cropped the map on narrow screens.
+ const fit=Math.min(width/mapWidth,height/mapHeight);
+ const scale=fit*(viewZone==='all'?1:1.25)*zoom;
  const follow=followId?residents.find(p=>p.id===followId):null;
  const target=!follow||!follow.atVenue?follow:
   M.outdoorPlaces.has(follow.schedulePlace)?follow:null;
  const centerX=target?.x??mapWidth/2;
  const centerY=target?target.y-42:MAP_ZONES[viewZone];
- // Following a resident or selecting a zone must keep every viewport edge inside the map.
- const offsetX=Math.min(0,Math.max(width-mapWidth*scale,width/2-centerX*scale+panX));
- const offsetY=Math.min(0,Math.max(height-mapHeight*scale,height/2-centerY*scale+panY));
+ const clampAxis=(size,worldSize,desired)=>{
+  const displayed=worldSize*scale;
+  return displayed<=size?(size-displayed)/2:Math.min(0,Math.max(size-displayed,desired));
+ };
+ const offsetX=clampAxis(width,mapWidth,width/2-centerX*scale+panX);
+ const offsetY=clampAxis(height,mapHeight,height/2-centerY*scale+panY);
  return {scale,offsetX,offsetY};
 }
 function panBy(dx,dy){
  if(zoom<=MIN_ZOOM)return currentMapView();
  const old=currentMapView(),{width:mapW,height:mapH}=globalThis.WordvilleHubMap.scale;
- const wantedX=Math.max(canvas.width-mapW*old.scale,Math.min(0,old.offsetX+dx));
- const wantedY=Math.max(canvas.height-mapH*old.scale,Math.min(0,old.offsetY+dy));
+ const clamp=(size,content,value)=>content<=size?(size-content)/2:
+  Math.max(size-content,Math.min(0,value));
+ const wantedX=clamp(canvas.width,mapW*old.scale,old.offsetX+dx);
+ const wantedY=clamp(canvas.height,mapH*old.scale,old.offsetY+dy);
  panX+=wantedX-old.offsetX;panY+=wantedY-old.offsetY;followId=null;
  return currentMapView();
 }
+
 function zoomAt(next,x=canvas.width/2,y=canvas.height/2){
  const old=currentMapView();
  const point={x:(x-old.offsetX)/old.scale,y:(y-old.offsetY)/old.scale};
@@ -266,7 +276,7 @@ function zoomAt(next,x=canvas.width/2,y=canvas.height/2){
 }
 function setMapZone(zone){
  if(!Object.hasOwn(MAP_ZONES,zone))return;
- viewZone=zone;setZoom(MIN_ZOOM);panX=0;panY=0;followId=null;
+ viewZone=zone;setZoom(1);panX=0;panY=0;followId=null;
  document.querySelectorAll('[data-map-zone]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mapZone===zone)));
 }
 let showMapCollision=false;

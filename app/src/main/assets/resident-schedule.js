@@ -86,56 +86,56 @@ const BLOCKS={
   [0,'home','잠자기'],[9,'square','아침 산책'],
   [10,'museum','전시품 둘러보기'],[12,'burger','점심 식사'],
   [13,'library','모험 소설 읽기'],[15,'park','산책과 친구 만나기'],
-  [17,'square','주민들과 게임'],[20,'pub','친구들과 대화'],
+  [17,'square','게시판에 새 공고 작성'],[20,'pub','친구들과 대화'],
   [23,'home','잠자기']],
  emily:[
   [0,'home','잠자기'],[7,'workshop','옷감 재단과 재봉'],
   [10,'market','원단과 소품 구입'],[12,'cafe','점심 식사'],
   [13,'workshop','옷 수선과 제작'],[17,'icecream','휴식과 디저트'],
-  [18,'square','주민 행사 준비'],[20,'pub','친구들과 저녁'],
+  [18,'square','게시판에 주민 행사 안내 작성'],[20,'pub','친구들과 저녁'],
   [22,'home','옷 정리 후 취침']],
  chiikawa:[
   [0,'home','잠자기'],[6,'home',mascotActivities.study],[7,'park',mascotActivities.weed],
-  ...daytime('chiikawa',['햄버거 메뉴 살펴보기','햄버거 먹기','따뜻한 빵과 감자튀김 정리']),
+  ...daytime('chiikawa',["햄버거 가게 개점과 재료 준비","손님 주문받고 햄버거 조리","조리대 청소와 손님 응대"]),
   [17,'park',mascotActivities.weed],[18,'market','집에 가져갈 간식 고르기'],
   [19,'home',mascotActivities.study],[21,'home','간식 정리 후 취침']],
  hachiware:[
   [0,'home','잠자기'],[6,'home',mascotActivities.cook],[7,'park',mascotActivities.photo],
-  ...daytime('hachiware',['오늘의 아이스크림 맛 살펴보기','아이스크림 맛보기','새 맛을 친구에게 추천하기']),
+  ...daytime('hachiware',["아이스크림 재료와 냉동고 점검","아이스크림 만들고 손님 주문받기","새 메뉴 개발과 매장 정리"]),
   [17,'square',mascotActivities.patrol],[18,'park',mascotActivities.photo],
   [19,'home',mascotActivities.cook],[21,'home','일기 쓰고 취침']],
  usagi:[
   [0,'home','잠자기'],[7,'park','뜀뛰기'],
-  ...daytime('usagi',['공방 재료 살펴보기','나무 장난감 만들기','장난감 색칠하고 공구 정리']),
+  ...daytime('usagi',["공방 개점과 나무 재료 확인","장난감 제작과 손님 판매","완성품 진열과 공구 정리"]),
   [17,'icecream','아이스크림 고르기'],[20,'park',mascotActivities.rap],[22,'home','간식 먹고 취침']],
  rakko:[
   [0,'home','잠자기'],[6,'gym','아침 체력 훈련'],
-  ...daytime('rakko',['화분 흙 상태 확인','온실 꽃과 나무 살펴보기','어린 식물에 물 주기']),
+  ...daytime('rakko',["식물원 개원과 화분 관리","관람객에게 식물 설명하기","온실 점검과 어린 식물 물 주기"]),
   [17,'park','후배와 산책'],[21,'home','장비 정리 후 취침']],
  kurimanju:[
   [0,'home','잠자기'],[8,'market','펍에 가져갈 간식 고르기'],
-  ...daytime('kurimanju',['펍의 테이블 정리','따뜻한 안주 맛보기','친구들과 펍에서 한잔하기']),
+  ...daytime('kurimanju',["펍 개점 준비와 테이블 점검","손님 맞이와 간단한 안주 만들기","음료 제공과 매장 정리"]),
   [18,'park','저녁 산책'],[22,'home','컵 정리 후 취침']],
  momo:[
   [0,'home','잠자기'],[7,'greenhouse','꽃에 물 주기'],
-  ...daytime('momo',['반납 도서 정리','창가에서 책 읽기','토시로에게 추천할 책 고르기']),
+  ...daytime('momo',["도서관 대출·반납 준비","대출·반납 접수와 열람실 안내","추천 도서 진열과 서가 정리"]),
   [17,'park','토시로와 약속한 산책'],[20,'home','편지를 쓰고 취침']],
  toshiro:[
   [0,'home','잠자기'],[6,'gym','아침 수련'],
-  ...daytime('toshiro',['준비 운동과 수영 연습','수영 후 휴식','기록 측정과 수건 정리']),
+  ...daytime('toshiro',["수영장 개장 전 안전 점검","수영 강습과 수영객 안전 관리","수영장 마감 점검과 수건 정리"]),
   [17,'park','모모와 약속한 산책'],[20,'home','하루를 기록하고 취침']],
  aizen:[
   [0,'home','잠자기'],[7,'library','서예 자료 읽기'],
-  ...daytime('aizen',['신간과 오래된 책 정리','서예 책 읽기','책 고르는 손님 돕기']),
+  ...daytime('aizen',["서점 개점과 신간 진열","책 추천과 손님 계산 돕기","서가 정리와 판매 마감"]),
   [17,'cafe','차를 마시며 생각 정리'],[22,'home','서예 연습 후 취침']],
  homura:[
   [0,'home','잠자기'],[7,'bookstore','전시 도록 고르기'],
-  ...daytime('homura',['오래된 시계 전시 관람','마도카가 좋아할 그림 찾아보기','마도카에게 줄 엽서 고르기']),
+  ...daytime('homura',["미술관 개관과 전시품 점검","관람객 안내와 전시 해설","작품 상태 확인과 전시 도록 정리"]),
   [17,'square','마도카에게 줄 엽서를 들고 먼저 기다리기'],
   [18,'square','마도카에게 먼저 마음을 전하기'],[21,'home','만남을 일기에 쓰고 취침']],
  madoka:[
   [0,'home','잠자기'],[8,'ranch','작은 동물 돌보기'],
-  ...daytime('madoka',['오늘의 디저트 고르기','딸기 케이크 먹기','호무라에게 줄 차 고르기']),
+  ...daytime('madoka',["카페 개점과 원두·재료 점검","음료 제조와 손님 계산","디저트 진열과 컵·테이블 정리"]),
   [17,'workshop','호무라에게 줄 리본 묶기'],
   [18,'square','호무라를 만나 마음에 답하기'],[21,'home','리본 정리 후 취침']]
 };
@@ -151,6 +151,18 @@ const TASK_STEPS=Object.freeze({
  market:['상품 확인','판매·구매','재고 정리'],square:['주민 만나기','행사·놀이','주변 정리'],
  workshop:['작업 재료 준비','제작·수선','작업 도구 정리'],park:['산책','운동·관찰','쉬기']
 });
+const WORK_STEPS=Object.freeze({
+  burger:['식재료 확인','주문·조리·응대','조리 공간 정리'],
+  icecream:['냉동고 점검','디저트 제조·판매','재료 보충'],
+  workshop:['도구 점검','제작·판매','완성품 진열'],
+  greenhouse:['화분·온실 점검','관람객 안내·관리','급수·정리'],
+  pub:['테이블 준비','손님 안내·음료 제공','매장 마감'],
+  library:['반납 도서 정리','자료 안내·대출','서가 정돈'],
+  pool:['안전 설비 점검','강습·안전 관리','시설 정리'],
+  bookstore:['신간 진열','도서 추천·계산','서가 정리'],
+  museum:['전시품 점검','관람객 안내·해설','전시실 정리'],
+  cafe:['원두·재료 준비','음료 제조·판매','컵·테이블 정리']
+});
 const mascotSteps=new Map([
  [mascotActivities.study,['제초 문제집 펴기','오답 다시 보기']],
  [mascotActivities.weed,['잡초가 난 자리 살피기','뽑은 잡초 모으기']],
@@ -164,6 +176,9 @@ function behaviorStages(place,activity){
  if(place==='home'&&/잠|취침|수면/.test(activity))return ['잠자기','잠자기','잠자기'];
  const steps=mascotSteps.get(activity);
  if(steps)return [steps[0],activity,steps[1]];
+ const work=WORK_STEPS[place];
+ if(work&&/근무|개점|개관|개장|주문|손님|판매|계산|안내|관람객|안전|서가|진열|제조|조리|강습|대출|반납|전시|화분 관리|온실 점검|매장 정리|마감|재료|공구 정리|음료 제공/.test(activity))
+  return [work[0],activity,work[2]];
  const stages=TASK_STEPS[place];
  return [stages[0],activity,stages[2]];
 }

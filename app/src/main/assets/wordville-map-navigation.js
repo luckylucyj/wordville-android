@@ -113,7 +113,7 @@ function bind(el,kind){
   state.points.set(ev.pointerId,p);
   if(state.points.size>=2){
    const arr=[...state.points.values()],middle={x:(arr[0].x+arr[1].x)/2,y:(arr[0].y+arr[1].y)/2};
-   const next=cap(state.pinch.zoom*(pinchDistance(arr)/Math.max(1,state.pinch.distance)),MIN,kind==='town'?2:MAX);
+   const next=cap(state.pinch.zoom*(pinchDistance(arr)/Math.max(1,state.pinch.distance)),MIN,MAX);
    zoomFor(next,middle.x,middle.y);
    state.dragging=true;clickBlocked.set(el,Date.now()+700);
    ev.preventDefault();
