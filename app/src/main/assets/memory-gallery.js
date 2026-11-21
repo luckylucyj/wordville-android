@@ -100,7 +100,7 @@
   if(item.author){const credit=document.createElement('small');credit.textContent='업로더: '+item.author;description.append(credit);}
   article.append(button,description);
   const url=safeLink(item.sourceUrl);
-  if(url){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='이미지 출처';article.append(link);}
+  if(url){const link=document.createElement('a');link.href=url;link.rel='noopener noreferrer';link.textContent='이미지 출처';article.append(link);}
   return article;
  }
  async function wordPhotos(w){
@@ -370,7 +370,7 @@
    
    const origin=document.createElement('a');origin.className='wv-search-credit';origin.textContent='출처·라이선스 확인';
    const href=safeLink(result.sourceUrl);origin.hidden=!href;
-   if(href){origin.href=href;origin.target='_blank';origin.rel='noopener noreferrer';}
+   if(href){origin.href=href;origin.rel='noopener noreferrer';}
    article.append(img,rights,origin,save);destination.append(article);
   }
   destination.append(pagination());

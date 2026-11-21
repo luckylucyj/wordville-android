@@ -313,7 +313,7 @@ public class MainActivity extends Activity {
      WebResourceResponse response=loader.shouldInterceptRequest(url);
      if(response!=null)return response;
     }
-    if("https".equals(url.getScheme())&&(CLOUD_HOST.equals(url.getHost())||"commons.wikimedia.org".equals(url.getHost())||"upload.wikimedia.org".equals(url.getHost())||"thumb.wikimedia.org".equals(url.getHost())))return null;
+    if("https".equals(url.getScheme())&&(CLOUD_HOST.equals(url.getHost())||"commons.wikimedia.org".equals(url.getHost())||"upload.wikimedia.org".equals(url.getHost())||"thumb.wikimedia.org".equals(url.getHost())||"api.openverse.org".equals(url.getHost())||"pixabay.com".equals(url.getHost())||"cdn.pixabay.com".equals(url.getHost())||"raw.githubusercontent.com".equals(url.getHost())))return null;
     return new WebResourceResponse("text/plain","UTF-8",new ByteArrayInputStream(new byte[0]));
    }
    @Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest request){
@@ -321,7 +321,15 @@ public class MainActivity extends Activity {
     if("https".equals(destination.getScheme())&&HOST.equals(destination.getHost()))return false;
     if(request.isForMainFrame()&&"https".equals(destination.getScheme())){
      String host=destination.getHost();
-     if(!("commons.wikimedia.org".equals(host)||SKELL_HOST.equals(host)||DICTIONARY_HOST.equals(host)||OXFORD_HOST.equals(host)||"translate.google.com".equals(host)))return true;
+     // Main-frame links must open outside the trusted app WebView. Only an
+     // explicit user gesture may open a non-allowlisted image-source site.
+     boolean known="commons.wikimedia.org".equals(host)||SKELL_HOST.equals(host)||
+      DICTIONARY_HOST.equals(host)||OXFORD_HOST.equals(host)||
+      "translate.google.com".equals(host)||"www.google.com".equals(host)||
+      "google.com".equals(host)||"pixabay.com".equals(host)||
+      "www.pixabay.com".equals(host)||"openverse.org".equals(host)||
+      "www.openverse.org".equals(host);
+     if(!known&&!request.hasGesture())return true;
      try{startActivity(new Intent(Intent.ACTION_VIEW,destination));}catch(ActivityNotFoundException ignored){}
     }
     return true;
