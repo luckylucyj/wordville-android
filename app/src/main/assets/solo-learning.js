@@ -147,6 +147,7 @@
   if(!(tab==='room'||games[tab]))return;
   const changed=Boolean(games[tab]&&mode!==tab);
   if(games[tab])mode=tab;
+  globalThis.wordvilleGame?.switchMode({fish:'fishing',wood:'weeding',capture:'foraging',room:'room'}[tab]);
   get('game-view').hidden=tab==='room';
   get('room-view').hidden=tab!=='room';
   screen.querySelectorAll('[data-solo-tab]').forEach(b=>{const active=b.dataset.soloTab===tab;b.setAttribute('aria-pressed',String(active));});
@@ -339,6 +340,41 @@
   if(!saveProgress()){roomMessage('가구 위치를 저장하지 못했습니다.');return;}
   renderRoom();roomMessage(roomItem(id).name+' 위치를 변경했습니다.');
  }
+
+ // The Canvas game and existing multiple-choice quiz share the same verified
+ // Wordville.review/save path; no duplicate XP is granted by the native bridge.
+ function learnFromCanvas(wordId,gameType,correct){
+  if(typeof Wordville==='undefined'||typeof save!=='function'||typeof state==='undefined')return false;
+  const word=listWords().find(w=>String(w.id)===String(wordId));
+  if(!word)return false;
+  const key={fishing:'fish',weeding:'wood',foraging:'capture'}[gameType];
+  if(!key)return false;
+  const now=Date.now(),eligible=model.reviewEligible(reviews(),word.id,now);
+  const before=wallet();let next=Wordville.review(state,word.id,Boolean(correct),now);
+  const previous=progress.stats[key]||{plays:0,correct:0,best:0};
+  let bonus=0,daily=0;
+  if(correct){
+   bonus=model.reward(streak+1,eligible);
+   if(progress.dailyCorrect+1>=10&&!progress.dailyBonus)daily=15;
+   next={...next,coins:next.coins+bonus+daily};
+  }
+  if(!save(next))return false;
+  previous.plays++;if(correct)previous.correct++;
+  streak=correct?streak+1:0;
+  previous.best=Math.max(previous.best||0,streak);
+  progress.stats[key]=previous;
+  if(correct){
+   delete progress.mistakes[word.id];
+   if(!progress.learned.includes(word.id))progress.learned.push(word.id);
+   if(!progress.frames.includes(word.id))progress.frames=[...progress.frames,word.id].slice(-4);
+   progress.dailyCorrect++;
+   if(daily)progress.dailyBonus=true;
+   progress.earned+=Math.max(0,wallet()-before);
+  }else progress.mistakes[word.id]=(progress.mistakes[word.id]||0)+1;
+  saveProgress();updateHeading();renderStats();
+  if(globalThis.WordvilleShell?.screen==='solo'&&get('room-view').hidden===false)renderRoom();
+  return true;
+ }
  screen.querySelectorAll('[data-solo-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.soloTab)));
  get('next').addEventListener('click',start);
  get('restart').addEventListener('click',newSession);
@@ -353,5 +389,10 @@
  document.addEventListener('wordville-words-ready',()=>{loadDays();if(globalThis.WordvilleShell?.screen==='solo')renderRoom();});
  document.addEventListener('wordville-record-changed',updateHeading);
  loadDays();setTab('fish');
- globalThis.WordvilleSolo={open(){loadDays();updateHeading();renderRoom();},get progress(){return progress;},get currentQuestion(){return round;}};
+ globalThis.WordvilleSolo={
+  open(){loadDays();updateHeading();renderRoom();globalThis.wordvilleGame?.resume();},
+  learnFromCanvas,
+  get progress(){return progress;},
+  get currentQuestion(){return round;}
+ };
 })();

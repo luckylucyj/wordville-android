@@ -55,6 +55,18 @@ public class MainActivity extends Activity {
  private static final String SKELL_HOST="skell.sketchengine.eu";
  private static final String DICTIONARY_HOST="dictionary.cambridge.org";
  private static final String OXFORD_HOST="www.oxfordlearnersdictionaries.com";
+ // Trusted bundled Canvas game reports an earned word to native Android.
+ // Persistent XP, coins and spaced-review data remain in the JS study engine.
+ private final class WordvilleGameBridge {
+  @JavascriptInterface public boolean onWordLearned(String wordId,String gameType){
+   if(wordId==null||gameType==null||!wordId.matches("[A-Za-z0-9_-]{1,80}"))return false;
+   if(!("fishing".equals(gameType)||"weeding".equals(gameType)||"foraging".equals(gameType)))return false;
+   getApplicationContext().getSharedPreferences("wordville_canvas_event_v1",MODE_PRIVATE)
+    .edit().putString("last_word",wordId).putString("last_game",gameType)
+    .putLong("timestamp",System.currentTimeMillis()).apply();
+   return true;
+  }
+ }
  private final class WordvilleDictionaryClipboardBridge {
   private final WebView owner;
   WordvilleDictionaryClipboardBridge(WebView owner){this.owner=owner;}
@@ -404,6 +416,7 @@ public class MainActivity extends Activity {
   // Trusted local app assets only: block untrusted frames and remote scripts via CSP.
   // Credential bridge stores encrypted secrets; external pages open in the browser.
   view.addJavascriptInterface(new WordvilleSettingsBridge(),"WordvilleSettings");
+  view.addJavascriptInterface(new WordvilleGameBridge(),"AndroidBridge");
   view.addJavascriptInterface(new WordvillePixabaySecureBridge(),"WordvillePixabaySecure");
   view.addJavascriptInterface(new WordvilleSpeechBridge(),"WordvilleSpeech");
   view.addJavascriptInterface(new WordvilleInterpretationBridge(view),"WordvilleInterpretationNative");

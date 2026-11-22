@@ -1,0 +1,75 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const canvas=readFileSync(new URL('../app/src/main/assets/canvas-minigames.js',import.meta.url),'utf8');
+const css=readFileSync(new URL('../app/src/main/assets/canvas-minigames.css',import.meta.url),'utf8');
+const html=readFileSync(new URL('../app/src/main/assets/index.html',import.meta.url),'utf8');
+const solo=readFileSync(new URL('../app/src/main/assets/solo-learning.js',import.meta.url),'utf8');
+const native=readFileSync(new URL('../app/src/main/java/com/wordville/app/MainActivity.java',import.meta.url),'utf8');
+const backup=readFileSync(new URL('../app/src/main/assets/record-backup.js',import.meta.url),'utf8');
+
+test('Canvas games are syntactically valid and loaded after solo progress controller',()=>{
+ assert.doesNotThrow(()=>new Function(canvas));
+ assert.match(html,/canvas-minigames\.js/);
+ assert.match(html,/canvas-minigames\.css/);
+ assert.ok(html.indexOf('solo-learning.js')<html.indexOf('canvas-minigames.js'));
+ assert.match(canvas,/root\.WordvilleGameEngine=WordvilleGameEngine/);
+ assert.match(canvas,/root\.wordvilleGame=new WordvilleGameEngine\('wordvilleCanvas'\)/);
+});
+test('all four Canvas modes, specified HUD geometry, optional art manifest',()=>{
+ for(const mode of ['fishing','weeding','foraging','room'])
+  assert.ok(canvas.includes("'"+mode+"'"),mode+' registered');
+ for(const value of ['W=600,H=1000','this.LOGICAL_W=W','this.LOGICAL_H=H',
+  'this.box(18,16,148,60','this.box(502,120,80,336','const p=this.state.popup,py=660',
+  'this.box(30,855,540,115','this.box(30,860,540,96'])assert.ok(canvas.includes(value),value);
+ for(const path of ['images/fishing/hachiware_idle.png','images/fishing/hachiware_catch.png',
+  'images/weeding/chiikawa_perfect.png','images/weeding/chiikawa_medium.png','images/weeding/chiikawa_bad.png',
+  'images/foraging/chiikawa_food_1.png','images/foraging/chiikawa_food_2.png','images/foraging/chiikawa_food_3.png',
+  'images/room/bg_isometric_room.png'])
+  assert.ok(canvas.includes(path),path+' asset slot');
+ assert.match(canvas,/drawCritter\(/);
+});
+test('high DPR render keeps fixed 600x1000 logical coordinates and mobile touch support',()=>{
+ assert.match(canvas,/Math\.min\(2,Math\.max\(1,root\.devicePixelRatio\|\|1\)\)/);
+ assert.match(canvas,/this\.ctx\.setTransform\(width\/W,0,0,height\/H,0,0\)/);
+ assert.match(css,/aspect-ratio:3\/5/);
+ assert.match(canvas,/touchAction='none'/);
+ assert.match(canvas,/pointercancel/);
+});
+test('real user vocabulary and progress are authoritative; no sample teaching-only dictionary',()=>{
+ assert.match(canvas,/loadWordsFromAndroid\(wordList\)/);
+ assert.match(canvas,/root\.WordvilleWords/);
+ assert.doesNotMatch(canvas,/this\.words=\[\s*\{id:1/);
+ assert.match(canvas,/root\.WordvilleSolo\.learnFromCanvas\(word\.id,this\.state\.mode,true\)/);
+ assert.match(solo,/Wordville\.review\(state,word\.id,Boolean\(correct\),now\)/);
+ assert.match(solo,/if\(!save\(next\)\)return false/);
+ assert.match(canvas,/root\.AndroidBridge\.onWordLearned\(String\(word\.id\),this\.state\.mode\)/);
+ assert.match(native,/new WordvilleGameBridge\(\),"AndroidBridge"/);
+});
+test('foraging has a 3 stage animation and prevents repeated rewards',()=>{
+ assert.match(canvas,/g\.stage=2;g\.timer=\.85;g\.pending=true/);
+ assert.match(canvas,/if\(g\.stage===2\)\{g\.stage=3;g\.timer=1;/);
+ assert.match(canvas,/else\{g\.stage=1;g\.pending=false;this\.advanceWord\(\);\}/);
+ assert.match(canvas,/if\(this\.state\.mode!=='foraging'\|\|g\.stage!==1/);
+});
+test('weeding has three result levels and timing limits',()=>{
+ assert.match(canvas,/w\.status=p>=\.4&&p<=\.6\?'perfect':p>=\.22&&p<=\.78\?'medium':'bad'/);
+ assert.match(canvas,/w\.timer=1\.3/);
+ assert.match(canvas,/if\(w\.status==='bad'\)/);
+});
+test('quarter-view inventory drag positions persist and belong to backup snapshot',()=>{
+ assert.match(canvas,/wordville_room_v1/);
+ assert.match(canvas,/setPointerCapture/);
+ assert.match(canvas,/pointermove/);
+ assert.match(canvas,/constrainFloor\(/);
+ assert.match(canvas,/saveRoomState\(\)/);
+ assert.match(backup,/wordville_room_v1/);
+});
+test('foreground/hidden game pause and restoration avoid freezing on other apps',()=>{
+ assert.match(canvas,/visibilitychange/);
+ assert.match(canvas,/wordville-app-resume/);
+ assert.match(canvas,/this\.pause\(\)/);
+ assert.match(canvas,/this\.resume\(\)/);
+ assert.doesNotMatch(canvas,/fetch\(/);
+ assert.doesNotMatch(canvas,/WebSocket\(/);
+});

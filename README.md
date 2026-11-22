@@ -30,6 +30,17 @@ Wordville 전용 Supabase 프로젝트(서울), 비공개 `wordville-images` 버
 공개 클라이언트에는 publishable key만 포함합니다. service-role key는 포함하지 않습니다.
 서버 설정 SQL: `server/storage.sql`. Wordville 전용 프로젝트에 적용되어 있습니다.
 
+## HTML5 Canvas 영단어 미니게임 4종 (2026-11-22)
+
+- 더보기 → 혼자 하는 단어 게임: Canvas 낚시(하치와레), 잡초 뽑기(치이카와), 음식 줍기 3단계, 나의 방 꾸미기.
+- 공통 Canvas 좌표 600×1000 고정; DPR 2 이상에서 1200×2000 백버퍼. 상단 18,16 나무 프레임 낮/밤 위젯, 상단 중앙 단어/뜻, 우측 4칸 도감, 좌하단 24,660 NEW 카드.
+- 낚시: 30,855의 540×115 게이지로 판정. 잡초: 적합/중간/비적합. 음식: 3지선다 후 발견·줍기·획득의 3단계 애니메이션.
+- 나의 방: 쿼터뷰 자유 가구 배치/드래그. 별도 wordville_room_v1 저장 및 기존 학습 백업에 포함. 배치 초기화는 가구 보유 내역을 보존.
+- 외부 더미 단어 없이 기존 WordvilleWords·Wordville.review·save를 사용. Android→JS 공개: window.wordvilleGame.loadWordsFromAndroid(wordList). JS→Android: window.AndroidBridge.onWordLearned(wordId, gameType). 네이티브 콜백으로 XP를 이중 지급하지 않음.
+- Android 앱 복귀 시 Canvas 루프를 재개하고 백그라운드에서는 멈춤. 기존 학습 기록, 코인, 단어장 보존.
+- scripts/build-canvas-minigame-art.py가 로컬 PNG 12개(512×512 캐릭터 8종, 배경 4종)를 생성해 APK에 포함. PNG가 없으면 Canvas 내장 도형 그래픽으로 대체.
+- 아트는 교체 가능한 기본 파스텔 일러스트입니다. 사용자 제공 고품질 동일 경로 PNG로 교체 가능하며 공식 원작 이미지 복제본은 아닙니다.
+- 실제 Android WebView는 보안상 file:// 대신 https://appassets.androidplatform.net/assets/의 WebViewAssetLoader를 사용하여 기존 앱 저장 데이터의 출처를 유지합니다.
 ## 2026-11-22 · 영상 참고 혼자 하는 영어 게임
 
 첨부된 두 개의 게임 시연 영상에서 확인한 기능 중 **친구 대결·온라인 순위 기능은 제외**했습니다.
