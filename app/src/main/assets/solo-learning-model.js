@@ -40,7 +40,7 @@
   const seen=new Set(options.seen||[]);
   const unseen=eligible.filter(w=>!seen.has(w.id));
   const available=unseen.length>=1?unseen:eligible;
-  if(available.length<4)return null;
+  if(available.length<1)return null;
   const priority=available.filter(w=>Number(mistakes[w.id]||0)>0||(reviews[w.id]?.due??0)<=now);
   const target=pick(priority.length?priority:available,options.random);
   if(!target)return null;
