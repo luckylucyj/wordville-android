@@ -6,7 +6,10 @@ const cloud=globalThis.WordvilleCloud, bucket=globalThis.WordvilleCloudConfig?.b
 const storageKey='wordville.rebuilt.v1';
 function notify(message){$('notice').textContent=message;}
 try{const raw=localStorage.getItem(storageKey);if(raw){const s=JSON.parse(raw);if(s.version!==1||!Number.isFinite(s.xp)||!Number.isFinite(s.coins)||!s.reviews||!Array.isArray(s.concepts))throw Error();state=s;}}catch{notify('기록을 읽지 못했습니다. 저장 공간 설정을 확인해 주세요.');}
-// Show the last locally saved totals immediately, without waiting for the\n// optional image database or any cloud sign-in handshake.\n$('balance').textContent=state.xp+' XP · '+state.coins+' 코인';\nfunction save(next){try{localStorage.setItem(storageKey,JSON.stringify(next));state=next;renderStats();document.dispatchEvent(new Event('wordville-record-changed'));return true;}catch{notify('저장에 실패했습니다. 저장 공간을 확인해 주세요.');return false;}}
+// Show the last locally saved totals immediately, without waiting for the
+// optional image database or any cloud sign-in handshake.
+$('balance').textContent=state.xp+' XP · '+state.coins+' 코인';
+function save(next){try{localStorage.setItem(storageKey,JSON.stringify(next));state=next;renderStats();document.dispatchEvent(new Event('wordville-record-changed'));return true;}catch{notify('저장에 실패했습니다. 저장 공간을 확인해 주세요.');return false;}}
 function renderStats(){$('balance').textContent=`${state.xp} XP · ${state.coins} 코인`;renderDue();}
 function renderDue(){$('due').textContent=`복습할 단어 ${words.filter(w=>!state.reviews[w.id]||state.reviews[w.id].due<=Date.now()).length}개 · 정답은 1·3·7·14·30일, 오답은 10분 뒤 복습` ;}
 function make(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
