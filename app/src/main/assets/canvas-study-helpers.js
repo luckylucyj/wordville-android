@@ -76,17 +76,25 @@
   readQueue(){
    try{
     const data=JSON.parse(this.storage?.getItem(this.key)||'null');
-    if(data?.version===1&&Array.isArray(data.front))return data;
+    if(data?.version===2&&data.scopes&&typeof data.scopes==='object')
+     return data.scopes[this.scope]||null;
+    // Upgrade a previous single-scope snapshot without deleting its progress.
+    if(data?.version===1&&data.scope===this.scope&&Array.isArray(data.front))
+     return data;
    }catch{}
    return null;
   }
   persist(){
    try{
-    this.storage?.setItem(this.key,JSON.stringify({
+    const saved=JSON.parse(this.storage?.getItem(this.key)||'null');
+    const scopes=saved?.version===2&&saved.scopes&&typeof saved.scopes==='object'?
+     {...saved.scopes}:saved?.version===1&&saved.scope?{[saved.scope]:saved}:{};
+    scopes[this.scope]={
      version:1,scope:this.scope,count:this.pool.length,
      start:String(this.pool[0]?.id||''),end:String(this.pool.at(-1)?.id||''),
      front:this.queue.slice(0,24).map(w=>String(w.id))
-    }));
+    };
+    this.storage?.setItem(this.key,JSON.stringify({version:2,scopes}));
     return true;
    }catch{return false;}
   }
