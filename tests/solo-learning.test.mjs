@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import '../app/src/main/assets/word-conversations.js';
 import '../app/src/main/assets/solo-learning-model.js';
 
 const model=globalThis.WordvilleSoloModel;
@@ -26,8 +27,9 @@ test('All three games use actual local vocabulary cards, not fake samples',()=>{
   if(mode==='wood')assert.equal(q.prompt,q.word.word);
   if(mode==='capture'){
    assert.ok(q.prompt.includes('_____'));
-   assert.ok(q.example.includes(q.word.word)||new RegExp(q.word.word,'i').test(q.example));
-   assert.ok(!q.prompt.includes(q.word.word),'no answer leaked in masked example');
+   assert.equal(q.prompt,model.blankExample(q.word).prompt);
+   assert.notEqual(q.prompt,q.example,'at least one answer is masked');
+   assert.ok(['VOCA 카드 예문','Wordville 영어 대화 예시'].includes(q.exampleSource));
   }
  }
 });
@@ -53,7 +55,10 @@ test('Uses a real example to create a single hidden word gap',()=>{
  assert.equal(q?.original,a.example);
  assert.ok(q.prompt.includes('_____'));
  assert.ok(!q.prompt.includes('reservation'));
- assert.equal(model.blankExample({...a,example:'This sentence does not use the target.'}),null);
+ const generated=model.blankExample({...a,example:'This sentence does not use the target.'});
+ assert.ok(generated?.prompt.includes('_____'));
+ assert.equal(generated?.source,'Wordville 영어 대화 예시');
+ assert.equal(model.blankExample({word:'',example:'No answer.'}),null);
 });
 
 test('Reward depends on review eligibility and preserves delayed review schedule',()=>{
@@ -82,4 +87,12 @@ test('No outside player or online opponent is required',()=>{
  assert.doesNotMatch(solo,/fetch\(/);
  assert.doesNotMatch(solo,/WebSocket\(/);
  assert.doesNotMatch(solo,/RTCPeerConnection\(/);
+});
+
+test('Most Day cards can create cloze puzzles using existing offline Wordville conversations',()=>{
+ const day10=model.candidates(words,'capture','10');
+ assert.ok(day10.length>20,'Day 10 should support a complete quiz');
+ const item=day10.find(w=>!w.example);
+ assert.ok(item);
+ assert.equal(model.blankExample(item)?.source,'Wordville 영어 대화 예시');
 });
