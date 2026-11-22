@@ -345,7 +345,8 @@ function drawPlayerGreeting(view,ms){
  const resident=residents.find(p=>p.id===playerGreeting.id);
  const x=view.offsetX+resident.x*view.scale;
  const y=view.offsetY+(resident.y-67)*view.scale;
- const visible=residentOutdoors(resident)&&x>=0&&x<=canvas.width&&y>=0&&y<=canvas.height;
+ const feet=view.offsetY+resident.y*view.scale;
+ const visible=residentOutdoors(resident)&&x>=0&&x<=canvas.width&&feet>=0&&y<=canvas.height;
  affectionBubble.hidden=!visible;
  if(!visible)return;
  const px=x/canvas.width*canvas.clientWidth;
