@@ -234,7 +234,11 @@ public class MainActivity extends Activity {
    return prefs().getString(NATIVE_TAB_KEY,"");
   }
   @JavascriptInterface public boolean saveLastTab(String screen){
-   if(!("learn".equals(screen)||"town".equals(screen)))return false;
+   // Remember the exact screen before Android pauses the WebView. The old
+   // learn/town-only whitelist discarded every other screen on process death.
+   if(screen==null||!Arrays.asList("town","places","residents","learn",
+     "review","lab","book","notes","gallery","account","sentences",
+     "interpretation","schedule","solo").contains(screen))return false;
    return prefs().edit().putString(NATIVE_TAB_KEY,screen).commit();
   }
  }
@@ -500,10 +504,16 @@ public class MainActivity extends Activity {
   String probe="(function(){"
     +(signalResume?"window.__wordvilleResumeProbeAt=performance.now();document.dispatchEvent(new Event('wordville-app-resume'));":"")
     +"var cover=document.getElementById('wv-loading-cover'),dock=document.getElementById('wv-bottom-dock');"
-    +"var village=window.WordvilleVillage;"
-    +"return !!window.WordvilleShell && !!cover && cover.hidden && !!dock"
-    +" && dock.getBoundingClientRect().height>0 && !!village"
-    +" && village.lastFrameAgeMs<2200 && village.lastFrameAt>window.__wordvilleResumeProbeAt;})()";
+    +"var village=window.WordvilleVillage,screen=window.WordvilleShell&&window.WordvilleShell.screen;"
+    +"var words=window.WordvilleWords,main=document.querySelector('main');"
+    +"var visible=!!main&&main.getBoundingClientRect().width>0;"
+    // A hidden village canvas is throttled by Android/Chromium on the Learn,
+    // Residents and other screens. Only require a fresh frame on Town.
+    +"var townReady=screen!=='town'||(!!village&&village.lastFrameAgeMs<3500"
+    +" && village.lastFrameAt>window.__wordvilleResumeProbeAt);"
+    +"return !!screen&&!!cover&&cover.hidden&&!!dock"
+    +" && dock.getBoundingClientRect().height>0&&visible"
+    +" && Array.isArray(words)&&words.length>0&&townReady;})()";
   try{
    expected.evaluateJavascript(probe,result->{
     if(!isCurrentCheck(expected,checkId))return;
