@@ -70,8 +70,6 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
-    env:
-      WORDVILLE_KEYSTORE: ${{ runner.temp }}/wordville-ci-preview.keystore
     steps:
       - name: Check out trusted main without persisted write credentials
         uses: actions/checkout@v4
@@ -87,25 +85,6 @@ jobs:
           node-version: '22'
       - name: Install the existing project dependencies
         run: npm ci
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
-          log-accepted-android-sdk-licenses: false
-      - name: Install Android compile dependencies
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-      - name: Generate temporary CI-only signing key
-        run: |
-          keytool -genkeypair -keystore "$WORDVILLE_KEYSTORE" -storetype PKCS12 \
-            -storepass android -keypass android -alias androiddebugkey \
-            -keyalg RSA -keysize 3072 -validity 1 \
-            -dname "CN=Wordville AI Preview, O=CI, C=KR"
       - name: Prepare isolated prompt input
         env:
           ISSUE_NUMBER: ${{ needs.verify-request.outputs.issue_number }}
@@ -178,6 +157,62 @@ jobs:
           (pathlib.Path(os.environ["RUNNER_TEMP"]) / "gemini-design.patch").write_bytes(patch)
           print("Verified", len(changed), "allowed changed files;", len(patch), "patch bytes")
           PY
+      - name: Export patch before running any generated code
+      - name: Transfer only the already validated changes
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-codex-reviewed-patch
+          path: ${{ runner.temp }}/gemini-design.patch
+          retention-days: 3
+          if-no-files-found: error
+
+
+  test-patch:
+    needs: implement-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      WORDVILLE_KEYSTORE: ${{ runner.temp }}/wordville-ci-preview.keystore
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: gemini-codex-reviewed-patch
+          path: ${{ runner.temp }}/validated-patch
+      - name: Apply the verified design patch for unprivileged testing
+        run: |
+          set -euo pipefail
+          git apply --binary --check "$RUNNER_TEMP/validated-patch/gemini-design.patch"
+          git apply --binary "$RUNNER_TEMP/validated-patch/gemini-design.patch"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies on a clean runner without OpenAI secrets
+        run: npm ci
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Install Android compile dependencies
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Generate temporary CI-only signing key
+        run: |
+          keytool -genkeypair -keystore "$WORDVILLE_KEYSTORE" -storetype PKCS12 \
+            -storepass android -keypass android -alias androiddebugkey \
+            -keyalg RSA -keysize 3072 -validity 1 \
+            -dname "CN=Wordville AI Preview, O=CI, C=KR"
       - name: Rebuild existing bundled web client
         run: npm run build:web
       - name: Run Wordville unit and regression tests
@@ -193,16 +228,9 @@ jobs:
           CHROME_PATH="$(command -v google-chrome)" node tests/canvas-browser.cjs
       - name: Compile Android debug APK without publishing it
         run: gradle --no-daemon assembleDebug
-      - name: Transfer only the already validated changes
-        uses: actions/upload-artifact@v4
-        with:
-          name: gemini-codex-reviewed-patch
-          path: ${{ runner.temp }}/gemini-design.patch
-          retention-days: 3
-          if-no-files-found: error
 
   open-draft-pr:
-    needs: [verify-request, implement-and-test]
+    needs: [verify-request, implement-and-test, test-patch]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
