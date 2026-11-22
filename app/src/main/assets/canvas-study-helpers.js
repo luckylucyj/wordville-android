@@ -51,6 +51,9 @@
     unique.add(id);return true;
    });
    const normalizedScope=String(scope||'all');
+   // A WebView may initialize before words.json is available. Never replace
+   // the saved queue with an empty queue during that brief startup interval.
+   if(!pool.length){this.queue=[];this.pool=[];this.scope=normalizedScope;return true;}
    if(normalizedScope===this.scope&&this.pool.length===pool.length&&
       pool.every((w,i)=>String(w.id)===String(this.pool[i].id)))return true;
    this.pool=pool;
