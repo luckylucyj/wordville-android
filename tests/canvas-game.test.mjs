@@ -21,7 +21,7 @@ test('all four Canvas modes, specified HUD geometry, optional art manifest',()=>
   assert.ok(canvas.includes("'"+mode+"'"),mode+' registered');
  for(const value of ['W=600,H=1000','this.LOGICAL_W=W','this.LOGICAL_H=H',
   'this.box(18,16,148,60','this.box(502,120,80,336','const p=this.state.popup,py=660',
-  'FISH_TRACK={x:124,y:1360,w:886,h:58}','this.box(30,860,540,96'])assert.ok(canvas.includes(value),value);
+  'FISH_ZONE=[64,88]','this.box(30,860,540,96'])assert.ok(canvas.includes(value),value);
  for(const path of ['images/fishing/hachiware_idle.png','images/fishing/hachiware_catch.png',
   'images/weeding/chiikawa_perfect.png','images/weeding/chiikawa_medium.png','images/weeding/chiikawa_bad.png',
   'images/foraging/chiikawa_3stage_atlas.png',
@@ -89,6 +89,9 @@ test('fishing uses authored PNGs only, logs WebView URL errors and does not draw
  const fishing=canvas.slice(canvas.indexOf('  renderFishing(){'),canvas.indexOf('  renderWeeding(){'));
  assert.match(fishing,/this\.paintSprite\('bg_fishing',0,0,W,H\)/);
  assert.match(fishing,/this\.paintSprite\(catching\?'hachiware_catch':'hachiware_idle'/);
+ assert.match(canvas,/f\.pos>=FISH_ZONE\[0\]-2&&f\.pos<=FISH_ZONE\[1\]\+2/);
+ assert.match(css,/width:var\(--fish-width\)/);
+ assert.match(css,/data-fishing-phase="caught"/);
  assert.doesNotMatch(fishing,/drawCritter\(|this\.background\(|ctx\.drawLine|for\(let i=0;i<5;i\+\+\)/);
  const generator=readFileSync(new URL('../scripts/build-canvas-minigame-art.py',import.meta.url),'utf8');
  assert.doesNotMatch(generator,/fishing\/bg_dock\.png/);

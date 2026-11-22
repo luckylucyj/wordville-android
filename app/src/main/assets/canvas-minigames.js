@@ -12,7 +12,8 @@
   {label:'Success!',progress:100}
  ];
  const ART_W=1147,ART_H=1536;
- const FISH_TRACK={x:124,y:1360,w:886,h:58};
+ const FISH_ZONE=[64,88];
+ const FISH_HINT='화면 또는 게이지를 탭해서 낚아채세요!';
  const ROOM_CARD_X=[133,315,493,672,850];
  const ROOM_FLOOR_OFFSET=140;
  const ROOM_ITEM_LIMIT=35;
@@ -60,7 +61,7 @@
    this.studyManager=new root.WordvilleStudyManager([]);
    this.stateScope='all';
    this.state={mode:'fishing',wordIdx:0,slots:[],popup:null,
-    fishing:{pos:.15,dir:1,zone:[.68,.86],catchTimer:0,counts:[0,0,0,0],lastCatch:null},
+    fishing:{pos:15,dir:1,caught:false,sceneDirty:true,counts:[0,0,0,0]},
     weeding:{pos:0,dir:1,status:'idle',timer:0,pendingRetry:false},
     foraging:{stage:1,timer:0,choices:[],pending:false},
     room:this.loadRoomState()};
@@ -74,6 +75,14 @@
    this.inventoryNode=root.document.getElementById('room-item-list');
    this.drawer=root.document.getElementById('room-drawer');
    this.stage=this.canvas.parentElement;
+   this.fishingControls=root.document.getElementById('wv-fishing-controls');
+   this.fishingReel=this.fishingControls.querySelector('.wv-fishing-reel');
+   this.fishingBobber=this.fishingControls.querySelector('.wv-fishing-bobber');
+   this.fishingHint=this.fishingControls.querySelector('.wv-fishing-hint');
+   this.fishingPopup=this.fishingControls.querySelector('.wv-fishing-popup');
+   this.fishingWeight=this.fishingPopup.querySelector('.wv-fishing-weight');
+   this.fishingControls.style.setProperty('--fish-start',FISH_ZONE[0]+'%');
+   this.fishingControls.style.setProperty('--fish-width',(FISH_ZONE[1]-FISH_ZONE[0])+'%');
    this.roomToggle=root.document.getElementById('room-drawer-toggle');
    this.inventoryPage=0;
    this.selectedFurniture='bed';
@@ -127,8 +136,10 @@
       this.sprites[key]=cleaned;
      }else this.sprites[key]=image;
      if(key==='bg_room'){this.prepareRoomArt(image);this.paint();}
-     if(key.startsWith('hachiware_')||key==='bg_fishing')
+     if(key.startsWith('hachiware_')||key==='bg_fishing'){
+      this.state.fishing.sceneDirty=true;
       console.info('[Wordville Fishing] PNG loaded',key,url,image.naturalWidth+'x'+image.naturalHeight);
+     }
     };
     image.onerror=()=>this.reportAssetError(key,url,'image.onerror');
     image.src=url;
@@ -192,6 +203,7 @@
    if(this.canvas.width!==width)this.canvas.width=width;
    if(this.canvas.height!==height)this.canvas.height=height;
    this.ctx.setTransform(width/W,0,0,height/H,0,0);
+   this.state.fishing.sceneDirty=true;
   }
   loadWordsFromAndroid(wordList){
    if(!Array.isArray(wordList))return false;
@@ -232,7 +244,10 @@
    if(!modes.includes(mode))return;
    this.state.mode=mode;this.stage.dataset.mode=mode;this.nextActionAt=0;
    this.message('');
-   this.state.fishing.catchTimer=0;this.state.weeding.timer=0;
+   this.state.fishing.sceneDirty=true;
+   this.fishingControls.hidden=mode!=='fishing';
+   if(mode==='fishing')this.resetFishing();
+   this.state.weeding.timer=0;
    this.state.weeding.status='idle';this.state.weeding.pendingRetry=false;
    this.state.foraging.pending=false;
    this.setForageStage(1);
@@ -244,7 +259,7 @@
    this.setDrawerOpen(mode==='room');
    if(this.roomHandleLayer)this.roomHandleLayer.hidden=mode!=='room';
    const action=root.document.getElementById('wordville-action');
-   if(action)action.hidden=mode==='foraging'||mode==='room';
+   if(action)action.hidden=mode!=='weeding';
    if(mode==='foraging')this.buildForagingChoices();
    if(mode==='room'){this.renderRoomInventoryUI();this.syncRoomHandles();}
    this.refreshHeaderUI();this.resume();
@@ -256,6 +271,7 @@
    const badge=root.document.getElementById('game-badge');
    if(badge)badge.textContent=titles[this.state.mode];
    const hint=root.document.getElementById('target-hint');
+   if(hint)hint.hidden=this.state.mode==='fishing';
    if(hint)hint.textContent=this.state.mode==='room'?'가구를 선택한 후 방 바닥에서 드래그해 배치하세요':
     this.state.mode==='foraging'?'뜻에 맞는 영단어를 골라 음식을 모으세요. 색깔 버튼으로 3단계 동작을 볼 수 있어요.':
     '아래 움직이는 게이지를 목표 구간에서 눌러보세요';
@@ -318,11 +334,11 @@
   update(dt){
    if(this.state.popup)this.state.popup.timer=Math.max(0,this.state.popup.timer-dt);
    const f=this.state.fishing,w=this.state.weeding,g=this.state.foraging;
-   if(f.catchTimer>0)f.catchTimer=Math.max(0,f.catchTimer-dt);
-   if(this.state.mode==='fishing'&&f.catchTimer<=0){
-    f.pos+=f.dir*dt*.62;
-    if(f.pos>=.96){f.pos=.96;f.dir=-1;}
-    if(f.pos<=.04){f.pos=.04;f.dir=1;}
+   if(this.state.mode==='fishing'&&!f.caught){
+    f.pos+=f.dir*dt*69;
+    if(f.pos>=92){f.pos=92;f.dir=-1;}
+    if(f.pos<=8){f.pos=8;f.dir=1;}
+    this.syncFishingTiming();
    }
    if(this.state.mode==='weeding'){
     if(w.timer>0){
@@ -360,52 +376,39 @@
    for(const button of this.forageButtons)button.disabled=game.pending;
    for(const button of this.choicesNode.children)button.disabled=game.pending;
   }
+  syncFishingTiming(){
+   const fish=this.state.fishing;
+   this.fishingBobber.style.left=fish.pos+'%';
+   const phase=fish.caught?'caught':
+    fish.pos>=FISH_ZONE[0]&&fish.pos<=FISH_ZONE[1]?'biting':'casting';
+   if(this.stage.dataset.fishingPhase!==phase)this.stage.dataset.fishingPhase=phase;
+  }
+  resetFishing(){
+   const fish=this.state.fishing;
+   fish.pos=15;fish.dir=1;fish.caught=false;fish.sceneDirty=true;
+   this.fishingPopup.setAttribute('aria-hidden','true');
+   this.fishingHint.textContent=FISH_HINT;
+   this.fishingReel.setAttribute('aria-label','낚아채기');
+   this.syncFishingTiming();
+  }
   renderFishing(){
    if(!this.paintSprite('bg_fishing',0,0,W,H))return;
    const c=this.ctx,f=this.state.fishing;
-   const catching=f.catchTimer>0;
+   const catching=f.caught;
    c.save();
    c.scale(W/ART_W,H/ART_H);
    const frame=catching?[76,410,797,459]:[550,445,323,424];
-   if(catching){
-    c.save();c.translate(474,640);c.scale(1.013,1.013);c.translate(-474,-640);
-   }
    this.paintSprite(catching?'hachiware_catch':'hachiware_idle',...frame);
-   if(catching)c.restore();
 
-   // Live values replace the sample numbers in the supplied illustration.
+   // The original bitmap includes sample numbers. Replace only its UI labels.
    const countPositions=[[1035,312],[1031,459],[1038,602],[1035,751]];
    countPositions.forEach(([x,y],index)=>{
     this.box(x-13,y-21,26,29,7,'#f8ede2',INK,0);
-    this.text(String(f.counts[index]||0),x,y+1,23,'#774822','850',25);
+    this.text(String(f.counts[index]),x,y+1,23,'#774822','850',25);
    });
+   this.box(176,919,157,55,12,'#fff9ed',INK,0);
+   if(!catching)this.text('FISH',253,960,36,'#925824','850',140);
    this.box(141,1116,215,73,10,'#fff9ed',INK,0);
-   this.text(f.lastCatch?.weight||'— kg',250,1169,47,'#925824','750',202);
-   if(!f.lastCatch){
-    this.box(176,919,157,55,12,'#fff9ed',INK,0);
-    this.text('FISH',253,960,36,'#925824','850',140);
-   }
-
-   // Redraw only the track interior so the illustrated rod and frame stay intact.
-   // A single moving bobber marks the same range used by the tap handler.
-   this.box(737,1339,63,24,5,'#f6efe8',INK,0);
-   this.box(735,1358,68,74,8,'#f6efe8',INK,0);
-   const {x,y,w,h}=FISH_TRACK;
-   this.box(x-8,y-7,w+16,h+16,36,'#edf9ff','#4d809c',4);
-   const water=c.createLinearGradient(x,y,x+w,y);
-   water.addColorStop(0,'#c7eafb');water.addColorStop(1,'#54a5cb');
-   this.box(x,y,w,h,29,water,INK,0);
-   const zoneX=x+w*f.zone[0],zoneWidth=w*(f.zone[1]-f.zone[0]);
-   this.box(zoneX,y,zoneWidth,h,11,catching?'#36917c':'#217999',INK,0);
-   const art=this.sprites.bg_fishing,scaleX=art.naturalWidth/ART_W,scaleY=art.naturalHeight/ART_H;
-   c.save();
-   c.translate(zoneX+(zoneWidth-81)/2,y+(h-46)/2);
-   c.clip(new Path2D('M1 23 Q4 10 24 6 Q47 0 61 13 Q79 1 80 11 Q80 19 72 26 Q82 32 78 40 Q75 45 61 35 Q45 47 22 44 Q6 40 1 23 Z'));
-   c.drawImage(art,822*scaleX,1367*scaleY,81*scaleX,46*scaleY,0,0,81,46);
-   c.restore();
-   const bobberX=x+w*f.pos;
-   this.box(bobberX-21,y-17,42,65,21,'#ed745e','#a6523c',4);
-   this.box(bobberX-19,y+6,38,13,4,'#fff4df',INK,0);
    c.restore();
   }
   renderWeeding(){
@@ -509,12 +512,12 @@
    if(pose==='perfect'||pose==='catch')this.text('✨',58,-130,27);
    c.restore();
   }
-  award(word,icon){
+  award(word,icon,weight){
    // One answer records one review; never reward if the persistent save failed.
    if(!word||!root.WordvilleSolo?.learnFromCanvas)return false;
    const result=root.WordvilleSolo.learnFromCanvas(word.id,this.state.mode,true);
    if(result===false)return false;
-   this.state.popup={icon,word:word.word,weight:(1+(word.word.length%7)*.45).toFixed(2)+'kg',timer:2.2};
+   this.state.popup={icon,word:word.word,weight:weight??(1+(word.word.length%7)*.45).toFixed(2)+'kg',timer:2.2};
    if(this.state.slots.length>=4)this.state.slots.shift();
    this.state.slots.push({icon,word:word.word});
    if(root.AndroidBridge&&typeof root.AndroidBridge.onWordLearned==='function'){
@@ -524,18 +527,40 @@
    return true;
   }
   onTapAction(){
-   if(Date.now()<this.nextActionAt||!this.getCurrentWord()||this.state.mode==='room')return;
-   const word=this.getCurrentWord();this.nextActionAt=Date.now()+450;
    if(this.state.mode==='fishing'){
-    const f=this.state.fishing,z=f.zone;
-    if(f.pos>=z[0]&&f.pos<=z[1]){
-     if(this.award(word,'🐟')){
+    const f=this.state.fishing;
+    if(f.caught){
+     this.resetFishing();
+     this.message('');
+     return;
+    }
+    const word=this.getCurrentWord();
+    if(!word||Date.now()<this.nextActionAt)return;
+    this.nextActionAt=Date.now()+200;
+    // The sample allows a two-point grace area beyond each visible boundary.
+    if(f.pos>=FISH_ZONE[0]-2&&f.pos<=FISH_ZONE[1]+2){
+     const weight=(Math.random()*2.5+2.5).toFixed(2)+' kg';
+     if(this.award(word,'🐟',weight)){
       f.counts[word.word.length%f.counts.length]++;
-      f.lastCatch=this.state.popup;
-      f.catchTimer=1.1;this.advanceWord();this.nextActionAt=Date.now()+1000;
+      f.caught=true;f.sceneDirty=true;
+      this.fishingWeight.textContent=weight;
+      this.fishingHint.textContent='성공! 다시 낚시하려면 탭하세요';
+      this.fishingPopup.setAttribute('aria-hidden','false');
+      this.fishingReel.setAttribute('aria-label','다시 낚시하기');
+      this.syncFishingTiming();
+      this.advanceWord();
      }
-    }else this.message('아쉬워요! 표시가 파란 물고기 구간에 올 때 눌러보세요.');
-   }else if(this.state.mode==='weeding'){
+    }else{
+     const hint='찌가 노란 구간에 들어올 때 탭하세요!';
+     this.fishingHint.textContent=hint;
+     this.message(hint);
+    }
+    return;
+   }
+   if(this.state.mode==='weeding'){
+    if(Date.now()<this.nextActionAt||!this.getCurrentWord())return;
+    const word=this.getCurrentWord();
+    this.nextActionAt=Date.now()+450;
     const w=this.state.weeding;if(w.timer>0)return;
     const p=w.pos;w.status=p>=.4&&p<=.6?'perfect':p>=.22&&p<=.78?'medium':'bad';
     w.timer=1.3;this.nextActionAt=Date.now()+1300;
@@ -666,22 +691,21 @@
   isActionPoint(p){
    if(!p)return false;
    if(this.state.mode==='weeding')return p.y>=820;
-   if(this.state.mode!=='fishing')return false;
-   const x=p.x/W*ART_W,y=p.y/H*ART_H;
-   return (x>=80&&x<=1057&&y>=1254&&y<=1464)||
-    (x>=795&&x<=1092&&y>=990&&y<=1235);
+   return this.state.mode==='fishing'&&p.x>=0&&p.x<=W&&p.y>=0&&p.y<=H;
   }
   bindEvents(){
    // Keep vertical page gestures available over the entire Canvas.
    // Only the small furniture handles disable pan, when directly dragged.
    this.canvas.style.touchAction='pan-y';
    let tap=null;
-   this.canvas.addEventListener('pointerdown',event=>{
+   this.stage.addEventListener('pointerdown',event=>{
+    if(event.button!==0)return;
+    tap=null;
     const p=this.pointerXY(event);
     if(!this.isActionPoint(p))return;
     tap={id:event.pointerId,x:event.clientX,y:event.clientY,at:Date.now(),mode:this.state.mode};
    },{passive:true});
-   this.canvas.addEventListener('pointerup',event=>{
+   this.stage.addEventListener('pointerup',event=>{
     const gesture=tap;tap=null;
     if(!gesture||event.pointerId!==gesture.id||gesture.mode!==this.state.mode)return;
     if(Date.now()-gesture.at>800||
@@ -689,7 +713,11 @@
     const p=this.pointerXY(event);
     if(this.isActionPoint(p))this.onTapAction();
    },{passive:true});
-   this.canvas.addEventListener('pointercancel',()=>{tap=null;});
+   this.stage.addEventListener('pointercancel',()=>{tap=null;});
+   // Pointer taps are handled by the shared swipe-aware stage listener.
+   this.fishingReel.addEventListener('click',event=>{
+    if(event.detail===0&&this.state.mode==='fishing')this.onTapAction();
+   });
    root.addEventListener('resize',()=>this.resize());
    root.document.addEventListener('visibilitychange',()=>{if(root.document.hidden)this.pause();else this.resume();});
    root.document.addEventListener('wordville-app-resume',()=>{this.resize();this.resume();this.refreshWordPool();});
@@ -722,11 +750,15 @@
   }
   paint(){
    if(this.state.mode==='foraging')return;
+   if(this.state.mode==='fishing'&&!this.state.fishing.sceneDirty)return;
    this.ctx.clearRect(0,0,W,H);
-   if(this.state.mode==='fishing')this.renderFishing();
-   else if(this.state.mode==='weeding')this.renderWeeding();
-   else this.renderRoom();
-   if(this.state.mode==='weeding')this.drawHUD();
+   if(this.state.mode==='fishing'){
+    this.renderFishing();
+    this.state.fishing.sceneDirty=false;
+   }else if(this.state.mode==='weeding'){
+    this.renderWeeding();
+    this.drawHUD();
+   }else this.renderRoom();
   }
   pause(){this.running=false;if(this.raf)root.cancelAnimationFrame(this.raf);this.raf=0;this.lastFrame=0;}
   resume(){
@@ -758,6 +790,21 @@
   handles.className='wv-room-drag-targets';handles.hidden=true;
   stage.append(canvas,handles);
   stage.insertAdjacentHTML('beforeend',`
+   <div id="wv-fishing-controls" hidden>
+    <span class="wv-fishing-shimmer" aria-hidden="true"></span>
+    <div class="wv-fishing-popup" aria-hidden="true">
+     <span class="wv-fishing-new" lang="en">✨ NEW ✨</span>
+     <span class="wv-fishing-weight"></span>
+    </div>
+    <button class="wv-fishing-reel" type="button" aria-label="낚아채기" aria-describedby="wv-fishing-hint">
+     <span class="wv-fishing-track" aria-hidden="true">
+      <span class="wv-fishing-zone"></span>
+      <span class="wv-fishing-fish">🐟</span>
+      <span class="wv-fishing-bobber"></span>
+     </span>
+     <span class="wv-fishing-hint" id="wv-fishing-hint"></span>
+    </button>
+   </div>
    <div id="wv-forage-card" data-stage="1" hidden>
     <div class="wv-forage-viewport">
      <div class="wv-forage-sprite" aria-hidden="true"></div>

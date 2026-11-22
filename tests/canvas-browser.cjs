@@ -28,7 +28,7 @@ const assert=require('node:assert/strict');
    wordvilleGame.atlas.sheets.foraging_stages?.naturalHeight===1536,
    {timeout:15000});
   // Award one real offline vocabulary word for a successful fishing catch.
-  await page.evaluate(()=>{wordvilleGame.state.fishing.pos=.76;wordvilleGame.onTapAction();});
+  await page.evaluate(()=>{wordvilleGame.state.fishing.pos=76;wordvilleGame.onTapAction();});
   assert.equal(await page.evaluate(id=>!!state.reviews[id],base.first),true);
   assert.ok((await page.evaluate(()=>state.coins))>base.coin);
   assert.equal(await page.evaluate(()=>wordvilleGame.state.fishing.counts.reduce((a,b)=>a+b)),1);
