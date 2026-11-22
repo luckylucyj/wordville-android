@@ -166,7 +166,6 @@ jobs:
           (pathlib.Path(os.environ["RUNNER_TEMP"]) / "gemini-design.patch").write_bytes(patch)
           print("Verified", len(changed), "allowed changed files;", len(patch), "patch bytes")
           PY
-      - name: Export patch before running any generated code
       - name: Transfer only the already validated changes
         uses: actions/upload-artifact@v4
         with:
