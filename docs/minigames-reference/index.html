@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Wordville MiniGames</title>
+  <link rel="stylesheet" href="css/wordville-minigames.css" />
+</head>
+<body>
+  <div id="game-shell">
+    <nav class="mode-tabs" aria-label="미니게임 선택">
+      <button class="tab-btn active" data-mode="fishing">🎣 낚시</button>
+      <button class="tab-btn" data-mode="weeding">🌱 잡초뽑기</button>
+      <button class="tab-btn" data-mode="foraging">🍙 음식줍기</button>
+      <button class="tab-btn" data-mode="room">🏠 나의방</button>
+    </nav>
+
+    <div class="canvas-wrapper">
+      <canvas id="wordvilleCanvas"></canvas>
+
+      <div id="word-prompt-box" class="pastel-card">
+        <span class="badge" id="game-badge">FISHING</span>
+        <div class="word-target" id="target-meaning">harvest — 수확하다</div>
+        <div class="word-hint" id="target-hint">타이밍에 맞춰 터치하세요!</div>
+      </div>
+
+      <div id="foraging-choices" class="choice-row hidden"></div>
+
+      <div id="room-drawer" class="room-drawer hidden">
+        <div class="drawer-header">
+          <span>🛋️ 획득한 가구·소품 (탭하여 배치 / 드래그 이동)</span>
+          <button id="btn-clear-room" class="mini-btn">초기화</button>
+        </div>
+        <div id="room-item-list" class="item-scroll"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/wordville-engine.js"></script>
+  <script src="js/world-and-room-plus.js"></script>
+</body>
+</html>

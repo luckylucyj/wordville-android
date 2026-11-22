@@ -5,7 +5,19 @@
 (function(root){
  'use strict';
  const W=600,H=1000,INK='#4A3B32',SKIN='#fffdf8',WOOD='#b78961',ROOM_KEY='wordville_room_v1';
- const modes=['fishing','weeding','foraging','room'];
+ const modes=['world','fishing','weeding','foraging','room'];
+ const worldHotspots=[
+  {mode:'fishing',x:145,y:470,icon:'🎣',name:'하치와레 낚시터'},
+  {mode:'weeding',x:445,y:275,icon:'🌱',name:'치이카와 잡초밭'},
+  {mode:'foraging',x:455,y:555,icon:'🍙',name:'숲속 음식 줍기'},
+  {mode:'room',x:300,y:710,icon:'🏠',name:'나의 방 오두막'}
+ ];
+ const roomThemes={
+  cozy:{name:'코지 크림',wall:'#fff0dd',floor:'#d1a27c',tint:'rgba(255,238,205,.10)'},
+  mint:{name:'민트 브리즈',wall:'#d9f4e9',floor:'#a7c9ad',tint:'rgba(142,226,186,.16)'},
+  peach:{name:'피치 블라썸',wall:'#ffe4dd',floor:'#dfb2a6',tint:'rgba(255,173,165,.16)'},
+  night:{name:'나이트 스타',wall:'#b9bce1',floor:'#777caa',tint:'rgba(64,69,137,.25)'}
+ };
  const eq=(value,min,max)=>Math.min(max,Math.max(min,value));
  const label=w=>String((w?.meanings&&w.meanings[0])||w?.meaning||'').split(/[;；]/)[0].trim();
  const itemTypes={
@@ -17,7 +29,7 @@
  function freshRoom(){
   return {unlocked:['bed','shelf','chair','plant','lamp'].map(id=>({id,...itemTypes[id]})),
    placed:[{id:'bed',x:245,y:410},{id:'shelf',x:455,y:466},{id:'plant',x:135,y:472}],
-   dragIdx:-1};
+   theme:'cozy',dragIdx:-1};
  }
  class WordvilleGameEngine {
   constructor(canvasId){
@@ -28,6 +40,7 @@
    this.LOGICAL_W=W;this.LOGICAL_H=H;
    this.sprites={};
    this.spriteManifest={
+    bg_world:'images/world/bg_world_map.png',
     bg_fishing:'images/fishing/bg_fishing.png',hachiware_idle:'images/fishing/hachiware_idle.png',
     hachiware_catch:'images/fishing/hachiware_catch.png',
     bg_weeding:'images/weeding/bg_meadow.png',weed_perfect:'images/weeding/chiikawa_perfect.png',
@@ -51,7 +64,7 @@
    this.inventoryNode=root.document.getElementById('room-item-list');
    this.drawer=root.document.getElementById('room-drawer');
    this.roomHandleLayer=root.document.getElementById('wv-room-drag-targets');
-   this.roomPointerId=null;
+   this.roomPointerId=null;this.selectedRoomIdx=-1;
    this.preloadSprites();this.bindEvents();this.resize();
    this.loadWordsFromAndroid(root.WordvilleWords||[]);
    this.switchMode('fishing');
@@ -66,8 +79,8 @@
       .map(it=>({id:it.id,...itemTypes[it.id]})).slice(0,20);
      const unique=[...new Map([...defaults.unlocked,...unlocked].map(it=>[it.id,it])).values()];
      const placed=saved.placed.filter(it=>it&&itemTypes[it.id]&&Number.isFinite(it.x)&&Number.isFinite(it.y))
-      .slice(0,35).map(it=>({id:it.id,...this.constrainFloor(it.x,it.y)}));
-     return {unlocked:unique,placed,dragIdx:-1};
+      .slice(0,35).map(it=>({id:it.id,...this.constrainFloor(it.x,it.y),flipX:it.flipX===true}));
+     return {unlocked:unique,placed,theme:roomThemes[saved.theme]?saved.theme:'cozy',dragIdx:-1};
     }
    }catch{}
    return defaults;
@@ -75,7 +88,8 @@
   saveRoomState(){
    try{
     root.localStorage.setItem(ROOM_KEY,JSON.stringify({
-     unlocked:this.state.room.unlocked,placed:this.state.room.placed,dragIdx:-1
+     unlocked:this.state.room.unlocked,placed:this.state.room.placed,
+     theme:roomThemes[this.state.room.theme]?this.state.room.theme:'cozy'
     }));
     return true;
    }catch{this.message('가구 저장에 실패했습니다. 기기 저장 공간을 확인해 주세요.');return false;}
@@ -107,8 +121,25 @@
   }
   reportAssetError(key,url,reason){
    console.error('[Wordville Canvas] Image failed to load:',key,url,reason);
-   if(key==='bg_fishing'||key==='hachiware_idle'||key==='hachiware_catch'){
-    this.message('낚시 PNG 파일을 찾거나 처리하지 못했습니다: '+this.spriteManifest[key]+
+   if(key==='bg_fishing'&&!this.triedDockAlternative&&typeof root.Image==='function'){
+    // The standalone spec calls the same fishing background bg_dock.png.
+    // Prefer the historical path if present, then accept the new authored name.
+    this.triedDockAlternative=true;
+    const dockPath='images/fishing/bg_dock.png';
+    const dockUrl=new URL(dockPath,root.document.baseURI).href;
+    const dock=new root.Image();
+    dock.onload=()=>{
+     if(dock.naturalWidth&&dock.naturalHeight){
+      this.sprites.bg_fishing=dock;
+      console.info('[Wordville Fishing] PNG loaded', 'bg_dock',dockUrl);
+     }else this.reportAssetError('bg_dock',dockUrl,'decoded to an empty image');
+    };
+    dock.onerror=()=>this.reportAssetError('bg_dock',dockUrl,'image.onerror');
+    dock.src=dockUrl;
+    return;
+   }
+   if(key==='bg_fishing'||key==='bg_dock'||key==='hachiware_idle'||key==='hachiware_catch'){
+    this.message('낚시 PNG 파일을 찾거나 처리하지 못했습니다: '+url+
      ' · app/src/main/assets/images/fishing/ 위치와 파일명을 확인하세요.');
    }
   }
@@ -164,8 +195,19 @@
    this.ctx.setTransform(width/W,0,0,height/H,0,0);
   }
   loadWordsFromAndroid(wordList){
-   if(!Array.isArray(wordList))return false;
-   this.sourceWords=wordList.filter(w=>w&&typeof w.word==='string'&&w.id!=null&&label(w));
+   // Android may send a serialized JSON array, while the WebView app supplies
+   // WordvilleWords directly as an array. Both paths use the real vocabulary.
+   let incoming=wordList;
+   if(typeof incoming==='string'){
+    try{incoming=JSON.parse(incoming);}catch(error){
+     this.message('Android 단어 목록 JSON을 읽지 못했습니다.');
+     return false;
+    }
+   }
+   if(!Array.isArray(incoming))return false;
+   const valid=incoming.filter(w=>w&&typeof w.word==='string'&&w.id!=null&&label(w));
+   if(!valid.length)return false;
+   this.sourceWords=valid;
    this.refreshWordPool();
    return this.words.length>0;
   }
@@ -207,23 +249,36 @@
    if(this.drawer)this.drawer.hidden=mode!=='room';
    if(this.roomHandleLayer)this.roomHandleLayer.hidden=mode!=='room';
    const action=root.document.getElementById('wordville-action');
-   if(action)action.hidden=mode==='foraging'||mode==='room';
+   if(action)action.hidden=mode==='foraging'||mode==='room'||mode==='world';
+   root.document.querySelectorAll('.wv-canvas-mode-tab').forEach(b=>{
+    const active=b.dataset.mode===mode;b.classList.toggle('active',active);
+    b.setAttribute('aria-pressed',String(active));
+   });
+   this.selectedRoomIdx=mode==='room'?this.selectedRoomIdx:-1;
    if(mode==='foraging')this.buildForagingChoices();
-   if(mode==='room'){this.renderRoomInventoryUI();this.syncRoomHandles();}
+   if(mode==='room'){
+    const themePicker=root.document.getElementById('wv-room-theme');
+    if(themePicker)themePicker.value=this.state.room.theme;
+    this.renderRoomInventoryUI();this.syncRoomHandles();
+   }
+   if(mode==='world')this.message('마을 거점 4곳 중 하나를 터치해 게임에 들어가세요.');
    this.refreshHeaderUI();this.resume();
   }
   refreshHeaderUI(){
    const word=this.getCurrentWord();
-   const titles={fishing:'🎣 낚시 · 하치와레',weeding:'🌱 잡초 뽑기 · 치이카와',
+   const titles={world:'🗺️ Wordville 마을',fishing:'🎣 낚시 · 하치와레',weeding:'🌱 잡초 뽑기 · 치이카와',
     foraging:'🍙 음식 줍기 · 치이카와',room:'🏠 나의 방 꾸미기'};
    const badge=root.document.getElementById('game-badge');
    if(badge)badge.textContent=titles[this.state.mode];
    const hint=root.document.getElementById('target-hint');
-   if(hint)hint.textContent=this.state.mode==='room'?'가구를 선택한 후 방 바닥에서 드래그해 배치하세요':
+   if(hint)hint.textContent=this.state.mode==='world'?'마을의 4가지 거점을 터치하면 게임으로 이동합니다':
+    this.state.mode==='room'?'가구를 선택한 후 방 바닥에서 드래그해 배치하세요':
     this.state.mode==='foraging'?'뜻을 확인하고 알맞은 영단어 버튼을 선택하세요':
     '아래 움직이는 게이지를 목표 구간에서 눌러보세요';
    const current=root.document.getElementById('target-meaning');
-   if(current)current.textContent=word?word.word+' — '+label(word):'단어를 불러오는 중입니다';
+   if(current)current.textContent=this.state.mode==='world'?'어디로 떠날까요?':
+    this.state.mode==='room'?'Room Decor · '+roomThemes[this.state.room.theme].name:
+    word?word.word+' — '+label(word):'단어를 불러오는 중입니다';
   }
   message(text){
    if(this.status)this.status.textContent=text;
@@ -254,11 +309,13 @@
    this.text('☀',58,47,24,isDay?'#f4a261':'#b38d67');
    this.text('☾',125,47,23,!isDay?'#f9dc82':'#cfdbde');
    this.box(179,16,401,76,15,'#fff3dc',INK,3);
-   this.text(this.state.mode==='room'?'나의 방 · 가구 배치':
+   this.text(this.state.mode==='world'?'Wordville · 미니게임 월드맵':
+    this.state.mode==='room'?'나의 방 · 가구 배치':
     (word?.word||'단어 준비 중'),379,47,22,INK,'850',375);
-   this.text(this.state.mode==='room'?'학습한 단어와 꾸미기를 이어가세요':
+   this.text(this.state.mode==='world'?'거점을 선택해 학습하세요':
+    this.state.mode==='room'?roomThemes[this.state.room.theme].name+' 테마':
     label(word||{}),379,73,16,'#735847','600',370);
-   if(this.state.mode==='room')return;
+   if(this.state.mode==='room'||this.state.mode==='world')return;
    this.box(502,120,80,336,16,'#c99d7c',INK,3);
    for(let i=0;i<4;i++){
     const y=132+i*79;
@@ -305,6 +362,24 @@
      if(g.stage===2){g.stage=3;g.timer=1;}
      else{g.stage=1;g.pending=false;this.advanceWord(true);}
     }
+   }
+  }
+  worldDestinationAt(x,y){
+   if(!Number.isFinite(x)||!Number.isFinite(y))return null;
+   const spot=worldHotspots.find(item=>Math.abs(x-item.x)<=72&&Math.abs(y-item.y)<=44);
+   return spot?.mode||null;
+  }
+  renderWorld(){
+   if(!this.paintSprite('bg_world',0,0,W,H)){
+    this.background('#e8f1df','#f4e3cd');
+    this.box(94,150,412,88,16,'rgba(255,250,240,.94)',INK,2);
+    this.text('월드맵 배경 원본 이미지가 없습니다',300,185,18,INK,'800');
+    this.text('images/world/bg_world_map.png',300,214,14,'#7a6658','600');
+   }
+   for(const place of worldHotspots){
+    this.box(place.x-69,place.y-40,138,80,17,'rgba(255,250,240,.94)',INK,3);
+    this.text(place.icon,place.x,place.y-1,30);
+    this.text(place.name,place.x,place.y+25,14,INK,'800',128);
    }
   }
   renderFishing(){
@@ -380,26 +455,32 @@
    return {x:300+245*dx,y:480+135*dy};
   }
   renderRoom(){
-   const c=this.ctx;
+   const c=this.ctx,theme=roomThemes[this.state.room.theme]||roomThemes.cozy;
    if(!this.paintSprite('bg_room',0,0,W,H)){
-    this.background('#f7e6d0','#c9e0c7');
-    c.fillStyle='#fff7e8';c.lineWidth=4;c.strokeStyle=INK;
+    this.background(theme.wall,theme.floor);
+    c.fillStyle=theme.wall;c.lineWidth=4;c.strokeStyle=INK;
     c.beginPath();c.moveTo(300,130);c.lineTo(545,255);c.lineTo(545,470);c.lineTo(300,345);c.closePath();c.fill();c.stroke();
     c.beginPath();c.moveTo(300,130);c.lineTo(55,255);c.lineTo(55,470);c.lineTo(300,345);c.closePath();c.fill();c.stroke();
-    c.fillStyle='#d1a27c';c.beginPath();c.moveTo(300,345);c.lineTo(545,470);c.lineTo(300,615);c.lineTo(55,470);c.closePath();c.fill();c.stroke();
+    c.fillStyle=theme.floor;c.beginPath();c.moveTo(300,345);c.lineTo(545,470);c.lineTo(300,615);c.lineTo(55,470);c.closePath();c.fill();c.stroke();
     c.strokeStyle='#e8c4a0';c.lineWidth=2;
     for(let i=1;i<8;i++){const u=i/8;c.beginPath();c.moveTo(55+490*u,470-125*u);c.lineTo(300+245*u,615-145*u);c.stroke();}
+   }
+   else{
+    c.fillStyle=theme.tint;c.fillRect(0,0,W,H);
    }
    this.drawCritter(285,465,false,'food_3',.53);
    this.drawCritter(367,479,true,'catch',.53);
    for(let i=0;i<this.state.room.placed.length;i++){
     const it=this.state.room.placed[i],info=itemTypes[it.id]||{icon:'📦'};
-    this.text(info.icon,it.x,it.y+13,47);
+    c.save();c.translate(it.x,it.y);if(it.flipX)c.scale(-1,1);
+    this.text(info.icon,0,13,47);c.restore();
+    if(this.selectedRoomIdx===i)this.text('●',it.x,it.y-35,16,'#d96662');
     if(this.state.room.dragIdx===i)this.text('↕',it.x,it.y-46,24,'#cd6748');
    }
    this.box(40,735,520,120,18,'#fffaf0');
    this.text('가구를 눌러 이동해요 · 방 바닥에서 놓으세요',300,784,21);
    this.text('방 꾸미기는 기기에 자동 저장됩니다',300,824,16,'#7b5a45','650');
+   this.text('테마: '+theme.name,300,890,21,INK,'800');
   }
   drawCritter(x,y,isHachi,pose,scale=1){
    const c=this.ctx;c.save();c.translate(x,y);c.scale(scale,scale);
@@ -423,6 +504,16 @@
    if(pose==='perfect'||pose==='catch'||pose==='food_3')this.text('✨',58,-130,27);
    c.restore();
   }
+  unlockWordFurniture(word){
+   const rewardIds=['bed','shelf','chair','plant','lamp','rug'];
+   const hash=String(word.id).split('').reduce((sum,ch)=>sum+ch.charCodeAt(0),0);
+   const id=rewardIds[hash%rewardIds.length],room=this.state.room;
+   if(room.unlocked.some(item=>item.id===id))return false;
+   room.unlocked.push({id,...itemTypes[id]});
+   this.saveRoomState();
+   if(this.state.mode==='room')this.renderRoomInventoryUI();
+   return true;
+  }
   award(word,icon){
    // One answer records one review; never reward if the persistent save failed.
    if(!word||!root.WordvilleSolo?.learnFromCanvas)return false;
@@ -431,6 +522,7 @@
    this.state.popup={icon,word:word.word,weight:(1+(word.word.length%7)*.45).toFixed(2)+'kg',timer:2.2};
    if(this.state.slots.length>=4)this.state.slots.shift();
    this.state.slots.push({icon,word:word.word});
+   this.unlockWordFurniture(word);
    if(root.AndroidBridge&&typeof root.AndroidBridge.onWordLearned==='function'){
     try{root.AndroidBridge.onWordLearned(String(word.id),this.state.mode);}catch{}
    }
@@ -438,7 +530,7 @@
    return true;
   }
   onTapAction(){
-   if(Date.now()<this.nextActionAt||!this.getCurrentWord()||this.state.mode==='room')return;
+   if(Date.now()<this.nextActionAt||!this.getCurrentWord()||this.state.mode==='room'||this.state.mode==='world')return;
    const word=this.getCurrentWord();this.nextActionAt=Date.now()+450;
    if(this.state.mode==='fishing'){
     const f=this.state.fishing,z=f.zone;
@@ -500,7 +592,10 @@
     button.type='button';button.className='wv-canvas-inventory-item';
     button.textContent=item.icon+' '+item.name;
     button.addEventListener('click',()=>{
-     r.placed.push({id:item.id,x:300,y:478});this.saveRoomState();this.syncRoomHandles();
+     if(r.placed.length>=35){this.message('가구는 최대 35개까지 배치할 수 있습니다.');return;}
+     r.placed.push({id:item.id,x:300,y:478,flipX:false});
+     this.selectedRoomIdx=r.placed.length-1;
+     this.saveRoomState();this.syncRoomHandles();
      this.message(item.name+' 배치 완료 · 드래그해서 위치를 변경하세요.');
     });
     list.append(button);
@@ -520,7 +615,8 @@
      event.preventDefault();event.stopPropagation();
      const index=Number(handle.dataset.index);
      if(!Number.isInteger(index)||!this.state.room.placed[index])return;
-     this.state.room.dragIdx=index;this.roomPointerId=event.pointerId;
+     this.state.room.dragIdx=index;this.selectedRoomIdx=index;
+     this.syncRoomHandles();this.roomPointerId=event.pointerId;
      handle.setPointerCapture?.(event.pointerId);
     });
     handle.addEventListener('pointermove',event=>{
@@ -544,6 +640,12 @@
     handle.style.left=(item.x/W*100)+'%';
     handle.style.top=((item.y-18)/H*100)+'%';
     handle.setAttribute('aria-label',(itemTypes[item.id]?.name||'가구')+' 위치 이동');
+    handle.setAttribute('aria-pressed',String(i===this.selectedRoomIdx));
+   }
+   const selected=this.state.room.placed[this.selectedRoomIdx];
+   for(const id of ['wv-room-flip','wv-room-remove']){
+    const btn=root.document.getElementById(id);
+    if(btn)btn.disabled=!selected;
    }
   }
   pointerXY(e){
@@ -558,7 +660,7 @@
    let tap=null;
    this.canvas.addEventListener('pointerdown',event=>{
     const p=this.pointerXY(event);
-    if(!p||this.state.mode==='room'||this.state.mode==='foraging'||p.y<820)return;
+    if(!p||this.state.mode==='room'||this.state.mode==='foraging'||(this.state.mode!=='world'&&p.y<820))return;
     tap={id:event.pointerId,x:event.clientX,y:event.clientY,at:Date.now(),mode:this.state.mode};
    },{passive:true});
    this.canvas.addEventListener('pointerup',event=>{
@@ -567,7 +669,11 @@
     if(Date.now()-gesture.at>800||
      Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)>13)return;
     const p=this.pointerXY(event);
-    if(p&&p.y>=820)this.onTapAction();
+    if(!p)return;
+    if(this.state.mode==='world'){
+     const destination=this.worldDestinationAt(p.x,p.y);
+     if(destination)this.switchMode(destination);
+    }else if(p.y>=820)this.onTapAction();
    },{passive:true});
    this.canvas.addEventListener('pointercancel',()=>{tap=null;});
    root.addEventListener('resize',()=>this.resize());
@@ -576,14 +682,32 @@
    root.document.addEventListener('wordville-words-ready',()=>this.loadWordsFromAndroid(root.WordvilleWords||[]));
    root.document.getElementById('wordville-action')?.addEventListener('click',()=>this.onTapAction());
    root.document.getElementById('btn-clear-room')?.addEventListener('click',()=>{
-    this.state.room.placed=[];this.saveRoomState();this.syncRoomHandles();
+    this.state.room.placed=[];this.selectedRoomIdx=-1;this.saveRoomState();this.syncRoomHandles();
     this.message('배치만 초기화했습니다. 보유 가구는 그대로 유지됩니다.');
+   });
+   root.document.getElementById('wv-room-theme')?.addEventListener('change',event=>{
+    const theme=event.target.value;
+    if(!roomThemes[theme])return;
+    this.state.room.theme=theme;this.saveRoomState();this.refreshHeaderUI();
+    this.message('방 테마를 '+roomThemes[theme].name+'(으)로 변경했습니다.');
+   });
+   root.document.getElementById('wv-room-flip')?.addEventListener('click',()=>{
+    const selected=this.state.room.placed[this.selectedRoomIdx];if(!selected)return;
+    selected.flipX=!selected.flipX;this.saveRoomState();this.syncRoomHandles();
+    this.message('선택한 가구의 방향을 변경했습니다.');
+   });
+   root.document.getElementById('wv-room-remove')?.addEventListener('click',()=>{
+    if(!this.state.room.placed[this.selectedRoomIdx])return;
+    this.state.room.placed.splice(this.selectedRoomIdx,1);
+    this.selectedRoomIdx=-1;this.saveRoomState();this.syncRoomHandles();
+    this.message('가구를 회수했습니다. 보유 가구는 그대로 유지됩니다.');
    });
    root.document.getElementById('wv-solo-day')?.addEventListener('change',()=>this.refreshWordPool());
   }
   paint(){
    this.ctx.clearRect(0,0,W,H);
-   if(this.state.mode==='fishing')this.renderFishing();
+   if(this.state.mode==='world')this.renderWorld();
+   else if(this.state.mode==='fishing')this.renderFishing();
    else if(this.state.mode==='weeding')this.renderWeeding();
    else if(this.state.mode==='foraging')this.renderForaging();
    else this.renderRoom();
@@ -609,6 +733,13 @@
   const solo=root.document.getElementById('wv-solo-view');
   if(!solo||root.wordvilleGame)return;
   const panel=root.document.createElement('div');panel.className='wv-canvas-panel';
+  const modeNav=root.document.createElement('nav');modeNav.className='wv-canvas-mode-tabs';
+  modeNav.setAttribute('aria-label','Wordville 미니게임 장소 선택');
+  for(const [mode,title] of [['world','🗺️ 마을'],['fishing','🎣 낚시'],['weeding','🌱 제초'],['foraging','🍙 채집'],['room','🏠 나의 방']]){
+   const b=root.document.createElement('button');b.type='button';b.className='wv-canvas-mode-tab';
+   b.dataset.mode=mode;b.textContent=title;b.setAttribute('aria-pressed','false');
+   b.addEventListener('click',()=>root.wordvilleGame?.switchMode(mode));modeNav.append(b);
+  }
   const heading=root.document.createElement('h3');heading.id='game-badge';heading.textContent='🎣 낚시 · 하치와레';
   const target=root.document.createElement('p');target.id='target-meaning';target.setAttribute('aria-live','polite');
   const hint=root.document.createElement('p');hint.id='target-hint';
@@ -624,11 +755,24 @@
   const drawer=root.document.createElement('div');drawer.id='room-drawer';drawer.hidden=true;
   const drawerTitle=root.document.createElement('strong');drawerTitle.textContent='내 방 가구 서랍';
   const items=root.document.createElement('div');items.id='room-item-list';
+  const controls=root.document.createElement('div');controls.className='wv-room-controls';
+  const themeLabel=root.document.createElement('label');themeLabel.textContent='테마';
+  const themePicker=root.document.createElement('select');themePicker.id='wv-room-theme';
+  for(const [id,theme] of Object.entries(roomThemes)){
+   const option=root.document.createElement('option');option.value=id;option.textContent=theme.name;
+   themePicker.append(option);
+  }
+  themeLabel.append(themePicker);
+  const flip=root.document.createElement('button');flip.id='wv-room-flip';
+  flip.type='button';flip.textContent='↔ 가구 반전';flip.disabled=true;
+  const remove=root.document.createElement('button');remove.id='wv-room-remove';
+  remove.type='button';remove.textContent='↩ 가구 회수';remove.disabled=true;
+  controls.append(themeLabel,flip,remove);
   const clear=root.document.createElement('button');clear.id='btn-clear-room';clear.type='button';clear.textContent='가구 배치만 초기화';
-  drawer.append(drawerTitle,items,clear);
+  drawer.append(drawerTitle,controls,items,clear);
   const action=root.document.createElement('button');action.type='button';
   action.id='wordville-action';action.textContent='🎯 타이밍 맞춰 누르기';
-  panel.append(heading,target,hint,stage,action,choices,drawer,status);
+  panel.append(modeNav,heading,target,hint,stage,action,choices,drawer,status);
   const navbar=solo.querySelector('.wv-solo-topnav');navbar?.after(panel);
   root.wordvilleGame=new WordvilleGameEngine('wordvilleCanvas');
  }

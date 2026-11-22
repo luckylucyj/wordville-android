@@ -35,3 +35,20 @@
 .wv-canvas-panel .wv-room-drag-handle:focus-visible{
  outline:3px dashed #3a745e;outline-offset:1px;
 }
+
+/* World map hub + room decor controls. Keeps the existing vertical app scroll. */
+.wv-canvas-mode-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-bottom:10px}
+.wv-canvas-panel .wv-canvas-mode-tab{font-size:12px;min-width:0;min-height:43px;padding:7px 2px;line-height:1.3;background:#fffaf0;border-color:#4a3b32}
+.wv-canvas-panel .wv-canvas-mode-tab.active,.wv-canvas-panel .wv-canvas-mode-tab[aria-pressed=true]{background:#ffd966;box-shadow:0 2px 0 #4a3b32}
+.wv-room-controls{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(2,minmax(0,1fr));gap:7px;align-items:end;margin:8px 0 10px}
+.wv-room-controls label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;min-width:0}
+.wv-room-controls select{width:100%;min-height:42px;border:2px solid #9e744e;border-radius:8px;background:#fffaf0;color:#4a3b32;font:inherit;font-size:13px;padding:4px}
+.wv-canvas-panel .wv-room-controls button{min-height:42px;padding:5px 3px;font-size:12px}
+.wv-canvas-panel .wv-room-controls button:disabled{opacity:.48;cursor:not-allowed}
+.wv-canvas-panel .wv-room-drag-handle[aria-pressed=true]:focus-visible{outline:3px dashed #cb695e}
+@media(max-width:390px){
+ .wv-canvas-mode-tabs{gap:3px}
+ .wv-canvas-panel .wv-canvas-mode-tab{font-size:11px;padding:5px 1px}
+ .wv-room-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wv-room-controls label{grid-column:1/-1}
+}

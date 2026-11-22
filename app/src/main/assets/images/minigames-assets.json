@@ -1,0 +1,102 @@
+{
+  "title": "Wordville MiniGames user-specified image asset manifest",
+  "verified_on": "2026-11-23",
+  "base_path": "app/src/main/assets/images/",
+  "status": "original-binaries-not-available",
+  "warning": "This file is an inventory only and does not include image contents. Do not treat it as proof of asset availability.",
+  "known_existing_engine_background_path": "app/src/main/assets/images/fishing/bg_fishing.png",
+  "note": "The provided specification calls for fishing/bg_dock.png instead; reconcile the actual game renderer before implementing.",
+  "assets": [
+    {
+      "game": "world",
+      "reference_filename": "960a00eb.png",
+      "target_path": "app/src/main/assets/images/world/bg_world_map.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "fishing",
+      "reference_filename": "dd58ffc0.jpeg",
+      "target_path": "app/src/main/assets/images/fishing/bg_dock.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "fishing",
+      "reference_filename": "6483ca8e.png",
+      "target_path": "app/src/main/assets/images/fishing/hachiware_idle.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "fishing",
+      "reference_filename": "cb91bc66.png",
+      "target_path": "app/src/main/assets/images/fishing/hachiware_catch.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "weeding",
+      "reference_filename": "70d180b6.png",
+      "target_path": "app/src/main/assets/images/weeding/bg_meadow.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "weeding",
+      "reference_filename": "1c5e8815.png",
+      "target_path": "app/src/main/assets/images/weeding/chiikawa_perfect.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "weeding",
+      "reference_filename": "7d066ae4.png",
+      "target_path": "app/src/main/assets/images/weeding/chiikawa_medium.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "weeding",
+      "reference_filename": "bb91c328.png",
+      "target_path": "app/src/main/assets/images/weeding/chiikawa_bad.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "foraging",
+      "reference_filename": "6f677588.jpeg",
+      "target_path": "app/src/main/assets/images/foraging/bg_forest.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "foraging",
+      "reference_filename": "71ee2b26.png",
+      "target_path": "app/src/main/assets/images/foraging/chiikawa_food_1.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "foraging",
+      "reference_filename": "e7ab3e07.png",
+      "target_path": "app/src/main/assets/images/foraging/chiikawa_food_2.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "foraging",
+      "reference_filename": "e2e7f6c8.png",
+      "target_path": "app/src/main/assets/images/foraging/chiikawa_food_3.png",
+      "status": "missing-unverified",
+      "sha256": null
+    },
+    {
+      "game": "room",
+      "reference_filename": "faabd908.jpeg",
+      "target_path": "app/src/main/assets/images/room/bg_isometric_room.png",
+      "status": "missing-unverified",
+      "sha256": null
+    }
+  ]
+}
