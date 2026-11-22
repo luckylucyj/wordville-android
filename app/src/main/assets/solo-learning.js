@@ -9,7 +9,7 @@
  const games={
   fish:{name:'단어 낚시',icon:'🎣',description:'한국어 뜻을 보고 맞는 영단어를 낚으세요.',prize:'잡은 물고기'},
   wood:{name:'단어 벌목',icon:'🪓',description:'영단어와 일치하는 한국어 뜻을 골라 나무를 베세요.',prize:'모은 통나무'},
-  capture:{name:'예문 포획',icon:'🐑',description:'기존 영어 예문의 빈칸에 알맞은 단어를 넣으세요.',prize:'발견한 동물'}
+  capture:{name:'예문 포획',icon:'🐑',description:'기존 Wordville 단어 카드·영어 대화 예문의 빈칸에 알맞은 단어를 넣으세요.',prize:'발견한 동물'}
  };
  const furniture=[
   {id:'rug',name:'크림 러그',icon:'🟠',cost:12},
@@ -91,7 +91,7 @@
    </div>
   </div>
   <div class="wv-solo-stats" id="wv-solo-stats"></div>
-  <p class="wv-solo-note">기존 VOCA의 뜻과 원문 예문을 사용합니다. 정답은 기존 복습 주기에 반영되며, 복습 가능 시 코인이 지급됩니다. 오답은 10분 뒤 복습할 수 있습니다.</p>
+  <p class="wv-solo-note">VOCA 카드에 저장된 예문은 그대로 사용하고, 없는 단어는 Wordville 내 영어 대화 연습 예시를 사용합니다. 정답은 기존 복습 주기에 반영되며, 복습 가능 시 코인이 지급됩니다. 오답은 10분 뒤 복습할 수 있습니다.</p>
  </section>
  <section id="wv-solo-room-view" hidden>
   <h3>🏠 나의 방 꾸미기</h3>
@@ -233,7 +233,7 @@
   if(correct){
    delete progress.mistakes[round.id];
    if(!progress.learned.includes(round.id))progress.learned.push(round.id);
-   if(!progress.frames.includes(round.id)&&progress.frames.length<4)progress.frames.push(round.id);
+   if(!progress.frames.includes(round.id))progress.frames=[...progress.frames,round.id].slice(-4);
    progress.dailyCorrect++;
    if(daily)progress.dailyBonus=true;
    progress.earned+=Math.max(0,original+bonus+daily);
@@ -249,7 +249,7 @@
   let message=(correct?'✅ 정답!':'❌ 오답. 정답: '+round.answer)+
    ' · '+round.word.word+' = '+round.meaning;
   if(correct)message+=' · +'+(original+bonus+daily)+' 코인'+(daily?' (하루 10문제 보너스)':'');
-  if(mode==='capture')message+=' · '+round.example+(round.translation?' / '+round.translation:'');
+  if(mode==='capture')message+=' · '+round.exampleSource+': '+round.example+(round.translation?' / '+round.translation:'');
   if(mode==='fish'&&correct)get('scene-art').textContent='🎣  🐟✨  💦';
   if(mode==='wood'&&correct)get('scene-art').textContent='🪵  🪓  ✨';
   if(mode==='capture'&&correct)get('scene-art').textContent='🐑  ✨  🏡';
