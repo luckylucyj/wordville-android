@@ -38,7 +38,11 @@ const assert=require('node:assert/strict');
   await page.locator('[data-solo-tab="capture"]').click();
   assert.equal(await page.evaluate(()=>wordvilleGame.state.mode),'foraging');
   const food=await page.evaluate(()=>wordvilleGame.getCurrentWord().word);
-  await page.locator('#foraging-choices button').filter({hasText:food}).first().click();
+  await page.locator('#foraging-choices button').evaluateAll((buttons,word)=>{
+   const matching=buttons.find(button=>button.textContent===word);
+   if(!matching)throw Error('Foraging target missing from options');
+   matching.click();
+  },food);
   assert.equal(await page.evaluate(()=>wordvilleGame.state.foraging.stage),2);
   await page.evaluate(()=>{wordvilleGame.state.foraging.timer=.001;wordvilleGame.update(.05);});
   assert.equal(await page.evaluate(()=>wordvilleGame.state.foraging.stage),3);
