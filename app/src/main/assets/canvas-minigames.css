@@ -1,0 +1,21 @@
+/* Wordville 600x1000 Canvas gameplay in a responsive WebView panel. */
+.wv-canvas-panel{box-sizing:border-box;width:min(100%,640px);margin:12px auto 18px;padding:11px;background:#f5e4bf;border:3px solid #a87d5a;border-radius:15px;color:#4a3b32;box-shadow:3px 5px 0 #6f4c2d42}
+.wv-canvas-panel *{box-sizing:border-box}
+#game-badge{margin:2px 0 5px;text-align:center;font-size:17px;line-height:1.4}
+#target-meaning{margin:0;text-align:center;font-size:15px;font-weight:850;line-height:1.55;overflow-wrap:anywhere}
+#target-hint{margin:5px 0 10px;text-align:center;font-size:12px;line-height:1.6}
+#wordvilleCanvas{display:block;width:100%;max-width:600px;height:auto;aspect-ratio:3/5;margin:0 auto;border:4px solid #a27b56;border-radius:12px;background:#f0dbb9;touch-action:none}
+.wv-canvas-panel button{background:#fff5da;border:2px solid #9e744e;border-radius:9px;color:#4a3b32;min-height:46px;padding:8px 10px;font:inherit;font-weight:800;cursor:pointer;overflow-wrap:anywhere}
+.wv-canvas-panel button:focus-visible{outline:3px solid #397c63;outline-offset:3px}
+#wordville-action{display:block;margin:12px auto;width:100%;min-height:51px;font-weight:900;color:#fffaf0;background:#518365;border-color:#345e48}
+#foraging-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:11px 0}
+#foraging-choices[hidden],#room-drawer[hidden]{display:none!important}
+#foraging-choices .wv-canvas-choice{font-size:14px;min-width:0;min-height:60px}
+#room-drawer{margin:9px 0;padding:10px;background:#fff7e4;border:2px solid #d5b18a;border-radius:11px}
+#room-drawer>strong{display:block;margin:0 0 8px;font-size:14px}
+#room-item-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:8px}
+#room-item-list button{font-size:12px;min-width:0;line-height:1.5}
+#btn-clear-room{width:100%;font-size:12px}
+#wordville-canvas-status{min-height:28px;margin:9px 2px 2px;font-size:13px;line-height:1.65;font-weight:650;overflow-wrap:anywhere}
+@media(min-width:560px){#room-item-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:390px){.wv-canvas-panel{padding:6px;border-width:2px;margin:8px auto 14px}#wordvilleCanvas{border-width:2px}#game-badge{font-size:15px}#target-meaning{font-size:13px}#target-hint{font-size:11px}#foraging-choices .wv-canvas-choice{font-size:12px;padding:6px 3px}}
