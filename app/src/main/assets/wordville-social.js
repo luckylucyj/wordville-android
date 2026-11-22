@@ -249,7 +249,7 @@ function renderStatus(){
  if(!log.childNodes.length)log.append(el('li','wv-social-hint',tr(lex.noTalk)));
  const greetStatus=el('p','wv-social-feedback');
  const greet=button(tr(lex.sayHi),()=>{
-  const result=hello(selected);renderStatus();const msg=statusBody.querySelector('.wv-social-greet-feedback');if(msg)msg.textContent=tr(result.added?lex.hiDone:lex.hiLimit);
+  const result=hello(selected);renderStatus();syncResidentCards();const msg=statusBody.querySelector('.wv-social-greet-feedback');if(msg)msg.textContent=tr(result.added?lex.hiDone:lex.hiLimit);
  },'wv-social-action');
  greetStatus.classList.add('wv-social-greet-feedback');
  add(f,talkHead,log,greet,greetStatus);statusBody.replaceChildren(f);
