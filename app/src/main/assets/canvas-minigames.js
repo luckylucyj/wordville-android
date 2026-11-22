@@ -37,9 +37,12 @@
     bg_room:'images/room/bg_isometric_room.png'
    };
    this.words=[];this.sourceWords=[];
+   this.atlas=new root.SpriteAtlasHelper();
+   this.studyManager=new root.WordvilleStudyManager([]);
+   this.stateScope='all';
    this.state={mode:'fishing',wordIdx:0,slots:[],popup:null,
     fishing:{pos:.15,dir:1,zone:[.68,.86],catchTimer:0},
-    weeding:{pos:0,dir:1,status:'idle',timer:0},
+    weeding:{pos:0,dir:1,status:'idle',timer:0,pendingRetry:false},
     foraging:{stage:1,timer:0,choices:[],pending:false},
     room:this.loadRoomState()};
    this.running=false;this.raf=0;this.lastFrame=0;this.nextActionAt=0;
@@ -76,6 +79,10 @@
    }catch{this.message('가구 저장에 실패했습니다. 기기 저장 공간을 확인해 주세요.');return false;}
   }
   preloadSprites(){
+   // Prefer 512px individual sprites; the vertical three-panel atlas is
+   // available when a standalone PNG is missing or supplied as a design sheet.
+   void this.atlas.loadSheet('weeding_states','images/weeding/chiikawa_3state_atlas.png');
+   void this.atlas.loadSheet('foraging_stages','images/foraging/chiikawa_3stage_atlas.png');
    if(typeof root.Image!=='function')return;
    Object.entries(this.spriteManifest).forEach(([key,path])=>{
     const image=new root.Image();
@@ -99,24 +106,35 @@
    return this.words.length>0;
   }
   refreshWordPool(){
-   const previous=this.getCurrentWord()?.id;
    const day=root.document.getElementById('wv-solo-day')?.value||'all';
    const filtered=this.sourceWords.filter(w=>day==='all'||(w.days||[]).includes(Number(day)));
    this.words=filtered.length?filtered:this.sourceWords;
-   this.state.wordIdx=Math.max(0,this.words.findIndex(w=>w.id===previous));
+   this.studyManager.setWords(this.words,day);
+   this.stateScope=day;
+   this.state.wordIdx=Math.max(0,this.words.findIndex(w=>w.id===this.getCurrentWord()?.id));
    this.buildForagingChoices();
    this.refreshHeaderUI();
   }
-  getCurrentWord(){return this.words.length?this.words[this.state.wordIdx%this.words.length]:null;}
+  getCurrentWord(){return this.studyManager.current();}
   advanceWord(){
-   if(!this.words.length)return;
-   this.state.wordIdx=(this.state.wordIdx+1)%this.words.length;
+   if(!this.getCurrentWord())return;
+   this.studyManager.markSuccess();
+   this.state.wordIdx=Math.max(0,this.words.findIndex(w=>w.id===this.getCurrentWord()?.id));
    if(this.state.mode==='foraging')this.buildForagingChoices();
    this.refreshHeaderUI();
   }
+  retryWord(){
+   if(!this.getCurrentWord())return;
+   const failed=this.studyManager.markRetry();
+   this.state.wordIdx=Math.max(0,this.words.findIndex(w=>w.id===this.getCurrentWord()?.id));
+   if(this.state.mode==='foraging')this.buildForagingChoices();
+   this.refreshHeaderUI();
+   return failed;
+  }
   switchMode(mode){
    if(!modes.includes(mode))return;
-   this.state.mode=mode;this.nextActionAt=0;this.state.weeding.timer=0;this.state.weeding.status='idle';
+   this.state.mode=mode;this.nextActionAt=0;this.state.weeding.timer=0;
+   this.state.weeding.status='idle';this.state.weeding.pendingRetry=false;
    this.state.foraging.stage=1;this.state.foraging.timer=0;this.state.foraging.pending=false;
    if(this.choicesNode)this.choicesNode.hidden=mode!=='foraging';
    if(this.drawer)this.drawer.hidden=mode!=='room';
@@ -200,7 +218,13 @@
     if(f.pos<=.04){f.pos=.04;f.dir=1;}
    }
    if(this.state.mode==='weeding'){
-    if(w.timer>0){w.timer=Math.max(0,w.timer-dt);if(!w.timer)w.status='idle';}
+    if(w.timer>0){
+     w.timer=Math.max(0,w.timer-dt);
+     if(!w.timer){
+      if(w.pendingRetry){w.pendingRetry=false;this.retryWord();}
+      w.status='idle';
+     }
+    }
     else{
      w.pos+=w.dir*dt*.8;
      if(w.pos>=1){w.pos=1;w.dir=-1;}
@@ -246,7 +270,10 @@
     for(let i=0;i<13;i++)this.text('✿',34+i*43,570+Math.sin(i)*24,19,['#f7bac9','#f0d07d','#c4bbf7'][i%3]);
    }
    const key=w.status==='idle'?'weed_medium':'weed_'+w.status;
-   if(!this.paintSprite(key,162,306,265,280))this.drawCritter(290,480,false,w.status);
+   if(!this.paintSprite(key,162,306,265,280)&&
+      !this.atlas.drawPanel(c,'weeding_states',
+       w.status==='perfect'?0:w.status==='bad'?2:1,162,306,265,280))
+    this.drawCritter(290,480,false,w.status);
    const labels={idle:'타이밍을 맞춰 잡초를 뽑으세요',perfect:'✨ 적합! 뿌리째 깔끔하게!',medium:'💦 중간! 힘껏 뽑았어요',bad:'💫 비적합! 줄기가 끊어졌어요'};
    this.box(104,579,392,46,11,'#fff8e5',INK,2);
    this.text(labels[w.status],300,610,18);
@@ -266,7 +293,9 @@
     c.fillStyle='#d6dfac';c.fillRect(0,600,W,400);
    }
    const stage=g.stage;
-   if(!this.paintSprite('food_'+stage,160,280,250,270))this.drawCritter(280,450,false,'food_'+stage);
+   if(!this.paintSprite('food_'+stage,160,280,250,270)&&
+      !this.atlas.drawPanel(c,'foraging_stages',stage-1,160,280,250,270))
+    this.drawCritter(280,450,false,'food_'+stage);
    const labels={1:'1/3 발견 · 맞는 영단어를 선택하세요',2:'2/3 줍기 · 두 손으로 조심히',3:'3/3 획득 · 머리 위로 번쩍!'};
    this.box(88,546,424,47,11,'#fff9e8',INK,2);
    this.text(labels[stage],300,576,18);
@@ -361,7 +390,8 @@
     w.timer=1.3;this.nextActionAt=Date.now()+1300;
     if(w.status==='bad'){
      this.message('비적합: 뿌리째 뽑지 못했어요. 다시 도전해 보세요.');
-     root.WordvilleSolo?.learnFromCanvas(word.id,this.state.mode,false);
+     if(root.WordvilleSolo?.learnFromCanvas(word.id,this.state.mode,false)!==false)
+      w.pendingRetry=true;
     }else if(this.award(word,w.status==='perfect'?'🌱':'🌿'))this.advanceWord();
    }
   }
@@ -383,7 +413,8 @@
      if(w.id!==word.id){
       this.message('❌ '+w.word+'는 정답이 아닙니다. 뜻을 다시 확인해 주세요.');
       this.nextActionAt=Date.now()+450;
-      root.WordvilleSolo?.learnFromCanvas(word.id,this.state.mode,false);
+      if(root.WordvilleSolo?.learnFromCanvas(word.id,this.state.mode,false)!==false)
+       this.retryWord();
       return;
      }
      if(this.award(word,word.word.length%2?'🍮':'🍙')){
@@ -472,7 +503,7 @@
    };
    this.raf=root.requestAnimationFrame(tick);
   }
-  destroy(){this.pause();}
+  destroy(){this.pause();this.studyManager.dispose();}
  }
  root.WordvilleGameEngine=WordvilleGameEngine;
  function init(){
