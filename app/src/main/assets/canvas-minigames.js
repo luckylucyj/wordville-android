@@ -79,7 +79,7 @@
       .map(it=>({id:it.id,...itemTypes[it.id]})).slice(0,20);
      const unique=[...new Map([...defaults.unlocked,...unlocked].map(it=>[it.id,it])).values()];
      const placed=saved.placed.filter(it=>it&&itemTypes[it.id]&&Number.isFinite(it.x)&&Number.isFinite(it.y))
-      .slice(0,35).map(it=>({id:it.id,...this.constrainFloor(it.x,it.y)}));
+      .slice(0,35).map(it=>({id:it.id,...this.constrainFloor(it.x,it.y),flipX:it.flipX===true}));
      return {unlocked:unique,placed,theme:roomThemes[saved.theme]?saved.theme:'cozy',dragIdx:-1};
     }
    }catch{}
