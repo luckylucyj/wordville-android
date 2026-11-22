@@ -107,13 +107,13 @@
    this.playTone('success');
    return item;
   }
-  markRetry(){
+  markRetry(silent=false){
    const item=this.queue.shift();
    if(!item)return null;
    // Two *other* questions must precede this retry. Move rather than duplicate.
    this.queue.splice(Math.min(2,this.queue.length),0,item);
    this.persist();
-   this.playTone('fail');
+   if(!silent)this.playTone('fail');
    return item;
   }
   playTone(type){
