@@ -123,9 +123,9 @@
    if(this.state.mode==='foraging')this.buildForagingChoices();
    this.refreshHeaderUI();
   }
-  retryWord(){
+  retryWord(silent=false){
    if(!this.getCurrentWord())return;
-   const failed=this.studyManager.markRetry();
+   const failed=this.studyManager.markRetry(silent);
    this.state.wordIdx=Math.max(0,this.words.findIndex(w=>w.id===this.getCurrentWord()?.id));
    if(this.state.mode==='foraging')this.buildForagingChoices();
    this.refreshHeaderUI();
@@ -221,7 +221,7 @@
     if(w.timer>0){
      w.timer=Math.max(0,w.timer-dt);
      if(!w.timer){
-      if(w.pendingRetry){w.pendingRetry=false;this.retryWord();}
+      if(w.pendingRetry){w.pendingRetry=false;this.retryWord(true);}
       w.status='idle';
      }
     }
@@ -390,8 +390,10 @@
     w.timer=1.3;this.nextActionAt=Date.now()+1300;
     if(w.status==='bad'){
      this.message('비적합: 뿌리째 뽑지 못했어요. 다시 도전해 보세요.');
-     if(root.WordvilleSolo?.learnFromCanvas(word.id,this.state.mode,false)!==false)
+     if(root.WordvilleSolo?.learnFromCanvas(word.id,this.state.mode,false)!==false){
+      this.studyManager.playTone('fail');
       w.pendingRetry=true;
+     }
     }else if(this.award(word,w.status==='perfect'?'🌱':'🌿'))this.advanceWord();
    }
   }
