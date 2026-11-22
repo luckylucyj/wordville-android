@@ -116,7 +116,7 @@
   }
   switchMode(mode){
    if(!modes.includes(mode))return;
-   this.state.mode=mode;this.state.weeding.timer=0;this.state.weeding.status='idle';
+   this.state.mode=mode;this.nextActionAt=0;this.state.weeding.timer=0;this.state.weeding.status='idle';
    this.state.foraging.stage=1;this.state.foraging.timer=0;this.state.foraging.pending=false;
    if(this.choicesNode)this.choicesNode.hidden=mode!=='foraging';
    if(this.drawer)this.drawer.hidden=mode!=='room';
