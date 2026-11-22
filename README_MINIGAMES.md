@@ -54,3 +54,11 @@
 - [ ] APK 빌드 및 성공 여부 확인
 
 **이 문서만 커밋했다고 이미지·미니게임이 앱에 새롭게 반영되거나 APK가 빌드되는 것은 아닙니다.** PR을 검토한 뒤 실제 원본 이미지와 누락된 기능을 추가로 구현해야 합니다.
+
+## 5. 사용자 제공 HTML·CSS 원문
+
+- [`docs/minigames-reference/index.html`](docs/minigames-reference/index.html) — 독립 게임 화면의 HTML 원문
+- [`docs/minigames-reference/wordville-minigames.css`](docs/minigames-reference/wordville-minigames.css) — 파스텔 게임 UI CSS 원문
+- [`docs/minigames-reference/README.md`](docs/minigames-reference/README.md) — 원문 코드가 실제 앱 실행 경로가 아닌 이유 및 누락된 JS 안내
+
+실제 메인 앱에서 이 소스들을 자동으로 읽어들이도록 연결하지 않았습니다. 요청된 JS는 붙여넣기 도중 끊겼기 때문에 기존 동작 중인 `canvas-minigames.js`가 그대로 유지됩니다.
