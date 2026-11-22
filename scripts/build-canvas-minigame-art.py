@@ -158,7 +158,24 @@ def main():
     for scene,file in [("fishing","fishing/bg_dock.png"),("weeding","weeding/bg_meadow.png"),
                        ("foraging","foraging/bg_forest.png"),("room","room/bg_isometric_room.png")]:
         bg(scene,BASE/file)
-    print("Generated 12 offline Canvas assets: 8 transparent 512x512 character PNGs + 4 backgrounds")
+    # Optional vertical atlas sheets: 3 equal 512x512 panels in one 512x1536 PNG.
+    # This preserves the independent character sprites and supports user-provided
+    # 3-panel illustrations with the same 0/1/2 panel mapping.
+    for output,parts in [
+        ("weeding/chiikawa_3state_atlas.png",[
+            "weeding/chiikawa_perfect.png","weeding/chiikawa_medium.png",
+            "weeding/chiikawa_bad.png"]),
+        ("foraging/chiikawa_3stage_atlas.png",[
+            "foraging/chiikawa_food_1.png","foraging/chiikawa_food_2.png",
+            "foraging/chiikawa_food_3.png"])
+    ]:
+        sheet=Image.new("RGBA",(512,1536),(0,0,0,0))
+        for index,name in enumerate(parts):
+            with Image.open(BASE/name) as source:
+                assert source.size==(512,512),name
+                sheet.alpha_composite(source.convert("RGBA"),(0,index*512))
+        sheet.save(BASE/output,optimize=True)
+    print("Generated 14 Canvas PNG assets: 8 character images, 4 scenes and 2 three-panel atlases")
 
 if __name__=="__main__":
     main()
