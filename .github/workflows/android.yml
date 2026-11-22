@@ -41,6 +41,11 @@ jobs:
           python scripts/build-idle48.py
           python scripts/build-guest-sprites.py
           python tests/guest-hair-colors.py
+      - name: Generate offline Canvas minigame PNG art
+        run: |
+          python scripts/build-canvas-minigame-art.py
+          python -c "from pathlib import Path; root=Path('app/src/main/assets/images'); files=list(root.rglob('*.png')); assert len(files)==12, len(files); print('Canvas art OK:',len(files))"
+
       - uses: actions/upload-artifact@v4
         with:
           name: wordville-audited-32x32-sprites
