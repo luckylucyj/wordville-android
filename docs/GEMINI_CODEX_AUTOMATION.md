@@ -1,5 +1,7 @@
 # Gemini → GitHub Issue → Codex → draft PR (Wordville)
 
+> **Updated 2026-11-23:** This original guide describes the manual `[Gemini Design Ready]` mode. To trigger **Gemini API design generation followed by Codex implementation without manually copying a completed Gemini spec**, use the new `[Gemini Design Request]` issue template. See [Gemini API to Codex](GEMINI_API_TO_CODEX.md) for the current workflow, cost, and limitations. A conversation finishing in the Gemini web app is not itself a GitHub event.
+
 ## Summary
 
 - Trigger: an **open GitHub Issue** created by `luckylucyj`, whose title starts with `[Gemini Design Ready]`; or owner-only manual workflow dispatch with an existing design issue number.
