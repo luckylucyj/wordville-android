@@ -120,6 +120,8 @@
    this.state.foraging.stage=1;this.state.foraging.timer=0;this.state.foraging.pending=false;
    if(this.choicesNode)this.choicesNode.hidden=mode!=='foraging';
    if(this.drawer)this.drawer.hidden=mode!=='room';
+   const action=root.document.getElementById('wordville-action');
+   if(action)action.hidden=mode==='foraging'||mode==='room';
    if(mode==='foraging')this.buildForagingChoices();
    if(mode==='room')this.renderRoomInventoryUI();
    this.refreshHeaderUI();this.resume();
