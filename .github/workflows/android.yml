@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 concurrency:
   group: wordville-signing-${{ github.repository }}-v1.7-${{ github.event_name }}-${{ github.event.pull_request.number || 'stable' }}
-  cancel-in-progress: false
+  # Superseded pull-request checks need not finish; main/release signing runs are never cancelled.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:
