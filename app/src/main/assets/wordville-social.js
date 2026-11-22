@@ -1,6 +1,6 @@
 /* Offline resident social journal, notice board and birthday/status UI.
  * Board posts are authored English-learning examples, not live internet posts.
- * All user interaction and custom birthdays remain local. */
+ * Interaction records remain local. */
 (function(root){
 'use strict';
 const residents=root.VillageModel?.people||[];
@@ -18,19 +18,21 @@ const lex={
  boardToday:['오늘의 글','Today’s posts','今日帖子','今日の投稿'],
  register:['주민 상태창','Resident status','居民状态','住民ステータス'],
  openStatus:['생일·호감도·기분·대화 보기','View birthday, affinity and conversations','查看生日、好感度与对话','誕生日・好感度・会話を見る'],
- birthday:['생일 (월/일)','Birthday (month/day)','生日（月/日）','誕生日（月/日）'],
- birthdayHint:['Wordville에서 임의로 설정한 생일입니다. 원작 공식 설정과 다를 수 있으며 수정할 수 있습니다.','App-assigned birthdays are editable and may not match canon.','生日为应用内设定，可修改，未必与原作相同。','アプリ内で設定された誕生日です。原作設定とは異なる場合があり、変更できます。'],
- affinity:['호감도','Affinity','好感度','好感度'],
+ birthday:['원작 생일','Original birthday','原作生日','原作の誕生日'],
+ birthdayUnknown:['공식 생일 확인 안 됨','Official birthday unconfirmed','官方生日未确认','公式の誕生日は未確認'],
+ affinity:['나와의 호감도','Affinity with you','对你的好感度','あなたへの好感度'],
+ residentAffinity:['주민 사이의 호감도','Affinity between residents','居民之间的好感度','住民同士の好感度'],
+ relationshipHint:['Wordville 설정 · 왼쪽 이름에서 오른쪽 이름을 향한 점수','Wordville scores from the name on the left toward the name on the right','Wordville设定 · 从左侧角色对右侧角色的分数','Wordville設定・左の住民から右の住民への好感度'],
  mood:['오늘 기분','Today’s mood','今日心情','今日の気分'],
  day:['오늘의 일정','Today’s routine','今日安排','今日の予定'],
  observed:['대화·상호작용 기록','Conversations & interactions','对话与互动记录','会話・交流の記録'],
  noTalk:['오늘 기록된 대화가 없습니다.','No conversations recorded today.','今天尚无对话记录。','今日の会話記録はありません。'],
  plan:['일정표 기준 (실제 행동 측정값이 아님)','Based on the schedule, not a measured activity log','根据预设日程，并非实际行为追踪','予定表に基づく表示で、実測した行動履歴ではありません'],
  sayHi:['인사하고 영어 표현 배우기','Say hello & learn an expression','打招呼并学英语表达','挨拶して英語表現を学ぶ'],
- hiDone:['인사했습니다. 호감도 +2','You said hello. Affinity +2','已打招呼，好感度 +2','挨拶しました。好感度 +2'],
+ hiDone:['인사했습니다. 호감도','You said hello. Affinity','已打招呼，好感度','挨拶しました。好感度'],
+ hiFull:['호감도가 100점이에요.','Affinity is at 100.','好感度已达100。','好感度は100です。'],
+ storageError:['호감도를 저장하지 못했습니다.','Could not save affinity.','无法保存好感度。','好感度を保存できませんでした。'],
  hiLimit:['오늘의 호감도 보상을 모두 받았습니다. 대화는 계속할 수 있습니다.','Today’s affinity rewards are used up. You can keep talking.','今日好感度奖励已达上限，仍可继续交谈。','今日の好感度報酬は上限です。会話は続けられます。'],
- save:['생일 저장','Save birthday','保存生日','誕生日を保存'],
- saved:['생일을 저장했습니다.','Birthday saved.','生日已保存。','誕生日を保存しました。'],
  close:['닫기','Close','关闭','閉じる'],
  today:['오늘','Today','今天','今日'],
  origin:['표현 뜻','Meaning & usage','释义与用法','意味・使い方'],
@@ -72,10 +74,45 @@ const phrases=[
 ];
 const ids=new Set(residents.map(p=>p.id));
 const byId=new Map(phrases.map(a=>[a[0],a]));
-const birthdays=['05-21','09-12','04-03','08-09','12-17','02-14','07-08','11-03','01-29','06-15','10-11','03-26','05-01','05-02','07-14','09-09','01-23','03-03','12-20','04-19','11-08','06-22'];
-const defaults=Object.fromEntries(residents.map((p,i)=>[p.id,birthdays[i]]));
+// Stardew Valley in-game Calendar. The original uses seasons rather than months.
+const seasonalBirthdays={
+ alex:['summer',13],elliott:['fall',5],harvey:['winter',14],sam:['summer',17],
+ sebastian:['winter',10],shane:['spring',20],haley:['spring',14],leah:['winter',23],
+ maru:['summer',10],penny:['fall',2],abigail:['fall',13],emily:['spring',27]
+};
+const seasons={
+ spring:['봄','Spring','春','春'],summer:['여름','Summer','夏','夏'],
+ fall:['가을','Fall','秋','秋'],winter:['겨울','Winter','冬','冬']
+};
+// Official Chiikawa notices, BLEACH character profiles, and Aniplex's Madoka birthday notice.
+const calendarBirthdays={
+ chiikawa:[5,1],hachiware:[5,1],usagi:[1,22],momo:[6,3],toshiro:[12,20],aizen:[5,29],madoka:[10,3]
+};
+const relationLabels={
+ close:['절친','Close friends','密友','親友'],
+ friends:['친구','Friends','朋友','友人'],
+ family:['가족','Family','家人','家族'],
+ colleagues:['동료','Colleagues','同事','同僚'],
+ mentor:['선후배','Mentor and pupil','前辈与后辈','先輩と後輩'],
+ complicated:['복잡한 사이','Complicated','关系复杂','複雑な関係'],
+ acquaintance:['아는 사이','Acquaintances','熟人','知り合い']
+};
+const pairKey=(a,b)=>a<b?a+'|'+b:b+'|'+a;
+const profiles=new Map([
+ ['homura','madoka','close',88,78,3,2],['momo','toshiro','close',79,82,2,2],
+ ['chiikawa','hachiware','close',82,82,2,2],
+ ['chiikawa','usagi','friends',68,72,2,2],['hachiware','usagi','friends',73,68,2,2],
+ ['rakko','chiikawa','mentor',65,77,1,2],['rakko','hachiware','mentor',64,76,1,2],
+ ['sam','sebastian','close',76,75,2,2],['abigail','sam','friends',68,68,2,2],
+ ['abigail','sebastian','friends',74,73,2,2],['haley','emily','family',68,77,1,2],
+ ['maru','sebastian','family',55,41,1,1],['harvey','maru','colleagues',65,63,1,1],
+ ['alex','haley','friends',64,64,2,2],['elliott','leah','friends',65,65,2,2],
+ ['momo','aizen','complicated',40,24,1,-1],['toshiro','aizen','complicated',17,24,-1,-1]
+].map(([a,b,type,ab,ba,da,db])=>[pairKey(a,b),{
+ type,initial:{[a]:ab,[b]:ba},change:{[a]:da,[b]:db}
+}]));
 function today(date=new Date()){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
-let record={birthdays:{},affinity:{},talks:[],rewards:{}};
+let record={birthdays:{},affinity:{},talks:[],rewards:{},pairs:{}};
 try{
  const parsed=JSON.parse(root.localStorage?.getItem(STORAGE_KEY)||'null');
  if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){
@@ -83,14 +120,43 @@ try{
   record.affinity=parsed.affinity&&typeof parsed.affinity==='object'?parsed.affinity:{};
   record.talks=Array.isArray(parsed.talks)?parsed.talks.filter(e=>e&&ids.has(e.id)).slice(-120):[];
   record.rewards=parsed.rewards&&typeof parsed.rewards==='object'?parsed.rewards:{};
+  record.pairs=parsed.pairs&&typeof parsed.pairs==='object'&&!Array.isArray(parsed.pairs)?parsed.pairs:{};
  }
 }catch{}
 function persist(){
  try{root.localStorage?.setItem(STORAGE_KEY,JSON.stringify(record));root.document?.dispatchEvent(new Event('wordville-record-changed'));return true;}catch{return false;}
 }
 const person=id=>residents.find(p=>p.id===id);
-const birthday=id=>/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(record.birthdays[id]||'')?record.birthdays[id]:defaults[id]||'01-01';
-const affection=id=>Math.max(0,Math.min(100,Number(record.affinity[id]??30)));
+function birthday(id){
+ if(seasonalBirthdays[id]){
+  const [season,day]=seasonalBirthdays[id];return {season,day};
+ }
+ if(calendarBirthdays[id]){
+  const [month,day]=calendarBirthdays[id];return {month,day};
+ }
+ return null;
+}
+function birthdayText(id){
+ const value=birthday(id);
+ if(!value)return tr(lex.birthdayUnknown);
+ if(value.season){
+  const season=tr(seasons[value.season]),day=value.day;
+  return [season+' '+day+'일',season+' '+day,season+'第'+day+'日',season+'の'+day+'日'][idx()];
+ }
+ return [value.month+'월 '+value.day+'일',new Intl.DateTimeFormat('en',{month:'long',timeZone:'UTC'}).format(Date.UTC(2000,value.month-1,1))+' '+value.day,
+  value.month+'月'+value.day+'日',value.month+'月'+value.day+'日'][idx()];
+}
+const score=(value,fallback=30)=>Number.isFinite(value)?Math.round(Math.max(0,Math.min(100,value))):fallback;
+const affection=id=>score(record.affinity[id]);
+function relationship(a,b){
+ if(a===b||!ids.has(a)||!ids.has(b))return null;
+ const key=pairKey(a,b),profile=profiles.get(key),saved=record.pairs[key]?.scores;
+ return {id:b,type:profile?.type||'acquaintance',
+  outgoing:score(saved?.[a],profile?.initial[a]??30),incoming:score(saved?.[b],profile?.initial[b]??30)};
+}
+function publishSocial(){
+ root.document?.dispatchEvent(new Event('wordville-social-updated'));
+}
 function mood(id,date=new Date()){
  const n=[...String(id)+today(date)].reduce((sum,ch)=>sum+ch.charCodeAt(0),0);
  return moods[n%moods.length];
@@ -108,37 +174,54 @@ function posts(date=new Date(),all=false){
  const ordered=phrases.map((p,i)=>({p,i,rank:(i*11+n*7)%phrases.length})).sort((a,b)=>a.rank-b.rank).map(x=>x.p);
  return all?ordered:ordered.slice(0,8);
 }
-function updateBirthday(id,value){
- if(!ids.has(id)||typeof value!=='string'||!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(value))return false;
- const d=new Date(value+'T12:00:00');if(Number.isNaN(d.getTime())||d.toISOString().slice(0,10)!==value)return false;
- record.birthdays[id]=value.slice(5);return persist();
-}
-function meeting(a,b,english,korean){
- if(!ids.has(a)||!ids.has(b))return;
- const d=today(),stamp=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
- for(const [id,other] of [[a,b],[b,a]]){
-  const last=record.talks.at(-1);
-  if(last?.id===id&&last?.other===other&&last?.date===d&&last?.stamp===stamp)continue;
-  record.talks.push({id,other,date:d,stamp,english:String(english||'').slice(0,200),korean:String(korean||'').slice(0,200),type:'residents'});
+function meeting(a,b,english,korean,date=new Date()){
+ const pair=relationship(a,b);
+ if(!pair)return;
+ const d=today(date),stamp=date.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+ const key=pairKey(a,b), hour=d+'T'+date.getHours(), prior=record.pairs[key];
+ if(prior?.hour===hour)return pair;
+ const profile=profiles.get(key), oldTalks=record.talks;
+ record.pairs[key]={hour,scores:{
+  [a]:score(pair.outgoing+(profile?.change[a]??1)),
+  [b]:score(pair.incoming+(profile?.change[b]??1))
+ }};
+ const talk={date:d,stamp,english:String(english||'').slice(0,200),korean:String(korean||'').slice(0,200),type:'residents'};
+ record.talks=[...oldTalks,{...talk,id:a,other:b},{...talk,id:b,other:a}].slice(-120);
+ if(!persist()){
+  record.talks=oldTalks;
+  if(prior)record.pairs[key]=prior;else delete record.pairs[key];
+  return pair;
  }
- record.talks=record.talks.slice(-120);persist();
- if(root.document)root.document.dispatchEvent(new CustomEvent('wordville-social-updated'));
+ publishSocial();
+ return relationship(a,b);
 }
-function hello(id){
- if(!ids.has(id))return {added:0};
- const d=today(),used=record.rewards[id]?.date===d?record.rewards[id].count||0:0;
- const added=used<5?2:0;
- if(added){record.rewards[id]={date:d,count:used+1};record.affinity[id]=Math.min(100,affection(id)+added);}
+function hello(id,date=new Date()){
+ if(!ids.has(id))return {added:0,score:0,saved:false};
+ const d=today(date),reward=record.rewards[id],before=affection(id);
+ const used=reward?.date===d?Math.max(0,Number(reward.count)||0):0;
+ const added=used<5?Math.min(2,100-before):0;
+ const previous=record.affinity[id],oldTalks=record.talks;
+ if(added){record.rewards[id]={date:d,count:used+1};record.affinity[id]=before+added;}
  const p=postFor(id);
- record.talks.push({id,other:'player',date:d,stamp:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),english:p?.[2]||'Hello!',korean:p?.[3]||'',type:'player'});
- record.talks=record.talks.slice(-120);persist();
- return {added};
+ record.talks=[...oldTalks,{id,other:'player',date:d,stamp:date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),english:p?.[2]||'Hello!',korean:p?.[3]||'',type:'player'}].slice(-120);
+ if(!persist()){
+  record.talks=oldTalks;
+  if(added){
+   if(reward)record.rewards[id]=reward;else delete record.rewards[id];
+   if(previous!==undefined)record.affinity[id]=previous;else delete record.affinity[id];
+  }
+  return {added:0,score:before,saved:false};
+ }
+ publishSocial();
+ return {added,score:affection(id),saved:true};
 }
 function status(id,date=new Date()){
- return {id, birthday:birthday(id),affinity:affection(id),mood:mood(id,date),plan:dayPlan(id,date),
+ const relations=residents.filter(p=>p.id!==id).map(p=>relationship(id,p.id)).filter(Boolean)
+  .sort((a,b)=>Number(a.type==='acquaintance')-Number(b.type==='acquaintance')||b.outgoing-a.outgoing);
+ return {id, birthday:birthday(id),affinity:affection(id),relations,mood:mood(id,date),plan:dayPlan(id,date),
   talks:record.talks.filter(t=>t.id===id&&t.date===today(date)).slice(-8).reverse()};
 }
-const api={STORAGE_KEY,residents,phrases,lex,postFor,posts,today,birthday,affection,mood,dayPlan,status,updateBirthday,hello,meeting,tr,current};
+const api={STORAGE_KEY,residents,phrases,lex,postFor,posts,today,birthday,birthdayText,affection,relationship,mood,dayPlan,status,hello,meeting,tr,current};
 root.WordvilleSocial=api;
 if(typeof document==='undefined'){if(typeof module!=='undefined')module.exports=api;return;}
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
@@ -221,14 +304,26 @@ function renderStatus(){
  const top=el('div','wv-social-top'),moodLine=el('div','wv-social-stat',tr(lex.mood)+': '+tr(s.mood)),aff=el('div','wv-social-stat',tr(lex.affinity)+': '+s.affinity+'/100');
  const progress=el('progress','wv-social-progress');progress.max=100;progress.value=s.affinity;progress.setAttribute('aria-label',tr(lex.affinity));add(aff,progress);
  add(top,moodLine,aff);
- const bday=el('div','wv-social-birthday'),label=el('label','',tr(lex.birthday));
- const input=el('input');input.type='date';input.value='2000-'+s.birthday;input.setAttribute('aria-label',tr(lex.birthday));
- const hint=el('p','wv-social-hint',tr(lex.birthdayHint));
- const response=el('p','wv-social-feedback');
- const save=button(tr(lex.save),()=>{
-  response.textContent=updateBirthday(selected,input.value)?tr(lex.saved):tr(lex.birthdayHint);
- },'wv-social-outline');
- add(label,input);add(bday,label,save);add(f,title,top,bday,hint,response);
+ const bday=el('div','wv-social-stat wv-canon-birthday');
+ add(bday,el('strong','',tr(lex.birthday)),el('span','',birthdayText(selected)));
+ add(f,title,top,bday);
+ const relations=el('details','wv-pair-affinity');
+ const pairList=el('ul','');
+ const residentName=id=>{
+  const name=person(id)?.name||id;
+  return root.WordvilleI18n?.translate(name)||name;
+ };
+ const selfName=residentName(selected);
+ for(const relation of s.relations){
+  const other=residentName(relation.id),row=el('li','');
+  add(row,el('strong','',other+' · '+tr(relationLabels[relation.type])),
+   el('span','',selfName+' → '+other+' ♥ '+relation.outgoing+'/100'),
+   el('span','',other+' → '+selfName+' ♥ '+relation.incoming+'/100'));
+  pairList.append(row);
+ }
+ relations.open=statusBody.querySelector('.wv-pair-affinity')?.open||false;
+ add(relations,el('summary','',tr(lex.residentAffinity)),el('p','wv-social-hint',tr(lex.relationshipHint)),pairList);
+ f.append(relations);
  const planH=el('h3','',tr(lex.day)),planInfo=el('p','wv-social-hint',tr(lex.plan)),timeline=el('ol','wv-social-timeline');
  for(const row of s.plan){
   const item=el('li'),time=el('time','',S.formatHour(row.hour)),details=el('div');
@@ -249,7 +344,9 @@ function renderStatus(){
  if(!log.childNodes.length)log.append(el('li','wv-social-hint',tr(lex.noTalk)));
  const greetStatus=el('p','wv-social-feedback');
  const greet=button(tr(lex.sayHi),()=>{
-  const result=hello(selected);renderStatus();syncResidentCards();const msg=statusBody.querySelector('.wv-social-greet-feedback');if(msg)msg.textContent=tr(result.added?lex.hiDone:lex.hiLimit);
+  const result=hello(selected),msg=statusBody.querySelector('.wv-social-greet-feedback');
+  if(msg)msg.textContent=!result.saved?tr(lex.storageError):result.added?tr(lex.hiDone)+' +'+result.added:
+   tr(result.score===100?lex.hiFull:lex.hiLimit);
  },'wv-social-action');
  greetStatus.classList.add('wv-social-greet-feedback');
  add(f,talkHead,log,greet,greetStatus);statusBody.replaceChildren(f);
@@ -285,7 +382,7 @@ function syncResidentCards(){
   const translated=root.WordvilleI18n?.translate(original)||original;
   const aff=affection(id);
   elements.name.textContent=translated;
-  elements.affinity.textContent='♥ '+tr(lex.affinity)+' '+aff+'/100';
+  elements.affinity.textContent='♥';
   elements.affinity.setAttribute('aria-label',translated+' · '+tr(lex.affinity)+' '+aff+'/100 · '+tr(lex.openStatus));
   elements.affinity.title=translated+' · '+tr(lex.affinity)+' '+aff+'/100';
  }

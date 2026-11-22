@@ -281,7 +281,7 @@ const assert = require('node:assert/strict');
   const alexName=alexCard.locator('.wv-resident-card-name');
   const alexInfo=alexCard.locator('[data-resident-affinity="alex"]');
   assert.equal((await alexName.innerText()).trim(),'알렉스');
-  assert.match(await alexInfo.innerText(),/호감도 30\/100/);
+  assert.equal((await alexInfo.innerText()).trim(),'♥');
   assert.equal(await alexInfo.isVisible(),true);
   const layout=await alexCard.evaluate(card=>{
    const portrait=card.querySelector('[data-person]');
@@ -291,17 +291,26 @@ const assert = require('node:assert/strict');
    const font=parseFloat(getComputedStyle(button).fontSize);
    return {nameLeft:nr.left<br.left,footerBelow:nr.top>=pr.bottom-1,
     inCard:br.right<=card.getBoundingClientRect().right+1,
-    readable:font>=10,nonSquare:Math.abs(br.height-br.width)>4};
+    readable:font>=16,compact:Math.abs(br.height-br.width)<=2&&br.width<=44};
   });
-  assert.deepEqual(layout,{nameLeft:true,footerBelow:true,inCard:true,readable:true,nonSquare:true},JSON.stringify(layout));
+  assert.deepEqual(layout,{nameLeft:true,footerBelow:true,inCard:true,readable:true,compact:true},JSON.stringify(layout));
   const affinityBefore=await page.evaluate(()=>WordvilleSocial.affection('alex'));
   await alexInfo.click();
   assert.equal(await page.locator('#wv-social-status').evaluate(x=>x.open),true);
   assert.match(await page.locator('#wv-social-status .wv-social-name').innerText(),/알렉스/);
+  assert.match(await page.locator('#wv-social-status .wv-canon-birthday').innerText(),/여름 13일/);
+  const relations=page.locator('#wv-social-status .wv-pair-affinity');
+  await relations.locator('summary').click();
+  assert.equal(await relations.locator('li').count(),21);
+  const alexHaley=await page.evaluate(()=>WordvilleSocial.relationship('alex','haley'));
+  const relationText=await relations.locator('li').first().innerText();
+  assert.ok(relationText.includes('알렉스 → 헤일리 ♥ '+alexHaley.outgoing+'/100'));
+  assert.ok(relationText.includes('헤일리 → 알렉스 ♥ '+alexHaley.incoming+'/100'));
+  await relations.locator('summary').click();
   await page.locator('#wv-social-status .wv-social-action').click();
   assert.equal(await page.evaluate(()=>WordvilleSocial.affection('alex')),affinityBefore+2);
   await page.locator('#wv-social-status .wv-social-close').click();
-  assert.match(await alexInfo.innerText(),/호감도 32\/100/,'affinity below the portrait updates immediately');
+  assert.match(await alexInfo.getAttribute('aria-label'),new RegExp((affinityBefore+2)+'/100'),'the accessible heart label tracks the saved score');
   await page.locator('#resident-list [data-resident-affinity="harvey"]').click();
   assert.match(await page.locator('#wv-social-status .wv-social-name').innerText(),/하비/);
   await page.locator('#wv-social-status .wv-social-close').click();
@@ -399,6 +408,39 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>WordvilleShell.screen),'town');
   assert.equal(await page.locator('#village-canvas').isVisible(),true);
   await page.evaluate(()=>WordvilleI18n.setLanguage('ko'));
+  const periodTabs=page.locator('#wv-town-periods');
+  assert.equal(await periodTabs.isVisible(),true);
+  await periodTabs.getByRole('button',{name:'점심'}).click();
+  assert.equal(await page.locator('#village-clock').innerText(),'12:00');
+  assert.equal(await periodTabs.getByRole('button',{name:'점심'}).getAttribute('aria-pressed'),'true');
+  await periodTabs.getByRole('button',{name:'저녁'}).click();
+  assert.equal(await page.evaluate(()=>WordvilleVillage.period),'dusk');
+  await periodTabs.getByRole('button',{name:'저녁'}).click();
+  assert.equal(await page.evaluate(()=>WordvilleVillage.schedulePreview),'auto');
+  const greetingFixture=await page.evaluate(()=>{
+   const pause=document.getElementById('pause-village');
+   const paused=pause.getAttribute('aria-pressed')==='true';
+   if(!paused)pause.click();
+   const inhabitants=WordvilleVillage.residents;
+   const originals=inhabitants.map(p=>({x:p.x,y:p.y,atVenue:p.atVenue,schedulePlace:p.schedulePlace}));
+   for(const p of inhabitants){p.atVenue=true;p.schedulePlace='home';}
+   const alex=inhabitants.find(p=>p.id==='alex');
+   Object.assign(alex,{x:255,y:380,atVenue:false,schedulePlace:'square'});
+   const canvas=document.getElementById('village-canvas'),view=WordvilleVillage.mapView();
+   return {originals,paused,affinity:WordvilleSocial.affection('alex'),
+    position:{x:(view.offsetX+alex.x*view.scale)*canvas.clientWidth/canvas.width,
+     y:(view.offsetY+(alex.y-22)*view.scale)*canvas.clientHeight/canvas.height}};
+  });
+  const townCanvas=page.locator('#village-canvas'),greetBubble=page.locator('#wv-town-affinity');
+  await townCanvas.click({position:greetingFixture.position});
+  assert.equal(await greetBubble.isVisible(),true,'tapping a visible resident shows the map heart');
+  assert.match(await greetBubble.innerText(),/♥.*\/100.*\+2/);
+  await townCanvas.click({position:greetingFixture.position});
+  assert.equal(await page.evaluate(()=>WordvilleSocial.affection('alex')),greetingFixture.affinity+2,'rapid taps do not grant extra points');
+  await page.evaluate(({originals,paused})=>{
+   WordvilleVillage.residents.forEach((p,i)=>Object.assign(p,originals[i]));
+   if(!paused)document.getElementById('pause-village').click();
+  },greetingFixture);
   // Fullscreen town map zone controls must remain accessible inside the gear menu.
   await page.locator('#wv-map-tools').click();
   assert.equal(await page.locator('#wv-map-tool-panel [data-map-zone]').count(),4);

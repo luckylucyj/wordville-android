@@ -60,7 +60,12 @@ const wrap=document.querySelector('.canvas-wrap');
 const mapHeader=document.createElement('div');mapHeader.className='wv-map-header';
 wrap.prepend(mapHeader);
 const timeBadge=document.querySelector('.time-badge');
-if(timeBadge){timeBadge.classList.add('wv-world-clock');mapHeader.append(timeBadge);}
+if(timeBadge){
+ const clockStack=document.createElement('div');clockStack.className='wv-clock-stack';
+ timeBadge.classList.add('wv-world-clock');clockStack.append(timeBadge);
+ const periods=get('wv-town-periods');if(periods)clockStack.append(periods);
+ mapHeader.append(clockStack);
+}
 const controls=document.querySelector('.village-controls');
 const timeNote=document.querySelector('.time-note');
 const toolButton=document.createElement('button');
@@ -216,7 +221,8 @@ if(typeof ResizeObserver!=='undefined'){
  resizeObserver.observe(wrap);
 }
 window.addEventListener('resize',resizeVillage);
-document.addEventListener('wordville-resident-selected',()=>{
+document.addEventListener('wordville-resident-selected',event=>{
+ if(event.detail?.stayInTown)return;
  // Explicit selection opens resident details; opening the Residents tab itself still shows portraits only.
  activate('residents');
  residents.dataset.mode='dialogue';
