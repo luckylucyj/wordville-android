@@ -95,7 +95,8 @@ test('API key connection, licensing and secure attribution remain available',()=
  assert.ok(html.includes('<button id="wv-memory-pixabay-test" type="button">'));
  assert.ok(html.includes('https://pixabay.com/api/docs/'));
  assert.match(gallery,/site\.textContent='출처: '/);
- assert.match(gallery,/image\.source=result\.source/);
+ assert.match(gallery,/image\.source=\(result\.source/);
+ assert.match(gallery,/result\.originSite\?' · 원본 '/);
 });
 
 test('Unsplash and Pexels use official authenticated photo APIs and save attribution',()=>{
