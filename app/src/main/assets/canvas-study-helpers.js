@@ -98,13 +98,13 @@
     return true;
    }catch{return false;}
   }
-  markSuccess(){
+  markSuccess(silent=false){
    const item=this.queue.shift();
    if(!item)return null;
    this.masteredIds.add(String(item.id));
    this.queue.push(item);
    this.persist();
-   this.playTone('success');
+   if(!silent)this.playTone('success');
    return item;
   }
   markRetry(silent=false){
