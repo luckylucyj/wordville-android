@@ -15,14 +15,21 @@ const tabDefs=[
 ];
 let current='town',lastScreen='town';
 const lastTabKey='wordville.last-learning-tab.v1';
-let resumeLearningTab=false;
-let lastOpened=null;
-try{lastOpened=localStorage.getItem(lastTabKey);}catch{}
+const rememberedScreens=new Set(['town','places','residents','learn','review','lab','book','notes','gallery','account','sentences','interpretation','schedule','solo']);
+let resumeScreen='town';
 try{
- const native=globalThis.WordvilleSettings?.getLastTab();
- if(native==='learn'||native==='town')lastOpened=native;
-}catch{}
-resumeLearningTab=lastOpened==='learn';
+ const local=localStorage.getItem(lastTabKey);
+ if(rememberedScreens.has(local))resumeScreen=local;
+ else {
+  const native=globalThis.WordvilleSettings?.getLastTab();
+  if(rememberedScreens.has(native))resumeScreen=native;
+ }
+}catch{
+ try{
+  const native=globalThis.WordvilleSettings?.getLastTab();
+  if(rememberedScreens.has(native))resumeScreen=native;
+ }catch{}
+}
 const residents=document.createElement('section');
 residents.id='wv-residents-view';
 residents.className='wv-residents-screen';
@@ -143,7 +150,7 @@ function activate(screen){
  current=screen;lastScreen=screen;
  // Restore the Word tab only when it was the last active screen. Other tabs
  // still use their normal startup behavior without resuming unfinished quizzes.
- const rememberedTab=screen==='learn'?'learn':'town';
+ const rememberedTab=screen;
  try{localStorage.setItem(lastTabKey,rememberedTab);}catch{}
  try{globalThis.WordvilleSettings?.saveLastTab(rememberedTab);}catch{}
  if(screen!=='town'){toolPanel.hidden=true;toolButton.setAttribute('aria-expanded','false');}
@@ -219,7 +226,12 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&!more.hidden){more.hidden=true;buttons.get('more').setAttribute('aria-expanded','false');}
 });
 globalThis.WordvilleShell={activate,get screen(){return current;},resizeVillage};
-activate(resumeLearningTab?'learn':'town');
+// Restore the exact tab after Android recreates the WebView. Initial document
+// scripts run in order; some screens are mounted by later deferred scripts.
+activate(resumeScreen);
+if(resumeScreen!=='town'){
+ setTimeout(()=>{if(current===resumeScreen)activate(resumeScreen);},0);
+}
 const loadingCover=get('wv-loading-cover'),townReference=globalThis.WordvilleHubMap?.image||globalThis.WordvilleWorldArt?.reference;
 let startupFinished=false;
 const finishStartup=()=>{
@@ -227,6 +239,10 @@ const finishStartup=()=>{
  startupFinished=true;
  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(loadingCover)loadingCover.hidden=true;}));
 };
+// Local vocabulary is the primary startup dependency. Do not wait for
+// decorative town art to finish loading before showing saved study data.
+document.addEventListener('wordville-words-ready',finishStartup,{once:true});
+if(globalThis.WordvilleWords?.length)finishStartup();
 // Never keep the user behind the loading overlay when an image resource hangs.
 // Android's native WebView recovery separately handles a destroyed renderer.
 setTimeout(()=>{if(loadingCover&&!loadingCover.hidden)finishStartup();},6500);

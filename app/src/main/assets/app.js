@@ -1,11 +1,14 @@
 'use strict';
 const $=id=>document.getElementById(id), E=Wordville;
-let state=E.fresh(),words=[],active=null,queue=[],reviewWord=null,db=null;
+let state=E.fresh(),words=[],active=null,queue=[],reviewWord=null,db=null,databaseReady=null;
 let cloudUser=null, imageBusy=false;
 const cloud=globalThis.WordvilleCloud, bucket=globalThis.WordvilleCloudConfig?.bucket;
 const storageKey='wordville.rebuilt.v1';
 function notify(message){$('notice').textContent=message;}
 try{const raw=localStorage.getItem(storageKey);if(raw){const s=JSON.parse(raw);if(s.version!==1||!Number.isFinite(s.xp)||!Number.isFinite(s.coins)||!s.reviews||!Array.isArray(s.concepts))throw Error();state=s;}}catch{notify('기록을 읽지 못했습니다. 저장 공간 설정을 확인해 주세요.');}
+// Show the last locally saved totals immediately, without waiting for the
+// optional image database or any cloud sign-in handshake.
+$('balance').textContent=state.xp+' XP · '+state.coins+' 코인';
 function save(next){try{localStorage.setItem(storageKey,JSON.stringify(next));state=next;renderStats();document.dispatchEvent(new Event('wordville-record-changed'));return true;}catch{notify('저장에 실패했습니다. 저장 공간을 확인해 주세요.');return false;}}
 function renderStats(){$('balance').textContent=`${state.xp} XP · ${state.coins} 코인`;renderDue();}
 function renderDue(){$('due').textContent=`복습할 단어 ${words.filter(w=>!state.reviews[w.id]||state.reviews[w.id].due<=Date.now()).length}개 · 정답은 1·3·7·14·30일, 오답은 10분 뒤 복습` ;}
@@ -91,7 +94,39 @@ function restoreWordView(){
   studyPdfPage=saved.pdf;
  if(Number.isSafeInteger(saved.page)&&saved.page>=0)wordPage=Math.min(saved.page,10000);
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberWordView();});
+// The local record is authoritative during an app switch; do not wait for a
+// network session or restart the entire WebView to refresh XP/coins/word status.
+function rehydrateStudyOnForeground(){
+ try{
+  const raw=localStorage.getItem(storageKey);
+  if(raw){
+   const latest=JSON.parse(raw);
+   if(latest.version===1&&Number.isFinite(latest.xp)&&Number.isFinite(latest.coins)
+     &&latest.reviews&&typeof latest.reviews==='object'&&Array.isArray(latest.concepts)){
+    if(JSON.stringify(state)!==raw){
+     state=latest;
+     // Legacy VOCA aliases may arrive from older local snapshots. Restore
+     // canonical IDs immediately, otherwise a foreground refresh can hide
+     // existing answers until the next full app launch.
+     if(words.length)migrateLearningAliases();
+     renderConcepts();
+     if(words.length)renderWords();
+     document.dispatchEvent(new Event('wordville-record-changed'));
+    }
+   }
+  }
+ }catch(error){
+  // Keep the working in-memory snapshot; surface diagnostic details for QA.
+  globalThis.__wordvilleResumeDataError=String(error?.stack||error);
+  console.warn('Wordville local progress rehydration failed',error);
+ }
+ renderStats();
+}
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)rememberWordView();
+ else rehydrateStudyOnForeground();
+});
+document.addEventListener('wordville-app-resume',rehydrateStudyOnForeground);
 window.addEventListener('pagehide',rememberWordView);
 
 function filteredWords(){const query=$('search').value.trim().toLowerCase(),day=$('day-filter').value,flag=$('wv-status-filter')?.value||'all';const list=words.filter(w=>(day===''||(w.days||[]).includes(Number(day)))&&(!query||w.word.toLowerCase().includes(query)||w.meaning.toLowerCase().includes(query))&&(flag==='all'||(globalThis.WordvilleStudy?.statusFor(w,day)||'new')===flag)&&(studyPdfPage===null||(w.pdfPages||[]).some(n=>Number(n)===studyPdfPage)));return globalThis.WordvilleBookOrder?.sort(list,day)||list;}
@@ -122,7 +157,7 @@ $('day-filter').addEventListener('change',()=>{wordPage=0;studyPdfPage=null;rend
 $('wv-status-filter').addEventListener('change',()=>{wordPage=0;renderWords();});
 $('wv-study-pdf-clear').addEventListener('click',()=>{studyPdfPage=null;wordPage=0;renderWords();});
 function openDatabase(){return new Promise((resolve,reject)=>{const req=indexedDB.open('wordville-memory',1);req.onupgradeneeded=()=>req.result.createObjectStore('images');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
-function imageAction(mode,key,value){return new Promise((resolve,reject)=>{if(!db)return reject(Error('이미지 저장소를 사용할 수 없습니다.'));const tx=db.transaction('images',mode==='get'?'readonly':'readwrite');const store=tx.objectStore('images');let request=mode==='get'?store.get(key):mode==='put'?store.put(value,key):store.delete(key);let result;request.onsuccess=()=>result=request.result;tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+async function imageAction(mode,key,value){if(!db&&databaseReady)await databaseReady;return new Promise((resolve,reject)=>{if(!db)return reject(Error('이미지 저장소를 사용할 수 없습니다.'));const tx=db.transaction('images',mode==='get'?'readonly':'readwrite');const store=tx.objectStore('images');let request=mode==='get'?store.get(key):mode==='put'?store.put(value,key):store.delete(key);let result;request.onsuccess=()=>result=request.result;tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
 let imageUrl=null;
 function showImage(blob){if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=blob?URL.createObjectURL(blob):null;$('memory-image').hidden=!blob;$('remove-image').hidden=!blob;if(blob)$('memory-image').src=imageUrl;else $('memory-image').removeAttribute('src');refreshImageButtons();}
 function renderWordConversations(w){
@@ -287,7 +322,22 @@ $('wv-rstudy-study-page').addEventListener('click',()=>{
  globalThis.WordvilleShell?.activate('learn');
 });
 
-async function init(){try{db=await openDatabase();}catch{notify('기억용 이미지 저장을 사용할 수 없습니다.');}try{const [res,posIndex]=await Promise.all([fetch('words.json'),loadWordPartsOfSpeech().catch(()=>null)]);wordPartsOfSpeech=posIndex;if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option','');option.value=w.id;globalThis.WordvilleVocabularyLocale?.bindOption(option,w.word,w.meaning);if(!globalThis.WordvilleVocabularyLocale)option.textContent=w.word;$(id).append(option);}}$('word-b').selectedIndex=1;connection();restoreWordView();renderWords();renderStats();initResidentDayOptions();globalThis.WordvilleWords=words;document.dispatchEvent(new Event('wordville-words-ready'));}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
+async function init(){
+ // Never make the existing vocabulary and saved progress wait for IndexedDB
+ // upgrades or the optional part-of-speech index. Samsung may defer either
+ // after backgrounding; the primary word list must remain independently ready.
+ databaseReady=openDatabase().then(opened=>{db=opened;}).catch(()=>{
+  notify('기억용 이미지 저장소를 열 수 없습니다. 학습 데이터는 계속 이용할 수 있습니다.');
+ });
+ void loadWordPartsOfSpeech().then(index=>{
+  wordPartsOfSpeech=index;
+  if(words.length){renderWords();if(active)renderWordPartsOfSpeech($('detail-word-pos'),active);}
+ }).catch(()=>{wordPartsOfSpeech=null;});
+ try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option','');option.value=w.id;globalThis.WordvilleVocabularyLocale?.bindOption(option,w.word,w.meaning);if(!globalThis.WordvilleVocabularyLocale)option.textContent=w.word;$(id).append(option);}}$('word-b').selectedIndex=1;connection();restoreWordView();renderWords();renderStats();initResidentDayOptions();globalThis.WordvilleWords=words;document.dispatchEvent(new Event('wordville-words-ready'));}catch(error){
+ globalThis.__wordvilleInitError=String(error?.stack||error);
+ console.error('Wordville vocabulary initialization failed',error);
+ notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');
+}}
 const wordsReady=init();
 
 function authState(user){
