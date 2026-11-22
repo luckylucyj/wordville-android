@@ -1,0 +1,75 @@
+/* Wordville solo learning: cozy pixel-inspired, mobile-first scenes. */
+#wv-solo-view[hidden],#wv-solo-game-view[hidden],#wv-solo-room-view[hidden]{display:none!important}
+#wv-solo-view{box-sizing:border-box;width:min(940px,calc(100% - 18px));margin:10px auto 28px;padding:12px;color:#533820;font-family:inherit}
+#wv-solo-view *{box-sizing:border-box;min-width:0}
+#wv-solo-view button,#wv-solo-view select{font:inherit;min-height:43px;border:2px solid #9d754c;border-radius:8px;background:#fff5dc;color:#563a27;padding:9px;font-weight:750;box-shadow:none}
+#wv-solo-view button:disabled{opacity:.55;cursor:default}
+#wv-solo-view button:focus-visible,#wv-solo-view select:focus-visible,#wv-solo-shortcut:focus-visible{outline:3px solid #247e67;outline-offset:2px}
+.wv-solo-heading{padding:16px 14px;background:#f6deb0;border:3px solid #ae8558;border-radius:13px;box-shadow:3px 4px #b78b6447}
+.wv-solo-heading small{color:#8b5f3d;font-size:10px;font-weight:900;letter-spacing:1px}
+.wv-solo-heading h2{font-size:21px;margin:7px 0 5px}
+.wv-solo-heading p{font-size:12px;line-height:1.65;margin:0}
+.wv-solo-wallet{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0}
+.wv-solo-wallet span{padding:7px 10px;background:#fff7e6;border:2px solid #d1b58a;border-radius:9px;font-size:12px;font-weight:800}
+.wv-solo-topnav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:12px 0}
+#wv-solo-view .wv-solo-topnav button{padding:7px 3px;font-size:12px;line-height:1.4;min-height:48px}
+#wv-solo-view .wv-solo-topnav button[aria-pressed=true]{color:#fff8e0;background:#587d63;border-color:#3c6447}
+#wv-solo-description{font-size:12px;margin:9px 0;line-height:1.6}
+.wv-solo-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:11px 0}
+.wv-solo-controls label{display:grid;gap:5px;font-size:12px;font-weight:850}
+.wv-solo-controls select{width:100%;font-size:12px}
+.wv-solo-scene{min-height:145px;overflow:hidden;position:relative;text-align:center;border:4px solid #a47b50;border-radius:14px;background:linear-gradient(#d6edda 0%,#dff5f2 50%,#90d4db 51%,#4d9db9 100%);box-shadow:inset 0 0 0 3px #ffebbc}
+.wv-solo-scene[data-game=wood]{background:linear-gradient(#8aa886,#b3d19b 58%,#64884b 58%,#8ab468)}
+.wv-solo-scene[data-game=capture]{background:linear-gradient(#c5e6e8,#e2f1ed 63%,#94bf7b 63%,#a8c98b)}
+.wv-solo-scene-art{font-size:48px;letter-spacing:8px;line-height:1.6;padding:25px 12px 32px;animation:wv-solo-sway 2.8s ease-in-out infinite alternate}
+.wv-solo-scene-counter{position:absolute;right:9px;bottom:8px;border:2px solid #9f814d;border-radius:7px;padding:5px 8px;background:#fff4dcd9;font-size:12px;font-weight:900}
+@keyframes wv-solo-sway{from{transform:translateY(1px)}to{transform:translateY(-7px)}}
+.wv-solo-question{border:3px solid #b89a6e;background:#fff9e9;border-radius:11px;padding:14px 12px;margin:10px 0}
+.wv-solo-question-top{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#896345;font-weight:850}
+.wv-solo-prompt{text-align:center;overflow-wrap:anywhere;font-size:clamp(17px,5vw,24px);font-weight:900;color:#4b3224;line-height:1.5;min-height:56px;margin:14px 0}
+.wv-solo-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#wv-solo-view .wv-solo-choice{min-height:64px;overflow-wrap:anywhere;padding:9px 5px;background:#f6e7c5}
+#wv-solo-view .wv-solo-choice.correct{background:#d7ecd0;border-color:#498a60;color:#205337}
+#wv-solo-view .wv-solo-choice.incorrect{background:#f9d7cc;border-color:#bc6c57;color:#903d30}
+#wv-solo-feedback{min-height:25px;line-height:1.6;font-size:12px;white-space:pre-line;overflow-wrap:anywhere;margin:10px 0}
+.wv-solo-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#wv-solo-view .wv-solo-actions .primary{background:#4f8769;color:#fff8e9;border-color:#36654c}
+.wv-solo-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.wv-solo-stat{font-size:11px;padding:10px 8px;background:#f5e8c8;border:2px solid #d5b98d;border-radius:8px;line-height:1.5}
+.wv-solo-note{font-size:11px;line-height:1.6;color:#785f44}
+#wv-solo-room-view>h3{font-size:20px;margin:13px 0 4px}
+#wv-solo-room-view>h4{font-size:15px;margin:19px 0 10px}
+#wv-solo-room-view>p{line-height:1.6;font-size:12px}
+.wv-solo-room{overflow:hidden;position:relative;min-height:320px;border:5px solid #9c7452;border-radius:14px;background:#eed5b3;box-shadow:inset 0 0 0 3px #fbecd3}
+.wv-solo-room[data-theme=mint]{background:#c9e5d0}
+.wv-solo-room[data-theme=sky]{background:#cee1f0}
+.wv-solo-room-wall{position:relative;min-height:160px;padding:18px 15px;background:linear-gradient(90deg,transparent 98%,#b8a08244 98%),linear-gradient(#ffffff77,#ffffff22);background-size:44px 100%,100%}
+.wv-solo-window{position:absolute;left:14px;top:22px;width:66px;height:70px;display:grid;place-items:center;border:7px solid #a67e57;border-radius:45px 45px 15px 15px;background:#abe1ea;font-size:28px}
+.wv-solo-frames{display:flex;gap:5px;align-items:center;justify-content:center;margin-left:76px;min-height:115px;flex-wrap:wrap}
+.wv-solo-frame{width:94px;min-height:91px;text-align:center;padding:8px 5px;border:6px solid #b47a3d;background:#fff9dc;box-shadow:inset 0 0 0 2px #e7c993,3px 4px #77503144;display:flex;flex-direction:column;justify-content:center;gap:3px;overflow-wrap:anywhere}
+.wv-solo-frame small{font-size:9px;line-height:1.2;color:#80623e}
+.wv-solo-frame strong{font-size:12px;line-height:1.25;color:#463328}
+.wv-solo-room-empty{font-size:12px;background:#fff9e5bb;padding:10px;border-radius:7px}
+.wv-solo-room-floor{position:relative;min-height:172px;background:repeating-linear-gradient(90deg,#bb8e5a 0 34px,#cba371 34px 68px);border-top:7px solid #977448}
+.wv-solo-room-floor:before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 37px,#78573d33 38px 40px)}
+.wv-solo-mascot{position:absolute;bottom:16px;left:calc(50% - 15px);font-size:34px;z-index:2;animation:wv-solo-sway 3s ease-in-out infinite alternate}
+.wv-solo-furniture{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,80px);height:160px;gap:1px;align-items:center;justify-items:center;padding:3px}
+.wv-solo-room-object{font-size:36px;z-index:3;grid-column:calc(mod(var(--slot), 3) + 1);cursor:pointer;filter:drop-shadow(2px 4px 1px #5438235c)}
+.wv-solo-room-object[data-item=rug]{font-size:45px}
+.wv-solo-room-object[data-item=aquarium]{font-size:44px}
+.wv-solo-room-object[data-item=bed]{font-size:45px}
+.wv-solo-room-object{grid-column:auto}
+.wv-solo-room-tools{display:flex;flex-wrap:wrap;align-items:flex-end;gap:9px;margin:14px 0}
+.wv-solo-room-tools label{flex:1 1 200px;font-size:12px;font-weight:850;display:grid;gap:5px}
+.wv-solo-room-tools select{width:100%}
+.wv-solo-shop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.wv-solo-shop-item{display:flex;flex-direction:column;gap:7px;align-items:center;justify-content:space-between;text-align:center;background:#fff3d8;padding:12px 5px;border:3px solid #c6a175;border-radius:10px}
+.wv-solo-shop-icon{font-size:35px}
+.wv-solo-shop-item strong{font-size:12px;line-height:1.4}
+#wv-solo-view .wv-solo-shop-item button{width:100%;min-height:40px;font-size:12px}
+#wv-solo-view .wv-solo-move{font-size:11px!important}
+#wv-solo-themes .wv-solo-shop-button{font-size:12px}
+#wv-solo-room-status{font-size:12px;line-height:1.6;min-height:22px}
+#wv-solo-shortcut{border:2px solid #4b7959;background:#e0f1d7;color:#335941;border-radius:9px;padding:8px 10px;font-weight:850;font-size:12px;min-height:40px}
+@media(max-width:480px){#wv-solo-view{width:calc(100% - 10px);padding:8px}.wv-solo-topnav{gap:4px}.wv-solo-wallet span{font-size:11px}.wv-solo-stats{grid-template-columns:1fr}.wv-solo-frame{width:78px;min-height:78px}.wv-solo-frame strong{font-size:10px}.wv-solo-scene-art{font-size:39px}}
+@media(prefers-reduced-motion:reduce){.wv-solo-scene-art,.wv-solo-mascot{animation:none}}
