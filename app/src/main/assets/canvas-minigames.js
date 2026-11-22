@@ -116,9 +116,9 @@
    this.refreshHeaderUI();
   }
   getCurrentWord(){return this.studyManager.current();}
-  advanceWord(){
+  advanceWord(silent=false){
    if(!this.getCurrentWord())return;
-   this.studyManager.markSuccess();
+   this.studyManager.markSuccess(silent);
    this.state.wordIdx=Math.max(0,this.words.findIndex(w=>w.id===this.getCurrentWord()?.id));
    if(this.state.mode==='foraging')this.buildForagingChoices();
    this.refreshHeaderUI();
@@ -235,7 +235,7 @@
     g.timer=Math.max(0,g.timer-dt);
     if(g.timer<=0){
      if(g.stage===2){g.stage=3;g.timer=1;}
-     else{g.stage=1;g.pending=false;this.advanceWord();}
+     else{g.stage=1;g.pending=false;this.advanceWord(true);}
     }
    }
   }
@@ -420,6 +420,7 @@
       return;
      }
      if(this.award(word,word.word.length%2?'🍮':'🍙')){
+      this.studyManager.playTone('success');
       g.stage=2;g.timer=.85;g.pending=true;
       this.nextActionAt=Date.now()+900;
      }
