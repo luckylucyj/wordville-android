@@ -38,7 +38,10 @@ Wordville 전용 Supabase 프로젝트(서울), 비공개 `wordville-images` 버
 - 나의 방: 쿼터뷰 자유 가구 배치/드래그. 별도 wordville_room_v1 저장 및 기존 학습 백업에 포함. 배치 초기화는 가구 보유 내역을 보존.
 - 외부 더미 단어 없이 기존 WordvilleWords·Wordville.review·save를 사용. Android→JS 공개: window.wordvilleGame.loadWordsFromAndroid(wordList). JS→Android: window.AndroidBridge.onWordLearned(wordId, gameType). 네이티브 콜백으로 XP를 이중 지급하지 않음.
 - Android 앱 복귀 시 Canvas 루프를 재개하고 백그라운드에서는 멈춤. 기존 학습 기록, 코인, 단어장 보존.
-- scripts/build-canvas-minigame-art.py가 로컬 PNG 12개(512×512 캐릭터 8종, 배경 4종)를 생성해 APK에 포함. PNG가 없으면 Canvas 내장 도형 그래픽으로 대체.
+- scripts/build-canvas-minigame-art.py는 **낚시를 제외한 11개 PNG**(치이카와 상태 및 음식 줍기 이미지 6개, 해당 배경 3개, 아틀라스 2개)만 생성합니다. 기존 사용자가 제공한 PNG는 덮어쓰지 않습니다. **낚시에서는 도형 Fallback이 없습니다.**
+- 낚시 이미지 3개는 프로젝트의 **app/src/main/assets/images/fishing/** 폴더에 `bg_fishing.png`, `hachiware_idle.png`, `hachiware_catch.png` 이름으로 넣어야 합니다. 3개가 모두 준비되면 빌드하여 APK에 포함합니다. 기존 `bg_dock.png`는 사용하지 않습니다.
+- 낚시 배경은 600×1000 Canvas 전체에 먼저 렌더링하고, 캐릭터 idle/catch PNG를 부두 위치에 덧그립니다. 하치와레 PNG의 흰 배경은 **이미지 외곽에 연결된 흰 픽셀만 투명화**하므로 얼굴·몸의 흰색은 보호됩니다. `onerror`가 실패 경로를 Console에 기록합니다. PNG가 없으면 배경과 캐릭터를 비워 두고 파일 오류를 표시합니다.
+- 터치 스크롤: Canvas 영역도 세로로 스와이프할 수 있습니다. 낚시/잡초 판정은 탭을 완료한 경우에만 발생하며, 방 가구만 작은 전용 드래그 영역에서 터치를 잡습니다.
 - 아트는 교체 가능한 기본 파스텔 일러스트입니다. 사용자 제공 고품질 동일 경로 PNG로 교체 가능하며 공식 원작 이미지 복제본은 아닙니다.
 - 실제 Android WebView는 보안상 file:// 대신 https://appassets.androidplatform.net/assets/의 WebViewAssetLoader를 사용하여 기존 앱 저장 데이터의 출처를 유지합니다.
 ## 2026-11-22 · 영상 참고 혼자 하는 영어 게임

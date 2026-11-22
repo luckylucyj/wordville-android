@@ -53,51 +53,36 @@ def eyes(d,x,y,mood):
         ellipse(d,(x+75,y-12,x+84,y+11),"#93cfe8",None)
 
 def char(name,mood,path):
+    # Generate only Chiikawa art for the weeding and foraging modes.
+    # Hachiware fishing artwork is never procedurally drawn.
+    if path.exists(): return
     im,d=picture()
-    hachi=name=="hachiware"
-    if hachi:
-        polygon(d,[(154,166),(166,51),(226,131)],BLUE)
-        polygon(d,[(284,129),(348,53),(360,168)],BLUE)
-    else:
-        ellipse(d,(146,74,210,189),WHITE)
-        ellipse(d,(301,74,365,189),WHITE)
-    # Feet, SD body and arms
+    ellipse(d,(146,74,210,189),WHITE)
+    ellipse(d,(301,74,365,189),WHITE)
+    # SD head and body.
     ellipse(d,(192,395,235,458),WHITE)
     ellipse(d,(288,395,330,458),WHITE)
     ellipse(d,(184,295,327,430),WHITE)
     ellipse(d,(154,321,205,370),WHITE)
     ellipse(d,(309,320,360,372),WHITE)
     ellipse(d,(123,140,388,340),WHITE,w=6)
-    if hachi:
-        # Signature pastel blue forehead markings.
-        polygon(d,[(135,161),(157,137),(211,157),(239,203),(257,223),(226,220),(194,191),(160,191)],BLUE,None)
-        polygon(d,[(378,161),(356,137),(302,157),(274,203),(257,223),(288,220),(321,191),(353,191)],BLUE,None)
     eyes(d,256,249,mood)
-    if hachi:
-        # Fishing rod and float.
-        line(d,[(354,335),(410,198),(443,124)],INK,5)
-        line(d,[(443,124),(458,365)],"#b0a196",2)
-        ellipse(d,(448,355,469,381),"#fa8d79",INK,3)
-        if mood=="catch":
-            ellipse(d,(378,390,449,425),"#85bad0",INK,3)
-            polygon(d,[(444,407),(471,393),(468,427)],"#85bad0")
-    else:
-        if mood in ("perfect","medium","bad"):
-            if mood=="bad":
-                line(d,[(172,368),(145,326)],"#70ac73",6)
-                polygon(d,[(142,325),(122,312),(134,292)],"#91c990")
-            else:
-                line(d,[(185,356),(169,248)],"#619b6f",7)
-                for dx in [-22,8,28]:
-                    ellipse(d,(160+dx,250,190+dx,269),"#9ed29b",INK,2)
-                if mood=="perfect":
-                    for dx in [-12,0,13]:line(d,[(169,355),(169+dx,379)],"#b18d69",3)
-        if mood.startswith("food_"):
-            y=388 if mood=="food_1" else 310 if mood=="food_2" else 165
-            ellipse(d,(221,y,295,y+60),"#f4d59f",INK,4)
-            ellipse(d,(243,y+9,271,y+24),"#f2a8a8",None)
-    # Sparkles and marks.
-    if mood in ("catch","perfect","food_3"):
+    if mood in ("perfect","medium","bad"):
+        if mood=="bad":
+            line(d,[(172,368),(145,326)],"#70ac73",6)
+            polygon(d,[(142,325),(122,312),(134,292)],"#91c990")
+        else:
+            line(d,[(185,356),(169,248)],"#619b6f",7)
+            for dx in [-22,8,28]:
+                ellipse(d,(160+dx,250,190+dx,269),"#9ed29b",INK,2)
+            if mood=="perfect":
+                for dx in [-12,0,13]:
+                    line(d,[(169,355),(169+dx,379)],"#b18d69",3)
+    if mood.startswith("food_"):
+        y=388 if mood=="food_1" else 310 if mood=="food_2" else 165
+        ellipse(d,(221,y,295,y+60),"#f4d59f",INK,4)
+        ellipse(d,(243,y+9,271,y+24),"#f2a8a8",None)
+    if mood in ("perfect","food_3"):
         for x,y in [(99,190),(414,258),(366,86)]:
             line(d,[(x-10,y),(x+10,y)],"#f4cc68",3)
             line(d,[(x,y-10),(x,y+10)],"#f4cc68",3)
@@ -105,18 +90,9 @@ def char(name,mood,path):
     im.resize((512,512),Image.Resampling.LANCZOS).save(path,optimize=True)
 
 def bg(scene,path):
+    if path.exists(): return
     im,d=picture(600,1000,False)
-    if scene=="fishing":
-        d.rectangle(points(0,0,600,520),fill="#f6e2ba")
-        ellipse(d,(-70,10,190,240),"#fff8e4",None)
-        d.rectangle(points(0,520,600,1000),fill="#b3dce9")
-        for y in range(560,1000,60):
-            d.arc(points(-40,y,640,y+42),0,180,fill="#e8f8ec",width=3*S)
-        for n in range(6):
-            x=55+n*85
-            rect(d,(x,455,x+115,532),"#ba8e6d",INK,2,r=5)
-            line(d,[(x+15,468),(x+15,523)],"#8f674e",2)
-    elif scene=="weeding":
+    if scene=="weeding":
         d.rectangle(points(0,0,600,1000),fill="#dcecc7")
         ellipse(d,(-50,345,660,1120),"#a8d3a1",None)
         for i in range(45):
@@ -146,8 +122,6 @@ def bg(scene,path):
 
 def main():
     for file,name,mood in [
-      ("fishing/hachiware_idle.png","hachiware","idle"),
-      ("fishing/hachiware_catch.png","hachiware","catch"),
       ("weeding/chiikawa_perfect.png","chiikawa","perfect"),
       ("weeding/chiikawa_medium.png","chiikawa","medium"),
       ("weeding/chiikawa_bad.png","chiikawa","bad"),
@@ -155,7 +129,7 @@ def main():
       ("foraging/chiikawa_food_2.png","chiikawa","food_2"),
       ("foraging/chiikawa_food_3.png","chiikawa","food_3")
     ]:char(name,mood,BASE/file)
-    for scene,file in [("fishing","fishing/bg_dock.png"),("weeding","weeding/bg_meadow.png"),
+    for scene,file in [("weeding","weeding/bg_meadow.png"),
                        ("foraging","foraging/bg_forest.png"),("room","room/bg_isometric_room.png")]:
         bg(scene,BASE/file)
     # Optional vertical atlas sheets: 3 equal 512x512 panels in one 512x1536 PNG.
@@ -175,7 +149,8 @@ def main():
                 assert source.size==(512,512),name
                 sheet.alpha_composite(source.convert("RGBA"),(0,index*512))
         sheet.save(BASE/output,optimize=True)
-    print("Generated 14 Canvas PNG assets: 8 character images, 4 scenes and 2 three-panel atlases")
+    print("Generated 11 base Canvas PNGs (6 weeding/foraging character images, 3 scenes, 2 atlases).")
+    print("Fishing requires user-supplied images/fishing/bg_fishing.png, hachiware_idle.png and hachiware_catch.png.")
 
 if __name__=="__main__":
     main()

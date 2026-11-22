@@ -44,7 +44,29 @@ jobs:
       - name: Generate offline Canvas minigame PNG art
         run: |
           python scripts/build-canvas-minigame-art.py
-          python -c "from pathlib import Path; root=Path('app/src/main/assets/images'); files=list(root.rglob('*.png')); assert len(files)==14, len(files); print('Canvas art OK:',len(files))"
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('app/src/main/assets/images')
+          # Eleven standalone/atlas PNGs are generated for the other games.
+          generated=[
+              'weeding/chiikawa_perfect.png','weeding/chiikawa_medium.png',
+              'weeding/chiikawa_bad.png','weeding/bg_meadow.png',
+              'weeding/chiikawa_3state_atlas.png',
+              'foraging/chiikawa_food_1.png','foraging/chiikawa_food_2.png',
+              'foraging/chiikawa_food_3.png','foraging/bg_forest.png',
+              'foraging/chiikawa_3stage_atlas.png','room/bg_isometric_room.png'
+          ]
+          missing=[name for name in generated if not (root/name).is_file()]
+          assert not missing, 'Missing generated assets: '+str(missing)
+          # Never generate fishing placeholder art. Permit a full user-provided
+          # set, or no fishing artwork before the user adds Gemini PNGs.
+          fishing=['fishing/bg_fishing.png','fishing/hachiware_idle.png',
+                   'fishing/hachiware_catch.png']
+          present=[name for name in fishing if (root/name).is_file()]
+          assert len(present) in (0,3), 'Fishing requires all 3 PNGs; found: '+str(present)
+          print('Canvas assets:',len(generated),'other game PNGs,',
+                len(present),'artist-supplied fishing PNGs')
+          PY
 
       - uses: actions/upload-artifact@v4
         with:
@@ -84,6 +106,7 @@ jobs:
           CHROME_PATH="$(command -v google-chrome)" node tests/board-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/solo-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/canvas-browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/fishing-touch-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/app-resume-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/select-day-browser.cjs
       - uses: actions/upload-artifact@v4
