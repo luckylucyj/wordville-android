@@ -24,7 +24,7 @@ function session({saved='',android=true,valid=true}={}){
  };
  class Params{constructor(q){this.fields=q;}toString(){return Object.entries(this.fields).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');}}
  const mockFetch=async()=>valid?({ok:true,json:async()=>({hits:[]})}):({ok:false,status:401});
- const start=js.indexOf(" const sourceSelect=$('wv-memory-search-source'),pixabayKey=$('wv-memory-pixabay-key');");
+ const start=js.indexOf(" const pixabayKey=$('wv-memory-pixabay-key');");
  const end=js.indexOf(' function externalLinks(q){',start);
  assert.ok(start>=0&&end>start,'Key UI initialization is present');
  new Function('$','location','globalThis','fetch','URLSearchParams',js.slice(start,end))(
