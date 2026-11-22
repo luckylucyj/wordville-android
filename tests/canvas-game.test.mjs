@@ -33,7 +33,10 @@ test('high DPR render keeps fixed 600x1000 logical coordinates and mobile touch 
  assert.match(canvas,/Math\.min\(2,Math\.max\(1,root\.devicePixelRatio\|\|1\)\)/);
  assert.match(canvas,/this\.ctx\.setTransform\(width\/W,0,0,height\/H,0,0\)/);
  assert.match(css,/aspect-ratio:3\/5/);
- assert.match(canvas,/touchAction='none'/);
+ assert.match(canvas,/touchAction='pan-y'/);
+ assert.match(css,/touch-action:pan-y/);
+ assert.match(css,/\.wv-room-drag-handle[\s\S]*?touch-action:none/);
+ assert.match(canvas,/className='wv-room-drag-handle'/);
  assert.match(canvas,/pointercancel/);
 });
 test('real user vocabulary and progress are authoritative; no sample teaching-only dictionary',()=>{
@@ -72,4 +75,22 @@ test('foreground/hidden game pause and restoration avoid freezing on other apps'
  assert.match(canvas,/this\.resume\(\)/);
  assert.doesNotMatch(canvas,/fetch\(/);
  assert.doesNotMatch(canvas,/WebSocket\(/);
+});
+
+test('fishing uses authored PNGs only, logs WebView URL errors and does not draw fallback scenes',()=>{
+ assert.match(canvas,/bg_fishing:'images\/fishing\/bg_fishing\.png'/);
+ assert.match(canvas,/hachiware_idle:'images\/fishing\/hachiware_idle\.png'/);
+ assert.match(canvas,/hachiware_catch:'images\/fishing\/hachiware_catch\.png'/);
+ assert.match(canvas,/new URL\(path,root\.document\.baseURI\)/);
+ assert.match(canvas,/image\.onerror=\(\)=>this\.reportAssetError/);
+ assert.match(canvas,/removeWhiteBackground\(image,key\)/);
+ assert.match(canvas,/visited=new Uint8Array\(total\)/);
+ const fishing=canvas.slice(canvas.indexOf('  renderFishing(){'),canvas.indexOf('  renderWeeding(){'));
+ assert.match(fishing,/this\.paintSprite\('bg_fishing',0,0,W,H\)/);
+ assert.match(fishing,/this\.paintSprite\(catching\?'hachiware_catch':'hachiware_idle'/);
+ assert.doesNotMatch(fishing,/drawCritter\(|this\.background\(|ctx\.drawLine|for\(let i=0;i<5;i\+\+\)/);
+ const generator=readFileSync(new URL('../scripts/build-canvas-minigame-art.py',import.meta.url),'utf8');
+ assert.doesNotMatch(generator,/fishing\/bg_dock\.png/);
+ assert.doesNotMatch(generator,/\("fishing\/hachiware_(idle|catch)\.png"/);
+ assert.match(generator,/if path\.exists\(\): return/);
 });
