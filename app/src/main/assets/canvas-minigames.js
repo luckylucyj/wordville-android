@@ -121,8 +121,25 @@
   }
   reportAssetError(key,url,reason){
    console.error('[Wordville Canvas] Image failed to load:',key,url,reason);
-   if(key==='bg_fishing'||key==='hachiware_idle'||key==='hachiware_catch'){
-    this.message('낚시 PNG 파일을 찾거나 처리하지 못했습니다: '+this.spriteManifest[key]+
+   if(key==='bg_fishing'&&!this.triedDockAlternative&&typeof root.Image==='function'){
+    // The standalone spec calls the same fishing background bg_dock.png.
+    // Prefer the historical path if present, then accept the new authored name.
+    this.triedDockAlternative=true;
+    const dockPath='images/fishing/bg_dock.png';
+    const dockUrl=new URL(dockPath,root.document.baseURI).href;
+    const dock=new root.Image();
+    dock.onload=()=>{
+     if(dock.naturalWidth&&dock.naturalHeight){
+      this.sprites.bg_fishing=dock;
+      console.info('[Wordville Fishing] PNG loaded', 'bg_dock',dockUrl);
+     }else this.reportAssetError('bg_dock',dockUrl,'decoded to an empty image');
+    };
+    dock.onerror=()=>this.reportAssetError('bg_dock',dockUrl,'image.onerror');
+    dock.src=dockUrl;
+    return;
+   }
+   if(key==='bg_fishing'||key==='bg_dock'||key==='hachiware_idle'||key==='hachiware_catch'){
+    this.message('낚시 PNG 파일을 찾거나 처리하지 못했습니다: '+url+
      ' · app/src/main/assets/images/fishing/ 위치와 파일명을 확인하세요.');
    }
   }
