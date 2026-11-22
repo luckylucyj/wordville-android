@@ -372,8 +372,11 @@
    const zoneX=x+w*f.zone[0],zoneWidth=w*(f.zone[1]-f.zone[0]);
    this.box(zoneX,y,zoneWidth,h,11,catching?'#36917c':'#217999',INK,0);
    const art=this.sprites.bg_fishing,scaleX=art.naturalWidth/ART_W,scaleY=art.naturalHeight/ART_H;
-   c.drawImage(art,822*scaleX,1367*scaleY,81*scaleX,46*scaleY,
-    zoneX+(zoneWidth-81)/2,y+(h-46)/2,81,46);
+   c.save();
+   c.translate(zoneX+(zoneWidth-81)/2,y+(h-46)/2);
+   c.clip(new Path2D('M1 23 Q4 10 24 6 Q47 0 61 13 Q79 1 80 11 Q80 19 72 26 Q82 32 78 40 Q75 45 61 35 Q45 47 22 44 Q6 40 1 23 Z'));
+   c.drawImage(art,822*scaleX,1367*scaleY,81*scaleX,46*scaleY,0,0,81,46);
+   c.restore();
    const bobberX=x+w*f.pos;
    this.box(bobberX-21,y-17,42,65,21,'#ed745e','#a6523c',4);
    this.box(bobberX-19,y+6,38,13,4,'#fff4df',INK,0);
@@ -466,7 +469,7 @@
     const items=room.unlocked.slice(this.inventoryPage*5,this.inventoryPage*5+5);
     for(let i=0;i<ROOM_CARD_X.length;i++){
      const x=ROOM_CARD_X[i],item=items[i];
-     if(this.inventoryPage>0){
+     if(this.inventoryPage>0||(i===0&&this.selectedFurniture!=='bed')){
       this.box(x,1290,160,164,24,item?'#fff7ec':'#c59a79','#795646',4);
       if(item){
        const art=this.roomArt[item.id]||this.sprites['furniture_'+item.id];

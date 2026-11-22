@@ -27,9 +27,9 @@
  position:absolute;top:84%;height:10.7%;left:11.6%;width:76.7%;
  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2.1%;
 }
-.wv-canvas-panel #room-drawer button,
-.wv-canvas-panel #room-drawer-toggle{
- min-height:0;padding:0;border:0;background:transparent;pointer-events:auto;
+#wv-solo-view #room-drawer button,
+#wv-solo-view #room-drawer-toggle{
+ min-height:0;padding:0;border:0;background:transparent;pointer-events:auto;-webkit-tap-highlight-color:transparent;
 }
 .wv-canvas-panel #room-drawer button:disabled{pointer-events:none}
 #room-drawer [data-turn],#room-drawer [data-room-close],#room-drawer-toggle{position:absolute}
@@ -44,10 +44,10 @@
 .wv-canvas-stage{position:relative;display:block;width:100%;max-width:600px;margin:0 auto}
 .wv-room-drag-targets{position:absolute;inset:0;z-index:0;pointer-events:none}
 .wv-room-drag-targets[hidden]{display:none!important}
-.wv-canvas-panel .wv-room-drag-handle{
+#wv-solo-view .wv-room-drag-handle{
  position:absolute;transform:translate(-50%,-50%);width:13%;height:8%;
  min-height:0;padding:0;border:0;border-radius:50%;background:transparent;
- touch-action:none;pointer-events:auto;cursor:grab;
+ touch-action:none;pointer-events:auto;cursor:grab;-webkit-tap-highlight-color:transparent;
 }
 .wv-canvas-panel .wv-room-drag-handle:active{cursor:grabbing}
 .wv-canvas-panel .wv-room-drag-handle:focus-visible{

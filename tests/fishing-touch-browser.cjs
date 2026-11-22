@@ -114,7 +114,11 @@ const backPng=png(16,16,()=>[46,157,181,255]);
   await page.locator('#room-item-list button').first().tap();
   assert.equal(await page.locator('.wv-room-drag-handle').count()>0,true);
   assert.equal(await page.locator('#wordvilleCanvas').evaluate(el=>getComputedStyle(el).touchAction),'pan-y');
-  assert.equal(await page.locator('.wv-room-drag-handle').first().evaluate(el=>getComputedStyle(el).touchAction),'none');
+  assert.deepEqual(await page.locator('.wv-room-drag-handle').first().evaluate(el=>{
+   const style=getComputedStyle(el);
+   return {touchAction:style.touchAction,background:style.backgroundColor};
+  }),{touchAction:'none',background:'rgba(0, 0, 0, 0)'});
+  assert.equal(await page.locator('#room-item-list button').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgba(0, 0, 0, 0)');
   await page.evaluate(()=>wordvilleGame.reportAssetError('bg_fishing','file:///android_asset/images/fishing/bg_fishing.png','test-failure'));
   assert.ok(assetErrors.some(s=>s.includes('bg_fishing')));
   assert.match(await page.locator('#wordville-canvas-status').textContent(),/bg_fishing\.png/);
