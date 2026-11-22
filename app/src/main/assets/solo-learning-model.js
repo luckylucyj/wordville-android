@@ -8,13 +8,28 @@
  const firstMeaning=w=>String((Array.isArray(w?.meanings)&&w.meanings[0])||w?.meaning||'').split(/[;；]/)[0].trim().slice(0,100);
  const term=w=>String(w?.word||'').trim();
  function blankExample(w){
-  const sentence=String(w?.example||'').trim(), target=term(w);
-  if(!sentence||!target||target.length>60)return null;
+  const target=term(w);
+  if(!target||target.length>60)return null;
   const escaped=target.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const match=new RegExp('(^|[^A-Za-z])('+escaped+')(?=$|[^A-Za-z])','i');
-  if(!match.test(sentence))return null;
-  return {prompt:sentence.replace(match,(whole,prefix)=>prefix+'_____'),original:sentence,translation:String(w.translation||'').slice(0,300)};
+  const match=new RegExp('(^|[^A-Za-z])('+escaped+')(?=$|[^A-Za-z])','gi');
+  let sentence=String(w?.example||'').trim(),source='VOCA 카드 예문';
+  let translation=String(w?.translation||'').slice(0,300);
+  // Most words have no directly stored example. Reuse the ten offline
+  // dialogue examples already present in Wordville, not scraped content.
+  if(!match.test(sentence)){
+   source='Wordville 영어 대화 예시';translation='';
+   const conversations=root.WordvilleConversations?.get?.(w)||[];
+   const lines=conversations.flatMap(item=>String(item.english||'').split(/\n+/));
+   sentence=lines.map(line=>line.replace(/^[AB]:\s*/,'').trim())
+    .find(line=>{match.lastIndex=0;return match.test(line);})||'';
+  }
+  if(!sentence)return null;
+  match.lastIndex=0;
+  const prompt=sentence.replace(match,(whole,prefix)=>prefix+'_____');
+  if(prompt===sentence)return null;
+  return {prompt,original:sentence,translation,source};
  }
+
  function candidates(words,mode,day='all'){
   const seen=new Set();
   return (Array.isArray(words)?words:[]).filter(w=>{
@@ -71,7 +86,7 @@
    prompt:mode==='fish'?firstMeaning(target):mode==='wood'?term(target):example.prompt,
    example:example?.original||String(target.example||''),
    translation:example?.translation||String(target.translation||''),
-   meaning:firstMeaning(target)};
+   meaning:firstMeaning(target),exampleSource:example?.source||'VOCA 카드 예문'};
  }
  function reviewEligible(reviews,id,now=Date.now()){
   const due=reviews?.[id]?.due;
