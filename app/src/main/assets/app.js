@@ -112,7 +112,11 @@ function rehydrateStudyOnForeground(){
     }
    }
   }
- }catch{/* Do not reset an existing in-memory record if storage is unavailable. */}
+ }catch(error){
+  // Keep the working in-memory snapshot; surface diagnostic details for QA.
+  globalThis.__wordvilleResumeDataError=String(error?.stack||error);
+  console.warn('Wordville local progress rehydration failed',error);
+ }
  renderStats();
 }
 document.addEventListener('visibilitychange',()=>{
@@ -326,7 +330,11 @@ async function init(){
   wordPartsOfSpeech=index;
   if(words.length){renderWords();if(active)renderWordPartsOfSpeech($('detail-word-pos'),active);}
  }).catch(()=>{wordPartsOfSpeech=null;});
- try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option','');option.value=w.id;globalThis.WordvilleVocabularyLocale?.bindOption(option,w.word,w.meaning);if(!globalThis.WordvilleVocabularyLocale)option.textContent=w.word;$(id).append(option);}}$('word-b').selectedIndex=1;connection();restoreWordView();renderWords();renderStats();initResidentDayOptions();globalThis.WordvilleWords=words;document.dispatchEvent(new Event('wordville-words-ready'));}catch{notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');}}
+ try{const res=await fetch('words.json');if(!res.ok)throw Error();words=await res.json();if(!globalThis.WordvilleBookOrder?.prepare(words))notify('PDF 순서 정보를 확인하지 못해 기존 순서로 표시합니다.');migrateLearningAliases();$('word-count').textContent=`총 ${words.length.toLocaleString()}개`;for(const day of [...new Set(words.flatMap(w=>w.days||[]))].sort((a,b)=>a-b)){const option=make('option',day===0?'이디엄':`Day ${String(day).padStart(2,'0')}`);option.value=day;$('day-filter').append(option);}for(const w of words){for(const id of ['word-a','word-b']){const option=make('option','');option.value=w.id;globalThis.WordvilleVocabularyLocale?.bindOption(option,w.word,w.meaning);if(!globalThis.WordvilleVocabularyLocale)option.textContent=w.word;$(id).append(option);}}$('word-b').selectedIndex=1;connection();restoreWordView();renderWords();renderStats();initResidentDayOptions();globalThis.WordvilleWords=words;document.dispatchEvent(new Event('wordville-words-ready'));}catch(error){
+ globalThis.__wordvilleInitError=String(error?.stack||error);
+ console.error('Wordville vocabulary initialization failed',error);
+ notify('단어장을 불러오지 못했습니다. 앱을 다시 실행해 주세요.');
+}}
 const wordsReady=init();
 
 function authState(user){
