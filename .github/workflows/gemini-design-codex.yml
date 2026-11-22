@@ -182,7 +182,7 @@ jobs:
     permissions:
       contents: read
     env:
-      WORDVILLE_KEYSTORE: ${{ runner.temp }}/wordville-ci-preview.keystore
+      WORDVILLE_KEYSTORE: /tmp/wordville-ci-preview.keystore
     steps:
       - uses: actions/checkout@v4
         with:
@@ -237,3 +237,65 @@ jobs:
       - name: Compile Android debug APK without publishing it
         run: gradle --no-daemon assembleDebug
 
+  open-draft-pr:
+    needs: [verify-request, implement-and-test, test-patch]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: gemini-codex-reviewed-patch
+          path: ${{ runner.temp }}/validated-patch
+      - name: Apply patch and reject any unauthorized files again
+        run: |
+          set -euo pipefail
+          git apply --binary --check "$RUNNER_TEMP/validated-patch/gemini-design.patch"
+          git apply --binary "$RUNNER_TEMP/validated-patch/gemini-design.patch"
+          python3 - <<'PY'
+          import os, subprocess, sys
+          data = subprocess.check_output(["git", "diff", "--name-only", "-z", "HEAD"])
+          paths = [os.fsdecode(s) for s in data.split(b"\0") if s]
+          allowed = ("app/src/main/assets/", "app/src/main/java/",
+                     "app/src/main/res/", "tests/")
+          if not paths or any(not p.startswith(allowed) for p in paths):
+              sys.exit("Refusing to publish unauthorized or empty changes.")
+          PY
+      - name: Create draft PR only (never merge or push to main)
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: automation/gemini-design-issue-${{ needs.verify-request.outputs.issue_number }}
+          commit-message: 'feat(ui): implement Gemini design from issue #${{ needs.verify-request.outputs.issue_number }}'
+          title: '[Gemini → Codex] Design implementation #${{ needs.verify-request.outputs.issue_number }}'
+          body: |
+            Draft implementation of Gemini design issue #${{ needs.verify-request.outputs.issue_number }}.
+
+            Automation checks: allowed-path validation, npm build, npm test,
+            Chrome UI smoke tests, Android debug compile.
+
+            A human must review design fidelity, original image assets, storage
+            compatibility and UI on a Galaxy device before marking this PR ready.
+
+            Important: GitHub's default GITHUB_TOKEN does not trigger other
+            pull_request Actions; the tests above ran in this workflow.
+            No direct commit to main and no automatic merge are performed.
+          draft: true
+          delete-branch: false
+          add-paths: |
+            app/src/main/assets/
+            app/src/main/java/
+            app/src/main/res/
+            tests/
+      - name: Explain when repository policy blocks automated PRs
+        if: failure()
+        run: |
+          echo "::error::If PR creation is disabled, enable Settings > Actions > General > Workflow permissions > Allow GitHub Actions to create and approve pull requests."
