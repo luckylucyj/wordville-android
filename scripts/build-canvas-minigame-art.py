@@ -53,6 +53,7 @@ def eyes(d,x,y,mood):
         ellipse(d,(x+75,y-12,x+84,y+11),"#93cfe8",None)
 
 def char(name,mood,path):
+    if path.exists(): return
     im,d=picture()
     hachi=name=="hachiware"
     if hachi:
@@ -105,18 +106,9 @@ def char(name,mood,path):
     im.resize((512,512),Image.Resampling.LANCZOS).save(path,optimize=True)
 
 def bg(scene,path):
+    if path.exists(): return
     im,d=picture(600,1000,False)
-    if scene=="fishing":
-        d.rectangle(points(0,0,600,520),fill="#f6e2ba")
-        ellipse(d,(-70,10,190,240),"#fff8e4",None)
-        d.rectangle(points(0,520,600,1000),fill="#b3dce9")
-        for y in range(560,1000,60):
-            d.arc(points(-40,y,640,y+42),0,180,fill="#e8f8ec",width=3*S)
-        for n in range(6):
-            x=55+n*85
-            rect(d,(x,455,x+115,532),"#ba8e6d",INK,2,r=5)
-            line(d,[(x+15,468),(x+15,523)],"#8f674e",2)
-    elif scene=="weeding":
+    if scene=="weeding":
         d.rectangle(points(0,0,600,1000),fill="#dcecc7")
         ellipse(d,(-50,345,660,1120),"#a8d3a1",None)
         for i in range(45):
@@ -146,8 +138,6 @@ def bg(scene,path):
 
 def main():
     for file,name,mood in [
-      ("fishing/hachiware_idle.png","hachiware","idle"),
-      ("fishing/hachiware_catch.png","hachiware","catch"),
       ("weeding/chiikawa_perfect.png","chiikawa","perfect"),
       ("weeding/chiikawa_medium.png","chiikawa","medium"),
       ("weeding/chiikawa_bad.png","chiikawa","bad"),
@@ -155,7 +145,7 @@ def main():
       ("foraging/chiikawa_food_2.png","chiikawa","food_2"),
       ("foraging/chiikawa_food_3.png","chiikawa","food_3")
     ]:char(name,mood,BASE/file)
-    for scene,file in [("fishing","fishing/bg_dock.png"),("weeding","weeding/bg_meadow.png"),
+    for scene,file in [("weeding","weeding/bg_meadow.png"),
                        ("foraging","foraging/bg_forest.png"),("room","room/bg_isometric_room.png")]:
         bg(scene,BASE/file)
     # Optional vertical atlas sheets: 3 equal 512x512 panels in one 512x1536 PNG.
@@ -175,7 +165,8 @@ def main():
                 assert source.size==(512,512),name
                 sheet.alpha_composite(source.convert("RGBA"),(0,index*512))
         sheet.save(BASE/output,optimize=True)
-    print("Generated 14 Canvas PNG assets: 8 character images, 4 scenes and 2 three-panel atlases")
+    print("Generated 11 base Canvas PNGs (6 weeding/foraging character images, 3 scenes, 2 atlases).")
+    print("Fishing requires user-supplied images/fishing/bg_fishing.png, hachiware_idle.png and hachiware_catch.png.")
 
 if __name__=="__main__":
     main()
