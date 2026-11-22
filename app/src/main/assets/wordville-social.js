@@ -284,7 +284,7 @@ function syncResidentCards(){
   const translated=root.WordvilleI18n?.translate(original)||original;
   const aff=affection(id);
   elements.name.textContent=translated;
-  elements.affinity.textContent='♥ '+tr(lex.affinity)+' '+aff+'/100 · '+tr(lex.openStatus);
+  elements.affinity.textContent='♥ '+tr(lex.affinity)+' '+aff+'/100 · ↗';
   elements.info.setAttribute('aria-label',translated+' · '+tr(lex.affinity)+' '+aff+'/100 · '+tr(lex.openStatus));
  }
 }
