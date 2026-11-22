@@ -55,6 +55,29 @@ const assert=require('node:assert/strict');
   // Foraging a valid word triggers each of the three staged animations.
   await page.locator('[data-solo-tab="capture"]').click();
   assert.equal(await page.evaluate(()=>wordvilleGame.state.mode),'foraging');
+  const card=page.locator('#wv-forage-card');
+  const gauge=card.getByRole('progressbar');
+  assert.equal(await card.isVisible(),true);
+  assert.equal(await page.locator('#wordvilleCanvas').isVisible(),false);
+  const previewBefore=await page.evaluate(()=>({
+   coins:state.coins,word:wordvilleGame.getCurrentWord()?.id,review:JSON.stringify(state.reviews)
+  }));
+  await card.getByRole('button',{name:/Forage/}).tap();
+  assert.equal(await gauge.getAttribute('aria-valuenow'),'30');
+  await page.waitForFunction(()=>document.querySelector('#wv-forage-card').dataset.stage==='2');
+  assert.equal(await gauge.getAttribute('aria-valuenow'),'68');
+  await page.waitForFunction(()=>document.querySelector('#wv-forage-card').dataset.stage==='3');
+  assert.equal(await gauge.getAttribute('aria-valuenow'),'100');
+  await card.getByRole('button',{name:/Forage/}).tap();
+  await card.getByRole('button',{name:/Pack/}).tap();
+  assert.equal(await card.locator('.wv-forage-badge').textContent(),'Success!');
+  assert.equal(await page.evaluate(()=>wordvilleGame.state.foraging.timer),0,
+   'Manual Pack cancels a running Forage preview');
+  await card.getByRole('button',{name:/Eat/}).tap();
+  assert.equal(await gauge.getAttribute('aria-valuenow'),'68');
+  assert.deepEqual(await page.evaluate(()=>({
+   coins:state.coins,word:wordvilleGame.getCurrentWord()?.id,review:JSON.stringify(state.reviews)
+  })),previewBefore,'Preview never changes vocabulary or rewards');
   // An incorrect food choice also advances to the next card and schedules
   // the failed word after two intervening cards.
   const firstWrong=await page.evaluate(()=>wordvilleGame.getCurrentWord().id);
@@ -67,17 +90,25 @@ const assert=require('node:assert/strict');
    incorrect.click();
   },firstWrong);
   assert.equal(await page.evaluate(id=>wordvilleGame.studyManager.queue[2]?.id===id,firstWrong),true);
-  const food=await page.evaluate(()=>wordvilleGame.getCurrentWord().word);
+  const correct=await page.evaluate(()=>({
+   word:wordvilleGame.getCurrentWord().word,id:wordvilleGame.getCurrentWord().id,coins:state.coins
+  }));
+  const food=correct.word;
   await page.locator('#foraging-choices button').evaluateAll((buttons,word)=>{
    const matching=buttons.find(button=>button.textContent===word);
    if(!matching)throw Error('Foraging target missing from options');
    matching.click();
   },food);
   assert.equal(await page.evaluate(()=>wordvilleGame.state.foraging.stage),2);
+  assert.equal(await card.getByRole('button',{name:/Forage/}).isDisabled(),true);
+  assert.equal(await page.locator('#foraging-choices button').first().isDisabled(),true);
+  assert.equal(await page.evaluate(id=>state.reviews[id]?.correct,correct.id),true);
+  assert.ok(await page.evaluate(coins=>state.coins>coins,correct.coins));
   await page.evaluate(()=>{wordvilleGame.state.foraging.timer=.001;wordvilleGame.update(.05);});
   assert.equal(await page.evaluate(()=>wordvilleGame.state.foraging.stage),3);
   await page.evaluate(()=>{wordvilleGame.state.foraging.timer=.001;wordvilleGame.update(.05);});
   assert.equal(await page.evaluate(()=>wordvilleGame.state.foraging.stage),1);
+  assert.equal(await card.getByRole('button',{name:/Forage/}).isEnabled(),true);
   // Room exists as a separate Canvas mode and allows drag/reposition.
   await page.locator('[data-solo-tab="room"]').click();
   assert.equal(await page.evaluate(()=>wordvilleGame.state.mode),'room');

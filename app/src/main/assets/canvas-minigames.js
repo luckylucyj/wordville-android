@@ -6,6 +6,11 @@
  'use strict';
  const W=600,H=1000,INK='#4A3B32',SKIN='#fffdf8',WOOD='#b78961',ROOM_KEY='wordville_room_v1';
  const modes=['fishing','weeding','foraging','room'];
+ const FORAGE_STAGES=[
+  {label:'Perfect!',progress:30},
+  {label:'Careful!',progress:68},
+  {label:'Success!',progress:100}
+ ];
  const ART_W=1147,ART_H=1536;
  const FISH_TRACK={x:124,y:1360,w:886,h:58};
  const ROOM_CARD_X=[133,315,493,672,850];
@@ -45,8 +50,6 @@
     hachiware_catch:'images/fishing/hachiware_catch.png',
     bg_weeding:'images/weeding/bg_meadow.png',weed_perfect:'images/weeding/chiikawa_perfect.png',
     weed_medium:'images/weeding/chiikawa_medium.png',weed_bad:'images/weeding/chiikawa_bad.png',
-    bg_foraging:'images/foraging/bg_forest.png',food_1:'images/foraging/chiikawa_food_1.png',
-    food_2:'images/foraging/chiikawa_food_2.png',food_3:'images/foraging/chiikawa_food_3.png',
     bg_room:'images/room/room-decor.webp',
     ...Object.fromEntries(Object.entries(FURNITURE_IMAGES).map(([id,file])=>[
      'furniture_'+id,'art/furniture/'+file
@@ -64,6 +67,10 @@
    this.running=false;this.raf=0;this.lastFrame=0;this.nextActionAt=0;
    this.status=root.document.getElementById('wordville-canvas-status');
    this.choicesNode=root.document.getElementById('foraging-choices');
+   this.forageCard=root.document.getElementById('wv-forage-card');
+   this.forageBadge=this.forageCard.querySelector('.wv-forage-badge');
+   this.forageGauge=this.forageCard.querySelector('.wv-forage-gauge');
+   this.forageButtons=this.forageCard.querySelectorAll('[data-forage-action]');
    this.inventoryNode=root.document.getElementById('room-item-list');
    this.drawer=root.document.getElementById('room-drawer');
    this.stage=this.canvas.parentElement;
@@ -227,7 +234,10 @@
    this.message('');
    this.state.fishing.catchTimer=0;this.state.weeding.timer=0;
    this.state.weeding.status='idle';this.state.weeding.pendingRetry=false;
-   this.state.foraging.stage=1;this.state.foraging.timer=0;this.state.foraging.pending=false;
+   this.state.foraging.pending=false;
+   this.setForageStage(1);
+   this.forageCard.hidden=mode!=='foraging';
+   this.canvas.hidden=mode==='foraging';
    if(this.choicesNode)this.choicesNode.hidden=mode!=='foraging';
    if(this.roomToggle)this.roomToggle.hidden=mode!=='room';
    root.document.getElementById('btn-clear-room').hidden=mode!=='room';
@@ -247,11 +257,13 @@
    if(badge)badge.textContent=titles[this.state.mode];
    const hint=root.document.getElementById('target-hint');
    if(hint)hint.textContent=this.state.mode==='room'?'가구를 선택한 후 방 바닥에서 드래그해 배치하세요':
-    this.state.mode==='foraging'?'뜻을 확인하고 알맞은 영단어 버튼을 선택하세요':
+    this.state.mode==='foraging'?'뜻에 맞는 영단어를 골라 음식을 모으세요. 색깔 버튼으로 3단계 동작을 볼 수 있어요.':
     '아래 움직이는 게이지를 목표 구간에서 눌러보세요';
    const current=root.document.getElementById('target-meaning');
    if(current)current.hidden=this.state.mode==='room';
-   if(current)current.textContent=word?word.word+' — '+label(word):'단어를 불러오는 중입니다';
+   if(current)current.textContent=word?
+    (this.state.mode==='foraging'?label(word):word.word+' — '+label(word)):
+    '단어를 불러오는 중입니다';
   }
   message(text){
    if(this.status)this.status.textContent=text;
@@ -326,13 +338,27 @@
      if(w.pos<=0){w.pos=0;w.dir=1;}
     }
    }
-   if(this.state.mode==='foraging'&&g.stage!==1){
+   if(this.state.mode==='foraging'&&g.timer>0){
     g.timer=Math.max(0,g.timer-dt);
-    if(g.timer<=0){
-     if(g.stage===2){g.stage=3;g.timer=1;}
-     else{g.stage=1;g.pending=false;this.advanceWord(true);}
+    if(!g.timer){
+     if(g.stage===1)this.setForageStage(2,1.4);
+     else if(g.stage===2)this.setForageStage(3,g.pending?1:0);
+     else{
+      g.pending=false;
+      this.setForageStage(1);
+     }
     }
    }
+  }
+  setForageStage(stage,timer=0){
+   const game=this.state.foraging,display=FORAGE_STAGES[stage-1];
+   game.stage=stage;
+   game.timer=timer;
+   this.forageCard.dataset.stage=String(stage);
+   this.forageBadge.textContent=display.label;
+   this.forageGauge.setAttribute('aria-valuenow',String(display.progress));
+   for(const button of this.forageButtons)button.disabled=game.pending;
+   for(const button of this.choicesNode.children)button.disabled=game.pending;
   }
   renderFishing(){
    if(!this.paintSprite('bg_fishing',0,0,W,H))return;
@@ -404,30 +430,6 @@
    this.box(52+496*w.pos-8,883,16,48,6,INK,INK,1);
    this.text('비적합       중간         적합         중간        비적합',300,947,12);
   }
-  renderForaging(){
-   const c=this.ctx,g=this.state.foraging;
-   if(!this.paintSprite('bg_foraging',0,0,W,H)){
-    this.background('#e8edcb','#b5d6a3');
-    for(let i=0;i<6;i++){const x=25+i*105;this.box(x,240,20,360,8,'#9c815e',INK,1);
-     c.fillStyle='#98be93';c.beginPath();c.ellipse(x+9,251,65,115,0,0,Math.PI*2);c.fill();}
-    c.fillStyle='#d6dfac';c.fillRect(0,600,W,400);
-   }
-   const stage=g.stage;
-   if(!this.paintSprite('food_'+stage,160,280,250,270)&&
-      !this.atlas.drawPanel(c,'foraging_stages',stage-1,160,280,250,270))
-    this.drawCritter(280,450,false,'food_'+stage);
-   const labels={1:'1/3 발견 · 맞는 영단어를 선택하세요',2:'2/3 줍기 · 두 손으로 조심히',3:'3/3 획득 · 머리 위로 번쩍!'};
-   this.box(88,546,424,47,11,'#fff9e8',INK,2);
-   this.text(labels[stage],300,576,18);
-   const choices=g.choices||[];
-   for(let i=0;i<3;i++){
-    const x=140+i*160;this.box(x-48,618,96,76,16,'#fff9e5');
-    this.text(['🍮','🍙','🍰'][i],x,665,43);
-   }
-   this.box(56,760,488,170,16,'#fff9e6');
-   this.text('아래 단어 버튼으로 음식을 주우세요',300,801,21);
-   this.text(choices.map(x=>x.word).join('  ·  '),300,853,17,'#7b5c47','650',450);
-  }
   constrainFloor(x,y){
    let dx=(x-300)/245,dy=(y-480)/135;
    const sum=Math.abs(dx)+Math.abs(dy);
@@ -489,7 +491,6 @@
   drawCritter(x,y,isHachi,pose,scale=1){
    const c=this.ctx;c.save();c.translate(x,y);c.scale(scale,scale);
    if(pose==='bad')c.rotate(-.35);
-   if(pose==='food_2')c.translate(0,14);
    this.box(-38,-28,76,63,30,SKIN,INK,3.5);
    if(isHachi){
     c.fillStyle='#84b3df';c.strokeStyle=INK;c.lineWidth=3;
@@ -505,7 +506,7 @@
    for(const sign of [-1,1]){c.beginPath();c.arc(sign*18,-83,4.8,0,Math.PI*2);c.fill();}
    c.strokeStyle=INK;c.lineWidth=3;c.beginPath();c.arc(0,-72,pose==='bad'?5:9,0,Math.PI);c.stroke();
    if(pose==='medium'||pose==='bad')this.text('💦',51,-80,24);
-   if(pose==='perfect'||pose==='catch'||pose==='food_3')this.text('✨',58,-130,27);
+   if(pose==='perfect'||pose==='catch')this.text('✨',58,-130,27);
    c.restore();
   }
   award(word,icon){
@@ -559,10 +560,12 @@
    for(const w of options){
     const button=root.document.createElement('button');button.type='button';
     button.className='wv-canvas-choice';button.textContent=w.word;
+    button.disabled=this.state.foraging.pending;
     button.addEventListener('click',()=>{
      const g=this.state.foraging;
-     if(this.state.mode!=='foraging'||g.stage!==1||Date.now()<this.nextActionAt)return;
+     if(this.state.mode!=='foraging'||g.pending||Date.now()<this.nextActionAt)return;
      if(w.id!==word.id){
+      this.setForageStage(1);
       this.message('❌ '+w.word+'는 정답이 아닙니다. 뜻을 다시 확인해 주세요.');
       this.nextActionAt=Date.now()+450;
       if(root.WordvilleSolo?.learnFromCanvas(word.id,this.state.mode,false)!==false)
@@ -571,8 +574,9 @@
      }
      if(this.award(word,word.word.length%2?'🍮':'🍙')){
       this.studyManager.playTone('success');
-      g.stage=2;g.timer=.85;g.pending=true;
-      this.nextActionAt=Date.now()+900;
+      g.pending=true;
+      this.setForageStage(2,1.4);
+      this.advanceWord(true);
      }
     });
     node.append(button);
@@ -690,6 +694,14 @@
    root.document.addEventListener('visibilitychange',()=>{if(root.document.hidden)this.pause();else this.resume();});
    root.document.addEventListener('wordville-app-resume',()=>{this.resize();this.resume();this.refreshWordPool();});
    root.document.addEventListener('wordville-words-ready',()=>this.loadWordsFromAndroid(root.WordvilleWords||[]));
+   for(const button of this.forageButtons){
+    button.addEventListener('click',()=>{
+     if(this.state.mode!=='foraging'||this.state.foraging.pending)return;
+     const action=button.dataset.forageAction;
+     if(action==='forage')this.setForageStage(1,.9);
+     else this.setForageStage(action==='eat'?2:3);
+    });
+   }
    root.document.getElementById('wordville-action')?.addEventListener('click',()=>this.onTapAction());
    this.roomToggle?.addEventListener('click',()=>this.setDrawerOpen(this.drawer.hidden));
    this.drawer.querySelector('[data-room-close]').addEventListener('click',()=>{
@@ -709,12 +721,12 @@
    root.document.getElementById('wv-solo-day')?.addEventListener('change',()=>this.refreshWordPool());
   }
   paint(){
+   if(this.state.mode==='foraging')return;
    this.ctx.clearRect(0,0,W,H);
    if(this.state.mode==='fishing')this.renderFishing();
    else if(this.state.mode==='weeding')this.renderWeeding();
-   else if(this.state.mode==='foraging')this.renderForaging();
    else this.renderRoom();
-   if(this.state.mode==='weeding'||this.state.mode==='foraging')this.drawHUD();
+   if(this.state.mode==='weeding')this.drawHUD();
   }
   pause(){this.running=false;if(this.raf)root.cancelAnimationFrame(this.raf);this.raf=0;this.lastFrame=0;}
   resume(){
@@ -745,6 +757,22 @@
   const handles=root.document.createElement('div');handles.id='wv-room-drag-targets';
   handles.className='wv-room-drag-targets';handles.hidden=true;
   stage.append(canvas,handles);
+  stage.insertAdjacentHTML('beforeend',`
+   <div id="wv-forage-card" data-stage="1" hidden>
+    <div class="wv-forage-viewport">
+     <div class="wv-forage-sprite" aria-hidden="true"></div>
+     <span class="wv-forage-badge" role="status" lang="en">Perfect!</span>
+    </div>
+    <div class="wv-forage-controls">
+     <div class="wv-forage-gauge" role="progressbar" aria-label="음식 줍기 단계"
+      aria-valuemin="0" aria-valuemax="100" aria-valuenow="30">
+      <div class="wv-forage-fill"></div>
+     </div>
+     <button type="button" data-forage-action="forage" lang="en" aria-label="Forage · 3단계 보기">Forage</button>
+     <button type="button" data-forage-action="eat" lang="en" aria-label="Eat · 먹는 동작 보기">Eat</button>
+     <button type="button" data-forage-action="pack" lang="en" aria-label="Pack · 수확 동작 보기">Pack</button>
+    </div>
+   </div>`);
   const status=root.document.createElement('p');status.id='wordville-canvas-status';
   status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const choices=root.document.createElement('div');choices.id='foraging-choices';choices.hidden=true;
