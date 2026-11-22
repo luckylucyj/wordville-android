@@ -175,3 +175,65 @@ jobs:
           if-no-files-found: error
 
 
+  test-patch:
+    needs: implement-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      WORDVILLE_KEYSTORE: ${{ runner.temp }}/wordville-ci-preview.keystore
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: gemini-codex-reviewed-patch
+          path: ${{ runner.temp }}/validated-patch
+      - name: Apply the verified design patch for unprivileged testing
+        run: |
+          set -euo pipefail
+          git apply --binary --check "$RUNNER_TEMP/validated-patch/gemini-design.patch"
+          git apply --binary "$RUNNER_TEMP/validated-patch/gemini-design.patch"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies on a clean runner without OpenAI secrets
+        run: npm ci
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Install Android compile dependencies
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Generate temporary CI-only signing key
+        run: |
+          keytool -genkeypair -keystore "$WORDVILLE_KEYSTORE" -storetype PKCS12 \
+            -storepass android -keypass android -alias androiddebugkey \
+            -keyalg RSA -keysize 3072 -validity 1 \
+            -dname "CN=Wordville AI Preview, O=CI, C=KR"
+      - name: Rebuild existing bundled web client
+        run: npm run build:web
+      - name: Run Wordville unit and regression tests
+        run: npm test
+      - name: Run Chrome-based interaction smoke tests
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --directory app/src/main/assets &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          sleep 2
+          CHROME_PATH="$(command -v google-chrome)" node tests/browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/canvas-browser.cjs
+      - name: Compile Android debug APK without publishing it
+        run: gradle --no-daemon assembleDebug
+
