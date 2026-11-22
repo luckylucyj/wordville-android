@@ -378,7 +378,7 @@
     try{
      const blob=await fetchImage(result);
      const image=new File([blob],result.title.replace(/^File:/,'').slice(0,100),{type:blob.type});
-     image.source=result.source||'Wikimedia Commons';image.sourceUrl=result.sourceUrl;image.license=result.license;image.author=result.author;
+     image.source=(result.source||'Wikimedia Commons')+(result.originSite?' · 원본 '+result.originSite:'');image.sourceUrl=result.sourceUrl;image.license=result.license;image.author=result.author;
      await addFiles([image],w);
      $('wv-memory-search-status').textContent='기억 이미지로 저장했습니다.';
     }catch(error){$('wv-memory-search-status').textContent='저장하지 못했습니다: '+error.message;}
