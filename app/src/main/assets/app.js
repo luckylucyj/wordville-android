@@ -195,8 +195,9 @@ $('search').addEventListener('input',()=>{
 $('wv-word-search-form').addEventListener('submit',event=>{
  event.preventDefault();
  clearTimeout(searchRenderTimer);searchRenderTimer=null;
- // A submitted query searches all days, regardless of saved filters.
- $('day-filter').value='';$('wv-status-filter').value='all';studyPdfPage=null;
+ // Search within the selected Day and study status. Never reset user
+ // preferences here: renderWords() persists the current filters to both
+ // localStorage and Android native preferences for WebView recovery.
  wordPage=0;renderWords();
  $('search').blur();
  $('filter-count').scrollIntoView({block:'start'});
