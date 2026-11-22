@@ -108,6 +108,10 @@ const backPng=png(16,16,()=>[46,157,181,255]);
   assert.equal(tap.after,tap.before+1,'A completed gauge tap grants one reward');
   // Room drag handles intercept touch only over a furniture icon.
   await page.locator('[data-solo-tab="room"]').click();
+  await page.locator('[data-room-close]').click();
+  assert.equal(await page.locator('#room-drawer').isVisible(),false);
+  await page.locator('#room-drawer-toggle').click();
+  await page.locator('#room-item-list button').first().tap();
   assert.equal(await page.locator('.wv-room-drag-handle').count()>0,true);
   assert.equal(await page.locator('#wordvilleCanvas').evaluate(el=>getComputedStyle(el).touchAction),'pan-y');
   assert.equal(await page.locator('.wv-room-drag-handle').first().evaluate(el=>getComputedStyle(el).touchAction),'none');

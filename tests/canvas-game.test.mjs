@@ -21,11 +21,11 @@ test('all four Canvas modes, specified HUD geometry, optional art manifest',()=>
   assert.ok(canvas.includes("'"+mode+"'"),mode+' registered');
  for(const value of ['W=600,H=1000','this.LOGICAL_W=W','this.LOGICAL_H=H',
   'this.box(18,16,148,60','this.box(502,120,80,336','const p=this.state.popup,py=660',
-  'this.box(30,855,540,115','this.box(30,860,540,96'])assert.ok(canvas.includes(value),value);
+  'FISH_TRACK={x:124,y:1360,w:886,h:58}','this.box(30,860,540,96'])assert.ok(canvas.includes(value),value);
  for(const path of ['images/fishing/hachiware_idle.png','images/fishing/hachiware_catch.png',
   'images/weeding/chiikawa_perfect.png','images/weeding/chiikawa_medium.png','images/weeding/chiikawa_bad.png',
   'images/foraging/chiikawa_food_1.png','images/foraging/chiikawa_food_2.png','images/foraging/chiikawa_food_3.png',
-  'images/room/bg_isometric_room.png'])
+  'images/room/room-decor.webp'])
   assert.ok(canvas.includes(path),path+' asset slot');
  assert.match(canvas,/drawCritter\(/);
 });

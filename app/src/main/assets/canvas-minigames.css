@@ -11,23 +11,41 @@
 #foraging-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:11px 0}
 #foraging-choices[hidden],#room-drawer[hidden]{display:none!important}
 #foraging-choices .wv-canvas-choice{font-size:14px;min-width:0;min-height:60px}
-#room-drawer{margin:9px 0;padding:10px;background:#fff7e4;border:2px solid #d5b18a;border-radius:11px}
-#room-drawer>strong{display:block;margin:0 0 8px;font-size:14px}
-#room-item-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:8px}
-#room-item-list button{font-size:12px;min-width:0;line-height:1.5}
-#btn-clear-room{width:100%;font-size:12px}
+#btn-clear-room{margin-top:8px;width:100%;font-size:12px}
 #wordville-canvas-status{min-height:28px;margin:9px 2px 2px;font-size:13px;line-height:1.65;font-weight:650;overflow-wrap:anywhere}
-@media(min-width:560px){#room-item-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:390px){.wv-canvas-panel{padding:6px;border-width:2px;margin:8px auto 14px}#wordvilleCanvas{border-width:2px}#game-badge{font-size:15px}#target-meaning{font-size:13px}#target-hint{font-size:11px}#foraging-choices .wv-canvas-choice{font-size:12px;padding:6px 3px}}
 
-#wordville-action[hidden]{display:none!important}
+#wordville-action[hidden],#btn-clear-room[hidden],#room-drawer-toggle[hidden]{display:none!important}
+
+/* The reference art and its touch regions share the same aspect ratio. */
+.wv-canvas-stage:is([data-mode="fishing"],[data-mode="room"]) #wordvilleCanvas{
+ aspect-ratio:1147 / 1536;
+ border:0;
+}
+#room-drawer{position:absolute;inset:0;pointer-events:none;z-index:1}
+#room-item-list{
+ position:absolute;top:84%;height:10.7%;left:11.6%;width:76.7%;
+ display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2.1%;
+}
+.wv-canvas-panel #room-drawer button,
+.wv-canvas-panel #room-drawer-toggle{
+ min-height:0;padding:0;border:0;background:transparent;pointer-events:auto;
+}
+.wv-canvas-panel #room-drawer button:disabled{pointer-events:none}
+#room-drawer [data-turn],#room-drawer [data-room-close],#room-drawer-toggle{position:absolute}
+#room-drawer [data-turn]{top:86.9%;width:5%;height:5%}
+#room-drawer [data-turn="-1"]{left:6.4%}
+#room-drawer [data-turn="1"]{right:6.2%}
+#room-drawer [data-room-close]{top:78.8%;right:6.6%;width:5.8%;height:4.5%}
+#room-drawer-toggle{top:3.5%;right:4.5%;width:14%;height:11%;z-index:1}
+
 
 /* Canvas swipes scroll the page; only furniture handles intercept direct drags. */
 .wv-canvas-stage{position:relative;display:block;width:100%;max-width:600px;margin:0 auto}
-.wv-room-drag-targets{position:absolute;inset:0;pointer-events:none}
+.wv-room-drag-targets{position:absolute;inset:0;z-index:0;pointer-events:none}
 .wv-room-drag-targets[hidden]{display:none!important}
 .wv-canvas-panel .wv-room-drag-handle{
- position:absolute;transform:translate(-50%,-50%);width:11%;height:6.6%;
+ position:absolute;transform:translate(-50%,-50%);width:13%;height:8%;
  min-height:0;padding:0;border:0;border-radius:50%;background:transparent;
  touch-action:none;pointer-events:auto;cursor:grab;
 }

@@ -22,6 +22,8 @@ const assert=require('node:assert/strict');
   assert.ok(base.words>5000);
   assert.equal(base.mode,'fishing');
   await page.waitForFunction(()=>
+   wordvilleGame.sprites.bg_fishing?.naturalWidth===1147 &&
+   wordvilleGame.sprites.bg_room?.naturalWidth===1147 &&
    wordvilleGame.atlas.sheets.weeding_states?.naturalHeight===1536 &&
    wordvilleGame.atlas.sheets.foraging_stages?.naturalHeight===1536,
    {timeout:15000});
@@ -29,6 +31,7 @@ const assert=require('node:assert/strict');
   await page.evaluate(()=>{wordvilleGame.state.fishing.pos=.76;wordvilleGame.onTapAction();});
   assert.equal(await page.evaluate(id=>!!state.reviews[id],base.first),true);
   assert.ok((await page.evaluate(()=>state.coins))>base.coin);
+  assert.equal(await page.evaluate(()=>wordvilleGame.state.fishing.counts.reduce((a,b)=>a+b)),1);
   assert.match(await page.locator('#wordville-canvas-status').innerText(),/저장 완료/);
   // Weeding 3-quality timing states.
   await page.locator('[data-solo-tab="wood"]').click();
@@ -88,7 +91,8 @@ const assert=require('node:assert/strict');
   await page.locator('#wordvilleCanvas').scrollIntoViewIfNeeded();
   const rect=await page.locator('#wordvilleCanvas').boundingBox();
   const p=(x,y)=>({x:rect.x+rect.width*x/600,y:rect.y+rect.height*y/1000});
-  const from=p(info.x,info.y-18),to=p(360,515);
+  const handle=await page.locator('.wv-room-drag-handle').last().boundingBox();
+  const from={x:handle.x+handle.width/2,y:handle.y+handle.height/2},to=p(360,640);
   await page.mouse.move(from.x,from.y);
   await page.mouse.down();
   assert.ok((await page.evaluate(()=>wordvilleGame.state.room.dragIdx))>=0,'Furniture must be selected before dragging');
