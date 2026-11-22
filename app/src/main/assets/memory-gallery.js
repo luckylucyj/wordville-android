@@ -131,7 +131,6 @@
   $('wv-memory-search-results').replaceChildren();
   $('wv-memory-search-panel').hidden=true;
   $('wv-memory-search-query').value=suggestImageQuery(w);
-  externalLinks($('wv-memory-search-query').value);
   $('wv-memory-search-status').textContent='';
   try{
    await ensurePrimary(w,legacyBlob);
@@ -538,13 +537,6 @@
  configurePhotoProvider('unsplash','Unsplash');
  configurePhotoProvider('pexels','Pexels');
 
- function externalLinks(q){
-  const term=encodeURIComponent(q);
-  $('wv-memory-google-link').href='https://www.google.com/search?tbm=isch&q='+term;
-  $('wv-memory-pixabay-link').href='https://pixabay.com/images/search/'+term+'/';
-  $('wv-memory-unsplash-link').href='https://unsplash.com/s/photos/'+term;
-  $('wv-memory-pexels-link').href='https://www.pexels.com/search/'+term+'/';
- }
  async function openverseResults(query,signal){
   // Anonymous access: send only the search term. Extra privileged parameters can
   // cause HTTP 401; 401 can also occur when Openverse rejects anonymous traffic.
@@ -582,7 +574,7 @@
  }
  async function pixabayResults(query,signal){
   const key=pixabayKey.value.trim();
-  if(!key)throw Error('Pixabay API 키를 입력하세요. 키 없이 검색하려면 Openverse를 선택하세요.');
+  if(!key)throw Error('Pixabay API 키가 등록되지 않았습니다.');
   const params=new URLSearchParams({key,q:query,image_type:'all',safesearch:'true',per_page:String(searchBatchSize)});
   const response=await fetch('https://pixabay.com/api/?'+params,{signal,credentials:'omit'});
   if(!response.ok)throw Error(pixabayApiError(response.status));
@@ -682,7 +674,6 @@
   imageSearchController?.abort();
   const controller=new AbortController();imageSearchController=controller;
   button.disabled=true;searchPage=0;queryResults=[];
-  externalLinks(query);
   $('wv-memory-source-breakdown').textContent='';
   $('wv-memory-search-status').textContent='Openverse · Commons · 연결된 사진 사이트를 동시에 검색 중…';
   $('wv-memory-search-results').replaceChildren();
@@ -692,10 +683,10 @@
    queryResults=combined.results;renderResults(w,combined.results);
    $('wv-memory-source-breakdown').textContent=combined.details.join(' · ');
    if(!combined.results.length)
-    $('wv-memory-search-status').textContent='조회된 이미지가 없습니다. 검색어를 바꾸거나 API 설정을 확인하세요. Google 웹 검색은 아래 링크에서 가능합니다.';
+    $('wv-memory-search-status').textContent='조회된 이미지가 없습니다. 검색어를 바꾸거나 이미지 사이트 API 키 등록 상태를 확인하세요.';
   }catch(error){
    if(serial===searchSerial&&current(w)&&error.name!=='AbortError')
-    $('wv-memory-search-status').textContent='이미지 통합 검색 오류: '+error.message+' · 개별 사이트 검색 링크를 이용할 수 있습니다.';
+    $('wv-memory-search-status').textContent='이미지 통합 검색 오류: '+error.message+' · 검색어 또는 인터넷 연결을 확인하세요.';
   }finally{
    if(serial===searchSerial){button.disabled=false;imageSearchController=null;}
   }
