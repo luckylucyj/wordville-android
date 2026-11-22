@@ -58,12 +58,14 @@ const assert=require('node:assert/strict');
    y:wordvilleGame.state.room.placed.at(-1).y,
    len:wordvilleGame.state.room.placed.length
   }));
+  await page.locator('#wordvilleCanvas').scrollIntoViewIfNeeded();
   const rect=await page.locator('#wordvilleCanvas').boundingBox();
   const p=(x,y)=>({x:rect.x+rect.width*x/600,y:rect.y+rect.height*y/1000});
   const from=p(info.x,info.y-18),to=p(360,515);
   await page.mouse.move(from.x,from.y);
   await page.mouse.down();
-  await page.mouse.move(to.x,to.y,{steps:4});
+  assert.ok((await page.evaluate(()=>wordvilleGame.state.room.dragIdx))>=0,'Furniture must be selected before dragging');
+  await page.mouse.move(to.x,to.y,{steps:6});
   await page.mouse.up();
   const moved=await page.evaluate(()=>wordvilleGame.state.room.placed.at(-1));
   assert.notEqual(Math.round(moved.x),Math.round(info.x));
