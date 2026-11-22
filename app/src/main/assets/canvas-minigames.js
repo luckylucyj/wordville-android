@@ -28,7 +28,7 @@
    this.LOGICAL_W=W;this.LOGICAL_H=H;
    this.sprites={};
    this.spriteManifest={
-    bg_fishing:'images/fishing/bg_dock.png',hachiware_idle:'images/fishing/hachiware_idle.png',
+    bg_fishing:'images/fishing/bg_fishing.png',hachiware_idle:'images/fishing/hachiware_idle.png',
     hachiware_catch:'images/fishing/hachiware_catch.png',
     bg_weeding:'images/weeding/bg_meadow.png',weed_perfect:'images/weeding/chiikawa_perfect.png',
     weed_medium:'images/weeding/chiikawa_medium.png',weed_bad:'images/weeding/chiikawa_bad.png',
@@ -79,17 +79,79 @@
    }catch{this.message('가구 저장에 실패했습니다. 기기 저장 공간을 확인해 주세요.');return false;}
   }
   preloadSprites(){
-   // Prefer 512px individual sprites; the vertical three-panel atlas is
-   // available when a standalone PNG is missing or supplied as a design sheet.
+   // Resolve against this HTML document, NOT against file:///android_asset or
+   // hard-coded WebViewAssetLoader URLs. Both trusted origins work unchanged.
    void this.atlas.loadSheet('weeding_states','images/weeding/chiikawa_3state_atlas.png');
    void this.atlas.loadSheet('foraging_stages','images/foraging/chiikawa_3stage_atlas.png');
    if(typeof root.Image!=='function')return;
    Object.entries(this.spriteManifest).forEach(([key,path])=>{
+    const url=new URL(path,root.document.baseURI).href;
     const image=new root.Image();
-    image.onload=()=>{if(image.naturalWidth>0)this.sprites[key]=image;};
-    image.onerror=()=>{}; // Missing optional PNG keeps the original drawn fallback.
-    image.src=path;
+    image.onload=()=>{
+     if(!image.naturalWidth||!image.naturalHeight){
+      this.reportAssetError(key,url,'decoded to an empty image');return;
+     }
+     if(key==='hachiware_idle'||key==='hachiware_catch'){
+      const cleaned=this.removeWhiteBackground(image,key);
+      if(!cleaned){this.reportAssetError(key,url,'chroma-key processing failed');return;}
+      this.sprites[key]=cleaned;
+     }else this.sprites[key]=image;
+     if(key.startsWith('hachiware_')||key==='bg_fishing')
+      console.info('[Wordville Fishing] PNG loaded',key,url,image.naturalWidth+'x'+image.naturalHeight);
+    };
+    image.onerror=()=>this.reportAssetError(key,url,'image.onerror');
+    image.src=url;
    });
+  }
+  reportAssetError(key,url,reason){
+   console.error('[Wordville Canvas] Image failed to load:',key,url,reason);
+   if(key==='bg_fishing'||key==='hachiware_idle'||key==='hachiware_catch'){
+    this.message('낚시 PNG 파일을 찾거나 처리하지 못했습니다: '+this.spriteManifest[key]+
+     ' · app/src/main/assets/images/fishing/ 위치와 파일명을 확인하세요.');
+   }
+  }
+  removeWhiteBackground(image,key){
+   // Flood-fill ONLY edge-connected near-white pixels. The character's white
+   // face and body are enclosed by dark outlines and must stay opaque.
+   const width=image.naturalWidth,height=image.naturalHeight;
+   if(width*height>8000000){
+    console.error('[Wordville Fishing] Character image is too large for chroma key:',key,width,height);
+    return null;
+   }
+   try{
+    const surface=root.document.createElement('canvas');
+    surface.width=width;surface.height=height;
+    const ctx=surface.getContext('2d',{willReadFrequently:true});
+    if(!ctx)return null;
+    ctx.drawImage(image,0,0);
+    const content=ctx.getImageData(0,0,width,height),data=content.data;
+    const total=width*height,visited=new Uint8Array(total),queue=new Int32Array(total);
+    let head=0,tail=0;
+    const white=(p)=>{
+     const i=p*4,r=data[i],g=data[i+1],b=data[i+2],a=data[i+3];
+     return a===0 || (r>=235&&g>=235&&b>=235&&
+      Math.max(r,g,b)-Math.min(r,g,b)<=24);
+    };
+    const enqueue=(p)=>{
+     if(!visited[p]&&white(p)){visited[p]=1;queue[tail++]=p;}
+    };
+    for(let x=0;x<width;x++){enqueue(x);enqueue((height-1)*width+x);}
+    for(let y=1;y<height-1;y++){enqueue(y*width);enqueue(y*width+width-1);}
+    while(head<tail){
+     const p=queue[head++];
+     data[p*4+3]=0;
+     const x=p%width,y=(p/width)|0;
+     if(x>0)enqueue(p-1);
+     if(x+1<width)enqueue(p+1);
+     if(y>0)enqueue(p-width);
+     if(y+1<height)enqueue(p+width);
+    }
+    ctx.putImageData(content,0,0);
+    return surface;
+   }catch(error){
+    console.error('[Wordville Fishing] White-background removal error:',key,error);
+    return null;
+   }
   }
   resize(){
    // Fixed logical space: resizing does not change H or HUD/interaction coordinates.
@@ -178,7 +240,7 @@
   }
   paintSprite(key,x,y,w,h){
    const img=this.sprites[key];
-   if(!img||!img.complete||!img.naturalWidth)return false;
+   if(!img||img.complete===false||!(img.naturalWidth||img.width))return false;
    this.ctx.drawImage(img,x,y,w,h);return true;
   }
   drawHUD(){
@@ -244,19 +306,12 @@
   }
   renderFishing(){
    const c=this.ctx;
-   if(!this.paintSprite('bg_fishing',0,0,W,H)){
-    this.background('#f7d9aa','#9ad5e4');
-    c.fillStyle='#c1ead9';c.fillRect(0,0,W,535);
-    c.fillStyle='#95d5e4';c.fillRect(0,530,W,470);
-    c.strokeStyle='#fff4dc';c.lineWidth=4;
-    for(let y=552;y<850;y+=31){c.beginPath();c.moveTo(0,y);c.quadraticCurveTo(280,y+22,600,y);c.stroke();}
-    for(let i=0;i<5;i++)this.box(55+i*72,485+i*5,110,31,3,'#c89a70',INK,1.5);
-   }
+   // Do not synthesize scenery or character shapes: only the user's authored
+   // PNGs are rendered. A combined background illustration always goes first.
+   this.paintSprite('bg_fishing',0,0,W,H);
    const catching=this.state.fishing.catchTimer>0;
-   if(!this.paintSprite(catching?'hachiware_catch':'hachiware_idle',216,288,238,252))
-    this.drawCritter(336,460,true,catching?'catch':'idle');
-   c.strokeStyle=INK;c.lineWidth=3;c.beginPath();c.moveTo(356,427);c.lineTo(470,563);
-   c.lineTo(468,682);c.stroke();
+   this.paintSprite(catching?'hachiware_catch':'hachiware_idle',216,288,238,252);
+   // Fishing timing gauge is an interactive HUD, not an illustrated fallback.
    this.box(30,855,540,115,18,'#fffaf0');
    this.text('물고기 구간에서 눌러보세요',300,880,17,INK,'800');
    this.box(52,907,496,35,18,'#def2d8',INK,2.5);
