@@ -145,6 +145,7 @@
  }
  function setTab(tab){
   if(!(tab==='room'||games[tab]))return;
+  const changed=Boolean(games[tab]&&mode!==tab);
   if(games[tab])mode=tab;
   get('game-view').hidden=tab==='room';
   get('room-view').hidden=tab!=='room';
@@ -152,7 +153,7 @@
   if(tab==='room'){renderRoom();return;}
   get('description').textContent=games[mode].description;
   get('scene').dataset.game=mode;
-  renderGame();
+  if(changed)newSession();else renderGame();
  }
  function scene(){
   get('scene-art').textContent=mode==='fish'?'🎣  🌊  🐟':mode==='wood'?'🌲  🪓  🌳':'🌿  🐑  🌼';
@@ -295,7 +296,9 @@
    const item=roomItem(id);if(!item||!progress.owned.includes(id))continue;
    const spot=el('span','wv-solo-room-object',item.icon);
    spot.dataset.item=id;spot.title=item.name;
-   const slot=Number(progress.slots[id]);spot.style.setProperty('--slot',String(Number.isInteger(slot)&&slot>=0&&slot<6?slot:furniture.indexOf(item)%6));
+   const savedSlot=Number(progress.slots[id]);
+   const slot=Number.isInteger(savedSlot)&&savedSlot>=0&&savedSlot<6?savedSlot:furniture.indexOf(item)%6;
+   spot.style.gridColumn=String(slot%3+1);spot.style.gridRow=String(Math.floor(slot/3)+1);
    spot.addEventListener('click',()=>moveItem(id));
    floor.append(spot);
   }
