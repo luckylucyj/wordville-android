@@ -21,6 +21,8 @@ test('image gallery JavaScript parses and Google appears as external source',()=
  assert.match(html,/<option value="openverse">/);
  assert.match(html,/<option value="commons">/);
  assert.match(html,/<option value="pixabay">/);
+ assert.match(html,/<option value="unsplash">/);
+ assert.match(html,/<option value="pexels">/);
 });
 
 test('anonymous Openverse image request asks for no more than 20 results',async()=>{
@@ -34,9 +36,9 @@ test('anonymous Openverse image request asks for no more than 20 results',async(
  });
  const images=await search('campaign',new AbortController().signal);
  assert.equal(actualUrl.origin,'https://api.openverse.org');
- assert.equal(actualUrl.searchParams.get('page_size'),'20');
+ assert.equal(actualUrl.searchParams.has('page_size'),false);
  assert.equal(actualUrl.searchParams.get('q'),'campaign');
- assert.equal(actualUrl.searchParams.get('mature'),'false');
+ assert.equal(actualUrl.searchParams.has('mature'),false);
  assert.equal(images.length,1);
  assert.equal(images[0].source,'Openverse');
  assert.equal(images[0].license,'CC0');
@@ -54,4 +56,26 @@ test('provider failures fall back to Wikimedia and credits include the actual so
  assert.match(gallery,/rights\.textContent=\(result\.source\|\|'출처 미상'\)/);
  assert.match(gallery,/if\(source==='google'\)/);
  assert.match(gallery,/Google 이미지 검색 결과 열기/);
+});
+
+test('Unsplash and Pexels use official authenticated photo APIs and save attribution',()=>{
+ assert.match(gallery,/https:\/\/api\.unsplash\.com\/search\/photos\?/);
+ assert.match(gallery,/https:\/\/api\.pexels\.com\/v1\/search\?/);
+ assert.match(gallery,/Authorization:'Client-ID '\+key/);
+ assert.match(gallery,/headers:\{Authorization:key\}/);
+ assert.match(gallery,/license:'Unsplash License'/);
+ assert.match(gallery,/license:'Pexels License'/);
+ assert.match(gallery,/downloadLocation:x\.links\.download_location/);
+ assert.match(gallery,/Unsplash 다운로드 기록 실패/);
+ for(const provider of ['unsplash','pexels']){
+  for(const suffix of ['field','key','remember','test','clear','status'])
+   assert.ok(html.includes('id="wv-memory-'+provider+'-'+suffix+'"'));
+ }
+});
+test('additional API credentials are encrypted by Android Keystore, never stored in JS storage',()=>{
+ const java=readFileSync(new URL('../app/src/main/java/com/wordville/app/MainActivity.java',import.meta.url),'utf8');
+ assert.match(java,/@JavascriptInterface public synchronized boolean saveProviderKey/);
+ assert.match(java,/@JavascriptInterface public synchronized String getProviderKey/);
+ assert.match(java,/@JavascriptInterface public synchronized boolean clearProviderKey/);
+ assert.doesNotMatch(gallery,/localStorage\.setItem\([^\n]*(unsplash|pexels)/i);
 });

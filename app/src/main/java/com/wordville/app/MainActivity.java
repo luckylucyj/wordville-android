@@ -132,6 +132,37 @@ public class MainActivity extends Activity {
   @JavascriptInterface public synchronized boolean clearSavedKey(){
    return storage().edit().remove(ENTRY_IV).remove(ENTRY_CIPHER).commit();
   }
+  private boolean validProvider(String provider){
+   return "unsplash".equals(provider)||"pexels".equals(provider);
+  }
+  @JavascriptInterface public synchronized boolean saveProviderKey(String provider,String value){
+   if(!validProvider(provider)||value==null||value.isEmpty()||value.length()>256||
+      !value.matches("[A-Za-z0-9_-]+"))return false;
+   try{
+    Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
+    cipher.init(Cipher.ENCRYPT_MODE,key());
+    String iv=Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP);
+    String encrypted=Base64.encodeToString(cipher.doFinal(value.getBytes(StandardCharsets.UTF_8)),Base64.NO_WRAP);
+    return storage().edit().putString(provider+"_iv",iv).putString(provider+"_cipher",encrypted).commit();
+   }catch(Exception error){return false;}
+  }
+  @JavascriptInterface public synchronized String getProviderKey(String provider){
+   if(!validProvider(provider))return "";
+   try{
+    String iv=storage().getString(provider+"_iv","");
+    String encrypted=storage().getString(provider+"_cipher","");
+    if(iv.isEmpty()||encrypted.isEmpty())return "";
+    byte[] nonce=Base64.decode(iv,Base64.NO_WRAP);
+    if(nonce.length!=12)return "";
+    Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
+    cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,nonce));
+    String value=new String(cipher.doFinal(Base64.decode(encrypted,Base64.NO_WRAP)),StandardCharsets.UTF_8);
+    return value.length()<=256&&value.matches("[A-Za-z0-9_-]+")?value:"";
+   }catch(Exception error){return "";}
+  }
+  @JavascriptInterface public synchronized boolean clearProviderKey(String provider){
+   return validProvider(provider)&&storage().edit().remove(provider+"_iv").remove(provider+"_cipher").commit();
+  }
  }
  private final class WordvilleSpeechBridge {
   @JavascriptInterface public void speak(String word,String accent,int id,String wordId){
@@ -381,7 +412,7 @@ public class MainActivity extends Activity {
      WebResourceResponse response=loader.shouldInterceptRequest(url);
      if(response!=null)return response;
     }
-    if("https".equals(url.getScheme())&&(CLOUD_HOST.equals(url.getHost())||"commons.wikimedia.org".equals(url.getHost())||"upload.wikimedia.org".equals(url.getHost())||"thumb.wikimedia.org".equals(url.getHost())||"api.openverse.org".equals(url.getHost())||"pixabay.com".equals(url.getHost())||"cdn.pixabay.com".equals(url.getHost())||"raw.githubusercontent.com".equals(url.getHost())))return null;
+    if("https".equals(url.getScheme())&&(CLOUD_HOST.equals(url.getHost())||"commons.wikimedia.org".equals(url.getHost())||"upload.wikimedia.org".equals(url.getHost())||"thumb.wikimedia.org".equals(url.getHost())||"api.openverse.org".equals(url.getHost())||"pixabay.com".equals(url.getHost())||"cdn.pixabay.com".equals(url.getHost())||"api.unsplash.com".equals(url.getHost())||"images.unsplash.com".equals(url.getHost())||"api.pexels.com".equals(url.getHost())||"images.pexels.com".equals(url.getHost())||"raw.githubusercontent.com".equals(url.getHost())))return null;
     return new WebResourceResponse("text/plain","UTF-8",new ByteArrayInputStream(new byte[0]));
    }
    @Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest request){
@@ -395,7 +426,9 @@ public class MainActivity extends Activity {
       DICTIONARY_HOST.equals(host)||OXFORD_HOST.equals(host)||
       "translate.google.com".equals(host)||"www.google.com".equals(host)||
       "google.com".equals(host)||"pixabay.com".equals(host)||
-      "www.pixabay.com".equals(host)||"openverse.org".equals(host)||
+      "www.pixabay.com".equals(host)||"unsplash.com".equals(host)||
+      "www.unsplash.com".equals(host)||"pexels.com".equals(host)||"www.pexels.com".equals(host)||
+      "openverse.org".equals(host)||
       "www.openverse.org".equals(host);
      if(!known&&!request.hasGesture())return true;
      try{startActivity(new Intent(Intent.ACTION_VIEW,destination));}catch(ActivityNotFoundException ignored){}

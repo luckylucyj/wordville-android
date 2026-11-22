@@ -5,7 +5,7 @@ const activity=readFileSync(new URL('../app/src/main/java/com/wordville/app/Main
 const html=readFileSync(new URL('../app/src/main/assets/index.html',import.meta.url),'utf8');
 const gallery=readFileSync(new URL('../app/src/main/assets/memory-gallery.js',import.meta.url),'utf8');
 test('Android WebView explicitly allows external image search APIs and thumbnails',()=>{
- for(const host of ['api.openverse.org','pixabay.com','cdn.pixabay.com']){
+ for(const host of ['api.openverse.org','pixabay.com','cdn.pixabay.com','api.unsplash.com','images.unsplash.com','api.pexels.com','images.pexels.com']){
   assert.ok(activity.includes('"'+host+'".equals(url.getHost())'),host);
   assert.ok(html.includes('https://'+host),host+' content-security-policy');
  }

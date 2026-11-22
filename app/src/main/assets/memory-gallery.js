@@ -276,6 +276,8 @@
    if(u.hostname==='api.openverse.org'&&/^\/v1\/images\/[0-9a-f-]{36}\/thumb\/?$/.test(u.pathname))return u;
    if(u.hostname==='cdn.pixabay.com'&&u.pathname.startsWith('/photo/'))return u;
    if(u.hostname==='pixabay.com'&&u.pathname.startsWith('/get/'))return u;
+   if(u.hostname==='images.unsplash.com'&&/^\/photo-[A-Za-z0-9_-]+/.test(u.pathname))return u;
+   if(u.hostname==='images.pexels.com'&&/^\/photos\/\d+\//.test(u.pathname))return u;
    return null;
   }catch{return null;}
  }
@@ -292,6 +294,19 @@
  async function fetchImage(result){
   const urls=imageSources(result);
   if(!urls.length)throw new Error('지원하지 않는 이미지 주소입니다.');
+  // Unsplash requires download tracking when the user adds an image to the album.
+  // Use the official API endpoint, never an arbitrary URL from a search result.
+  if(result.source==='Unsplash'){
+   const key=$('wv-memory-unsplash-key').value.trim();
+   let endpoint;
+   try{endpoint=new URL(result.downloadLocation);}catch{throw Error('Unsplash 다운로드 정보가 없습니다.');}
+   if(endpoint.protocol!=='https:'||endpoint.hostname!=='api.unsplash.com'||
+      !/^\/photos\/[A-Za-z0-9_-]+\/download\/?$/.test(endpoint.pathname))
+    throw Error('Unsplash 다운로드 주소가 올바르지 않습니다.');
+   if(!key)throw Error('Unsplash API 키가 필요합니다.');
+   const track=await fetch(endpoint.href,{credentials:'omit',headers:{Authorization:'Client-ID '+key}});
+   if(!track.ok)throw Error('Unsplash 다운로드 기록 실패 (HTTP '+track.status+').');
+  }
   let problem='';
   for(const url of urls){
    try{
@@ -398,6 +413,8 @@
   ? globalThis.WordvillePixabaySecure:null;
  sourceSelect.addEventListener('change',()=>{
   $('wv-memory-pixabay-field').hidden=sourceSelect.value!=='pixabay';
+  for(const provider of ['unsplash','pexels'])
+   $('wv-memory-'+provider+'-field').hidden=sourceSelect.value!==provider;
  });
  function restorePixabayKey(){
   if(!pixabaySecure){
@@ -468,17 +485,76 @@
    status.textContent='연결 실패: '+(error.message||'네트워크 오류')+' · 키 또는 네트워크 연결을 확인하세요. 실패한 키는 저장하지 않았습니다.';
   }finally{button.disabled=false;}
  });
+ // Each account's key stays in RAM or Android Keystore, never in localStorage or GitHub.
+ const providerSecure=pixabaySecure&&typeof pixabaySecure.getProviderKey==='function'?pixabaySecure:null;
+ function configurePhotoProvider(provider,label){
+  const field=$('wv-memory-'+provider+'-key');
+  const remember=$('wv-memory-'+provider+'-remember');
+  const status=$('wv-memory-'+provider+'-status');
+  const button=$('wv-memory-'+provider+'-test');
+  const header=key=>({Authorization:provider==='unsplash'?'Client-ID '+key:key});
+  const apiUrl=provider==='unsplash'?
+   'https://api.unsplash.com/search/photos?query=flower&per_page=1':
+   'https://api.pexels.com/v1/search?query=flower&per_page=1';
+  if(!providerSecure){
+   remember.checked=false;remember.disabled=true;
+   status.textContent='이 환경에서는 키 자동 저장이 지원되지 않습니다. 현재 실행 중에는 입력한 키를 사용할 수 있습니다.';
+  }else{
+   try{
+    const saved=providerSecure.getProviderKey(provider);
+    if(saved){field.value=saved;status.textContent='저장된 '+label+' API 키를 자동으로 불러왔습니다.';}
+   }catch{status.textContent=label+' API 키를 불러오지 못했습니다.';}
+  }
+  field.addEventListener('input',()=>searchCache.clear());
+  remember.addEventListener('change',()=>{
+   if(remember.checked){status.textContent='연결 테스트에 성공하면 키를 기기에 암호화 저장합니다.';return;}
+   if(providerSecure&&!providerSecure.clearProviderKey(provider)){
+    remember.checked=true;status.textContent='저장된 키를 삭제하지 못했습니다.';
+   }else{status.textContent='저장된 키를 삭제했습니다. 현재 입력한 키는 계속 사용할 수 있습니다.';}
+   searchCache.clear();
+  });
+  $('wv-memory-'+provider+'-clear').addEventListener('click',()=>{
+   if(providerSecure&&!providerSecure.clearProviderKey(provider)){
+    status.textContent='저장된 키를 삭제하지 못했습니다.';return;
+   }
+   field.value='';searchCache.clear();
+   status.textContent=label+' API 키를 삭제했습니다.';
+  });
+  button.addEventListener('click',async()=>{
+   const key=field.value.trim();
+   if(!key){status.textContent=label+' API 키를 입력하세요.';field.focus();return;}
+   button.disabled=true;status.textContent=label+' 연결 확인 중…';
+   try{
+    const response=await fetch(apiUrl,{credentials:'omit',headers:header(key)});
+    if(!response.ok)throw Error(label+' 응답 '+response.status);
+    const data=await response.json();
+    if(!Array.isArray(provider==='unsplash'?data.results:data.photos))throw Error('응답 형식 오류');
+    if(remember.checked&&providerSecure){
+     if(!providerSecure.saveProviderKey(provider,key))throw Error('암호화 저장 실패');
+     status.textContent=label+' 연결 성공. 이 기기에 암호화 저장하여 다음 실행부터 자동 연결합니다.';
+    }else status.textContent=label+' 연결 성공. 현재 실행 중에만 사용합니다.';
+    searchCache.clear();
+   }catch(error){status.textContent='연결 실패: '+error.message+' · API 키와 네트워크를 확인하세요. 실패한 키는 저장하지 않았습니다.';}
+   finally{button.disabled=false;}
+  });
+ }
+ configurePhotoProvider('unsplash','Unsplash');
+ configurePhotoProvider('pexels','Pexels');
+
  function externalLinks(q){
   const term=encodeURIComponent(q);
   $('wv-memory-google-link').href='https://www.google.com/search?tbm=isch&q='+term;
   $('wv-memory-pixabay-link').href='https://pixabay.com/images/search/'+term+'/';
+  $('wv-memory-unsplash-link').href='https://unsplash.com/s/photos/'+term;
+  $('wv-memory-pexels-link').href='https://www.pexels.com/search/'+term+'/';
  }
  async function openverseResults(query,signal){
-  // Anonymous Openverse requests must use the default maximum page size (20).
-  // Larger page_size values cause HTTP 401 without registered OAuth credentials.
-  const params=new URLSearchParams({q:query,page_size:String(openversePageSize),mature:'false'});
+  // Anonymous access: send only the search term. Extra privileged parameters can
+  // cause HTTP 401; 401 can also occur when Openverse rejects anonymous traffic.
+  const params=new URLSearchParams({q:query});
   const response=await fetch('https://api.openverse.org/v1/images/?'+params,{signal,credentials:'omit'});
-  if(!response.ok)throw Error('Openverse 응답 '+response.status);
+  if(!response.ok)throw Error(response.status===401?
+   'Openverse 익명 검색 인증 거부 (HTTP 401)': 'Openverse 응답 '+response.status);
   const data=await response.json();
   if(!Array.isArray(data.results))throw Error('Openverse 검색 형식 오류');
   return data.results.filter(x=>!x.mature&&/^[a-f0-9-]{36}$/i.test(x.id||''))
@@ -518,6 +594,41 @@
    .map(x=>({title:x.tags||query,thumbnail:approvedMediaUrl(x.webformatURL)?x.webformatURL:x.previewURL,
      sourceUrl:'https://pixabay.com/photos/id-'+x.id+'/',
      license:'Pixabay Content License',author:String(x.user||''),source:'Pixabay'}));
+ }
+ async function unsplashResults(query,signal){
+  const key=$('wv-memory-unsplash-key').value.trim();
+  if(!key)throw Error('Unsplash API 키를 입력하세요.');
+  const params=new URLSearchParams({query,per_page:'30',content_filter:'high'});
+  const response=await fetch('https://api.unsplash.com/search/photos?'+params,
+   {signal,credentials:'omit',headers:{Authorization:'Client-ID '+key}});
+  if(!response.ok)throw Error('Unsplash 응답 '+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data.results))throw Error('Unsplash 검색 형식 오류');
+  return data.results.filter(x=>approvedMediaUrl(x.urls?.small||x.urls?.regular)
+   &&safeLink(x.links?.html)&&x.links?.download_location)
+   .slice(0,searchResultLimit).map(x=>({
+    id:x.id,title:String(x.alt_description||x.description||query).slice(0,120),
+    thumbnail:approvedMediaUrl(x.urls?.small)?x.urls.small:x.urls.regular,
+    sourceUrl:safeLink(x.links.html),downloadLocation:x.links.download_location,
+    license:'Unsplash License',author:String(x.user?.name||'').slice(0,120),source:'Unsplash'
+   }));
+ }
+ async function pexelsResults(query,signal){
+  const key=$('wv-memory-pexels-key').value.trim();
+  if(!key)throw Error('Pexels API 키를 입력하세요.');
+  const params=new URLSearchParams({query,per_page:'50'});
+  const response=await fetch('https://api.pexels.com/v1/search?'+params,
+   {signal,credentials:'omit',headers:{Authorization:key}});
+  if(!response.ok)throw Error('Pexels 응답 '+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data.photos))throw Error('Pexels 검색 형식 오류');
+  return data.photos.filter(x=>approvedMediaUrl(x.src?.large||x.src?.medium)&&safeLink(x.url))
+   .slice(0,searchResultLimit).map(x=>({
+    id:x.id,title:String(x.alt||query).slice(0,120),
+    thumbnail:approvedMediaUrl(x.src?.large)?x.src.large:x.src.medium,
+    sourceUrl:safeLink(x.url),license:'Pexels License',
+    author:String(x.photographer||'').slice(0,120),source:'Pexels'
+   }));
  }
  let imageSearchController=null;
  async function search(w=active){
@@ -560,6 +671,20 @@
       results=await commonsResults(query,controller.signal);
       explanation='Pixabay API는 계정별 키가 필요합니다. 키 없이 Wikimedia Commons 이미지를 표시합니다. Pixabay 원본은 아래 사이트 링크에서 검색할 수 있습니다. ';
      }
+    }else if(source==='unsplash'||source==='pexels'){
+     const key=$('wv-memory-'+source+'-key').value.trim();
+     if(!key){
+      results=await commonsResults(query,controller.signal);
+      explanation=(source==='unsplash'?'Unsplash':'Pexels')+'는 무료 API 키가 필요합니다. 키 등록 전에는 Wikimedia Commons 이미지를 표시합니다. ';
+     }else{
+      try{results=source==='unsplash'?
+       await unsplashResults(query,controller.signal):await pexelsResults(query,controller.signal);}
+      catch(providerError){
+       if(providerError.name==='AbortError')throw providerError;
+       results=await commonsResults(query,controller.signal);
+       explanation=(source==='unsplash'?'Unsplash':'Pexels')+' 검색 실패 ('+providerError.message+')로 Wikimedia Commons 이미지를 표시합니다. ';
+      }
+     }
     }else{
      try{results=await openverseResults(query,controller.signal);}
      catch(openverseError){
@@ -574,7 +699,7 @@
       explanation='Openverse 검색 결과가 없어 Wikimedia Commons 결과로 전환했습니다. ';
      }
     }
-    if(source!=='pixabay'){
+    if(source!=='pixabay'&&!explanation){
      if(searchCache.size>12)searchCache.delete(searchCache.keys().next().value);
      searchCache.set(cacheKey,{saved:Date.now(),results});
     }
@@ -584,7 +709,7 @@
    if(explanation)$('wv-memory-search-status').textContent=explanation+$('wv-memory-search-status').textContent;
   }catch(error){
    if(serial===searchSerial&&current(w)&&error.name!=='AbortError')
-    $('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 아래 Google·Pixabay 웹 검색 링크를 이용할 수 있습니다.';
+    $('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 아래 이미지 검색 사이트 링크를 이용할 수 있습니다.';
   }finally{if(serial===searchSerial){button.disabled=false;imageSearchController=null;}}
  }
 

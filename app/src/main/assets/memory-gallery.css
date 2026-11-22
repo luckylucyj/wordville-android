@@ -101,3 +101,13 @@
  overflow-wrap:anywhere;font-size:12px
 }
 #wv-memory-pixabay-status{font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+
+/* Additional free-photo search providers: keep API fields inside small screens. */
+.wv-memory-api-field{min-width:0;max-width:100%;padding:7px 0;border-top:1px solid #b69c77}
+.wv-memory-api-field[hidden]{display:none}
+.wv-memory-api-field>label:first-child{display:block;font-size:12px}
+.wv-memory-api-field input[type=password]{display:block;width:100%;min-width:0;max-width:100%;margin-top:4px}
+.wv-memory-api-field .wv-memory-key-remember{display:flex;align-items:flex-start;gap:8px;margin:8px 0;line-height:1.5;font-size:12px}
+.wv-memory-api-field .wv-memory-key-remember input{flex:0 0 18px;width:18px;height:18px;margin:1px 0 0}
+.wv-memory-api-field button{min-width:0;max-width:100%;padding:7px 9px;white-space:normal;overflow-wrap:anywhere;font-size:12px}
+.wv-memory-api-field p{font-size:12px;line-height:1.55;overflow-wrap:anywhere}
