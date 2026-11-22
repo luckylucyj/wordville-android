@@ -256,8 +256,7 @@ function renderStatus(){
 }
 function openBoard(){showAll=false;renderBoard();if(!board.d.open)board.d.showModal();document.dispatchEvent(new Event('wordville-board-open'));}
 function openResident(id){if(ids.has(id))selected=id;renderStatus();if(!statusDialog.d.open)statusDialog.d.showModal();}
- // Every portrait gets its own visible name/affinity button beneath the art.
- // Keep the original portrait click action (visit resident) unchanged.
+// Each resident has a portrait/location button and a separate affinity action.
 const residentCards=new Map();
 function syncResidentCards(){
  const list=document.getElementById('resident-list');
@@ -265,27 +264,30 @@ function syncResidentCards(){
  for(const portraitButton of [...list.querySelectorAll(':scope > button[data-person]')]){
   const id=portraitButton.dataset.person;
   if(!ids.has(id))continue;
-  const card=el('div','wv-resident-card');
+  const card=el('article','wv-resident-card');
   card.dataset.residentCard=id;
   portraitButton.classList.add('wv-resident-portrait-button');
-  // The name is presented in the separate info button, not duplicated on the art.
+  // The existing portrait continues to navigate to the resident's location.
   for(const child of [...portraitButton.childNodes])
    if(child.nodeType===Node.TEXT_NODE)child.remove();
-  const info=button('',()=>openResident(id),'wv-resident-info-button');
-  info.dataset.residentAffinity=id;
+  const footer=el('div','wv-resident-card-footer');
   const name=el('strong','wv-resident-card-name');
-  const affinity=el('span','wv-resident-card-affinity');
-  info.append(name,affinity);
-  card.append(portraitButton,info);list.append(card);
-  residentCards.set(id,{card,info,name,affinity});
+  const affinity=button('',()=>openResident(id),'wv-resident-affinity-button');
+  affinity.dataset.residentAffinity=id;
+  affinity.type='button';
+  add(footer,name,affinity);
+  add(card,portraitButton,footer);list.append(card);
+  residentCards.set(id,{card,name,affinity});
  }
  for(const [id,elements] of residentCards){
+  if(!elements.card.isConnected){residentCards.delete(id);continue;}
   const original=person(id)?.name||id;
   const translated=root.WordvilleI18n?.translate(original)||original;
   const aff=affection(id);
   elements.name.textContent=translated;
-  elements.affinity.textContent='♥ '+tr(lex.affinity)+' '+aff+'/100 · ↗';
-  elements.info.setAttribute('aria-label',translated+' · '+tr(lex.affinity)+' '+aff+'/100 · '+tr(lex.openStatus));
+  elements.affinity.textContent='♥ '+tr(lex.affinity)+' '+aff+'/100';
+  elements.affinity.setAttribute('aria-label',translated+' · '+tr(lex.affinity)+' '+aff+'/100 · '+tr(lex.openStatus));
+  elements.affinity.title=translated+' · '+tr(lex.affinity)+' '+aff+'/100';
  }
 }
 syncResidentCards();
@@ -296,16 +298,12 @@ const mapHeader=document.querySelector('.wv-map-header');
 const boardButton=button('📌',openBoard,'wv-board-trigger');
 boardButton.id='wv-board-open';boardButton.setAttribute('aria-label',tr(lex.boardOpen));boardButton.title=tr(lex.boardOpen);
 if(mapHeader)mapHeader.insertBefore(boardButton,document.getElementById('wv-map-tools'));
-// All portrait cards now have individual status buttons below the artwork.
-const dialogue=document.getElementById('village-dialogue');
-if(dialogue)dialogue.append(button(tr(lex.openStatus),()=>openResident(selected),'wv-dialog-status'));
 const more=document.getElementById('wv-more-panel');
 if(more)more.append(button('👥 '+tr(lex.register),()=>{more.hidden=true;openResident(selected);},'wv-social-more'));
 document.addEventListener('wordville-resident-selected',e=>{if(ids.has(e.detail?.id))selected=e.detail.id;});
 document.addEventListener('wordville-language-changed',()=>{
  boardButton.setAttribute('aria-label',tr(lex.boardOpen));boardButton.title=tr(lex.boardOpen);
  syncResidentCards();
- document.querySelector('.wv-dialog-status')&&(document.querySelector('.wv-dialog-status').textContent=tr(lex.openStatus));
  document.querySelector('.wv-social-more')&&(document.querySelector('.wv-social-more').textContent='👥 '+tr(lex.register));
  board.close.setAttribute('aria-label',tr(lex.close));statusDialog.close.setAttribute('aria-label',tr(lex.close));
  if(board.d.open)renderBoard();if(statusDialog.d.open)renderStatus();

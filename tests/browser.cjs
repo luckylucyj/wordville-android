@@ -275,10 +275,25 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('.wv-residents-screen .wv-portrait').count(),22);
   assert.equal(await page.locator('#resident-list [data-resident-card]').count(),22,'every portrait has its own status card');
   assert.equal(await page.locator('#resident-list [data-resident-affinity]').count(),22,'each resident has an individual affinity button');
-  assert.equal(await page.locator('.wv-social-resident-toolbar').count(),0,'old single global status button is removed');
-  const alexInfo=page.locator('#resident-list [data-resident-affinity="alex"]');
-  assert.match(await alexInfo.innerText(),/알렉스/);
+  assert.equal(await page.locator('.wv-social-resident-toolbar').count(),0,'old global status toolbar is removed');
+  assert.equal(await page.locator('.wv-dialog-status').count(),0,'old View birthday button is removed');
+  const alexCard=page.locator('#resident-list [data-resident-card="alex"]');
+  const alexName=alexCard.locator('.wv-resident-card-name');
+  const alexInfo=alexCard.locator('[data-resident-affinity="alex"]');
+  assert.equal((await alexName.innerText()).trim(),'알렉스');
   assert.match(await alexInfo.innerText(),/호감도 30\/100/);
+  assert.equal(await alexInfo.isVisible(),true);
+  const layout=await alexCard.evaluate(card=>{
+   const portrait=card.querySelector('[data-person]');
+   const name=card.querySelector('.wv-resident-card-name');
+   const button=card.querySelector('[data-resident-affinity]');
+   const nr=name.getBoundingClientRect(),br=button.getBoundingClientRect(),pr=portrait.getBoundingClientRect();
+   const font=parseFloat(getComputedStyle(button).fontSize);
+   return {nameLeft:nr.left<br.left,footerBelow:nr.top>=pr.bottom-1,
+    inCard:br.right<=card.getBoundingClientRect().right+1,
+    readable:font>=10,nonSquare:Math.abs(br.height-br.width)>4};
+  });
+  assert.deepEqual(layout,{nameLeft:true,footerBelow:true,inCard:true,readable:true,nonSquare:true},JSON.stringify(layout));
   const affinityBefore=await page.evaluate(()=>WordvilleSocial.affection('alex'));
   await alexInfo.click();
   assert.equal(await page.locator('#wv-social-status').evaluate(x=>x.open),true);
