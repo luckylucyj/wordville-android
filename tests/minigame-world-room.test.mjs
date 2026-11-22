@@ -114,3 +114,25 @@ test('world navigation remains separate from Wordville existing solo quiz state'
  engine.switchMode('no-such-mode');
  assert.equal(engine.state.mode,'world');
 });
+
+test('Android bridge accepts JSON strings and direct vocabulary arrays without demo words',()=>{
+ const {engine}=createHarness();
+ engine.state={wordIdx:0,mode:'fishing'};
+ engine.words=[];engine.sourceWords=[];
+ engine.studyManager={setWords(){},current(){return null;}};
+ engine.refreshHeaderUI=()=>{};
+ engine.buildForagingChoices=()=>{};
+ const original=[{id:900,word:'meadow',meaning:'초원',days:[1]}];
+ assert.equal(engine.loadWordsFromAndroid(JSON.stringify(original)),true);
+ assert.equal(engine.sourceWords[0].word,'meadow');
+ assert.equal(engine.loadWordsFromAndroid([{id:901,word:'harvest',meaning:'수확하다',days:[2]}]),true);
+ assert.equal(engine.sourceWords[0].id,901);
+ assert.equal(engine.loadWordsFromAndroid('this is not JSON'),false);
+ assert.equal(engine.sourceWords[0].id,901,'bad JSON must not replace valid vocabulary');
+});
+
+test('fishing keeps legacy background support and accepts authored bg_dock.png',()=>{
+ assert.ok(source.includes("bg_fishing:'images/fishing/bg_fishing.png'"));
+ assert.ok(source.includes('images/fishing/bg_dock.png'));
+ assert.ok(source.includes('image.onerror=()=>this.reportAssetError'));
+});
