@@ -367,8 +367,10 @@
    };
    if(sources.length)img.src=sources[0];
    else{img.hidden=true;const failure=document.createElement('small');failure.textContent='이미지 주소가 지원되지 않습니다.';article.append(failure);}
+   const site=document.createElement('span');site.className='wv-image-source-badge';
+   site.textContent='출처: '+(result.source||'출처 미상')+(result.originSite?' · 원본 '+result.originSite:'');
    const rights=document.createElement('small');rights.className='wv-search-license';
-   rights.textContent=(result.source||'출처 미상')+' · '+(result.license||'라이선스 정보 확인 필요')+(result.author?' · 업로더 '+result.author:'');
+   rights.textContent=(result.license||'라이선스 정보 확인 필요')+(result.author?' · 업로더 '+result.author:'');
    const save=document.createElement('button');save.type='button';save.textContent='이 이미지 저장';
    save.addEventListener('click',async()=>{
     if(!current(w)||imageBusy)return;
@@ -376,7 +378,7 @@
     try{
      const blob=await fetchImage(result);
      const image=new File([blob],result.title.replace(/^File:/,'').slice(0,100),{type:blob.type});
-     image.source=result.source||'Wikimedia Commons';image.sourceUrl=result.sourceUrl;image.license=result.license;image.author=result.author;
+     image.source=(result.source||'Wikimedia Commons')+(result.originSite?' · 원본 '+result.originSite:'');image.sourceUrl=result.sourceUrl;image.license=result.license;image.author=result.author;
      await addFiles([image],w);
      $('wv-memory-search-status').textContent='기억 이미지로 저장했습니다.';
     }catch(error){$('wv-memory-search-status').textContent='저장하지 못했습니다: '+error.message;}
@@ -386,7 +388,7 @@
    const origin=document.createElement('a');origin.className='wv-search-credit';origin.textContent='출처·라이선스 확인';
    const href=safeLink(result.sourceUrl);origin.hidden=!href;
    if(href){origin.href=href;origin.rel='noopener noreferrer';}
-   article.append(img,rights,origin,save);destination.append(article);
+   article.append(img,site,rights,origin,save);destination.append(article);
   }
   destination.append(pagination());
  }
@@ -405,17 +407,12 @@
   const meaning=String(w.meaning||'');
   return senseHints[word.toLowerCase()]?.find(([re])=>re.test(meaning))?.[1]||word;
  }
- const sourceSelect=$('wv-memory-search-source'),pixabayKey=$('wv-memory-pixabay-key');
+ const pixabayKey=$('wv-memory-pixabay-key');
  const pixabayStatus=$('wv-memory-pixabay-status');
  const rememberPixabay=$('wv-memory-pixabay-remember');
  const pixabaySecure=location.origin==='https://appassets.androidplatform.net'
   && typeof globalThis.WordvillePixabaySecure?.getSavedKey==='function'
   ? globalThis.WordvillePixabaySecure:null;
- sourceSelect.addEventListener('change',()=>{
-  $('wv-memory-pixabay-field').hidden=sourceSelect.value!=='pixabay';
-  for(const provider of ['unsplash','pexels'])
-   $('wv-memory-'+provider+'-field').hidden=sourceSelect.value!==provider;
- });
  function restorePixabayKey(){
   if(!pixabaySecure){
    rememberPixabay.checked=false;rememberPixabay.disabled=true;
@@ -563,7 +560,8 @@
     thumbnail:'https://api.openverse.org/v1/images/'+x.id+'/thumb/',
     sourceUrl:safeLink(x.foreign_landing_url)||'https://openverse.org/image/'+x.id,
     license:[x.license?.toUpperCase(),x.license_version].filter(Boolean).join(' '),
-    author:String(x.creator||'').slice(0,120),source:'Openverse'
+    author:String(x.creator||'').slice(0,120),source:'Openverse',
+    originSite:String(x.source||'').slice(0,70)
    }));
   }
  async function commonsResults(query,signal){
@@ -631,86 +629,76 @@
    }));
  }
  let imageSearchController=null;
+ // All providers run concurrently. One failing or a missing optional key
+ // must never hide images returned by other websites.
+ async function unifiedResults(query,signal){
+  const jobs=[
+   {name:'Openverse',load:()=>openverseResults(query,signal)},
+   {name:'Wikimedia Commons',load:()=>commonsResults(query,signal)}
+  ];
+  const missing=[];
+  const authenticated=[
+   {id:'unsplash',name:'Unsplash',load:()=>unsplashResults(query,signal)},
+   {id:'pexels',name:'Pexels',load:()=>pexelsResults(query,signal)},
+   {id:'pixabay',name:'Pixabay',load:()=>pixabayResults(query,signal)}
+  ];
+  for(const provider of authenticated){
+   if($('wv-memory-'+provider.id+'-key').value.trim())jobs.push(provider);
+   else missing.push(provider.name+' 키 미등록');
+  }
+  const outcomes=await Promise.allSettled(jobs.map(job=>job.load()));
+  if(signal.aborted)throw new DOMException('검색 취소됨','AbortError');
+  const batches=[],details=[];
+  for(let i=0;i<jobs.length;i++){
+   const result=outcomes[i],name=jobs[i].name;
+   if(result.status==='fulfilled'&&Array.isArray(result.value)){
+    const list=result.value.filter(item=>item&&approvedMediaUrl(item.thumbnail));
+    batches.push(list);details.push(name+' '+list.length+'장');
+   }else{
+    batches.push([]);
+    const error=result.status==='rejected'?result.reason:null;
+    const why=String(error?.message||'검색 실패').slice(0,95);
+    details.push(name+' 오류 ('+why+')');
+   }
+  }
+  details.push(...missing);
+  const merged=[],used=new Set(),length=Math.max(0,...batches.map(batch=>batch.length));
+  // Interleave providers so every source appears near the start of results.
+  for(let i=0;i<length;i++){
+   for(const batch of batches){
+    const item=batch[i];if(!item)continue;
+    const key=(safeLink(item.sourceUrl)||item.thumbnail).toLowerCase();
+    if(used.has(key))continue;
+    used.add(key);merged.push(item);
+   }
+  }
+  return {results:merged,details};
+ }
  async function search(w=active){
   if(!w)return;
   const query=$('wv-memory-search-query').value.trim().slice(0,120);
   if(!query){$('wv-memory-search-status').textContent='검색어를 입력하세요.';return;}
-  const serial=++searchSerial,button=$('wv-memory-search-submit'),source=sourceSelect.value;
-  imageSearchController?.abort();const controller=new AbortController();imageSearchController=controller;
+  const serial=++searchSerial,button=$('wv-memory-search-submit');
+  imageSearchController?.abort();
+  const controller=new AbortController();imageSearchController=controller;
   button.disabled=true;searchPage=0;queryResults=[];
   externalLinks(query);
-  $('wv-memory-search-status').textContent='이미지 검색 중…';
+  $('wv-memory-source-breakdown').textContent='';
+  $('wv-memory-search-status').textContent='Openverse · Commons · 연결된 사진 사이트를 동시에 검색 중…';
   $('wv-memory-search-results').replaceChildren();
   try{
-   // The official Google Custom Search JSON API is closed to new customers.
-   // Link to Google's image results rather than scrape or claim API access.
-   if(source==='google'){
-    const destination=$('wv-memory-search-results');
-    const notice=document.createElement('p');notice.className='wv-search-empty';
-    notice.textContent='Google 이미지 검색은 Google 웹사이트에서 표시됩니다. 이미지를 저장하려면 원본 이용 조건을 확인한 후 파일을 내려받아 위의 파일 선택을 이용하세요.';
-    const link=document.createElement('a');link.href=$('wv-memory-google-link').href;
-    link.textContent='Google 이미지 검색 결과 열기';link.rel='noopener noreferrer';
-    destination.append(notice,link);
-    $('wv-memory-search-status').textContent='Google 이미지 웹 검색으로 연결할 수 있습니다. 앱 내부 결과 API는 제공되지 않습니다.';
-    return;
-   }
-   const cacheKey=source+'|'+query.toLowerCase(),cache=searchCache.get(cacheKey);
-   let results=source==='pixabay'?null:(cache&&Date.now()-cache.saved<600000?cache.results:null);
-   let explanation='';
-   if(!results){
-    if(source==='commons')results=await commonsResults(query,controller.signal);
-    else if(source==='pixabay'){
-     if(pixabayKey.value.trim()){
-      try{results=await pixabayResults(query,controller.signal);}
-      catch(pixabayError){
-       if(pixabayError.name==='AbortError')throw pixabayError;
-       results=await commonsResults(query,controller.signal);
-       explanation='Pixabay 검색 연결 실패 ('+pixabayError.message+')로 Wikimedia Commons 이미지를 표시합니다. API 키를 확인하고 연결 테스트를 실행하세요. ';
-      }
-     }else{
-      results=await commonsResults(query,controller.signal);
-      explanation='Pixabay API는 계정별 키가 필요합니다. 키 없이 Wikimedia Commons 이미지를 표시합니다. Pixabay 원본은 아래 사이트 링크에서 검색할 수 있습니다. ';
-     }
-    }else if(source==='unsplash'||source==='pexels'){
-     const key=$('wv-memory-'+source+'-key').value.trim();
-     if(!key){
-      results=await commonsResults(query,controller.signal);
-      explanation=(source==='unsplash'?'Unsplash':'Pexels')+'는 무료 API 키가 필요합니다. 키 등록 전에는 Wikimedia Commons 이미지를 표시합니다. ';
-     }else{
-      try{results=source==='unsplash'?
-       await unsplashResults(query,controller.signal):await pexelsResults(query,controller.signal);}
-      catch(providerError){
-       if(providerError.name==='AbortError')throw providerError;
-       results=await commonsResults(query,controller.signal);
-       explanation=(source==='unsplash'?'Unsplash':'Pexels')+' 검색 실패 ('+providerError.message+')로 Wikimedia Commons 이미지를 표시합니다. ';
-      }
-     }
-    }else{
-     try{results=await openverseResults(query,controller.signal);}
-     catch(openverseError){
-      if(openverseError.name==='AbortError')throw openverseError;
-      try{
-       results=await commonsResults(query,controller.signal);
-       explanation='Openverse 연결 오류 ('+openverseError.message+')로 Wikimedia Commons 결과를 표시합니다. ';
-      }catch(commonsError){throw Error('Openverse: '+openverseError.message+' / Commons: '+commonsError.message);}
-     }
-     if(!results.length){
-      results=await commonsResults(query,controller.signal);
-      explanation='Openverse 검색 결과가 없어 Wikimedia Commons 결과로 전환했습니다. ';
-     }
-    }
-    if(source!=='pixabay'&&!explanation){
-     if(searchCache.size>12)searchCache.delete(searchCache.keys().next().value);
-     searchCache.set(cacheKey,{saved:Date.now(),results});
-    }
-   }
+   const combined=await unifiedResults(query,controller.signal);
    if(serial!==searchSerial||!current(w))return;
-   queryResults=results;renderResults(w,results);
-   if(explanation)$('wv-memory-search-status').textContent=explanation+$('wv-memory-search-status').textContent;
+   queryResults=combined.results;renderResults(w,combined.results);
+   $('wv-memory-source-breakdown').textContent=combined.details.join(' · ');
+   if(!combined.results.length)
+    $('wv-memory-search-status').textContent='조회된 이미지가 없습니다. 검색어를 바꾸거나 API 설정을 확인하세요. Google 웹 검색은 아래 링크에서 가능합니다.';
   }catch(error){
    if(serial===searchSerial&&current(w)&&error.name!=='AbortError')
-    $('wv-memory-search-status').textContent='검색 오류: '+error.message+' · 아래 이미지 검색 사이트 링크를 이용할 수 있습니다.';
-  }finally{if(serial===searchSerial){button.disabled=false;imageSearchController=null;}}
+    $('wv-memory-search-status').textContent='이미지 통합 검색 오류: '+error.message+' · 개별 사이트 검색 링크를 이용할 수 있습니다.';
+  }finally{
+   if(serial===searchSerial){button.disabled=false;imageSearchController=null;}
+  }
  }
 
  $('wv-memory-search-toggle').addEventListener('click',()=>{

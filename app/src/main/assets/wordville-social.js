@@ -249,25 +249,54 @@ function renderStatus(){
  if(!log.childNodes.length)log.append(el('li','wv-social-hint',tr(lex.noTalk)));
  const greetStatus=el('p','wv-social-feedback');
  const greet=button(tr(lex.sayHi),()=>{
-  const result=hello(selected);renderStatus();const msg=statusBody.querySelector('.wv-social-greet-feedback');if(msg)msg.textContent=tr(result.added?lex.hiDone:lex.hiLimit);
+  const result=hello(selected);renderStatus();syncResidentCards();const msg=statusBody.querySelector('.wv-social-greet-feedback');if(msg)msg.textContent=tr(result.added?lex.hiDone:lex.hiLimit);
  },'wv-social-action');
  greetStatus.classList.add('wv-social-greet-feedback');
  add(f,talkHead,log,greet,greetStatus);statusBody.replaceChildren(f);
 }
 function openBoard(){showAll=false;renderBoard();if(!board.d.open)board.d.showModal();document.dispatchEvent(new Event('wordville-board-open'));}
 function openResident(id){if(ids.has(id))selected=id;renderStatus();if(!statusDialog.d.open)statusDialog.d.showModal();}
+ // Every portrait gets its own visible name/affinity button beneath the art.
+ // Keep the original portrait click action (visit resident) unchanged.
+const residentCards=new Map();
+function syncResidentCards(){
+ const list=document.getElementById('resident-list');
+ if(!list)return;
+ for(const portraitButton of [...list.querySelectorAll(':scope > button[data-person]')]){
+  const id=portraitButton.dataset.person;
+  if(!ids.has(id))continue;
+  const card=el('div','wv-resident-card');
+  card.dataset.residentCard=id;
+  portraitButton.classList.add('wv-resident-portrait-button');
+  // The name is presented in the separate info button, not duplicated on the art.
+  for(const child of [...portraitButton.childNodes])
+   if(child.nodeType===Node.TEXT_NODE)child.remove();
+  const info=button('',()=>openResident(id),'wv-resident-info-button');
+  info.dataset.residentAffinity=id;
+  const name=el('strong','wv-resident-card-name');
+  const affinity=el('span','wv-resident-card-affinity');
+  info.append(name,affinity);
+  card.append(portraitButton,info);list.append(card);
+  residentCards.set(id,{card,info,name,affinity});
+ }
+ for(const [id,elements] of residentCards){
+  const original=person(id)?.name||id;
+  const translated=root.WordvilleI18n?.translate(original)||original;
+  const aff=affection(id);
+  elements.name.textContent=translated;
+  elements.affinity.textContent='♥ '+tr(lex.affinity)+' '+aff+'/100 · ↗';
+  elements.info.setAttribute('aria-label',translated+' · '+tr(lex.affinity)+' '+aff+'/100 · '+tr(lex.openStatus));
+ }
+}
+syncResidentCards();
+
 board.d.addEventListener('close',()=>boardButton?.focus());
 personSelect.addEventListener('change',()=>{selected=personSelect.value;renderStatus();});
 const mapHeader=document.querySelector('.wv-map-header');
 const boardButton=button('📌',openBoard,'wv-board-trigger');
 boardButton.id='wv-board-open';boardButton.setAttribute('aria-label',tr(lex.boardOpen));boardButton.title=tr(lex.boardOpen);
 if(mapHeader)mapHeader.insertBefore(boardButton,document.getElementById('wv-map-tools'));
-const neigh=document.querySelector('#wv-residents-view .neighbors');
-if(neigh){
- const toolbar=el('div','wv-social-resident-toolbar');
- toolbar.append(button(tr(lex.openStatus),()=>openResident(selected),'wv-social-outline'));
- neigh.prepend(toolbar);
-}
+// All portrait cards now have individual status buttons below the artwork.
 const dialogue=document.getElementById('village-dialogue');
 if(dialogue)dialogue.append(button(tr(lex.openStatus),()=>openResident(selected),'wv-dialog-status'));
 const more=document.getElementById('wv-more-panel');
@@ -275,13 +304,13 @@ if(more)more.append(button('👥 '+tr(lex.register),()=>{more.hidden=true;openRe
 document.addEventListener('wordville-resident-selected',e=>{if(ids.has(e.detail?.id))selected=e.detail.id;});
 document.addEventListener('wordville-language-changed',()=>{
  boardButton.setAttribute('aria-label',tr(lex.boardOpen));boardButton.title=tr(lex.boardOpen);
- document.querySelector('.wv-social-resident-toolbar button')&&(document.querySelector('.wv-social-resident-toolbar button').textContent=tr(lex.openStatus));
+ syncResidentCards();
  document.querySelector('.wv-dialog-status')&&(document.querySelector('.wv-dialog-status').textContent=tr(lex.openStatus));
  document.querySelector('.wv-social-more')&&(document.querySelector('.wv-social-more').textContent='👥 '+tr(lex.register));
  board.close.setAttribute('aria-label',tr(lex.close));statusDialog.close.setAttribute('aria-label',tr(lex.close));
  if(board.d.open)renderBoard();if(statusDialog.d.open)renderStatus();
 });
-document.addEventListener('wordville-social-updated',()=>{if(statusDialog.d.open)renderStatus();});
+document.addEventListener('wordville-social-updated',()=>{syncResidentCards();if(statusDialog.d.open)renderStatus();});
 api.openBoard=openBoard;api.openResident=openResident;
 api.boardPinnedCount=boardNoticeCount;api.boardPin=boardPin;api.boardClear=boardClear;
 api.boardIsPinned=id=>pinned.has(id);api.boardState=()=>boardNoticeCount()===0?0:boardNoticeCount()<=4?1:2;

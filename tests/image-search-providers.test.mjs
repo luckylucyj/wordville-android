@@ -15,16 +15,17 @@ function openverseWith(fetchImpl){
  );
 }
 
-test('image gallery JavaScript parses and Google appears as external source',()=>{
+test('image gallery renders unified providers with a separate API key configuration panel',()=>{
  assert.doesNotThrow(()=>new Function(gallery));
- assert.match(html,/<option value="google">Google 이미지 · 웹 검색 \(외부\)<\/option>/);
- assert.match(html,/<option value="openverse">/);
- assert.match(html,/<option value="commons">/);
- assert.match(html,/<option value="pixabay">/);
- assert.match(html,/<option value="unsplash">/);
- assert.match(html,/<option value="pexels">/);
+ assert.doesNotMatch(html,/id="wv-memory-search-source"/);
+ assert.match(html,/id="wv-memory-api-settings"/);
+ assert.match(html,/id="wv-memory-source-breakdown"/);
+ assert.match(gallery,/wv-image-source-badge/);
+ assert.match(gallery,/originSite/);
+ assert.match(gallery,/Promise\.allSettled\(jobs\.map\(job=>job\.load\(\)\)\)/);
+ assert.match(html,/id="wv-memory-google-link"/);
 });
-
+ 
 test('anonymous Openverse image request asks for no more than 20 results',async()=>{
  let actualUrl;
  const search=openverseWith(async url=>{
@@ -44,18 +45,58 @@ test('anonymous Openverse image request asks for no more than 20 results',async(
  assert.equal(images[0].license,'CC0');
 });
 
-test('provider failures fall back to Wikimedia and credits include the actual source',()=>{
- assert.match(gallery,/catch\(openverseError\)[\s\S]*?commonsResults\(query,controller\.signal\)/);
- assert.ok(gallery.includes("if(pixabayKey.value.trim()){"),"Pixabay with key uses API");
- assert.ok(gallery.includes("catch(pixabayError)"),"Pixabay errors fallback to commons");
- assert.ok(gallery.includes("Pixabay 연결 성공"),"connection test reports success");
- assert.ok(gallery.includes("pixabayApiError(response.status)"),"API HTTP failures are explained");
- assert.ok(html.includes('<button id="wv-memory-pixabay-test" type="button">'),"key test button exists");
- assert.ok(html.includes('https://pixabay.com/api/docs/'),"key registration link exists");
- assert.match(gallery,/Pixabay API는 계정별 키가 필요합니다/);
- assert.match(gallery,/rights\.textContent=\(result\.source\|\|'출처 미상'\)/);
- assert.match(gallery,/if\(source==='google'\)/);
- assert.match(gallery,/Google 이미지 검색 결과 열기/);
+function unifiedWith(keys,handlers){
+ const first=gallery.indexOf(' async function unifiedResults(query,signal){');
+ const last=gallery.indexOf(' async function search(w=active){',first);
+ assert.ok(first>=0&&last>first,'unified function exists');
+ const $=id=>({value:keys[id]||''});
+ const methods=['openverseResults','commonsResults','unsplashResults','pexelsResults','pixabayResults'];
+ return new Function('$','openverseResults','commonsResults','unsplashResults','pexelsResults','pixabayResults','approvedMediaUrl','safeLink','DOMException',
+  gallery.slice(first,last)+';return unifiedResults;')($,...methods.map(name=>handlers[name]),x=>Boolean(x),x=>x,DOMException);
+}
+test('unified search displays all available provider results and isolates failed sources',async()=>{
+ const calls=[];
+ const picture=source=>({source,thumbnail:'https://example.test/'+source+'.jpg',sourceUrl:'https://example.test/'+source});
+ const handlers={
+  openverseResults:async()=>{calls.push('Openverse');return [picture('Openverse')]},
+  commonsResults:async()=>{calls.push('Commons');return [picture('Wikimedia Commons')]},
+  unsplashResults:async()=>{calls.push('Unsplash');throw Error('API 401')},
+  pexelsResults:async()=>{calls.push('Pexels');return []},
+  pixabayResults:async()=>{calls.push('Pixabay');return [picture('Pixabay')]}
+ };
+ const search=unifiedWith({'wv-memory-unsplash-key':'u','wv-memory-pixabay-key':'p'},handlers);
+ const result=await search('campaign',new AbortController().signal);
+ assert.equal(result.results.length,3);
+ assert.deepEqual(result.results.map(x=>x.source),['Openverse','Wikimedia Commons','Pixabay']);
+ assert.deepEqual(calls.sort(),['Commons','Openverse','Pixabay','Unsplash']);
+ assert.match(result.details.join(' '),/Unsplash 오류 \(API 401\)/);
+ assert.match(result.details.join(' '),/Pexels 키 미등록/);
+});
+test('two key-free sources still return images when optional API keys are absent',async()=>{
+ const img=source=>({source,thumbnail:'https://example.test/pic.jpg',sourceUrl:'https://example.test/'+source});
+ const unexpected=()=>{throw Error('Optional provider should not run without key');};
+ const search=unifiedWith({},{
+  openverseResults:async()=>[img('Openverse')],
+  commonsResults:async()=>[img('Wikimedia Commons')],
+  unsplashResults:unexpected,pexelsResults:unexpected,pixabayResults:unexpected
+ });
+ const result=await search('bank',new AbortController().signal);
+ assert.deepEqual(result.results.map(x=>x.source),['Openverse','Wikimedia Commons']);
+ assert.equal(result.details.filter(x=>x.includes('키 미등록')).length,3);
+});
+test('missing provider does not create fake Google images',()=>{
+ assert.ok(gallery.includes('Google'));
+ assert.ok(!gallery.includes("source==='google'"));
+ assert.ok(html.includes('Google 이미지에서 더 찾기'));
+});
+test('API key connection, licensing and secure attribution remain available',()=>{
+ assert.ok(gallery.includes('Pixabay 연결 성공'));
+ assert.ok(gallery.includes('pixabayApiError(response.status)'));
+ assert.ok(html.includes('<button id="wv-memory-pixabay-test" type="button">'));
+ assert.ok(html.includes('https://pixabay.com/api/docs/'));
+ assert.match(gallery,/site\.textContent='출처: '/);
+ assert.match(gallery,/image\.source=\(result\.source/);
+ assert.match(gallery,/result\.originSite\?' · 원본 '/);
 });
 
 test('Unsplash and Pexels use official authenticated photo APIs and save attribution',()=>{
