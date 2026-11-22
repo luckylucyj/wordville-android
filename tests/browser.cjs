@@ -502,7 +502,11 @@ const assert = require('node:assert/strict');
   console.log('ALIAS_AFTER_RESUME',JSON.stringify(await page.evaluate(()=>({
    memory:state.reviews['voca-effect'],legacy:state.reviews['voca-l-effect'],
    disk:JSON.parse(localStorage.getItem('wordville.rebuilt.v1')).reviews,
-   backup:!!localStorage.getItem('wordville.learning.before-vocabulary-audit')
+   backup:!!localStorage.getItem('wordville.learning.before-vocabulary-audit'),
+   initError:globalThis.__wordvilleInitError||null,
+   resumeError:globalThis.__wordvilleResumeDataError||null,
+   manualMigration:(()=>{try{const n=Wordville.migrateAliases(state,words);
+    return {changed:n!==state,canonical:n.reviews['voca-effect']||null};}catch(error){return String(error);}})()
   }))));
   await page.reload();await page.waitForFunction(()=>!!globalThis.WordvilleShell&&document.querySelectorAll('.word').length>0);await page.locator('#wv-bottom-dock [data-screen="learn"]').click();await page.waitForSelector('.word');
   console.log('ALIAS_AFTER_RELOAD',JSON.stringify(await page.evaluate(()=>({
@@ -510,7 +514,11 @@ const assert = require('node:assert/strict');
    disk:JSON.parse(localStorage.getItem('wordville.rebuilt.v1')).reviews,
    backup:!!localStorage.getItem('wordville.learning.before-vocabulary-audit'),
    words:words.length, wordCount:document.querySelectorAll('.word').length,
-   notice:document.querySelector('#notice')?.textContent
+   notice:document.querySelector('#notice')?.textContent,
+   initError:globalThis.__wordvilleInitError||null,
+   resumeError:globalThis.__wordvilleResumeDataError||null,
+   manualMigration:(()=>{try{const n=Wordville.migrateAliases(state,words);
+    return {changed:n!==state,canonical:n.reviews['voca-effect']||null};}catch(error){return String(error);}})()
   }))));
   assert.equal(await page.evaluate(()=>state.reviews['voca-effect'].attempts),4);
   assert.ok(await page.evaluate(()=>localStorage.getItem('wordville.learning.before-vocabulary-audit')));
