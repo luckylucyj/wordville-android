@@ -1,8 +1,6 @@
 name: Gemini design to Codex draft PR
 
 on:
-  push:
-    branches: [automation/gemini-api-to-codex-20261123]
   issues:
     types: [opened]
   workflow_dispatch:
@@ -20,16 +18,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate-handoff-offline:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Python Gemini handoff tests without API secrets
-        run: python3 -m unittest discover -s tests -p 'test_gemini_design_handoff.py'
-
   verify-request:
     # An issue is an explicit handoff event. A Gemini web-chat completion alone
     # does NOT trigger GitHub; it must be posted by the owner's GitHub identity.
