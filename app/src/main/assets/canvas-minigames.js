@@ -195,8 +195,19 @@
    this.ctx.setTransform(width/W,0,0,height/H,0,0);
   }
   loadWordsFromAndroid(wordList){
-   if(!Array.isArray(wordList))return false;
-   this.sourceWords=wordList.filter(w=>w&&typeof w.word==='string'&&w.id!=null&&label(w));
+   // Android may send a serialized JSON array, while the WebView app supplies
+   // WordvilleWords directly as an array. Both paths use the real vocabulary.
+   let incoming=wordList;
+   if(typeof incoming==='string'){
+    try{incoming=JSON.parse(incoming);}catch(error){
+     this.message('Android 단어 목록 JSON을 읽지 못했습니다.');
+     return false;
+    }
+   }
+   if(!Array.isArray(incoming))return false;
+   const valid=incoming.filter(w=>w&&typeof w.word==='string'&&w.id!=null&&label(w));
+   if(!valid.length)return false;
+   this.sourceWords=valid;
    this.refreshWordPool();
    return this.words.length>0;
   }
