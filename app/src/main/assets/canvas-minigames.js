@@ -126,6 +126,9 @@
   retryWord(silent=false){
    if(!this.getCurrentWord())return;
    const failed=this.studyManager.markRetry(silent);
+   // The failed card has moved two positions back: its input cooldown must
+   // never block the *next* word's fresh answer button.
+   this.nextActionAt=0;
    this.state.wordIdx=Math.max(0,this.words.findIndex(w=>w.id===this.getCurrentWord()?.id));
    if(this.state.mode==='foraging')this.buildForagingChoices();
    this.refreshHeaderUI();
