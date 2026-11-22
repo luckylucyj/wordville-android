@@ -19,3 +19,5 @@
 #wordville-canvas-status{min-height:28px;margin:9px 2px 2px;font-size:13px;line-height:1.65;font-weight:650;overflow-wrap:anywhere}
 @media(min-width:560px){#room-item-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:390px){.wv-canvas-panel{padding:6px;border-width:2px;margin:8px auto 14px}#wordvilleCanvas{border-width:2px}#game-badge{font-size:15px}#target-meaning{font-size:13px}#target-hint{font-size:11px}#foraging-choices .wv-canvas-choice{font-size:12px;padding:6px 3px}}
+
+#wordville-action[hidden]{display:none!important}
