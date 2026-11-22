@@ -1,9 +1,75 @@
-name: Gemini bridge parse probe
+name: Gemini design to Codex draft PR
+
 on:
   push:
-    branches: [automation/gemini-codex-setup-20261122]
+    branches: ['automation/gemini-codex-setup-20261122']
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Existing [Gemini Design Ready] issue number'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gemini-design-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: false
+
 jobs:
   syntax-check:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Workflow parsed"
+      - name: Confirm workflow parsed without external API calls
+        run: echo 'Gemini/Codex workflow syntax accepted.'
+
+  verify-request:
+    # An issue is an explicit handoff event. A Gemini web-chat completion alone
+    # does NOT trigger GitHub; it must be posted by the owner's GitHub identity.
+    if: >-
+      (github.event_name == 'issues' &&
+       github.event.issue.user.login == 'luckylucyj' &&
+       startsWith(github.event.issue.title, '[Gemini Design Ready]')) ||
+      (github.event_name == 'workflow_dispatch' && github.actor == 'luckylucyj')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      issue_number: ${{ steps.check.outputs.issue_number }}
+    steps:
+      - name: Verify the trusted design issue
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        run: |
+          set -euo pipefail
+          [[ "$ISSUE_NUMBER" =~ ^[1-9][0-9]*$ ]] || exit 1
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" > "$RUNNER_TEMP/design-issue.json"
+          python3 - <<'PY'
+          import json, os, pathlib, sys
+          data = json.loads((pathlib.Path(os.environ["RUNNER_TEMP"]) / "design-issue.json").read_text())
+          author = (data.get("user") or {}).get("login")
+          title = data.get("title") or ""
+          body = data.get("body") or ""
+          if author != "luckylucyj" or not title.startswith("[Gemini Design Ready]"):
+              sys.exit("Refusing an issue not authored by the repository owner with the approved title.")
+          if data.get("state") != "open" or "pull_request" in data:
+              sys.exit("Only open design issues are accepted.")
+          if not 50 <= len(body) <= 20000:
+              sys.exit("Design instructions must be 50–20000 characters.")
+          dest = pathlib.Path(os.environ["RUNNER_TEMP"]) / "gemini-design.md"
+          dest.write_text("# " + title + "\n\n" + body + "\n", encoding="utf-8")
+          PY
+          echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+      - name: Transfer the verified design specification
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-verified-design-spec
+          path: ${{ runner.temp }}/gemini-design.md
+          retention-days: 3
+          if-no-files-found: error
+
