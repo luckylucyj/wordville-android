@@ -37,6 +37,13 @@ test('vocabulary is not blocked by optional POS or photo database loading',()=>{
  assert.match(app,/try\{const res=await fetch\('words\.json'\)/);
  assert.match(app,/async function imageAction\(mode,key,value\)\{if\(!db&&databaseReady\)await databaseReady;/);
 });
+test('startup and local record save functions are actually executable (not commented by escaped newlines)',()=>{
+ assert.match(app,/^function save\\(next\\)/m);
+ assert.match(app,/^\\$\\('balance'\\)\\.textContent=/m);
+ assert.match(shell,/^document\\.addEventListener\\('wordville-words-ready',finishStartup/m);
+ assert.match(shell,/^if\\(globalThis\\.WordvilleWords\\?\\.length\\)finishStartup\\(\\);/m);
+});
+
 test('existing XP/coins and reviews are restored from localStorage on foreground without network',()=>{
  assert.match(app,/function rehydrateStudyOnForeground\(\)/);
  assert.match(app,/localStorage\.getItem\(storageKey\)/);
