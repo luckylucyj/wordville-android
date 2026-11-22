@@ -53,52 +53,36 @@ def eyes(d,x,y,mood):
         ellipse(d,(x+75,y-12,x+84,y+11),"#93cfe8",None)
 
 def char(name,mood,path):
+    # Generate only Chiikawa art for the weeding and foraging modes.
+    # Hachiware fishing artwork is never procedurally drawn.
     if path.exists(): return
     im,d=picture()
-    hachi=name=="hachiware"
-    if hachi:
-        polygon(d,[(154,166),(166,51),(226,131)],BLUE)
-        polygon(d,[(284,129),(348,53),(360,168)],BLUE)
-    else:
-        ellipse(d,(146,74,210,189),WHITE)
-        ellipse(d,(301,74,365,189),WHITE)
-    # Feet, SD body and arms
+    ellipse(d,(146,74,210,189),WHITE)
+    ellipse(d,(301,74,365,189),WHITE)
+    # SD head and body.
     ellipse(d,(192,395,235,458),WHITE)
     ellipse(d,(288,395,330,458),WHITE)
     ellipse(d,(184,295,327,430),WHITE)
     ellipse(d,(154,321,205,370),WHITE)
     ellipse(d,(309,320,360,372),WHITE)
     ellipse(d,(123,140,388,340),WHITE,w=6)
-    if hachi:
-        # Signature pastel blue forehead markings.
-        polygon(d,[(135,161),(157,137),(211,157),(239,203),(257,223),(226,220),(194,191),(160,191)],BLUE,None)
-        polygon(d,[(378,161),(356,137),(302,157),(274,203),(257,223),(288,220),(321,191),(353,191)],BLUE,None)
     eyes(d,256,249,mood)
-    if hachi:
-        # Fishing rod and float.
-        line(d,[(354,335),(410,198),(443,124)],INK,5)
-        line(d,[(443,124),(458,365)],"#b0a196",2)
-        ellipse(d,(448,355,469,381),"#fa8d79",INK,3)
-        if mood=="catch":
-            ellipse(d,(378,390,449,425),"#85bad0",INK,3)
-            polygon(d,[(444,407),(471,393),(468,427)],"#85bad0")
-    else:
-        if mood in ("perfect","medium","bad"):
-            if mood=="bad":
-                line(d,[(172,368),(145,326)],"#70ac73",6)
-                polygon(d,[(142,325),(122,312),(134,292)],"#91c990")
-            else:
-                line(d,[(185,356),(169,248)],"#619b6f",7)
-                for dx in [-22,8,28]:
-                    ellipse(d,(160+dx,250,190+dx,269),"#9ed29b",INK,2)
-                if mood=="perfect":
-                    for dx in [-12,0,13]:line(d,[(169,355),(169+dx,379)],"#b18d69",3)
-        if mood.startswith("food_"):
-            y=388 if mood=="food_1" else 310 if mood=="food_2" else 165
-            ellipse(d,(221,y,295,y+60),"#f4d59f",INK,4)
-            ellipse(d,(243,y+9,271,y+24),"#f2a8a8",None)
-    # Sparkles and marks.
-    if mood in ("catch","perfect","food_3"):
+    if mood in ("perfect","medium","bad"):
+        if mood=="bad":
+            line(d,[(172,368),(145,326)],"#70ac73",6)
+            polygon(d,[(142,325),(122,312),(134,292)],"#91c990")
+        else:
+            line(d,[(185,356),(169,248)],"#619b6f",7)
+            for dx in [-22,8,28]:
+                ellipse(d,(160+dx,250,190+dx,269),"#9ed29b",INK,2)
+            if mood=="perfect":
+                for dx in [-12,0,13]:
+                    line(d,[(169,355),(169+dx,379)],"#b18d69",3)
+    if mood.startswith("food_"):
+        y=388 if mood=="food_1" else 310 if mood=="food_2" else 165
+        ellipse(d,(221,y,295,y+60),"#f4d59f",INK,4)
+        ellipse(d,(243,y+9,271,y+24),"#f2a8a8",None)
+    if mood in ("perfect","food_3"):
         for x,y in [(99,190),(414,258),(366,86)]:
             line(d,[(x-10,y),(x+10,y)],"#f4cc68",3)
             line(d,[(x,y-10),(x,y+10)],"#f4cc68",3)
