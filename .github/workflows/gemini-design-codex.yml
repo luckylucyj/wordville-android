@@ -1,8 +1,6 @@
 name: Gemini design to Codex draft PR
 
 on:
-  push:
-    branches: ['automation/gemini-codex-setup-20261122']
   issues:
     types: [opened]
   workflow_dispatch:
@@ -20,13 +18,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  syntax-check:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Confirm workflow parsed without external API calls
-        run: echo 'Gemini/Codex workflow syntax accepted.'
-
   verify-request:
     # An issue is an explicit handoff event. A Gemini web-chat completion alone
     # does NOT trigger GitHub; it must be posted by the owner's GitHub identity.
