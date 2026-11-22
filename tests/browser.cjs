@@ -273,6 +273,24 @@ const assert = require('node:assert/strict');
   assert.equal(await page.evaluate(()=>VillageModel.links.filter(([a,b])=>VillageModel.isStairEdge(a,b)).length),2);
   await page.locator('#wv-bottom-dock [data-screen="residents"]').click();
   assert.equal(await page.locator('.wv-residents-screen .wv-portrait').count(),22);
+  assert.equal(await page.locator('#resident-list [data-resident-card]').count(),22,'every portrait has its own status card');
+  assert.equal(await page.locator('#resident-list [data-resident-affinity]').count(),22,'each resident has an individual affinity button');
+  assert.equal(await page.locator('.wv-social-resident-toolbar').count(),0,'old single global status button is removed');
+  const alexInfo=page.locator('#resident-list [data-resident-affinity="alex"]');
+  assert.match(await alexInfo.innerText(),/알렉스/);
+  assert.match(await alexInfo.innerText(),/호감도 30\/100/);
+  const affinityBefore=await page.evaluate(()=>WordvilleSocial.affection('alex'));
+  await alexInfo.click();
+  assert.equal(await page.locator('#wv-social-status').evaluate(x=>x.open),true);
+  assert.match(await page.locator('#wv-social-status .wv-social-name').innerText(),/알렉스/);
+  await page.locator('#wv-social-status .wv-social-action').click();
+  assert.equal(await page.evaluate(()=>WordvilleSocial.affection('alex')),affinityBefore+2);
+  await page.locator('#wv-social-status .wv-social-close').click();
+  assert.match(await alexInfo.innerText(),/호감도 32\/100/,'affinity below the portrait updates immediately');
+  await page.locator('#resident-list [data-resident-affinity="harvey"]').click();
+  assert.match(await page.locator('#wv-social-status .wv-social-name').innerText(),/하비/);
+  await page.locator('#wv-social-status .wv-social-close').click();
+
   const guestPortraits=page.locator('#resident-list .wv-guest-portrait');
   assert.equal(await guestPortraits.count(),10);
   // These 10 residents use standalone high-resolution photos/portraits; smooth scaling is intentional.
