@@ -67,6 +67,14 @@ const assert=require('node:assert/strict');
    status:401,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{}'
   }));
   assert.equal(await page.locator('#wv-memory-search-source').count(),0);
+  // No site picker or four external search links should occupy word-card space.
+  for(const id of ['wv-memory-google-link','wv-memory-pixabay-link',
+    'wv-memory-unsplash-link','wv-memory-pexels-link'])
+   assert.equal(await page.locator('#'+id).count(),0,'Remove outbound search link '+id);
+  assert.equal(await page.locator('#wv-memory-api-settings').isVisible(),true,
+    'Advanced credential settings are retained but collapsed');
+  assert.equal(await page.locator('#wv-memory-api-settings').evaluate(e=>e.open),false);
+
   await page.locator('#wv-memory-search-query').fill('comprehensive');
   await page.locator('#wv-memory-search-submit').click();
   await page.waitForFunction(()=>document.querySelectorAll('.wv-search-result').length===1);

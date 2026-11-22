@@ -23,7 +23,10 @@ test('image gallery renders unified providers with a separate API key configurat
  assert.match(gallery,/wv-image-source-badge/);
  assert.match(gallery,/originSite/);
  assert.match(gallery,/Promise\.allSettled\(jobs\.map\(job=>job\.load\(\)\)\)/);
- assert.match(html,/id="wv-memory-google-link"/);
+ for(const id of ['wv-memory-google-link','wv-memory-pixabay-link','wv-memory-unsplash-link','wv-memory-pexels-link'])
+  assert.ok(!html.includes('id="'+id+'"'),'Remove old outbound search link '+id);
+ assert.ok(!gallery.includes('function externalLinks('),'Outbound link updater must be removed');
+ assert.match(html,/id="wv-memory-search-submit"/);
 });
  
 test('anonymous Openverse image request asks for no more than 20 results',async()=>{
@@ -84,10 +87,12 @@ test('two key-free sources still return images when optional API keys are absent
  assert.deepEqual(result.results.map(x=>x.source),['Openverse','Wikimedia Commons']);
  assert.equal(result.details.filter(x=>x.includes('키 미등록')).length,3);
 });
-test('missing provider does not create fake Google images',()=>{
- assert.ok(gallery.includes('Google'));
+test('no external site-search links or false Google search results are shown',()=>{
+ for(const phrase of ['Google 이미지에서 더 찾기','Pixabay 사이트에서 찾기',
+  'Unsplash 사이트에서 찾기','Pexels 사이트에서 찾기'])
+  assert.ok(!html.includes(phrase),'Remove old external search link: '+phrase);
  assert.ok(!gallery.includes("source==='google'"));
- assert.ok(html.includes('Google 이미지에서 더 찾기'));
+ assert.match(html,/Google 이미지 검색은 신규 사용자를 위한 공식 검색 API가 제공되지 않아 통합 검색에 포함하지 않습니다/);
 });
 test('API key connection, licensing and secure attribution remain available',()=>{
  assert.ok(gallery.includes('Pixabay 연결 성공'));
