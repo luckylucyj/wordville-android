@@ -7,7 +7,7 @@ const app=readFileSync(new URL('assets/app.js',root),'utf8');
 const shell=readFileSync(new URL('assets/app-shell.js',root),'utf8');
 
 test('native resume health verifies vocabulary and visible screen without requiring hidden Town rendering',()=>{
- assert.match(java,/var townReady=screen!='town'/);
+ assert.ok(java.includes("var townReady=screen!=='town'"));
  assert.match(java,/townReady;\}\)\(\)"/);
  assert.match(java,/Array\.isArray\(words\)&&words\.length>0/);
  assert.match(java,/var words=window\.WordvilleWords/);
