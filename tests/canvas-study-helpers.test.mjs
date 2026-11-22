@@ -85,5 +85,5 @@ test('The existing secure WebView origin and String-ID Java bridge are retained'
  assert.ok(html.indexOf('canvas-study-helpers.js')<html.indexOf('canvas-minigames.js'));
  assert.match(canvas,/new root\.WordvilleStudyManager\(\[\]\)/);
  assert.match(canvas,/this\.atlas\.drawPanel\(/);
- assert.match(canvas,/this\.studyManager\.markRetry\(\)/);
+ assert.match(canvas,/this\.studyManager\.markRetry\(silent\)/);
 });
