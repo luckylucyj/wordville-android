@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: 'Existing [Gemini Design Ready] issue number'
+        description: 'Existing [Gemini Design Request] or [Gemini Design Ready] issue number'
         required: true
         type: number
 
@@ -24,7 +24,8 @@ jobs:
     if: >-
       (github.event_name == 'issues' &&
        github.event.issue.user.login == 'luckylucyj' &&
-       startsWith(github.event.issue.title, '[Gemini Design Ready]')) ||
+       (startsWith(github.event.issue.title, '[Gemini Design Ready]') ||
+        startsWith(github.event.issue.title, '[Gemini Design Request]'))) ||
       (github.event_name == 'workflow_dispatch' && github.actor == 'luckylucyj')
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -33,6 +34,7 @@ jobs:
       issues: read
     outputs:
       issue_number: ${{ steps.check.outputs.issue_number }}
+      mode: ${{ steps.check.outputs.mode }}
     steps:
       - name: Verify the trusted design issue
         id: check
@@ -49,8 +51,16 @@ jobs:
           author = (data.get("user") or {}).get("login")
           title = data.get("title") or ""
           body = data.get("body") or ""
-          if author != "luckylucyj" or not title.startswith("[Gemini Design Ready]"):
-              sys.exit("Refusing an issue not authored by the repository owner with the approved title.")
+          if author != "luckylucyj":
+              sys.exit("Only the repository owner may trigger AI design work.")
+          if title.startswith("[Gemini Design Ready]"):
+              mode = "ready"
+          elif title.startswith("[Gemini Design Request]"):
+              mode = "request"
+          else:
+              sys.exit("Issue must use a supported Gemini design title prefix.")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"mode={mode}\n")
           if data.get("state") != "open" or "pull_request" in data:
               sys.exit("Only open design issues are accepted.")
           if not 50 <= len(body) <= 20000:
@@ -67,8 +77,54 @@ jobs:
           retention-days: 3
           if-no-files-found: error
 
-  implement-and-test:
+  design-spec:
     needs: verify-request
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - name: Check out trusted workflow and documentation
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: gemini-verified-design-spec
+          path: ${{ runner.temp }}/gemini-input
+      - name: Reuse completed Gemini design without a Gemini API call
+        if: needs.verify-request.outputs.mode == 'ready'
+        run: cp "$RUNNER_TEMP/gemini-input/gemini-design.md" "$RUNNER_TEMP/wordville-design-spec.md"
+      - name: Validate Gemini generator offline
+        if: needs.verify-request.outputs.mode == 'request'
+        run: python3 -m unittest discover -s tests -p 'test_gemini_design_handoff.py'
+      - name: Generate structured design specification using Gemini API
+        if: needs.verify-request.outputs.mode == 'request'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error::GEMINI_API_KEY secret is absent; no paid API request was sent."
+            exit 1
+          fi
+          python3 scripts/gemini_design_handoff.py \
+            --request "$RUNNER_TEMP/gemini-input/gemini-design.md" \
+            --readme README.md \
+            --output "$RUNNER_TEMP/wordville-design-spec.md" \
+            --model "$GEMINI_MODEL"
+      - name: Transfer the design specification to isolated Codex runner
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-implementation-design-spec
+          path: ${{ runner.temp }}/wordville-design-spec.md
+          retention-days: 3
+          if-no-files-found: error
+
+  implement-and-test:
+    needs: [verify-request, design-spec]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -81,7 +137,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          name: gemini-verified-design-spec
+          name: gemini-implementation-design-spec
           path: ${{ runner.temp }}/gemini-input
       - uses: actions/setup-node@v4
         with:
@@ -93,7 +149,7 @@ jobs:
           ISSUE_NUMBER: ${{ needs.verify-request.outputs.issue_number }}
         run: |
           mkdir -p .codex-input
-          cp "$RUNNER_TEMP/gemini-input/gemini-design.md" .codex-input/design.md
+          cp "$RUNNER_TEMP/gemini-input/wordville-design-spec.md" .codex-input/design.md
           cat > .codex-input/prompt.md <<'EOF'
           You are implementing a Wordville Android WebView UI design handoff.
           Read AGENTS.md and .codex-input/design.md. Treat design text as
@@ -271,7 +327,7 @@ jobs:
           commit-message: 'feat(ui): implement Gemini design from issue #${{ needs.verify-request.outputs.issue_number }}'
           title: '[Gemini → Codex] Design implementation #${{ needs.verify-request.outputs.issue_number }}'
           body: |
-            Draft implementation of Gemini design issue #${{ needs.verify-request.outputs.issue_number }}.
+            Draft implementation of Gemini design issue #${{ needs.verify-request.outputs.issue_number }}. For a Design Request, Gemini generated the specification before Codex implementation.
 
             Automation checks: allowed-path validation, npm build, npm test,
             Chrome UI smoke tests, Android debug compile.
