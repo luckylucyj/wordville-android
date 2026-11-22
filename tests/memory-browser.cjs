@@ -62,11 +62,17 @@ const assert=require('node:assert/strict');
   await page.route('https://thumb.wikimedia.org/**',route=>route.fulfill({
    status:200,contentType:'image/png',headers:{'access-control-allow-origin':'*'},body:png
   }));
-  await page.locator('#wv-memory-search-source').selectOption('commons');
+  // Unified search must keep Wikimedia images even when Openverse HTTP 401s.
+  await page.route('https://api.openverse.org/v1/images/?**',route=>route.fulfill({
+   status:401,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{}'
+  }));
+  assert.equal(await page.locator('#wv-memory-search-source').count(),0);
   await page.locator('#wv-memory-search-query').fill('comprehensive');
   await page.locator('#wv-memory-search-submit').click();
   await page.waitForFunction(()=>document.querySelectorAll('.wv-search-result').length===1);
   assert.match(await page.locator('#wv-memory-search-results').innerText(),/CC BY-SA 4.0/);
+  assert.match(await page.locator('.wv-image-source-badge').first().innerText(),/Wikimedia Commons/);
+  assert.match(await page.locator('#wv-memory-source-breakdown').innerText(),/Openverse 오류/);
   await page.waitForFunction(()=>{const img=document.querySelector('.wv-search-result img');return img?.complete&&img.naturalWidth>0;});
   assert.equal(await page.locator('.wv-search-result img').isVisible(),true);
   await page.locator('.wv-search-result button').click();
@@ -80,7 +86,7 @@ const assert=require('node:assert/strict');
     title:'Photo '+i,license:'cc0',license_version:'1.0',creator:'Photo creator',
     foreign_landing_url:'https://example.org/photo/'+i,mature:false}))})
   }));
-  await page.locator('#wv-memory-search-source').selectOption('openverse');
+  // The same search button interleaves 20 Openverse and 1 Commons images.
   await page.locator('#wv-memory-search-query').fill('bank');
   await page.locator('#wv-memory-search-submit').click();
   await page.waitForFunction(()=>document.querySelectorAll('.wv-search-result').length===10);
@@ -91,7 +97,7 @@ const assert=require('node:assert/strict');
   });
   assert.ok(pager.buttons.every(b=>b.left>=pager.left-1&&b.right<=pager.right+1),'image pagination buttons must not overflow');
   await page.locator('.wv-search-pagination').first().locator('button').last().click();
-  await page.waitForFunction(()=>document.querySelector('.wv-search-page-number')?.textContent.includes('2 / 2'));
+  await page.waitForFunction(()=>document.querySelector('.wv-search-page-number')?.textContent.includes('2 / 3'));
   await page.setViewportSize({width:390,height:844});
   await page.locator('#remove-image').click();
   await page.waitForFunction(()=>document.querySelector('#wv-memory-count').textContent.includes('2장'));
