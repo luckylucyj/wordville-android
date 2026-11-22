@@ -64,12 +64,14 @@ public class MainActivity extends Activity {
     if(owner!=web||!pageReady||!foreground)return;
     String result="null";
     try{
-     if(owner.hasWindowFocus()){
-      ClipboardManager clipboard=getSystemService(ClipboardManager.class);
-      ClipData clip=clipboard==null?null:clipboard.getPrimaryClip();
-      CharSequence text=clip==null||clip.getItemCount()==0?null:clip.getItemAt(0).getText();
-      result=JSONObject.quote(text==null?"":text.subSequence(0,Math.min(text.length(),6001)).toString());
-     }
+     // A focused word card can outlive a transient WebView focus change.
+     // Android ClipboardManager itself enforces foreground privacy rules;
+     // do not silently discard explicit user paste requests based on
+     // hasWindowFocus(), which is unreliable after image/dialog transitions.
+     ClipboardManager clipboard=getSystemService(ClipboardManager.class);
+     ClipData clip=clipboard==null?null:clipboard.getPrimaryClip();
+     CharSequence text=clip==null||clip.getItemCount()==0?null:clip.getItemAt(0).getText();
+     result=JSONObject.quote(text==null?"":text.subSequence(0,Math.min(text.length(),6001)).toString());
     }catch(SecurityException ignored){}
     owner.evaluateJavascript("window.WordvilleDictionary?.onPaste("+id+","+result+");",null);
    });
