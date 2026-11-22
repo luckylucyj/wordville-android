@@ -239,7 +239,7 @@ const finishStartup=()=>{
  startupFinished=true;
  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(loadingCover)loadingCover.hidden=true;}));
 };
-// Never keep the user behind the loading overlay when an image resource hangs.
+// Local vocabulary is the primary startup dependency. Do not wait for\n// decorative town art to finish loading before showing saved study data.\ndocument.addEventListener('wordville-words-ready',finishStartup,{once:true});\nif(globalThis.WordvilleWords?.length)finishStartup();\n// Never keep the user behind the loading overlay when an image resource hangs.
 // Android's native WebView recovery separately handles a destroyed renderer.
 setTimeout(()=>{if(loadingCover&&!loadingCover.hidden)finishStartup();},6500);
 document.addEventListener('wordville-app-resume',()=>{
