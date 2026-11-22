@@ -106,6 +106,7 @@ jobs:
           CHROME_PATH="$(command -v google-chrome)" node tests/board-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/solo-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/canvas-browser.cjs
+          CHROME_PATH="$(command -v google-chrome)" node tests/fishing-touch-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/app-resume-browser.cjs
           CHROME_PATH="$(command -v google-chrome)" node tests/select-day-browser.cjs
       - uses: actions/upload-artifact@v4
