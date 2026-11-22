@@ -1,0 +1,55 @@
+/* Wordville unified image search and individual portrait affinity controls. */
+#wv-memory-api-settings{
+ margin:10px 0;border:2px solid #bda075;border-radius:8px;
+ background:#fff7e5;padding:0 10px 8px;max-width:100%
+}
+#wv-memory-api-settings summary{
+ padding:11px 5px;cursor:pointer;font-size:12px;font-weight:850;color:#563c29;
+ line-height:1.4
+}
+#wv-memory-api-settings summary:focus-visible{outline:3px solid #247d64;outline-offset:2px}
+.wv-memory-unified-note{padding:9px 10px;margin:8px 0;background:#e9f1dd;
+ border:2px solid #b7c99e;border-radius:8px;font-size:12px;line-height:1.6;color:#314b38}
+.wv-memory-source-breakdown{
+ font-size:11px;line-height:1.65;margin:8px 0;overflow-wrap:anywhere;
+ background:#f2e6cf;border-radius:7px;padding:6px 9px;color:#5d492f
+}
+.wv-memory-source-breakdown:empty{display:none}
+#wv-memory-api-settings .wv-memory-api-field{max-width:100%;border-top:1px dashed #cab18f;padding:12px 0}
+#wv-memory-api-settings .wv-memory-external-links{gap:7px}
+.wv-memory-search-results .wv-image-source-badge{
+ display:block;width:fit-content;max-width:100%;padding:5px 8px;
+ border-radius:5px;border:1px solid #b7c894;background:#e4f1d5;color:#34533f;
+ font-size:12px;font-weight:850;line-height:1.4;overflow-wrap:anywhere
+}
+.wv-memory-search-results .wv-search-license{display:block;overflow-wrap:anywhere}
+#wv-residents-view #resident-list>.wv-resident-card{
+ display:flex;flex-direction:column;gap:7px;min-width:0;padding:5px;
+ border-radius:10px;background:#f8e9c7;border:3px solid #b89262;
+ box-shadow:2px 3px #60492a36;overflow:hidden
+}
+#wv-residents-view #resident-list>.wv-resident-card>button.wv-resident-portrait-button{
+ display:flex;align-items:center;justify-content:center;
+ width:100%;min-width:0;min-height:138px;flex:0 0 auto;
+ border:2px solid #b28d61;border-radius:7px;
+ padding:4px;background:#f2dbb0;box-shadow:none
+}
+#wv-residents-view #resident-list>.wv-resident-card>button.wv-resident-info-button{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:3px;width:100%;min-width:0;min-height:68px;padding:7px 3px;
+ border:2px solid #7ea38a;border-radius:7px;background:#e3f1dc;
+ color:#314e3b;box-shadow:none;line-height:1.35;text-align:center;
+ white-space:normal;overflow-wrap:anywhere;cursor:pointer
+}
+.wv-resident-info-button .wv-resident-card-name{font-size:13px;font-weight:900;line-height:1.3}
+.wv-resident-info-button .wv-resident-card-affinity{font-size:11px;font-weight:750;line-height:1.4}
+#wv-residents-view #resident-list>.wv-resident-card>button:focus-visible{
+ outline:3px solid #266a56;outline-offset:2px
+}
+@media(max-width:390px){
+ #wv-residents-view #resident-list>.wv-resident-card{gap:5px;padding:4px;border-width:2px}
+ #wv-residents-view #resident-list>.wv-resident-card>button.wv-resident-portrait-button{min-height:120px}
+ #wv-residents-view #resident-list>.wv-resident-card>button.wv-resident-info-button{min-height:62px;padding:6px 2px}
+ .wv-resident-info-button .wv-resident-card-name{font-size:12px}
+ .wv-resident-info-button .wv-resident-card-affinity{font-size:10px}
+}
