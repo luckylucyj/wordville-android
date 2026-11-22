@@ -24,7 +24,7 @@ test('all four Canvas modes, specified HUD geometry, optional art manifest',()=>
   'FISH_TRACK={x:124,y:1360,w:886,h:58}','this.box(30,860,540,96'])assert.ok(canvas.includes(value),value);
  for(const path of ['images/fishing/hachiware_idle.png','images/fishing/hachiware_catch.png',
   'images/weeding/chiikawa_perfect.png','images/weeding/chiikawa_medium.png','images/weeding/chiikawa_bad.png',
-  'images/foraging/chiikawa_food_1.png','images/foraging/chiikawa_food_2.png','images/foraging/chiikawa_food_3.png',
+  'images/foraging/chiikawa_3stage_atlas.png',
   'images/room/room-decor.webp'])
   assert.ok(canvas.includes(path),path+' asset slot');
  assert.match(canvas,/drawCritter\(/);
@@ -49,11 +49,12 @@ test('real user vocabulary and progress are authoritative; no sample teaching-on
  assert.match(canvas,/root\.AndroidBridge\.onWordLearned\(String\(word\.id\),this\.state\.mode\)/);
  assert.match(native,/new WordvilleGameBridge\(\),"AndroidBridge"/);
 });
-test('foraging has a 3 stage animation and prevents repeated rewards',()=>{
- assert.match(canvas,/g\.stage=2;g\.timer=\.85;g\.pending=true/);
- assert.match(canvas,/if\(g\.stage===2\)\{g\.stage=3;g\.timer=1;/);
- assert.match(canvas,/else\{g\.stage=1;g\.pending=false;this\.advanceWord\(true\);\}/);
- assert.match(canvas,/if\(this\.state\.mode!=='foraging'\|\|g\.stage!==1/);
+test('foraging uses the offline three-frame atlas and separate playback controls',()=>{
+ assert.match(css,/images\/foraging\/chiikawa_3stage_atlas\.png/);
+ assert.match(css,/--forage-frame:50%/);
+ assert.match(css,/--forage-frame:100%/);
+ assert.match(canvas,/if\(this\.state\.mode!=='foraging'\|\|g\.pending\|\|Date\.now\(\)<this\.nextActionAt\)return/);
+ assert.match(canvas,/if\(action==='forage'\)this\.setForageStage\(1,\.9\)/);
 });
 test('weeding has three result levels and timing limits',()=>{
  assert.match(canvas,/w\.status=p>=\.4&&p<=\.6\?'perfect':p>=\.22&&p<=\.78\?'medium':'bad'/);
