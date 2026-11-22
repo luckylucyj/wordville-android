@@ -50,6 +50,8 @@
    this.choicesNode=root.document.getElementById('foraging-choices');
    this.inventoryNode=root.document.getElementById('room-item-list');
    this.drawer=root.document.getElementById('room-drawer');
+   this.roomHandleLayer=root.document.getElementById('wv-room-drag-targets');
+   this.roomPointerId=null;
    this.preloadSprites();this.bindEvents();this.resize();
    this.loadWordsFromAndroid(root.WordvilleWords||[]);
    this.switchMode('fishing');
@@ -203,10 +205,11 @@
    this.state.foraging.stage=1;this.state.foraging.timer=0;this.state.foraging.pending=false;
    if(this.choicesNode)this.choicesNode.hidden=mode!=='foraging';
    if(this.drawer)this.drawer.hidden=mode!=='room';
+   if(this.roomHandleLayer)this.roomHandleLayer.hidden=mode!=='room';
    const action=root.document.getElementById('wordville-action');
    if(action)action.hidden=mode==='foraging'||mode==='room';
    if(mode==='foraging')this.buildForagingChoices();
-   if(mode==='room')this.renderRoomInventoryUI();
+   if(mode==='room'){this.renderRoomInventoryUI();this.syncRoomHandles();}
    this.refreshHeaderUI();this.resume();
   }
   refreshHeaderUI(){
@@ -497,10 +500,50 @@
     button.type='button';button.className='wv-canvas-inventory-item';
     button.textContent=item.icon+' '+item.name;
     button.addEventListener('click',()=>{
-     r.placed.push({id:item.id,x:300,y:478});this.saveRoomState();
+     r.placed.push({id:item.id,x:300,y:478});this.saveRoomState();this.syncRoomHandles();
      this.message(item.name+' 배치 완료 · 드래그해서 위치를 변경하세요.');
     });
     list.append(button);
+   }
+   this.syncRoomHandles();
+  }
+  syncRoomHandles(){
+   const layer=this.roomHandleLayer;
+   if(!layer)return;
+   const items=this.state.room.placed;
+   while(layer.children.length>items.length)layer.lastElementChild.remove();
+   while(layer.children.length<items.length){
+    const handle=root.document.createElement('button');
+    handle.type='button';handle.className='wv-room-drag-handle';
+    handle.addEventListener('pointerdown',event=>{
+     if(this.state.mode!=='room')return;
+     event.preventDefault();event.stopPropagation();
+     const index=Number(handle.dataset.index);
+     if(!Number.isInteger(index)||!this.state.room.placed[index])return;
+     this.state.room.dragIdx=index;this.roomPointerId=event.pointerId;
+     handle.setPointerCapture?.(event.pointerId);
+    });
+    handle.addEventListener('pointermove',event=>{
+     if(this.state.room.dragIdx<0||this.roomPointerId!==event.pointerId)return;
+     const p=this.pointerXY(event);if(!p)return;
+     Object.assign(this.state.room.placed[this.state.room.dragIdx],
+      this.constrainFloor(p.x,p.y+18));
+     this.syncRoomHandles();
+    });
+    const end=event=>{
+     if(this.state.room.dragIdx<0||this.roomPointerId!==event.pointerId)return;
+     this.state.room.dragIdx=-1;this.roomPointerId=null;this.saveRoomState();
+    };
+    handle.addEventListener('pointerup',end);
+    handle.addEventListener('pointercancel',end);
+    layer.append(handle);
+   }
+   for(let i=0;i<items.length;i++){
+    const item=items[i],handle=layer.children[i];
+    handle.dataset.index=String(i);
+    handle.style.left=(item.x/W*100)+'%';
+    handle.style.top=((item.y-18)/H*100)+'%';
+    handle.setAttribute('aria-label',(itemTypes[item.id]?.name||'가구')+' 위치 이동');
    }
   }
   pointerXY(e){
@@ -509,37 +552,32 @@
    return {x:(e.clientX-rect.left)/rect.width*W,y:(e.clientY-rect.top)/rect.height*H};
   }
   bindEvents(){
-   this.canvas.style.touchAction='none';
+   // Keep vertical page gestures available over the entire Canvas.
+   // Only the small furniture handles disable pan, when directly dragged.
+   this.canvas.style.touchAction='pan-y';
+   let tap=null;
    this.canvas.addEventListener('pointerdown',event=>{
-    const p=this.pointerXY(event);if(!p)return;
-    if(this.state.mode==='room'){
-     for(let i=this.state.room.placed.length-1;i>=0;i--){
-      const it=this.state.room.placed[i];
-      if(Math.hypot(p.x-it.x,p.y-(it.y-18))<=53){
-       this.state.room.dragIdx=i;this.canvas.setPointerCapture?.(event.pointerId);return;
-      }
-     }
-     return;
-    }
-    if(this.state.mode!=='foraging'&&p.y>=820)this.onTapAction();
-   });
-   this.canvas.addEventListener('pointermove',event=>{
-    const r=this.state.room;if(this.state.mode!=='room'||r.dragIdx<0)return;
-    const p=this.pointerXY(event);if(!p)return;
-    const xy=this.constrainFloor(p.x,p.y+18);
-    Object.assign(r.placed[r.dragIdx],xy);
-   });
-   const end=()=>{const r=this.state.room;if(r.dragIdx>=0){r.dragIdx=-1;this.saveRoomState();}};
-   this.canvas.addEventListener('pointerup',end);
-   this.canvas.addEventListener('pointercancel',end);
-   root.addEventListener('pointerup',end);
+    const p=this.pointerXY(event);
+    if(!p||this.state.mode==='room'||this.state.mode==='foraging'||p.y<820)return;
+    tap={id:event.pointerId,x:event.clientX,y:event.clientY,at:Date.now(),mode:this.state.mode};
+   },{passive:true});
+   this.canvas.addEventListener('pointerup',event=>{
+    const gesture=tap;tap=null;
+    if(!gesture||event.pointerId!==gesture.id||gesture.mode!==this.state.mode)return;
+    if(Date.now()-gesture.at>800||
+     Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)>13)return;
+    const p=this.pointerXY(event);
+    if(p&&p.y>=820)this.onTapAction();
+   },{passive:true});
+   this.canvas.addEventListener('pointercancel',()=>{tap=null;});
    root.addEventListener('resize',()=>this.resize());
    root.document.addEventListener('visibilitychange',()=>{if(root.document.hidden)this.pause();else this.resume();});
    root.document.addEventListener('wordville-app-resume',()=>{this.resize();this.resume();this.refreshWordPool();});
    root.document.addEventListener('wordville-words-ready',()=>this.loadWordsFromAndroid(root.WordvilleWords||[]));
    root.document.getElementById('wordville-action')?.addEventListener('click',()=>this.onTapAction());
    root.document.getElementById('btn-clear-room')?.addEventListener('click',()=>{
-    this.state.room.placed=[];this.saveRoomState();this.message('배치만 초기화했습니다. 보유 가구는 그대로 유지됩니다.');
+    this.state.room.placed=[];this.saveRoomState();this.syncRoomHandles();
+    this.message('배치만 초기화했습니다. 보유 가구는 그대로 유지됩니다.');
    });
    root.document.getElementById('wv-solo-day')?.addEventListener('change',()=>this.refreshWordPool());
   }
@@ -576,6 +614,10 @@
   const hint=root.document.createElement('p');hint.id='target-hint';
   const canvas=root.document.createElement('canvas');canvas.id='wordvilleCanvas';
   canvas.width=600;canvas.height=1000;canvas.setAttribute('aria-label','Wordville 600 × 1000 캔버스 단어 미니게임');
+  const stage=root.document.createElement('div');stage.id='wv-canvas-stage';stage.className='wv-canvas-stage';
+  const handles=root.document.createElement('div');handles.id='wv-room-drag-targets';
+  handles.className='wv-room-drag-targets';handles.hidden=true;
+  stage.append(canvas,handles);
   const status=root.document.createElement('p');status.id='wordville-canvas-status';
   status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const choices=root.document.createElement('div');choices.id='foraging-choices';choices.hidden=true;
@@ -586,7 +628,7 @@
   drawer.append(drawerTitle,items,clear);
   const action=root.document.createElement('button');action.type='button';
   action.id='wordville-action';action.textContent='🎯 타이밍 맞춰 누르기';
-  panel.append(heading,target,hint,canvas,action,choices,drawer,status);
+  panel.append(heading,target,hint,stage,action,choices,drawer,status);
   const navbar=solo.querySelector('.wv-solo-topnav');navbar?.after(panel);
   root.wordvilleGame=new WordvilleGameEngine('wordvilleCanvas');
  }
