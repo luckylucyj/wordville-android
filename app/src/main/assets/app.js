@@ -102,6 +102,10 @@ function rehydrateStudyOnForeground(){
      &&latest.reviews&&typeof latest.reviews==='object'&&Array.isArray(latest.concepts)){
     if(JSON.stringify(state)!==raw){
      state=latest;
+     // Legacy VOCA aliases may arrive from older local snapshots. Restore
+     // canonical IDs immediately, otherwise a foreground refresh can hide
+     // existing answers until the next full app launch.
+     if(words.length)migrateLearningAliases();
      renderConcepts();
      if(words.length)renderWords();
      document.dispatchEvent(new Event('wordville-record-changed'));
