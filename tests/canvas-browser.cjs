@@ -21,6 +21,10 @@ const assert=require('node:assert/strict');
   assert.deepEqual({w:base.width,h:base.height},{w:1200,h:2000});
   assert.ok(base.words>5000);
   assert.equal(base.mode,'fishing');
+  await page.waitForFunction(()=>
+   wordvilleGame.atlas.sheets.weeding_states?.naturalHeight===1536 &&
+   wordvilleGame.atlas.sheets.foraging_stages?.naturalHeight===1536,
+   {timeout:15000});
   // Award one real offline vocabulary word for a successful fishing catch.
   await page.evaluate(()=>{wordvilleGame.state.fishing.pos=.76;wordvilleGame.onTapAction();});
   assert.equal(await page.evaluate(id=>!!state.reviews[id],base.first),true);
@@ -34,9 +38,32 @@ const assert=require('node:assert/strict');
   await page.waitForTimeout(80);
   await page.evaluate(()=>{wordvilleGame.state.weeding.timer=0;wordvilleGame.nextActionAt=0;wordvilleGame.state.weeding.pos=.01;wordvilleGame.onTapAction();});
   assert.equal(await page.evaluate(()=>wordvilleGame.state.weeding.status),'bad');
+  // Bad outcomes are requeued after two other real VOCA cards, without copies.
+  const deferred=await page.evaluate(()=>{
+   const g=wordvilleGame,failed=g.getCurrentWord().id;
+   g.state.weeding.timer=.001;g.update(.05);
+   return {failed,queue:g.studyManager.queue.slice(0,4).map(w=>w.id),
+    count:g.studyManager.queue.length,unique:new Set(g.studyManager.queue.map(w=>w.id)).size,
+    review:state.reviews[failed]};
+  });
+  assert.equal(deferred.queue[2],deferred.failed);
+  assert.equal(deferred.count,deferred.unique);
+  assert.equal(deferred.review.correct,false);
   // Foraging a valid word triggers each of the three staged animations.
   await page.locator('[data-solo-tab="capture"]').click();
   assert.equal(await page.evaluate(()=>wordvilleGame.state.mode),'foraging');
+  // An incorrect food choice also advances to the next card and schedules
+  // the failed word after two intervening cards.
+  const firstWrong=await page.evaluate(()=>wordvilleGame.getCurrentWord().id);
+  await page.locator('#foraging-choices button').evaluateAll((buttons,answerId)=>{
+   const incorrect=buttons.find(button=>{
+    const entry=wordvilleGame.state.foraging.choices.find(w=>w.word===button.textContent);
+    return entry&&entry.id!==answerId;
+   });
+   if(!incorrect)throw Error('Foraging incorrect option missing');
+   incorrect.click();
+  },firstWrong);
+  assert.equal(await page.evaluate(id=>wordvilleGame.studyManager.queue[2]?.id===id,firstWrong),true);
   const food=await page.evaluate(()=>wordvilleGame.getCurrentWord().word);
   await page.locator('#foraging-choices button').evaluateAll((buttons,word)=>{
    const matching=buttons.find(button=>button.textContent===word);
@@ -72,12 +99,15 @@ const assert=require('node:assert/strict');
   assert.ok(await page.evaluate(()=>!!localStorage.getItem('wordville_room_v1')));
   // Foreground event plus a cold WebView reload must preserve layout and learning.
   await page.evaluate(()=>document.dispatchEvent(new Event('wordville-app-resume')));
+  const pendingWord=await page.evaluate(()=>wordvilleGame.getCurrentWord()?.id);
   await page.reload();
   await page.waitForFunction(()=>!!globalThis.wordvilleGame&&WordvilleWords?.length>5000,{timeout:30000});
   const restored=await page.evaluate(()=>wordvilleGame.state.room.placed.at(-1));
   assert.ok(Math.abs(restored.x-moved.x)<2);
   assert.ok(Math.abs(restored.y-moved.y)<2);
   assert.ok(await page.evaluate(id=>!!state.reviews[id],base.first));
+  assert.equal(await page.evaluate(()=>wordvilleGame.getCurrentWord()?.id),pendingWord,
+   'Pending word order remains stable after Android WebView recreation');
   assert.deepEqual(errors,[]);
   console.log('PASS: Canvas 4 modes, DPR2, real word rewards, 3-stage foraging, dragging and cold-start restoration');
  }finally{await browser.close();}

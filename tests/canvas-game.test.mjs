@@ -49,7 +49,7 @@ test('real user vocabulary and progress are authoritative; no sample teaching-on
 test('foraging has a 3 stage animation and prevents repeated rewards',()=>{
  assert.match(canvas,/g\.stage=2;g\.timer=\.85;g\.pending=true/);
  assert.match(canvas,/if\(g\.stage===2\)\{g\.stage=3;g\.timer=1;/);
- assert.match(canvas,/else\{g\.stage=1;g\.pending=false;this\.advanceWord\(\);\}/);
+ assert.match(canvas,/else\{g\.stage=1;g\.pending=false;this\.advanceWord\(true\);\}/);
  assert.match(canvas,/if\(this\.state\.mode!=='foraging'\|\|g\.stage!==1/);
 });
 test('weeding has three result levels and timing limits',()=>{
