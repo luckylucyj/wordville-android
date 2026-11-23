@@ -7,9 +7,9 @@
  const byId=id=>document.getElementById(id);
  const storeKey='wordville.solo-learning.v1';
  const games={
-  fish:{name:'단어 낚시',icon:'🎣',description:'한국어 뜻을 보고 맞는 영단어를 낚으세요.',prize:'잡은 물고기'},
-  wood:{name:'단어 벌목',icon:'🪓',description:'영단어와 일치하는 한국어 뜻을 골라 나무를 베세요.',prize:'모은 통나무'},
-  capture:{name:'예문 포획',icon:'🐑',description:'기존 Wordville 단어 카드·영어 대화 예문의 빈칸에 알맞은 단어를 넣으세요.',prize:'발견한 동물'}
+  fish:{name:'단어 낚시',icon:'🎣',description:'찌를 맞춰 누른 뒤 영어 단어의 한국어 뜻을 입력하세요.',prize:'잡은 물고기'},
+  wood:{name:'단어 제초',icon:'🌱',description:'제초 타이밍을 맞춘 뒤 영단어의 한국어 뜻을 입력하세요.',prize:'제거한 잡초'},
+  capture:{name:'음식 수집',icon:'🍙',description:'단어의 한국어 뜻에 맞는 영어 단어를 골라 음식을 모으세요.',prize:'모은 음식'}
  };
  const furniture=[
   {id:'rug',name:'크림 러그',icon:'🟠',cost:12},
@@ -58,7 +58,7 @@
  screen.innerHTML=`
  <div class="wv-solo-heading"><small>WORDVILLE · SOLO VOCABULARY</small>
  <h2>🎮 나만의 영어 게임</h2>
- <p>영상에서 본 낚시·벌목·예문 포획과 나의 방을 혼자 즐겨요. 친구 대결과 온라인 순위는 없습니다.</p></div>
+ <p>낚시·제초·음식 수집과 나의 방을 혼자 즐겨요. 친구 대결과 온라인 순위는 없습니다.</p></div>
  <div class="wv-solo-wallet" aria-live="polite">
   <span id="wv-solo-coins">🪙 0 코인</span>
   <span id="wv-solo-streak">🔥 연속 정답 0</span>
@@ -66,8 +66,8 @@
  </div>
  <div class="wv-solo-topnav" role="group" aria-label="게임 및 내 방 선택">
   <button type="button" data-solo-tab="fish">🎣 낚시</button>
-  <button type="button" data-solo-tab="wood">🪓 벌목</button>
-  <button type="button" data-solo-tab="capture">🐑 포획</button>
+  <button type="button" data-solo-tab="wood">🌱 제초</button>
+  <button type="button" data-solo-tab="capture">🍙 음식 수집</button>
   <button type="button" data-solo-tab="room">🏠 나의 방</button>
  </div>
  <section id="wv-solo-game-view">
@@ -151,6 +151,8 @@
   get('game-view').hidden=tab==='room';
   get('room-view').hidden=tab!=='room';
   screen.querySelectorAll('[data-solo-tab]').forEach(b=>{const active=b.dataset.soloTab===tab;b.setAttribute('aria-pressed',String(active));});
+  get('question').hidden=true; // Unified Canvas handles answers, hide legacy multiple-choice fishing/wood game.
+  get('scene').hidden=true;
   if(tab==='room'){renderRoom();return;}
   get('description').textContent=games[mode].description;
   get('scene').dataset.game=mode;

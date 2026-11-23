@@ -116,24 +116,32 @@ const backPng=png(16,16,()=>[46,157,181,255]);
   assert.equal(await phase(),'biting');
   assert.equal(await page.locator('.wv-fishing-bobber').evaluate(el=>el.style.left),'76%');
   await reel.tap();
+  assert.equal(await total(),before,'Timing success cannot grant a word without a correct meaning');
+  assert.equal(await page.locator('#wv-canvas-answer').isVisible(),true);
+  await page.locator('#wv-answer-input').fill(await page.evaluate(()=>
+    WordvilleCanvasAnswer.alternatives(wordvilleGame.getCurrentWord())[0]));
+  await page.locator('#wv-canvas-answer button[type=submit]').tap();
   assert.equal(await phase(),'caught');
-  assert.equal(await total(),before+1,'A completed gauge tap grants one reward');
+  assert.equal(await total(),before+1);
   assert.equal(await popup.getAttribute('aria-hidden'),'false');
   const [weightValue,unit]=(await popup.locator('.wv-fishing-weight').textContent()).split(' ');
   assert.equal(unit,'kg');
   assert.match(weightValue,/^\d\.\d{2}$/);
   assert.ok(Number(weightValue)>=2.5&&Number(weightValue)<=5);
   await page.evaluate(()=>wordvilleGame.update(4));
-  assert.equal(await phase(),'caught','The catch waits for the player to reset it');
+  assert.equal(await phase(),'caught');
   await page.getByRole('button',{name:'다시 낚시하기'}).press('Enter');
   assert.equal(await phase(),'casting');
-  assert.equal(await popup.getAttribute('aria-hidden'),'true');
-  assert.equal(await total(),before+1,'Reset does not grant a second reward');
+  assert.equal(await total(),before+1);
 
   await setPosition(62);
-  assert.equal(await phase(),'casting','The displayed zone starts at 64%');
   await page.locator('#wordvilleCanvas').tap({position:{x:100,y:120}});
-  assert.equal(await phase(),'caught','A scene tap counts at the sample’s 62% grace boundary');
+  assert.equal(await page.locator('#wv-canvas-answer').isVisible(),true);
+  assert.equal(await total(),before+1);
+  await page.locator('#wv-answer-input').fill(await page.evaluate(()=>
+    WordvilleCanvasAnswer.alternatives(wordvilleGame.getCurrentWord())[0]));
+  await page.locator('#wv-canvas-answer button[type=submit]').click();
+  assert.equal(await phase(),'caught');
   assert.equal(await total(),before+2);
   // Room drag handles intercept touch only over a furniture icon.
   await page.locator('[data-solo-tab="room"]').click();

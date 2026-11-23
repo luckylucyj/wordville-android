@@ -1,0 +1,6 @@
+/* BGM control lives in the Town settings drawer, not over the map. */
+.wv-town-music-control{display:flex;flex-direction:column;gap:5px;width:100%;padding:7px 0;border-top:1px solid #bfa77d}
+#wv-town-music{min-height:40px;width:100%;border:2px solid #97794e;background:#fcf0ca;color:#4a3928;border-radius:5px;font-size:12px;font-weight:800;touch-action:manipulation}
+#wv-town-music[aria-pressed="true"]{background:#d4ead2;border-color:#6a916a}
+#wv-town-music-status{display:block;max-width:100%;font-size:11px;line-height:1.4;color:#5c4b3a;overflow-wrap:anywhere}
+#wv-town-music-audio{display:none}
