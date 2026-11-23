@@ -1,0 +1,16 @@
+/* Only the illustrated fishing/weeding canvas is the game. No parallel quiz UI. */
+#wv-solo-question[hidden],#wv-solo-scene[hidden],#wv-canvas-answer[hidden],
+#wv-weeding-word[hidden],#wv-fishing-art-error[hidden]{display:none!important}
+#wv-canvas-answer{margin:10px 0;padding:12px;background:#fff8e6;border:3px solid #ab8357;border-radius:14px;position:relative;z-index:4}
+#wv-answer-prompt{display:block;font-size:14px;font-weight:850;margin:0 0 8px;color:#563a29}
+.wv-answer-line{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center}
+#wv-answer-input{width:100%;min-width:0;height:44px;padding:7px 9px;border:2px solid #a07b54;border-radius:8px;background:#fff;font-size:16px}
+#wv-canvas-answer button{min-height:44px;font-size:12px;padding:5px 9px}
+.wv-fishing-word{position:absolute;left:40%;top:0;z-index:2;max-width:35%;padding:2px 4px;background:#fff8dfeb;border:1px solid #654f43;border-radius:6px;font-size:clamp(9px,2.5vw,12px);font-weight:900;line-height:16px;transform:translateX(-50%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#wv-weeding-word{position:absolute;left:50%;top:12%;transform:translateX(-50%);max-width:70%;z-index:2;background:#fff9eaf2;border:3px solid #ac885d;border-radius:12px;padding:7px 13px;font-weight:900;color:#513b2d;text-align:center;font-size:clamp(14px,4vw,21px);overflow-wrap:anywhere;pointer-events:none}
+.wv-canvas-stage[data-mode="fishing"] #wordvilleCanvas{background:#a4dbe9 url('images/fishing/bg_fishing.png') center / cover no-repeat}
+.wv-canvas-stage[data-mode="fishing"][data-reference-art="true"]{aspect-ratio:9/16}
+.wv-canvas-stage[data-mode="weeding"][data-reference-art="true"]{aspect-ratio:9/16;overflow:hidden;background:#c9e6bf}
+.wv-canvas-stage[data-mode="weeding"][data-reference-art="true"] #wordvilleCanvas{width:100%;height:100%;aspect-ratio:auto}
+#wv-fishing-art-error{position:absolute;top:25%;left:6%;right:6%;padding:15px;border-radius:14px;border:3px solid #9a6d41;background:#fff3da;color:#633f29;font-size:14px;font-weight:800;line-height:1.5;text-align:center;z-index:3}
+@media(max-width:390px){.wv-answer-line{grid-template-columns:minmax(0,1fr) auto}.wv-answer-line button:last-child{grid-column:1/-1;min-height:32px}}
