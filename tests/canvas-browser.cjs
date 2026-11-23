@@ -27,31 +27,37 @@ const assert=require('node:assert/strict');
    wordvilleGame.atlas.sheets.weeding_states?.naturalHeight===1536 &&
    wordvilleGame.atlas.sheets.foraging_stages?.naturalHeight===1536,
    {timeout:15000});
-  // Award one real offline vocabulary word for a successful fishing catch.
+  // Fishing timing only opens the actual vocabulary answer form.
   await page.evaluate(()=>{wordvilleGame.state.fishing.pos=76;wordvilleGame.onTapAction();});
-  assert.equal(await page.evaluate(id=>!!state.reviews[id],base.first),true);
-  assert.ok((await page.evaluate(()=>state.coins))>base.coin);
+  assert.equal(await page.locator('#wv-canvas-answer').isVisible(),true);
+  assert.equal(await page.evaluate(()=>wordvilleGame.state.fishing.counts.reduce((a,b)=>a+b)),0,
+   'Timing cannot grant reward without a correct word meaning');
+  await page.locator('#wv-answer-input').fill(await page.evaluate(()=>
+   WordvilleCanvasAnswer.alternatives(wordvilleGame.getCurrentWord())[0]));
+  await page.locator('#wv-canvas-answer button[type=submit]').click();
   assert.equal(await page.evaluate(()=>wordvilleGame.state.fishing.counts.reduce((a,b)=>a+b)),1);
   assert.match(await page.locator('#wordville-canvas-status').innerText(),/저장 완료/);
-  // Weeding 3-quality timing states.
+
   await page.locator('[data-solo-tab="wood"]').click();
   assert.equal(await page.evaluate(()=>wordvilleGame.state.mode),'weeding');
   await page.evaluate(()=>{wordvilleGame.nextActionAt=0;wordvilleGame.state.weeding.pos=.50;wordvilleGame.onTapAction();});
+  assert.equal(await page.locator('#wv-canvas-answer').isVisible(),true);
+  assert.equal(await page.evaluate(()=>wordvilleGame.state.weeding.status),'idle',
+   'Perfect timing cannot mark correct before the typed meaning is checked');
+  await page.locator('#wv-answer-input').fill(await page.evaluate(()=>
+   WordvilleCanvasAnswer.alternatives(wordvilleGame.getCurrentWord())[0]));
+  await page.locator('#wv-canvas-answer button[type=submit]').click();
   assert.equal(await page.evaluate(()=>wordvilleGame.state.weeding.status),'perfect');
-  await page.waitForTimeout(80);
-  await page.evaluate(()=>{wordvilleGame.state.weeding.timer=0;wordvilleGame.nextActionAt=0;wordvilleGame.state.weeding.pos=.01;wordvilleGame.onTapAction();});
-  assert.equal(await page.evaluate(()=>wordvilleGame.state.weeding.status),'bad');
-  // Bad outcomes are requeued after two other real VOCA cards, without copies.
-  const deferred=await page.evaluate(()=>{
-   const g=wordvilleGame,failed=g.getCurrentWord().id;
-   g.state.weeding.timer=.001;g.update(.05);
-   return {failed,queue:g.studyManager.queue.slice(0,4).map(w=>w.id),
-    count:g.studyManager.queue.length,unique:new Set(g.studyManager.queue.map(w=>w.id)).size,
-    review:state.reviews[failed]};
+
+  await page.evaluate(()=>{
+   wordvilleGame.state.weeding.timer=0;
+   wordvilleGame.nextActionAt=0;
+   wordvilleGame.state.weeding.pos=.01;
+   wordvilleGame.onTapAction();
   });
-  assert.equal(deferred.queue[2],deferred.failed);
-  assert.equal(deferred.count,deferred.unique);
-  assert.equal(deferred.review.correct,false);
+  assert.equal(await page.evaluate(()=>wordvilleGame.state.weeding.status),'bad');
+  assert.equal(await page.locator('#wv-canvas-answer').isVisible(),false);
+
   // Foraging a valid word triggers each of the three staged animations.
   await page.locator('[data-solo-tab="capture"]').click();
   assert.equal(await page.evaluate(()=>wordvilleGame.state.mode),'foraging');
