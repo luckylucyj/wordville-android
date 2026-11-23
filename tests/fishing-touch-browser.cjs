@@ -77,7 +77,12 @@ const backPng=png(16,16,()=>[46,157,181,255]);
   assert.equal(info.body[3],255,'White character face remains opaque');
   assert.deepEqual(info.body.slice(0,3),[255,255,255]);
   assert.equal(info.outline[3],255);
-  assert.deepEqual(info.background.slice(0,3),[46,157,181]);
+  assert.equal(info.background[3],255,'Fishing canvas background must be opaque art');
+  assert.ok(
+   (info.background[0]===46&&info.background[1]===157&&info.background[2]===181)||
+   (info.background[1]>180&&info.background[2]>180),
+   'Fishing background renders either pixel lakeside dock water or legacy bg_fishing PNG: '+JSON.stringify(info.background)
+  );
   assert.equal(info.css,'pan-y');
   assert.equal(info.fileUrl,'file:///android_asset/images/fishing/bg_fishing.png');
   assert.equal(info.safeUrl,'https://appassets.androidplatform.net/assets/images/fishing/bg_fishing.png');
