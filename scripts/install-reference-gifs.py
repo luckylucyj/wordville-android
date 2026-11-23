@@ -5,6 +5,8 @@ from zipfile import ZipFile, BadZipFile
 
 ASSETS=Path(__file__).resolve().parents[1]/"app/src/main/assets"
 ARCHIVE=ASSETS/"wordville-reference-gifs.zip"
+if not ARCHIVE.is_file() and (ASSETS/"wordville-reference-gifs-corrected.zip").is_file():
+    ARCHIVE=ASSETS/"wordville-reference-gifs-corrected.zip"
 NEEDED=("images/reference/fishing.gif","images/reference/foraging.gif")
 LEGACY="images/reference/weeding.gif"  # Old ZIP mistakenly named a food GIF 'weeding'.
 

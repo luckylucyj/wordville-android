@@ -2,7 +2,7 @@
 
 The two uploaded 360×640 GIFs show (1) Hachiware fishing and (2) Chiikawa with a pudding, rice ball and cake. The **second GIF is not weeding**, and rendering it under the weed mode is an error.
 
-Upload `wordville-reference-gifs-corrected.zip` from the conversation to `app/src/main/assets/wordville-reference-gifs.zip` on the PR branch. The corrected ZIP contains:
+Upload `wordville-reference-gifs-corrected.zip` **without renaming** to `app/src/main/assets/` on the PR branch. The installer also accepts the older filename `wordville-reference-gifs.zip`. The corrected ZIP contains:
 - `images/reference/fishing.gif`
 - `images/reference/foraging.gif`
 
