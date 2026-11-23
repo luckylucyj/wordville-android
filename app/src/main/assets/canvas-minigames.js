@@ -92,6 +92,11 @@
     room_chiikawa_fg:'images/minigames/room_chiikawa_fg.png',
     room_hachiware_fg:'images/minigames/room_hachiware_fg.png',
     meadow_bg:'images/minigames/meadow_bg.webp',
+    fishing_dock_bg:'images/minigames/fishing_dock_bg.webp',
+    prop_fish_blue:'images/minigames/props/fish_blue.png',
+    prop_fish_orange:'images/minigames/props/fish_orange.png',
+    prop_fish_gold:'images/minigames/props/fish_gold.png',
+    prop_bobber:'images/minigames/props/bobber.png',
     prop_weed_full:'images/minigames/props/weed_full.png',
     prop_weed_damaged:'images/minigames/props/weed_damaged.png',
     prop_weed_clover:'images/minigames/props/weed_clover.png',
@@ -122,7 +127,8 @@
    this.weedingWord=root.document.getElementById('wv-weeding-word');
    this.artError=root.document.getElementById('wv-fishing-art-error');
    this.state={mode:'fishing',wordIdx:0,slots:[],popup:null,
-    fishing:{pos:15,dir:1,caught:false,sceneDirty:true,counts:[0,0,0,0]},
+    fishing:{pos:15,dir:1,caught:false,sceneDirty:true,counts:[0,0,0,0],t:0,lastFish:'prop_fish_blue',
+     actor:{id:'hachiware',x:378,y:568,direction:'left',walkDistance:0,action:'idle'},particles:[]},
     weeding:{pos:0,dir:1,status:'idle',timer:0,pendingRetry:false,combo:0,bushHp:4,maxHp:4,
      actor:{id:'chiikawa',x:195,y:580,tx:225,ty:580,direction:'right',walkDistance:0,action:'idle',jumpT:0},
      particles:[],matchPairs:[],selectedEn:null,matchedIds:[]},
@@ -435,11 +441,27 @@
   update(dt){
    if(this.state.popup)this.state.popup.timer=Math.max(0,this.state.popup.timer-dt);
    const f=this.state.fishing,w=this.state.weeding,g=this.state.foraging;
-   if(this.state.mode==='fishing'&&!f.caught&&!this.pendingAnswer){
-    f.pos+=f.dir*dt*69;
-    if(f.pos>=92){f.pos=92;f.dir=-1;}
-    if(f.pos<=8){f.pos=8;f.dir=1;}
-    this.syncFishingTiming();
+   if(this.state.mode==='fishing'){
+    f.t=(f.t||0)+dt;
+    if(!f.caught&&!this.pendingAnswer){
+     f.pos+=f.dir*dt*69;
+     if(f.pos>=92){f.pos=92;f.dir=-1;}
+     if(f.pos<=8){f.pos=8;f.dir=1;}
+     this.syncFishingTiming();
+    }
+    const inZone=!f.caught&&f.pos>=FISH_ZONE[0]-2&&f.pos<=FISH_ZONE[1]+2;
+    if(f.actor){
+     f.actor.direction='left';
+     f.actor.action=f.caught?'talk':(inZone?'walk':'idle');
+     if(inZone)f.actor.walkDistance=(f.actor.walkDistance||0)+dt*4;
+    }
+    if((inZone||f.caught)&&Math.random()<dt*(f.caught?16:7)){
+     f.particles.push({x:185+(Math.random()-.5)*44,y:f.caught?540:670,vx:(Math.random()-.5)*90,vy:-75-Math.random()*75,life:0.65,color:f.caught?'#fff3a8':'#e8fbff',size:5});
+    }
+    for(let i=f.particles.length-1;i>=0;i--){
+     const pt=f.particles[i];pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.vy+=190*dt;pt.life-=dt;
+     if(pt.life<=0)f.particles.splice(i,1);
+    }
    }
    if(this.state.mode==='weeding'){
     if(w.timer>0){
@@ -583,8 +605,66 @@
    this.syncFishingTiming();
   }
   renderFishing(){
-   // The complete authored PNG/GIF already contains Hachiware and the fishing rod.
-   // Do not stamp a duplicate character or procedural scenery over it.
+   // Live cozy pixel-art lakeside dock + Wordville pixel-art Hachiware!
+   if(this.paintSprite('fishing_dock_bg',0,0,W,H)){
+    const c=this.ctx,f=this.state.fishing,t=f.t||0;
+    const inZone=!f.caught&&f.pos>=FISH_ZONE[0]-2&&f.pos<=FISH_ZONE[1]+2;
+    c.save();c.imageSmoothingEnabled=false;
+    // Animated water ripples & glints in the turquoise pond
+    const bobX=185+Math.sin(t*1.8)*5,bobY=676+(inZone?Math.sin(t*28)*7:Math.sin(t*3.2)*3);
+    c.strokeStyle='rgba(255,255,255,0.68)';c.lineWidth=3;
+    const r1=18+((t*24)%28),r2=12+(((t*24)+14)%28);
+    c.beginPath();c.ellipse(bobX,bobY+8,r1,r1*0.36,0,0,Math.PI*2);c.stroke();
+    if(inZone){c.beginPath();c.ellipse(bobX,bobY+8,r2,r2*0.36,0,0,Math.PI*2);c.stroke();}
+    // Subtle dark fish shadow swimming near the bobber
+    if(!f.caught){
+     const sx=bobX-26+Math.sin(t*1.5)*22,sy=bobY+28+Math.cos(t*1.9)*8;
+     c.fillStyle='rgba(36,92,118,0.28)';
+     c.beginPath();c.ellipse(sx,sy,16,7,Math.sin(t*1.5)*0.2,0,Math.PI*2);c.fill();
+    }
+    // Live Wordville pixel-art Hachiware on the wooden dock!
+    const ha=f.actor||{id:'hachiware',x:378,y:568,direction:'left',walkDistance:0,action:'idle'};
+    const jumpOff=f.caught?-Math.abs(Math.sin(t*7.5))*26:(inZone?-Math.abs(Math.sin(t*14))*6:Math.sin(t*2.4)*2);
+    c.fillStyle='rgba(74,59,50,0.24)';
+    c.beginPath();c.ellipse(ha.x,ha.y+4,28,10,0,0,Math.PI*2);c.fill();
+    if(root.WordvilleWalk?.paint){
+     root.WordvilleWalk.paint(c,ha,ha.x,ha.y+jumpOff,{
+      width:118,height:118,walking:ha.action==='walk',action:ha.action
+     });
+    }
+    // Crisp fishing rod & curved line from Hachiware's paw to bobber/fish
+    const pawX=ha.x-26,pawY=ha.y+jumpOff-34;
+    const tipX=f.caught?250:226,tipY=f.caught?385:428+(inZone?Math.sin(t*26)*8:Math.sin(t*2.4)*3);
+    c.strokeStyle='#5a3b24';c.lineWidth=5;c.lineCap='round';
+    c.beginPath();c.moveTo(pawX,pawY);c.quadraticCurveTo((pawX+tipX)/2,tipY+18,tipX,tipY);c.stroke();
+    c.strokeStyle='#fffdf5';c.lineWidth=2;
+    const lineEndX=f.caught?192:bobX,lineEndY=f.caught?525+Math.sin(t*9)*10:bobY-4;
+    c.beginPath();c.moveTo(tipX,tipY);c.quadraticCurveTo(tipX-32,(tipY+lineEndY)/2+16,lineEndX,lineEndY);c.stroke();
+    // Pixel bobber (while casting/biting) or leaping pixel fish (when caught!)
+    if(f.caught){
+     const fishImg=this.sprites[f.lastFish||'prop_fish_blue']||this.sprites.prop_fish_blue;
+     if(fishImg&&(fishImg.naturalWidth||fishImg.width)){
+      const fw=108,fh=fw*(fishImg.naturalHeight||fishImg.height)/(fishImg.naturalWidth||fishImg.width);
+      c.drawImage(fishImg,lineEndX-fw/2,lineEndY-fh/2,fw,fh);
+     }
+    }else{
+     const bobImg=this.sprites.prop_bobber;
+     if(bobImg&&(bobImg.naturalWidth||bobImg.width)){
+      c.drawImage(bobImg,bobX-17,bobY-20,34,34);
+     }
+    }
+    // Water droplet / victory star particles
+    for(const pt of (f.particles||[])){
+     c.fillStyle=pt.color;c.fillRect(Math.round(pt.x),Math.round(pt.y),pt.size,pt.size);
+    }
+    // Cute Hachiware reaction bubble
+    const mood=f.caught?'낚았다! ✨':(inZone?'입질 왔다! ❗':'기다리는 중...');
+    const bw=122,bx=Math.min(W-bw-16,Math.max(16,ha.x-bw/2)),by=ha.y+jumpOff-136;
+    this.box(bx,by,bw,32,12,'#fffdf5f2',INK,2.5);
+    this.text(mood,bx+bw/2,by+21,15,INK,'850',bw-14);
+    c.restore();
+    return;
+   }
    if(this.paintSprite('reference_fishing',0,0,W,H))return;
    if(this.paintSprite('bg_fishing',0,0,W,H))return;
    // The CSS bitmap remains visible when Canvas decode fails; never fill black.
@@ -809,6 +889,8 @@
     const f=this.state.fishing;
     const weight=(Math.random()*2.5+2.5).toFixed(2)+' kg';
     f.counts[word.word.length%f.counts.length]++;
+    const fishSprites=['prop_fish_blue','prop_fish_orange','prop_fish_gold'];
+    f.lastFish=fishSprites[word.word.length%fishSprites.length];
     f.caught=true;f.sceneDirty=true;
     // Automatically add caught fish to the Room Aquarium!
     const fishColors=['#5eaee0','#f4945e','#76c990','#e888b2'];
@@ -1307,7 +1389,7 @@
   }
   paint(){
    if(this.state.mode==='foraging'){this.renderForagingLive();return;}
-   if(this.state.mode==='fishing'&&!this.state.fishing.sceneDirty&&!this.sprites.reference_fishing)return;
+   if(this.state.mode==='fishing'&&!this.state.fishing.sceneDirty&&!this.sprites.reference_fishing&&!this.sprites.fishing_dock_bg)return;
    this.ctx.clearRect(0,0,W,H);
    if(this.state.mode==='fishing'){
     this.renderFishing();
