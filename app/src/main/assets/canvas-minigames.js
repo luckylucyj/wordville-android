@@ -31,12 +31,26 @@
   aquarium:'pixel_furn_aquarium',lamp:'pixel_furn_lamp',plant:'pixel_furn_plant',
   rug:'pixel_furn_cushions'
  };
- // Foot collision half-extents (hw, hh) & height layerBias in logical 600x1000 space.
- // Flat items (cushions/rug) use negative layerBias so characters sit/stand over them; tall items occlude behind.
+ // Isometric room geometry (6x6 diamond floor + Left/Right back walls in 600x1000 canvas)
+ const ISO_N=6,ISO_TOP_X=300,ISO_TOP_Y=332,ISO_UX=41.67,ISO_UY=22.0,ISO_WALL_H=156;
+ const isoToScreen=(u,v)=>({x:ISO_TOP_X+(u-v)*ISO_UX,y:ISO_TOP_Y+(u+v)*ISO_UY});
+ const screenToIso=(x,y)=>{
+  const dx=(x-ISO_TOP_X)/ISO_UX,dy=(y-ISO_TOP_Y)/ISO_UY;
+  return {u:(dy+dx)/2,v:(dy-dx)/2};
+ };
+ // Foot collision half-extents (hw, hh), isometric grid size (wu, wv), zone ('floor'|'wall'), & layerBias
  const FURNITURE_FOOTPRINTS={
-  bed:{hw:54,hh:26,sit:true,layerBias:0},shelf:{hw:34,hh:20,layerBias:4},books:{hw:34,hh:20,layerBias:4},
-  desk:{hw:38,hh:22,layerBias:0},chair:{hw:36,hh:18,sit:true,layerBias:-22},sofa:{hw:38,hh:22,sit:true,layerBias:2},
-  aquarium:{hw:34,hh:22,layerBias:4},lamp:{hw:18,hh:14,layerBias:4},plant:{hw:20,hh:14,layerBias:2},rug:{hw:36,hh:18,sit:true,layerBias:-26}
+  bed:{zone:'floor',wu:1.8,wv:1.1,hw:52,hh:26,sit:true,layerBias:0},
+  shelf:{zone:'floor',wu:1.0,wv:0.9,hw:32,hh:18,layerBias:4},
+  books:{zone:'floor',wu:1.0,wv:0.9,hw:32,hh:18,layerBias:4},
+  desk:{zone:'floor',wu:1.1,wv:1.1,hw:36,hh:20,layerBias:0},
+  chair:{zone:'floor',wu:1.1,wv:0.9,hw:32,hh:16,sit:true,layerBias:-24},
+  sofa:{zone:'floor',wu:1.1,wv:0.9,hw:34,hh:18,sit:true,layerBias:2},
+  aquarium:{zone:'floor',wu:1.1,wv:0.9,hw:34,hh:20,layerBias:4},
+  lamp:{zone:'floor',wu:0.75,wv:0.75,hw:18,hh:14,layerBias:4},
+  plant:{zone:'floor',wu:0.75,wv:0.75,hw:20,hh:14,layerBias:2},
+  rug:{zone:'floor',wu:1.2,wv:1.0,hw:36,hh:18,sit:true,layerBias:-26},
+  wordframe:{zone:'wall',wu:1.0,wv:1.0,hw:36,hh:20,layerBias:-500}
  };
  const MASCOT_IDS=new Set(['chiikawa','hachiware','usagi','rakko','kurimanju']);
  const ALL_RESIDENT_NAMES=[
@@ -54,20 +68,22 @@
   bed:{name:'포근침대',icon:'🛏️'},shelf:{name:'원목책장',icon:'📚'},chair:{name:'방석세트',icon:'🪑'},
   plant:{name:'화분',icon:'🪴'},lamp:{name:'스탠드조명',icon:'🪔'},rug:{name:'원형러그',icon:'🧶'},
   desk:{name:'원형테이블',icon:'🪑'},books:{name:'책장',icon:'📚'},aquarium:{name:'수족관',icon:'🐠'},
-  sofa:{name:'나무서랍장',icon:'🛋️'}
+  sofa:{name:'나무서랍장',icon:'🛋️'},wordframe:{name:'벽 단어액자',icon:'🖼️'}
  };
  function freshRoom(){
   return {
    host:'chiikawa',
    guests:['usagi'],
    aquariumFish:[{name:'파랑물고기',color:'#5eaee0'},{name:'금붕어',color:'#f4945e'}],
-   unlocked:['bed','shelf','chair','plant','lamp','desk','aquarium'].map(id=>({id,...itemTypes[id]})),
+   unlocked:['bed','shelf','chair','plant','lamp','desk','aquarium','wordframe'].map(id=>({id,...itemTypes[id]})),
    placed:[
-    {id:'bed',x:225,y:388},
-    {id:'shelf',x:412,y:398},
-    {id:'aquarium',x:162,y:442},
-    {id:'chair',x:240,y:462},
-    {id:'desk',x:382,y:462}
+    {id:'bed',...isoToScreen(1.3,1.2)},
+    {id:'shelf',...isoToScreen(1.1,3.6)},
+    {id:'aquarium',...isoToScreen(4.2,1.2)},
+    {id:'chair',...isoToScreen(2.2,4.1)},
+    {id:'desk',...isoToScreen(3.8,3.6)},
+    {id:'wordframe',x:120,y:322,wall:'left',wallPos:4.3,wallH:0.55},
+    {id:'wordframe',x:385,y:272,wall:'right',wallPos:2.0,wallH:0.54}
    ],
    dragIdx:-1
   };
@@ -87,8 +103,8 @@
     bg_weeding:'images/weeding/bg_meadow.png',weed_perfect:'images/weeding/chiikawa_perfect.png',
     weed_medium:'images/weeding/chiikawa_medium.png',weed_bad:'images/weeding/chiikawa_bad.png',
     bg_room:'images/room/room-decor.webp',
-    room_chiikawa:'images/minigames/room_chiikawa_empty.webp',
-    room_hachiware:'images/minigames/room_hachiware_empty.webp',
+    room_chiikawa:'images/minigames/room_chiikawa_iso.webp',
+    room_hachiware:'images/minigames/room_hachiware_iso.webp',
     room_chiikawa_fg:'images/minigames/room_chiikawa_fg.png',
     room_hachiware_fg:'images/minigames/room_hachiware_fg.png',
     meadow_bg:'images/minigames/meadow_bg.webp',
@@ -137,6 +153,10 @@
      particles:[],t:0},
     room:this.loadRoomState()};
    this.roomActors=[];
+   this.roomCraftMode=false;
+   this.roomSelectedPlacedIdx=-1;
+   this.roomDragOrigin=null;
+   this.roomDragValid=true;
    this.roomInviteOpen=false;
    this.roomGuestQuery='';
    this.roomSocialBar=root.document.getElementById('wv-room-social-bar');
@@ -183,7 +203,7 @@
       .map(it=>({id:it.id,...itemTypes[it.id]})).slice(0,20);
      const unique=[...new Map([...defaults.unlocked,...unlocked].map(it=>[it.id,it])).values()];
      const placed=saved.placed.filter(it=>it&&itemTypes[it.id]&&Number.isFinite(it.x)&&Number.isFinite(it.y))
-      .slice(0,ROOM_ITEM_LIMIT).map(it=>({id:it.id,...this.constrainFloor(it.x,it.y)}));
+      .slice(0,ROOM_ITEM_LIMIT).map(it=>({id:it.id,...this.constrainFloor(it.x,it.y,it.id)}));
      const host=saved.host==='hachiware'?'hachiware':'chiikawa';
      const validIds=new Set(ALL_RESIDENT_NAMES.map(x=>x[0]));
      const guests=Array.isArray(saved.guests)?saved.guests.filter(id=>validIds.has(id)&&id!==host).slice(0,4):defaults.guests;
@@ -719,11 +739,100 @@
    this.box(52+496*w.pos-8,883,16,48,6,INK,INK,1);
    this.text(labels[w.status],300,839,18,INK,'800',510);
   }
-  constrainFloor(x,y){
-   let dx=(x-300)/192,dy=(y-412)/78;
-   const len=Math.hypot(dx,dy);
-   if(len>1){dx/=len;dy/=len;}
-   return {x:300+192*dx,y:412+78*dy};
+  constrainFloor(x,y,itemId){
+   const fp=itemId?FURNITURE_FOOTPRINTS[itemId]:null;
+   if(fp?.zone==='wall'){
+    // Wall placement zone: Left Back Wall (x < 300) vs Right Back Wall (x >= 300)
+    const wall=x<ISO_TOP_X?'left':'right';
+    const rawPos=wall==='left'?(ISO_TOP_X-x)/ISO_UX:(x-ISO_TOP_X)/ISO_UX;
+    const pos=this.roomCraftMode?Math.round(eq(rawPos,0.8,5.2)*2)/2:eq(rawPos,0.8,5.2);
+    const floorEdgeY=ISO_TOP_Y+pos*ISO_UY;
+    const wallH=eq((floorEdgeY-y)/ISO_WALL_H,0.28,0.78);
+    const snappedH=this.roomCraftMode?Math.round(wallH*4)/4:wallH;
+    const sx=wall==='left'?ISO_TOP_X-pos*ISO_UX:ISO_TOP_X+pos*ISO_UX;
+    const sy=floorEdgeY-snappedH*ISO_WALL_H;
+    return {x:sx,y:sy,wall,wallPos:pos,wallH:snappedH};
+   }
+   // Floor placement zone: strict 6x6 isometric diamond [0.55..5.45]
+   const iso=screenToIso(x,y);
+   const padU=fp?Math.max(0.55,fp.wu*0.48):0.55;
+   const padV=fp?Math.max(0.55,fp.wv*0.48):0.55;
+   let u=eq(iso.u,padU,ISO_N-padU),v=eq(iso.v,padV,ISO_N-padV);
+   if(this.roomCraftMode&&itemId){
+    u=Math.round(u*2)/2;v=Math.round(v*2)/2;
+    u=eq(u,padU,ISO_N-padU);v=eq(v,padV,ISO_N-padV);
+   }
+   return isoToScreen(u,v);
+  }
+  hasFurnitureCollision(skipIdx,x,y,id){
+   const fp=FURNITURE_FOOTPRINTS[id]||{zone:'floor',wu:1,wv:1};
+   const placed=this.state.room.placed;
+   if(fp.zone==='wall'){
+    const wall=x<ISO_TOP_X?'left':'right';
+    const pos=wall==='left'?(ISO_TOP_X-x)/ISO_UX:(x-ISO_TOP_X)/ISO_UX;
+    for(let i=0;i<placed.length;i++){
+     if(i===skipIdx)continue;
+     const o=placed[i],ofp=FURNITURE_FOOTPRINTS[o.id];
+     if(ofp?.zone!=='wall')continue;
+     const ow=o.wall||(o.x<ISO_TOP_X?'left':'right');
+     const op=o.wallPos!=null?o.wallPos:(ow==='left'?(ISO_TOP_X-o.x)/ISO_UX:(o.x-ISO_TOP_X)/ISO_UX);
+     if(ow===wall&&Math.abs(pos-op)<1.35&&Math.abs(y-o.y)<44)return true;
+    }
+    return false;
+   }
+   const p1=screenToIso(x,y);
+   for(let i=0;i<placed.length;i++){
+    if(i===skipIdx)continue;
+    const o=placed[i],ofp=FURNITURE_FOOTPRINTS[o.id]||{zone:'floor',wu:1,wv:1};
+    if(ofp.zone==='wall')continue;
+    const p2=screenToIso(o.x,o.y);
+    const limU=(fp.wu+ofp.wu)*0.44,limV=(fp.wv+ofp.wv)*0.44;
+    if(Math.abs(p1.u-p2.u)<limU&&Math.abs(p1.v-p2.v)<limV)return true;
+   }
+   return false;
+  }
+  drawIsoFootprint(u,v,wu,wv,fill,stroke){
+   const c=this.ctx,hu=wu/2,hv=wv/2;
+   const p0=isoToScreen(u-hu,v-hv),p1=isoToScreen(u+hu,v-hv);
+   const p2=isoToScreen(u+hu,v+hv),p3=isoToScreen(u-hu,v+hv);
+   c.save();c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.lineTo(p3.x,p3.y);c.closePath();
+   c.fillStyle=fill;c.fill();
+   if(stroke){c.strokeStyle=stroke;c.lineWidth=2;c.stroke();}
+   c.restore();
+  }
+  drawCraftGrid(){
+   const c=this.ctx;
+   c.save();
+   // 1. Isometric 6x6 Floor Placement Grid
+   c.strokeStyle='rgba(122,88,62,0.28)';c.lineWidth=1.5;c.setLineDash([4,4]);
+   for(let i=0;i<=ISO_N;i++){
+    const a=isoToScreen(i,0),b=isoToScreen(i,ISO_N);
+    c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();
+    const d=isoToScreen(0,i),e=isoToScreen(ISO_N,i);
+    c.beginPath();c.moveTo(d.x,d.y);c.lineTo(e.x,e.y);c.stroke();
+   }
+   // 2. Left & Right Back Wall Placement Zones (distinct pastel blue grid!)
+   c.strokeStyle='rgba(70,136,196,0.38)';c.lineWidth=1.5;
+   for(let i=0;i<=ISO_N;i++){
+    // Left wall vertical lines
+    const fl=isoToScreen(0,i);
+    c.beginPath();c.moveTo(fl.x,fl.y);c.lineTo(fl.x,fl.y-ISO_WALL_H);c.stroke();
+    // Right wall vertical lines
+    const fr=isoToScreen(i,0);
+    c.beginPath();c.moveTo(fr.x,fr.y);c.lineTo(fr.x,fr.y-ISO_WALL_H);c.stroke();
+   }
+   for(const h of [0.33,0.66,1]){
+    const ly=ISO_WALL_H*h;
+    const lt=isoToScreen(0,0),ll=isoToScreen(0,ISO_N),lr=isoToScreen(ISO_N,0);
+    c.beginPath();c.moveTo(lt.x,lt.y-ly);c.lineTo(ll.x,ll.y-ly);c.stroke();
+    c.beginPath();c.moveTo(lt.x,lt.y-ly);c.lineTo(lr.x,lr.y-ly);c.stroke();
+   }
+   c.setLineDash([]);
+   // Subtle zone pills
+   this.box(118,225,74,22,8,'#e7f4ffdd','#4a85b8',1.5);this.text('왼쪽 벽',155,240,11,'#2d5c85','850',68);
+   this.box(408,225,74,22,8,'#e7f4ffdd','#4a85b8',1.5);this.text('오른쪽 벽',445,240,11,'#2d5c85','850',68);
+   this.box(252,586,96,22,8,'#fff8e6dd','#a67c52',1.5);this.text('바닥 설치 구역',300,601,11,'#6b4b2f','850',90);
+   c.restore();
   }
   prepareRoomArt(image){
    // Use the reference's illustrated inventory icons as transparent room props.
@@ -738,47 +847,71 @@
   renderRoom(){
    const c=this.ctx,room=this.state.room;
    const bgKey=room.host==='hachiware'?'room_hachiware':'room_chiikawa';
-   c.fillStyle=room.host==='hachiware'?'#e6ddc7':'#1b1714';
+   c.fillStyle=room.host==='hachiware'?'#d1e7f4':'#fad1d7';
    c.fillRect(0,0,W,H);
-   // Paint Chiikawa / Hachiware circular pixel-art room base centered in upper stage
-   const hasPixelRoom=this.paintSprite(bgKey,-24,95,648,560);
+   // Paint Isometric Cutaway Chiikawa / Hachiware room (1:1 normalized 600x600 at y=75..675)
+   const hasPixelRoom=this.paintSprite(bgKey,0,75,600,600);
    if(!hasPixelRoom&&!this.paintSprite('bg_room',0,0,W,H))return;
-   // Wall learned-word frames (top inner wall)
-   const learnedFrames=(root.WordvilleSolo?.progress?.frames||[]).slice(0,2);
-   const fallbackWords=this.words.slice(0,2).map(w=>({word:w.word,meaning:label(w)}));
-   const wallFrames=learnedFrames.length?learnedFrames:fallbackWords;
-   wallFrames.forEach((fr,i)=>{
-    const fx=i===0?148:354,fy=228;
-    this.box(fx,fy,98,52,8,'#fffaf0f0','#9c724c',3);
-    this.text(fr.word||'word',fx+49,fy+22,13,INK,'850',88);
-    this.text(fr.meaning||'',fx+49,fy+40,11,'#7d5e48','650',88);
-   });
-   // Depth-sort placed furniture, live room actors, AND front doorway arch/pillars by footY!
+   // Craft Mode: draw distinct Floor 6x6 Diamond Grid + Left/Right Wall Placement Grids
+   if(this.roomCraftMode)this.drawCraftGrid();
+   // Draw occupied furniture footprints in Craft Mode (or while actively dragging any item!)
+   if(this.roomCraftMode||room.dragIdx>=0){
+    room.placed.forEach((item,index)=>{
+     const fp=FURNITURE_FOOTPRINTS[item.id]||{zone:'floor',wu:1,wv:1};
+     if(fp.zone==='wall')return;
+     const iso=screenToIso(item.x,item.y);
+     const isDrag=room.dragIdx===index,isSel=this.roomSelectedPlacedIdx===index;
+     const fill=isDrag?(this.roomDragValid?'rgba(76,196,106,0.45)':'rgba(239,83,80,0.52)'):
+      (isSel?'rgba(255,204,77,0.42)':'rgba(218,176,120,0.24)');
+     const stroke=isDrag?(this.roomDragValid?'#2e8b47':'#c62828'):(isSel?'#b87c1e':'rgba(122,88,62,0.4)');
+     this.drawIsoFootprint(iso.u,iso.v,fp.wu,fp.wv,fill,stroke);
+    });
+   }
+   // Learned words for wall-mounted word frames
+   const learnedFrames=(root.WordvilleSolo?.progress?.frames||[]).slice(0,6);
+   const fallbackWords=this.words.slice(0,6).map(w=>({word:w.word,meaning:label(w)}));
+   const wallWords=learnedFrames.length?learnedFrames:fallbackWords;
+   let wallFrameCounter=0;
+   // Depth-sort placed furniture & live room actors by isometric Y!
    const drawList=[];
    room.placed.forEach((item,index)=>{
-    const bias=FURNITURE_FOOTPRINTS[item.id]?.layerBias||0;
-    drawList.push({kind:'furn',footY:item.y+ROOM_FLOOR_OFFSET,sortY:item.y+ROOM_FLOOR_OFFSET+bias,item,index});
+    const fp=FURNITURE_FOOTPRINTS[item.id]||{zone:'floor',layerBias:0};
+    drawList.push({
+     kind:fp.zone==='wall'?'wall_furn':'furn',
+     footY:item.y+ROOM_FLOOR_OFFSET,
+     sortY:fp.zone==='wall'?-100+item.y:item.y+ROOM_FLOOR_OFFSET+(fp.layerBias||0),
+     item,index
+    });
    });
-   for(const actor of this.roomActors){
-    drawList.push({kind:'actor',footY:actor.y+ROOM_FLOOR_OFFSET,sortY:actor.y+ROOM_FLOOR_OFFSET,actor});
-   }
-   // Front stone arch / dome door arch + lower rim occludes actors & furniture behind y=488
-   const fgKey=room.host==='hachiware'?'room_hachiware_fg':'room_chiikawa_fg';
-   if(this.sprites[fgKey]){
-    drawList.push({kind:'room_fg',footY:488,sortY:488,fgKey});
+   if(!this.roomCraftMode){
+    for(const actor of this.roomActors){
+     drawList.push({kind:'actor',footY:actor.y+ROOM_FLOOR_OFFSET,sortY:actor.y+ROOM_FLOOR_OFFSET,actor});
+    }
    }
    drawList.sort((a,b)=>a.sortY-b.sortY);
    const nowSec=Date.now()/1000;
    for(const entry of drawList){
-    if(entry.kind==='room_fg'){
-     this.paintSprite(entry.fgKey,-24,95,648,560);
+    if(entry.kind==='wall_furn'){
+     const {item,index}=entry;
+     const fr=wallWords[wallFrameCounter%Math.max(1,wallWords.length)]||{word:'word',meaning:'단어'};
+     wallFrameCounter++;
+     const isLeft=(item.wall||(item.x<ISO_TOP_X?'left':'right'))==='left';
+     const isDrag=room.dragIdx===index,isSel=this.roomSelectedPlacedIdx===index;
+     const border=isDrag?(this.roomDragValid?'#2e8b47':'#c62828'):(isSel?'#d48a1c':'#9c724c');
+     c.save();c.translate(item.x,item.y);
+     // Subtle isometric wall shear so the frame sits flush against the Left or Right back wall!
+     c.transform(1,isLeft?-0.38:0.38,0,1,0,0);
+     this.box(-42,-24,84,48,7,'#fffaf0f5',border,isDrag||isSel?3.5:2.5);
+     this.text(fr.word||'word',0,-3,12,INK,'850',74);
+     this.text(fr.meaning||'',0,13,10,'#7d5e48','650',74);
+     c.restore();
     }else if(entry.kind==='furn'){
      const {item,index}=entry;
      const y=entry.footY;
      const pixKey=PIXEL_FURNITURE_MAP[item.id];
      const sprite=(pixKey&&this.sprites[pixKey])||this.roomArt[item.id]||this.sprites['furniture_'+item.id];
      if(sprite){
-      const width=item.id==='bed'?118:item.id==='lamp'?54:item.id==='plant'?60:84;
+      const width=item.id==='bed'?114:item.id==='lamp'?50:item.id==='plant'?56:80;
       const height=width*(sprite.naturalHeight||sprite.height)/(sprite.naturalWidth||sprite.width);
       c.drawImage(sprite,item.x-width/2,y-height,width,height);
       // Swimming fish inside aquarium linked to Fishing minigame!
@@ -792,7 +925,9 @@
        });
       }
      }else this.text(itemTypes[item.id].icon,item.x,y,43);
-     if(room.dragIdx===index)this.text('↕',item.x,y-12,22,'#8b4f39');
+     if(room.dragIdx===index){
+      this.text(this.roomDragValid?'✓ 설치 가능':'✕ 충돌!',item.x,y-14,14,this.roomDragValid?'#227a3a':'#c62828','900');
+     }
     }else{
      const a=entry.actor,m=actorMetrics(a.id);
      if(root.WordvilleWalk?.paint){
@@ -993,7 +1128,8 @@
   }
   isPointBlockedByFurniture(x,y,radius=16){
    for(const item of this.state.room.placed){
-    const fp=FURNITURE_FOOTPRINTS[item.id]||{hw:30,hh:18};
+    const fp=FURNITURE_FOOTPRINTS[item.id]||{zone:'floor',hw:30,hh:18};
+    if(fp.zone==='wall')continue;
     if(Math.abs(x-item.x)<fp.hw+radius&&Math.abs(y-item.y)<fp.hh+radius*0.65)return item;
    }
    return null;
@@ -1118,6 +1254,28 @@
      this.message(hname+'으로 전환했습니다!');
     });
     hostRow.append(btn);
+   }
+   const craftBtn=root.document.createElement('button');craftBtn.type='button';craftBtn.className='wv-craft-btn';
+   craftBtn.setAttribute('aria-pressed',String(Boolean(this.roomCraftMode)));
+   craftBtn.textContent=this.roomCraftMode?'🔨 꾸미기 ON':'🔨 꾸미기 모드';
+   craftBtn.addEventListener('click',()=>{
+    this.roomCraftMode=!this.roomCraftMode;
+    if(!this.roomCraftMode)this.roomSelectedPlacedIdx=-1;
+    this.renderRoomSocialUI();
+    this.message(this.roomCraftMode?'크래프트 모드 ON · 벽/바닥 그리드에 맞춰 가구를 배치하세요!':'감상 모드 · 주민들이 방 안에서 자유롭게 활동합니다.');
+   });
+   hostRow.append(craftBtn);
+   if(this.roomCraftMode&&this.roomSelectedPlacedIdx>=0&&room.placed[this.roomSelectedPlacedIdx]){
+    const rmBtn=root.document.createElement('button');rmBtn.type='button';rmBtn.className='wv-remove-btn';
+    const selItem=room.placed[this.roomSelectedPlacedIdx];
+    rmBtn.textContent='🗑 '+(itemTypes[selItem.id]?.name||'가구')+' 제거';
+    rmBtn.addEventListener('click',()=>{
+     room.placed.splice(this.roomSelectedPlacedIdx,1);
+     this.roomSelectedPlacedIdx=-1;
+     this.saveRoomState();this.syncRoomHandles();this.renderRoomSocialUI();
+     this.message('선택한 가구를 방에서 제거했습니다.');
+    });
+    hostRow.append(rmBtn);
    }
    // Accordion header showing invited resident count + compact badges + expand/collapse arrow
    const accBtn=root.document.createElement('button');accBtn.type='button';accBtn.className='wv-guest-accordion-btn';
@@ -1265,11 +1423,25 @@
       this.message('가구는 최대 '+ROOM_ITEM_LIMIT+'개까지 배치할 수 있습니다.');return;
      }
      const offset=room.placed.length%6;
-     const placed={id:item.id,...this.constrainFloor(235+offset*26,422-(offset%2)*30)};
+     const isWall=FURNITURE_FOOTPRINTS[item.id]?.zone==='wall';
+     let targetPos=isWall?this.constrainFloor(offset%2?385:205,272,item.id):
+      this.constrainFloor(isoToScreen(1.5+(offset%3)*1.4,1.5+Math.floor(offset/3)*1.6).x,
+       isoToScreen(1.5+(offset%3)*1.4,1.5+Math.floor(offset/3)*1.6).y,item.id);
+     // Find first collision-free isometric tile if default spot is taken
+     if(this.hasFurnitureCollision(-1,targetPos.x,targetPos.y,item.id)&&!isWall){
+      outer:for(let u=1;u<=5;u+=1){
+       for(let v=1;v<=5;v+=1){
+        const cand=this.constrainFloor(isoToScreen(u,v).x,isoToScreen(u,v).y,item.id);
+        if(!this.hasFurnitureCollision(-1,cand.x,cand.y,item.id)){targetPos=cand;break outer;}
+       }
+      }
+     }
+     const placed={id:item.id,...targetPos};
      room.placed.push(placed);
      if(!this.saveRoomState()){room.placed.pop();return;}
-     this.selectedFurniture=item.id;this.syncRoomHandles();
-     this.message(item.name+' 배치 완료 · 드래그해서 위치를 변경하세요.');
+     this.selectedFurniture=item.id;this.roomSelectedPlacedIdx=room.placed.length-1;
+     this.syncRoomHandles();this.renderRoomSocialUI();
+     this.message(item.name+(isWall?' (벽 전용)':' (바닥 전용)')+' 배치 완료 · 드래그해서 위치를 변경하세요.');
     });
     list.append(button);
    }
@@ -1291,19 +1463,31 @@
      const p=this.pointerXY(event);if(!p)return;
      const item=this.state.room.placed[index];
      this.roomDragOffset={x:item.x-p.x,y:item.y-p.y};
+     this.roomDragOrigin={...item};
+     this.roomDragValid=true;
+     this.roomSelectedPlacedIdx=index;
      this.state.room.dragIdx=index;this.roomPointerId=event.pointerId;
      handle.setPointerCapture?.(event.pointerId);
+     if(this.roomCraftMode)this.renderRoomSocialUI();
     });
     handle.addEventListener('pointermove',event=>{
      if(this.state.room.dragIdx<0||this.roomPointerId!==event.pointerId)return;
      const p=this.pointerXY(event);if(!p)return;
-     Object.assign(this.state.room.placed[this.state.room.dragIdx],
-      this.constrainFloor(p.x+this.roomDragOffset.x,p.y+this.roomDragOffset.y));
+     const item=this.state.room.placed[this.state.room.dragIdx];
+     const next=this.constrainFloor(p.x+this.roomDragOffset.x,p.y+this.roomDragOffset.y,item.id);
+     Object.assign(item,next);
+     this.roomDragValid=!this.hasFurnitureCollision(this.state.room.dragIdx,item.x,item.y,item.id);
      this.syncRoomHandles();
     });
     const end=event=>{
      if(this.state.room.dragIdx<0||this.roomPointerId!==event.pointerId)return;
-     this.state.room.dragIdx=-1;this.roomPointerId=null;this.saveRoomState();
+     const idx=this.state.room.dragIdx;
+     if(!this.roomDragValid&&this.roomDragOrigin&&this.state.room.placed[idx]){
+      Object.assign(this.state.room.placed[idx],this.roomDragOrigin);
+      this.message('다른 가구와 겹쳐 설치할 수 없어 원래 자리로 되돌렸습니다.');
+     }
+     this.state.room.dragIdx=-1;this.roomPointerId=null;this.roomDragOrigin=null;this.roomDragValid=true;
+     this.saveRoomState();this.syncRoomHandles();
     };
     handle.addEventListener('pointerup',end);
     handle.addEventListener('pointercancel',end);
