@@ -333,7 +333,7 @@ function greetTownResident(resident){
  // Show the current value on rapid taps without counting them as new greetings.
  if(playerGreeting?.id===resident.id&&performance.now()<playerGreeting.until)return;
  const result=social.hello(resident.id);
- affectionBubble.textContent='♥ '+result.score+'/100'+(result.added?' · +'+result.added:'');
+ affectionBubble.textContent='♥ '+result.score+'/100'; // Only the number changes; no flickering copy.
  playerGreeting={id:resident.id,until:performance.now()+2200};
  drawPlayerGreeting(currentMapView(),performance.now());
 }

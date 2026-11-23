@@ -382,7 +382,8 @@ function syncResidentCards(){
   const translated=root.WordvilleI18n?.translate(original)||original;
   const aff=affection(id);
   elements.name.textContent=translated;
-  elements.affinity.textContent='♥';
+  elements.affinity.textContent='♥'; // Keep the card icon fixed during every Town greeting.
+  elements.affinity.dataset.score=String(aff);
   elements.affinity.setAttribute('aria-label',translated+' · '+tr(lex.affinity)+' '+aff+'/100 · '+tr(lex.openStatus));
   elements.affinity.title=translated+' · '+tr(lex.affinity)+' '+aff+'/100';
  }

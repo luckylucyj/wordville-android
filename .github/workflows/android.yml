@@ -43,6 +43,8 @@ jobs:
           python scripts/build-idle48.py
           python scripts/build-guest-sprites.py
           python tests/guest-hair-colors.py
+      - name: Install user-supplied reference fishing and weeding GIFs (if bundled)
+        run: python scripts/install-reference-gifs.py
       - name: Generate offline Canvas minigame PNG art
         run: |
           python scripts/build-canvas-minigame-art.py

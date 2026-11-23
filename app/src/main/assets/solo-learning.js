@@ -151,6 +151,8 @@
   get('game-view').hidden=tab==='room';
   get('room-view').hidden=tab!=='room';
   screen.querySelectorAll('[data-solo-tab]').forEach(b=>{const active=b.dataset.soloTab===tab;b.setAttribute('aria-pressed',String(active));});
+  get('question').hidden=true; // Unified Canvas handles answers, hide legacy multiple-choice fishing/wood game.
+  get('scene').hidden=true;
   if(tab==='room'){renderRoom();return;}
   get('description').textContent=games[mode].description;
   get('scene').dataset.game=mode;
