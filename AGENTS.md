@@ -3,7 +3,7 @@
 Wordville is an Android Gradle app whose main screens use **Android WebView + HTML/CSS/JavaScript/Canvas**, not Jetpack Compose or Unity. Inspect the repository before editing.
 
 - Preserve the application ID, signing identity, version code policy, GitHub release behavior, Android WebViewAssetLoader origins, offline study data, existing storage keys, and user records.
-- Respect existing routes, resident profiles, generated art assets, and 48px sprite constraints. Do not replace supplied art with geometric fallback graphics. In particular, fishing only uses the three actual PNGs under `app/src/main/assets/images/fishing/`; do not generate substitutes.
+- Respect existing routes, resident profiles, generated art assets, and 48px sprite constraints. Do not replace supplied art with geometric fallback graphics. Preserve the existing PNGs under `app/src/main/assets/images/fishing/`; the live fishing minigame may render the cozy pixel-art lakeside dock (`images/minigames/fishing_dock_bg.webp`) with the live Wordville pixel-art Hachiware sprite (`WordvilleWalk.paint`) and pixel fish/bobber sprites.
 - Design modifications should remain focused in `app/src/main/assets/`, `app/src/main/java/`, `app/src/main/res/` and `tests/`.
 - Do not modify workflows, scripts that handle credentials, dependency manifests, secrets, release settings, permissions, or deployment configuration as part of an automated design handoff.
 - Do not delete or overwrite unrelated app features. Avoid changing any persisted learning records or image synchronization protocols.
