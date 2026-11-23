@@ -21,13 +21,14 @@ test('all four Canvas modes, specified HUD geometry, optional art manifest',()=>
   assert.ok(canvas.includes("'"+mode+"'"),mode+' registered');
  for(const value of ['W=600,H=1000','this.LOGICAL_W=W','this.LOGICAL_H=H',
   'this.box(18,16,148,60','this.box(502,120,80,336','const p=this.state.popup,py=660',
-  'this.box(30,855,540,115','this.box(30,860,540,96'])assert.ok(canvas.includes(value),value);
+  'FISH_ZONE=[64,88]','this.box(30,860,540,96'])assert.ok(canvas.includes(value),value);
  for(const path of ['images/fishing/hachiware_idle.png','images/fishing/hachiware_catch.png',
   'images/weeding/chiikawa_perfect.png','images/weeding/chiikawa_medium.png','images/weeding/chiikawa_bad.png',
-  'images/foraging/chiikawa_food_1.png','images/foraging/chiikawa_food_2.png','images/foraging/chiikawa_food_3.png',
-  'images/room/bg_isometric_room.png'])
+  'images/foraging/chiikawa_3stage_atlas.png',
+  'images/room/room-decor.webp'])
   assert.ok(canvas.includes(path),path+' asset slot');
- assert.match(canvas,/drawCritter\(/);
+ assert.doesNotMatch(canvas,/drawCritter\(/,'no procedurally drawn characters');
+ assert.match(canvas,/reference_fishing:'images\/reference\/fishing\.gif'/);
 });
 test('high DPR render keeps fixed 600x1000 logical coordinates and mobile touch support',()=>{
  assert.match(canvas,/Math\.min\(2,Math\.max\(1,root\.devicePixelRatio\|\|1\)\)/);
@@ -49,16 +50,17 @@ test('real user vocabulary and progress are authoritative; no sample teaching-on
  assert.match(canvas,/root\.AndroidBridge\.onWordLearned\(String\(word\.id\),this\.state\.mode\)/);
  assert.match(native,/new WordvilleGameBridge\(\),"AndroidBridge"/);
 });
-test('foraging has a 3 stage animation and prevents repeated rewards',()=>{
- assert.match(canvas,/g\.stage=2;g\.timer=\.85;g\.pending=true/);
- assert.match(canvas,/if\(g\.stage===2\)\{g\.stage=3;g\.timer=1;/);
- assert.match(canvas,/else\{g\.stage=1;g\.pending=false;this\.advanceWord\(true\);\}/);
- assert.match(canvas,/if\(this\.state\.mode!=='foraging'\|\|g\.stage!==1/);
+test('foraging uses the offline three-frame atlas and separate playback controls',()=>{
+ assert.match(css,/images\/foraging\/chiikawa_3stage_atlas\.png/);
+ assert.match(css,/--forage-frame:50%/);
+ assert.match(css,/--forage-frame:100%/);
+ assert.match(canvas,/if\(this\.state\.mode!=='foraging'\|\|g\.pending\|\|Date\.now\(\)<this\.nextActionAt\)return/);
+ assert.match(canvas,/if\(action==='forage'\)this\.setForageStage\(1,\.9\)/);
 });
 test('weeding has three result levels and timing limits',()=>{
- assert.match(canvas,/w\.status=p>=\.4&&p<=\.6\?'perfect':p>=\.22&&p<=\.78\?'medium':'bad'/);
- assert.match(canvas,/w\.timer=1\.3/);
- assert.match(canvas,/if\(w\.status==='bad'\)/);
+ assert.match(canvas,/const p=w\.pos,quality=p>=\.4&&p<=\.6\?'perfect':p>=\.22&&p<=\.78\?'medium':'bad'/);
+ assert.match(canvas,/w\.status='bad';w\.timer=1\.3/);
+ assert.match(canvas,/this\.openAnswer\('weeding',quality\)/);
 });
 test('quarter-view inventory drag positions persist and belong to backup snapshot',()=>{
  assert.match(canvas,/wordville_room_v1/);
@@ -82,15 +84,30 @@ test('fishing uses authored PNGs only, logs WebView URL errors and does not draw
  assert.match(canvas,/hachiware_idle:'images\/fishing\/hachiware_idle\.png'/);
  assert.match(canvas,/hachiware_catch:'images\/fishing\/hachiware_catch\.png'/);
  assert.match(canvas,/new URL\(path,root\.document\.baseURI\)/);
- assert.match(canvas,/image\.onerror=\(\)=>this\.reportAssetError/);
+ assert.match(canvas,/image\.onerror=\(\)=>\{/);
  assert.match(canvas,/removeWhiteBackground\(image,key\)/);
  assert.match(canvas,/visited=new Uint8Array\(total\)/);
  const fishing=canvas.slice(canvas.indexOf('  renderFishing(){'),canvas.indexOf('  renderWeeding(){'));
  assert.match(fishing,/this\.paintSprite\('bg_fishing',0,0,W,H\)/);
- assert.match(fishing,/this\.paintSprite\(catching\?'hachiware_catch':'hachiware_idle'/);
+ assert.doesNotMatch(fishing,/hachiware_catch|hachiware_idle/,'Background already includes Hachiware');
+ assert.match(canvas,/f\.pos>=FISH_ZONE\[0\]-2&&f\.pos<=FISH_ZONE\[1\]\+2/);
+ assert.ok(canvas.includes("reference_foraging:'images/reference/foraging.gif'"));
+ assert.doesNotMatch(canvas,/reference_weeding:/);
+ assert.match(canvas,/this\.openAnswer\('fishing','perfect'\)/);
+ assert.match(canvas,/this\.submitAnswer\(this\.answerInput\.value\)/);
+ assert.match(css,/width:var\(--fish-width\)/);
+ assert.match(css,/data-fishing-phase="caught"/);
  assert.doesNotMatch(fishing,/drawCritter\(|this\.background\(|ctx\.drawLine|for\(let i=0;i<5;i\+\+\)/);
  const generator=readFileSync(new URL('../scripts/build-canvas-minigame-art.py',import.meta.url),'utf8');
  assert.doesNotMatch(generator,/fishing\/bg_dock\.png/);
  assert.doesNotMatch(generator,/\("fishing\/hachiware_(idle|catch)\.png"/);
  assert.match(generator,/if path\.exists\(\): return/);
+});
+
+test('the second user GIF is food collecting, never weed removal',()=>{
+ const weeding=canvas.slice(canvas.indexOf('  renderWeeding(){'),canvas.indexOf('  constrainFloor('));
+ assert.doesNotMatch(weeding,/reference_foraging|reference_weeding/);
+ assert.ok(css.includes("images/reference/foraging.gif"));
+ const installer=readFileSync(new URL('../scripts/install-reference-gifs.py',import.meta.url),'utf8');
+ assert.match(installer,/LEGACY=/);
 });

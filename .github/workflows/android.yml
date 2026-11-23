@@ -28,6 +28,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install user-supplied offline Town music (if bundled)
+        run: python scripts/install-town-music.py
       - name: Generate offline British pronunciation
         run: |
           sudo apt-get update -q
@@ -41,6 +43,8 @@ jobs:
           python scripts/build-idle48.py
           python scripts/build-guest-sprites.py
           python tests/guest-hair-colors.py
+      - name: Install user-supplied reference fishing and weeding GIFs (if bundled)
+        run: python scripts/install-reference-gifs.py
       - name: Generate offline Canvas minigame PNG art
         run: |
           python scripts/build-canvas-minigame-art.py

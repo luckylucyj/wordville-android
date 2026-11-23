@@ -42,7 +42,7 @@ const backPng=png(16,16,()=>[46,157,181,255]);
 
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined,args:['--no-sandbox']});
- const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+ const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,reducedMotion:'reduce'});
  const pageErrors=[],assetErrors=[],requested=[];
  page.on('pageerror',error=>pageErrors.push(error.message));
  page.on('console',msg=>{if(msg.type()==='error'&&msg.text().includes('[Wordville Canvas] Image failed'))assetErrors.push(msg.text());});
@@ -66,7 +66,7 @@ const backPng=png(16,16,()=>[46,157,181,255]);
    const edge=Array.from(ctx.getImageData(0,0,1,1).data);
    const body=Array.from(ctx.getImageData(8,8,1,1).data);
    const outline=Array.from(ctx.getImageData(3,8,1,1).data);
-   game.state.mode='fishing';game.paint();
+   game.state.mode='fishing';game.state.fishing.sceneDirty=true;game.paint();
    const background=Array.from(game.ctx.getImageData(32,1200,1,1).data);
    return {edge,body,outline,background,
     css:getComputedStyle(game.canvas).touchAction,
@@ -87,7 +87,7 @@ const backPng=png(16,16,()=>[46,157,181,255]);
   // A swipe must not trigger the fishing success callback.
   const swipe=await page.evaluate(()=>{
    const g=wordvilleGame,canvas=g.canvas,rect=canvas.getBoundingClientRect();
-   g.state.mode='fishing';g.state.fishing.pos=.76;g.nextActionAt=0;
+   g.state.mode='fishing';g.state.fishing.pos=76;g.nextActionAt=0;
    const id=g.getCurrentWord()?.id;
    const oldCount=g.state.slots.length;
    const x=rect.left+rect.width/2,y=rect.top+rect.height*.9;
@@ -96,25 +96,70 @@ const backPng=png(16,16,()=>[46,157,181,255]);
    return {oldCount,newCount:g.state.slots.length,id};
   });
   assert.equal(swipe.newCount,swipe.oldCount,'Swipe must not count as a game tap');
-  // One true tap inside the gauge counts exactly once.
-  const tap=await page.evaluate(()=>{
-   const g=wordvilleGame,c=g.canvas,r=c.getBoundingClientRect();
-   g.nextActionAt=0;g.state.fishing.pos=.76;
-   const before=g.state.slots.length,x=r.left+r.width/2,y=r.top+r.height*.9;
-   c.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:28,clientX:x,clientY:y}));
-   c.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:28,clientX:x,clientY:y}));
-   return {before,after:g.state.slots.length};
-  });
-  assert.equal(tap.after,tap.before+1,'A completed gauge tap grants one reward');
+  const reel=page.getByRole('button',{name:'낚아채기'});
+  const popup=page.locator('.wv-fishing-popup');
+  const phase=()=>page.locator('#wv-canvas-stage').getAttribute('data-fishing-phase');
+  const setPosition=pos=>page.evaluate(value=>{
+   const g=wordvilleGame;
+   g.pause();g.nextActionAt=0;g.state.fishing.pos=value;g.syncFishingTiming();
+  },pos);
+  const total=()=>page.evaluate(()=>wordvilleGame.state.fishing.counts.reduce((a,b)=>a+b,0));
+  const before=await total();
+  await setPosition(20);
+  await reel.tap();
+  assert.match(await page.locator('#wv-fishing-hint').textContent(),/노란 구간/);
+  assert.equal(await phase(),'casting');
+  assert.equal(await total(),before);
+  assert.equal(await popup.getAttribute('aria-hidden'),'true');
+
+  await setPosition(76);
+  assert.equal(await phase(),'biting');
+  assert.equal(await page.locator('.wv-fishing-bobber').evaluate(el=>el.style.left),'76%');
+  await reel.tap();
+  assert.equal(await total(),before,'Timing success cannot grant a word without a correct meaning');
+  assert.equal(await page.locator('#wv-canvas-answer').isVisible(),true);
+  await page.locator('#wv-answer-input').fill(await page.evaluate(()=>
+    WordvilleCanvasAnswer.alternatives(wordvilleGame.getCurrentWord())[0]));
+  await page.locator('#wv-canvas-answer button[type=submit]').tap();
+  assert.equal(await phase(),'caught');
+  assert.equal(await total(),before+1);
+  assert.equal(await popup.getAttribute('aria-hidden'),'false');
+  const [weightValue,unit]=(await popup.locator('.wv-fishing-weight').textContent()).split(' ');
+  assert.equal(unit,'kg');
+  assert.match(weightValue,/^\d\.\d{2}$/);
+  assert.ok(Number(weightValue)>=2.5&&Number(weightValue)<=5);
+  await page.evaluate(()=>wordvilleGame.update(4));
+  assert.equal(await phase(),'caught');
+  await page.getByRole('button',{name:'다시 낚시하기'}).press('Enter');
+  assert.equal(await phase(),'casting');
+  assert.equal(await total(),before+1);
+
+  await setPosition(62);
+  await page.locator('#wordvilleCanvas').tap({position:{x:100,y:120}});
+  assert.equal(await page.locator('#wv-canvas-answer').isVisible(),true);
+  assert.equal(await total(),before+1);
+  await page.locator('#wv-answer-input').fill(await page.evaluate(()=>
+    WordvilleCanvasAnswer.alternatives(wordvilleGame.getCurrentWord())[0]));
+  await page.locator('#wv-canvas-answer button[type=submit]').click();
+  assert.equal(await phase(),'caught');
+  assert.equal(await total(),before+2);
   // Room drag handles intercept touch only over a furniture icon.
   await page.locator('[data-solo-tab="room"]').click();
+  await page.locator('[data-room-close]').click();
+  assert.equal(await page.locator('#room-drawer').isVisible(),false);
+  await page.locator('#room-drawer-toggle').click();
+  await page.locator('#room-item-list button').first().tap();
   assert.equal(await page.locator('.wv-room-drag-handle').count()>0,true);
   assert.equal(await page.locator('#wordvilleCanvas').evaluate(el=>getComputedStyle(el).touchAction),'pan-y');
-  assert.equal(await page.locator('.wv-room-drag-handle').first().evaluate(el=>getComputedStyle(el).touchAction),'none');
+  assert.deepEqual(await page.locator('.wv-room-drag-handle').first().evaluate(el=>{
+   const style=getComputedStyle(el);
+   return {touchAction:style.touchAction,background:style.backgroundColor};
+  }),{touchAction:'none',background:'rgba(0, 0, 0, 0)'});
+  assert.equal(await page.locator('#room-item-list button').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgba(0, 0, 0, 0)');
   await page.evaluate(()=>wordvilleGame.reportAssetError('bg_fishing','file:///android_asset/images/fishing/bg_fishing.png','test-failure'));
   assert.ok(assetErrors.some(s=>s.includes('bg_fishing')));
   assert.match(await page.locator('#wordville-canvas-status').textContent(),/bg_fishing\.png/);
   assert.deepEqual(pageErrors,[]);
-  console.log('PASS: PNG-only fishing, alpha-safe edge chroma, both WebView paths, swipe-scroll, tap, room drag handles, onerror diagnostics');
+  console.log('PASS: fishing assets, swipe-scroll, gauge and scene taps, catch state, keyboard restart, and room drag handles');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

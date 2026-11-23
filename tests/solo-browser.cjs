@@ -1,4 +1,4 @@
-// One-player games / saved room end-to-end smoke test on mobile Chromium.
+// Unified Canvas vocabulary gameplay and saved room end-to-end test.
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 (async()=>{
@@ -7,37 +7,42 @@ const assert=require('node:assert/strict');
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  try{
   await page.goto('http://127.0.0.1:4173');
-  await page.waitForFunction(()=>globalThis.WordvilleSolo&&WordvilleShell&&globalThis.WordvilleWords?.length>5000,{timeout:30000});
+  await page.waitForFunction(()=>globalThis.WordvilleSolo&&globalThis.wordvilleGame&&WordvilleWords?.length>5000,{timeout:30000});
   await page.locator('#wv-bottom-dock [data-screen="more"]').click();
   await page.locator('#wv-more-panel [data-more="solo"]').click();
   assert.equal(await page.locator('#wv-solo-view').isVisible(),true);
-  assert.equal(await page.locator('#wv-solo-game-view').isVisible(),true);
+  assert.equal(await page.locator('#wv-solo-question').isVisible(),false,'Duplicate quiz should be hidden');
+  assert.equal(await page.locator('#wv-solo-scene').isVisible(),false,'Duplicate emoji game should be hidden');
   const initial=await page.evaluate(()=>state.coins);
-  async function solve(mode){
-   await page.locator('[data-solo-tab="'+mode+'"]').click();
-   await page.locator('#wv-solo-next').click();
-   const q=await page.evaluate(()=>WordvilleSolo.currentQuestion);
-   assert.ok(q&&q.choices.length===4,mode+' must show four answers');
-   assert.equal(q.mode,mode);
-   if(mode==='capture')assert.match(q.prompt,/_____/);
-   await page.locator('#wv-solo-choices button').evaluateAll((buttons,answer)=>{
-    const correct=buttons.find(b=>b.dataset.answer===answer);
-    if(!correct)throw Error('correct choice missing');
-    correct.click();
-   },q.answer);
-   await page.waitForFunction(()=>document.querySelector('#wv-solo-feedback')?.textContent.includes('정답!'));
-   return q;
+  for(const [tab,mode,pos] of [['fish','fishing',76],['wood','weeding',.5]]){
+   await page.locator('[data-solo-tab="'+tab+'"]').click();
+   await page.evaluate(({mode,pos})=>{
+    const g=wordvilleGame;g.pause();g.nextActionAt=0;
+    if(mode==='fishing'){g.state.fishing.pos=pos;g.state.fishing.caught=false;}
+    else{g.state.weeding.pos=pos;g.state.weeding.timer=0;}
+    g.onTapAction();
+   },{mode,pos});
+   assert.equal(await page.locator('#wv-canvas-answer').isVisible(),true);
+   const meaning=await page.evaluate(()=>WordvilleCanvasAnswer.alternatives(wordvilleGame.getCurrentWord())[0]);
+   assert.ok(meaning,'Missing VOCA meaning');
+   await page.locator('#wv-answer-input').fill(meaning);
+   await page.locator('#wv-canvas-answer button[type=submit]').click();
+   assert.match(await page.locator('#wordville-canvas-status').innerText(),/저장 완료/);
   }
-  const fish=await solve('fish');
-  assert.ok((await page.evaluate(()=>state.coins))>initial,'correct answer earns coin reward');
-  const wood=await solve('wood');
-  const capture=await solve('capture');
-  assert.ok([fish,wood,capture].every(x=>x.word&&x.answer));
+  await page.locator('[data-solo-tab="capture"]').click();
+  await page.evaluate(()=>{
+   const g=wordvilleGame,word=g.getCurrentWord();
+   const choice=[...document.querySelectorAll('#foraging-choices button')].find(b=>b.textContent===word.word);
+   if(!choice)throw Error('Foraging correct choice missing');
+   choice.click();
+  });
+  assert.ok(await page.evaluate(()=>WordvilleSolo.progress.learned.length>=3));
+  assert.ok((await page.evaluate(()=>state.coins))>initial);
   await page.locator('[data-solo-tab="room"]').click();
   assert.equal(await page.locator('#wv-solo-room-view').isVisible(),true);
-  assert.ok((await page.locator('.wv-solo-frame').count())>=1,'learned words appear as wall art');
+  assert.ok((await page.locator('.wv-solo-frame').count())>=1);
   const coins=await page.evaluate(()=>state.coins);
-  assert.ok(coins>=12,'three correct answers should fund the cheapest decoration');
+  assert.ok(coins>=12);
   await page.locator('#wv-solo-shop .wv-solo-shop-item').first().locator('button').first().click();
   assert.equal(await page.locator('#wv-solo-furniture [data-item="rug"]').count(),1);
   await page.locator('#wv-solo-shop .wv-solo-shop-item').first().locator('.wv-solo-move').click();
@@ -47,10 +52,10 @@ const assert=require('node:assert/strict');
   await page.locator('#wv-bottom-dock [data-screen="more"]').click();
   await page.locator('#wv-more-panel [data-more="solo"]').click();
   await page.locator('[data-solo-tab="room"]').click();
-  assert.equal(await page.locator('#wv-solo-furniture [data-item="rug"]').count(),1,'room items persist');
-  assert.equal(await page.evaluate(()=>WordvilleSolo.progress.slots.rug),original,'item position persists');
-  assert.ok((await page.locator('.wv-solo-frame').count())>=1,'learned word frames persist');
+  assert.equal(await page.locator('#wv-solo-furniture [data-item="rug"]').count(),1);
+  assert.equal(await page.evaluate(()=>WordvilleSolo.progress.slots.rug),original);
+  assert.ok((await page.locator('.wv-solo-frame').count())>=1);
   assert.deepEqual(errors,[]);
-  console.log('PASS: solo fishing/woodcutting/cloze, shared XP and coins, shop, item placement and saved word frames');
+  console.log('PASS: unified Canvas fishing/weeding typed answers, foraging and saved room');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

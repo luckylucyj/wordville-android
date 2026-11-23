@@ -53,7 +53,13 @@ const skyFor=phase=>({
 const lightFilter={dawn:'#f6bd9650',day:'#fff1d00a',sunset:'#e88e6550',night:'#101b3870'};
 let weather='clear';
 const weathers=new Set(['clear','wind','clouds','overcast','rain']);
-function setWeather(value){if(!weathers.has(value))return false;weather=value;return true;}
+function setWeather(value){
+ if(!weathers.has(value))return false;
+ if(weather===value)return true;
+ weather=value;
+ root.document?.dispatchEvent?.(new CustomEvent('wordville-weather-changed',{detail:{weather}}));
+ return true;
+}
 function drawSky(c,phase,skyY=45,weatherType=weather){
  const colors=skyFor(phase);
  for(let y=0;y<skyY;y++)rect(c,0,y,W,1,colors[Math.min(2,Math.floor(y*3/skyY))]);

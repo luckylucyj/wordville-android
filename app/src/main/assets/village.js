@@ -5,6 +5,15 @@ const panel=document.getElementById('village-dialogue'),feed=document.getElement
 const zoomIn=document.getElementById('zoom-in'),zoomOut=document.getElementById('zoom-out');
 const MIN_ZOOM=.75,MAX_ZOOM=3,ZOOM_STEP=.25;
 const residents=M.freshResidents();let mode='auto',schedulePreview='auto',selected=null,zoom=1,last=0,t=0,paused=false,chatCount=0,minute='',period='day',viewZone='all',followId=null,frameHandle=null,lastDrawAt=0,panX=0,panY=0;
+const timeModeSelect=document.getElementById('village-time-mode');
+const periodButtons=[...document.querySelectorAll('[data-town-hour]')];
+const periodLabels={
+ ko:['아침','점심','저녁','시간대 미리보기'],en:['Morning','Noon','Evening','Time of day preview'],
+ 'zh-CN':['早晨','正午','傍晚','时段预览'],ja:['朝','昼','夕方','時間帯プレビュー']
+};
+const affectionBubble=document.getElementById('wv-town-affinity');
+let playerGreeting=null;
+const residentOutdoors=p=>!p.atVenue||M.outdoorPlaces.has(p.schedulePlace);
 const scheduleMinute=()=>schedulePreview==='auto'?S.minuteNow():Number(schedulePreview)*60;
 
 const paints={day:{sky:'#9ccdda',ground:'#93b078',stone:'#d8ceb3',shade:'#b3a58b',roof:'#536a82',wall:'#e1d3b8',side:'#b5ac98',leaf:'#5c8b59',leaf2:'#83a15e',window:'#668396',path:'#c9c4b2'},dusk:{sky:'#b5a1b3',ground:'#718064',stone:'#b9a695',shade:'#94887e',roof:'#4c566c',wall:'#cbb7a8',side:'#9a8e8b',leaf:'#526e56',leaf2:'#71825a',window:'#e8c482',path:'#aaa199'},night:{sky:'#172b48',ground:'#344a43',stone:'#667078',shade:'#4c5766',roof:'#2d405a',wall:'#839096',side:'#616e7c',leaf:'#324f48',leaf2:'#436459',window:'#eed598',path:'#657480'}};
@@ -49,7 +58,7 @@ function ground(p){
 function sprite(p){
  // A scheduled villager inside a building (or asleep at home) is drawn in
  // that indoor place, not simultaneously outside in the town square.
- if(p.atVenue&&!M.outdoorPlaces.has(p.schedulePlace))return;
+ if(!residentOutdoors(p))return;
  const {x,y}=p,walking=!paused&&p.chat<=0&&p.isMoving===true;
  const assets=globalThis.WordvillePortraits,img=assets?.spriteImage,index=assets?.order?.[p.id];
  // Alex previews the hand-painted native 64px animation; others remain 48px.
@@ -110,6 +119,13 @@ function syncTime(){
  document.getElementById('village-period').textContent=L
   ?L.tr(period==='day'?'morning':period)+' · '+L.tr(schedulePreview==='auto'?'clock':'preview')
   :({day:'낮',dusk:'저녁',night:'밤'})[period];
+ const periodText=periodLabels[globalThis.WordvilleI18n?.language]||periodLabels.ko;
+ const active=mode==='night'||h<6||h>=18?2:h>=12?1:0;
+ periodButtons.forEach((button,i)=>{
+  button.querySelector('b').textContent=periodText[i];
+  button.setAttribute('aria-pressed',String(i===active));
+ });
+ document.getElementById('wv-town-periods').setAttribute('aria-label',periodText[3]);
  document.querySelector('.village-section').dataset.period=period;
  document.documentElement.dataset.period=period;minute=now.getMinutes();
  if(document.getElementById('wv-resident-schedule')?.open)renderScheduleRows();
@@ -132,7 +148,7 @@ function writeDialogue([english,korean]){
   globalThis.WordvilleVocabularyLocale.bindText(ko,korean);
  else ko.textContent=korean;
 }
-function select(id){
+function select(id,{stayInTown=false}={}){
  selected=id;
  const gallery=document.getElementById('wv-residents-view');
  if(gallery&&panel.parentElement!==gallery)gallery.append(panel);
@@ -168,7 +184,7 @@ function select(id){
  else writeDialogue(['Let’s learn a new word together.','새로운 단어를 함께 배워요.']);
  panel.hidden=false;
  document.querySelectorAll('[data-person]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.person===id)));
- document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id}}));
+ document.dispatchEvent(new CustomEvent('wordville-resident-selected',{detail:{id,stayInTown}}));
 }
 const greetings=[
  ['Let’s meet at the cafe.','카페에서 만나요.'],
@@ -189,7 +205,8 @@ function meet(a,b){
  const translatedSecond=globalThis.WordvilleI18n?.translate(second.name)||second.name;
  li.textContent=locale==='ko'?`${first.name} ↔ ${second.name} · ${dialogue}`:
   `${translatedFirst} ↔ ${translatedSecond} · ${special?meetingLines[first.id][0]+' / '+meetingLines[second.id][0]:line[0]}`;
- globalThis.WordvilleSocial?.meeting(first.id,second.id,special?meetingLines[first.id][0]:line[0],dialogue);
+ if(document.body.dataset.screen==='town'&&schedulePreview==='auto')
+  globalThis.WordvilleSocial?.meeting(first.id,second.id,special?meetingLines[first.id][0]:line[0],dialogue);
  feed.prepend(li);
  while(feed.children.length>5)feed.lastChild.remove();
  document.getElementById('conversation-count').textContent=chatCount+'번의 대화';
@@ -309,10 +326,36 @@ function drawMapCollision(){
 }
 function frame(ms){const dt=last?Math.min((ms-last)/1000,.1):0;last=ms;if(!paused&&!document.hidden){t+=dt;M.tick(residents,dt,meet,{minuteOfDay:scheduleMinute()});}if(new Date().getMinutes()!==minute)syncTime();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#3b5146';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();const view=currentMapView();ctx.translate(view.offsetX,view.offsetY);ctx.scale(view.scale,view.scale);(globalThis.WordvilleWorldArt?.town?globalThis.WordvilleWorldArt.town(ctx,period,t):ground(paints[period]));const hub=globalThis.WordvilleHubMap,weather=globalThis.WordvillePixelStyle?.weather||'clear';const drawables=[];if(hub?.props&&hub?.drawProp){for(const prop of hub.props)drawables.push({y:prop.y,draw:()=>hub.drawProp(ctx,prop,period,t,weather)});}for(const p of residents){if(VISIBLE_RESIDENTS.has(p.id)||p.id===selected)drawables.push({y:p.y,draw:()=>sprite(p)});}const boardDraw=globalThis.WordvilleBoard?.draw||globalThis.WordvilleSocial?.drawTownBoard;
 if(boardDraw)drawables.push({y:M.bulletin?.anchorY??385,draw:()=>boardDraw(ctx)});
- drawables.sort((a,b)=>a.y-b.y);for(const item of drawables)item.draw();globalThis.WordvilleWalk?.drawPets(ctx,t);globalThis.WordvillePixelStyle?.paintTownOverlay?.(ctx,period,t);drawMapCollision();ctx.restore();lastDrawAt=performance.now();frameHandle=requestAnimationFrame(frame);}
+ drawables.sort((a,b)=>a.y-b.y);for(const item of drawables)item.draw();globalThis.WordvilleWalk?.drawPets(ctx,t);globalThis.WordvillePixelStyle?.paintTownOverlay?.(ctx,period,t);drawMapCollision();ctx.restore();drawPlayerGreeting(view,ms);lastDrawAt=performance.now();frameHandle=requestAnimationFrame(frame);}
+function greetTownResident(resident){
+ const social=globalThis.WordvilleSocial;
+ if(!social)return;
+ // Show the current value on rapid taps without counting them as new greetings.
+ if(playerGreeting?.id===resident.id&&performance.now()<playerGreeting.until)return;
+ const result=social.hello(resident.id);
+ affectionBubble.textContent='♥ '+result.score+'/100'; // Only the number changes; no flickering copy.
+ playerGreeting={id:resident.id,until:performance.now()+2200};
+ drawPlayerGreeting(currentMapView(),performance.now());
+}
+function drawPlayerGreeting(view,ms){
+ if(!playerGreeting||ms>=playerGreeting.until||document.body.dataset.screen!=='town'){
+  affectionBubble.hidden=true;playerGreeting=null;
+  return;
+ }
+ const resident=residents.find(p=>p.id===playerGreeting.id);
+ const x=view.offsetX+resident.x*view.scale;
+ const y=view.offsetY+(resident.y-67)*view.scale;
+ const feet=view.offsetY+resident.y*view.scale;
+ const visible=residentOutdoors(resident)&&x>=0&&x<=canvas.width&&feet>=0&&y<=canvas.height;
+ affectionBubble.hidden=!visible;
+ if(!visible)return;
+ const px=x/canvas.width*canvas.clientWidth;
+ affectionBubble.style.left=canvas.offsetLeft+Math.min(canvas.clientWidth-48,Math.max(48,px))+'px';
+ affectionBubble.style.top=canvas.offsetTop+Math.max(33,y/canvas.height*canvas.clientHeight)+'px';
+}
 for(const p of M.people){const b=document.createElement('button');b.type='button';b.dataset.person=p.id;b.setAttribute('aria-pressed','false');const dot=document.createElement('span');dot.className='resident-dot';dot.style.background=p.shirt;b.append(dot,document.createTextNode(p.name));b.addEventListener('click',()=>{if(document.body.dataset.screen==='residents'&&globalThis.WordvilleVillage?.visitResident){globalThis.WordvilleVillage.visitResident(p.id);}else select(p.id);});document.getElementById('resident-list').append(b);}
 canvas.addEventListener('click',e=>{if(globalThis.WordvilleMapNavigation?.consumeClick?.(canvas))return;const box=canvas.getBoundingClientRect(),view=currentMapView(),x=(e.clientX-box.left)/box.width*canvas.width,y=(e.clientY-box.top)/box.height*canvas.height,wx=(x-view.offsetX)/view.scale,wy=(y-view.offsetY)/view.scale;if(globalThis.WordvilleSocial?.boardHit?.(wx,wy)){globalThis.WordvilleSocial.openBoard();return;}
- const found=residents.filter(p=>!p.atVenue||M.outdoorPlaces.has(p.schedulePlace)).filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-53&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id);return;}
+ const found=residents.filter(residentOutdoors).filter(p=>Math.abs(p.x-wx)<27&&wy>=p.y-62&&wy<=p.y+12).sort((a,b)=>Math.abs((a.y-25)-wy)+Math.abs(a.x-wx)-Math.abs((b.y-25)-wy)-Math.abs(b.x-wx))[0];if(found){select(found.id,{stayInTown:true});greetTownResident(found);return;}
 // The reference painting has different entrances from the generated fallback map.
 const art=globalThis.WordvilleWorldArt;
 const landmarks=art?.hubLandmarks?.length?art.hubLandmarks:(art?.reference?.complete&&art.reference.naturalWidth>0?art.referenceLandmarks:art?.landmarks)||[];
@@ -336,10 +379,16 @@ for(let hour=0;hour<=24;hour++){
  const o=document.createElement('option');o.value=String(hour);o.textContent=S.formatHour(hour)+(hour===24?' ('+(globalThis.WordvilleScheduleLocale?.tr('nextDay')||'다음 날')+')':'');
  scheduleHourSelect.add(o);
 }
-scheduleHourSelect.addEventListener('change',()=>{
- schedulePreview=scheduleHourSelect.value;
+function setSchedulePreview(value){
+ scheduleHourSelect.value=value;schedulePreview=value;
  M.syncSchedule(residents,scheduleMinute(),{teleport:true});
- syncTime();if(selected)select(selected);
+ syncTime();if(selected)select(selected,{stayInTown:document.body.dataset.screen==='town'});
+}
+scheduleHourSelect.addEventListener('change',()=>setSchedulePreview(scheduleHourSelect.value));
+for(const button of periodButtons)button.addEventListener('click',()=>{
+ const hour=button.dataset.townHour;
+ mode='auto';timeModeSelect.value=mode;
+ setSchedulePreview(schedulePreview===hour?'auto':hour);
 });
 const scheduleBox=document.getElementById('wv-resident-schedule');
 const personSelect=document.getElementById('wv-sched-person');
@@ -404,7 +453,7 @@ document.getElementById('wv-sched-reset').addEventListener('click',()=>{
 });
 M.syncSchedule(residents,scheduleMinute(),{teleport:true});
 
-document.getElementById('village-time-mode').addEventListener('change',e=>{mode=e.target.value;syncTime();});
+timeModeSelect.addEventListener('change',e=>{mode=e.target.value;syncTime();});
 zoomIn.addEventListener('click',()=>setZoom(zoom+ZOOM_STEP));
 zoomOut.addEventListener('click',()=>setZoom(zoom-ZOOM_STEP));
 setZoom(zoom);
