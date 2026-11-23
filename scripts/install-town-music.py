@@ -46,7 +46,7 @@ def install():
                 dest.write_bytes(payload)
     except BadZipFile as exc:
         raise SystemExit("Corrupted music ZIP") from exc
-    print("Town music: installed five offline MP3 tracks.")
+    # CI only: keep the Git checkout archive, but omit the duplicate ZIP from the APK.\n    ARCHIVE.unlink()\n    print("Town music: installed five offline MP3 tracks.")
 
 if __name__=="__main__":
     install()
