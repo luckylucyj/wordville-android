@@ -14,7 +14,7 @@ Android WebView requires a user tap to start audio. Open **Town → ⚙ → ♫ 
 
 ## Install the supplied music assets (single ZIP)
 
-Download the five-file `wordville-music-upload.zip` handoff. From the GitHub web UI, select the `design/town-resident-affinity` branch and upload this ZIP to `app/src/main/assets/wordville-music.zip`. The build workflow runs `scripts/install-town-music.py` to securely unpack all five tracks into the APK; the ZIP must contain:
+Download the five-file `wordville-music.zip` handoff. From the GitHub web UI, select the `design/town-resident-affinity` branch and upload this ZIP to `app/src/main/assets/wordville-music.zip`. The build workflow runs `scripts/install-town-music.py` to securely unpack all five tracks into the APK; the ZIP must contain:
 - `audio/01_morning_sunny.mp3`
 - `audio/02_noon_sunny.mp3`
 - `audio/03_evening_sunny.mp3`

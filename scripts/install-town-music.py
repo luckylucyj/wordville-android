@@ -9,6 +9,8 @@ from zipfile import ZipFile, BadZipFile
 
 ASSETS=Path(__file__).resolve().parents[1]/"app/src/main/assets"
 ARCHIVE=ASSETS/"wordville-music.zip"
+if not ARCHIVE.is_file() and (ASSETS/"wordville-music-upload.zip").is_file():
+    ARCHIVE=ASSETS/"wordville-music-upload.zip"
 SONGS=[
     "01_morning_sunny.mp3", "02_noon_sunny.mp3", "03_evening_sunny.mp3",
     "04_night_clear.mp3", "05_cloudy.mp3",
