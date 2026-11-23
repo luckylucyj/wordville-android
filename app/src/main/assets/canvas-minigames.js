@@ -15,7 +15,7 @@
  const FISH_ZONE=[64,88];
  const FISH_HINT='화면 또는 게이지를 탭해서 낚아채세요!';
  const ROOM_CARD_X=[133,315,493,672,850];
- const ROOM_FLOOR_OFFSET=140;
+ const ROOM_FLOOR_OFFSET=0;
  const ROOM_ITEM_LIMIT=35;
  const ROOM_ART={
   bed:[145,1310,136,123,'M3 48 Q7 22 58 6 L68 4 L75 23 L85 35 L132 60 L135 100 L109 114 L95 119 L76 106 L70 101 L42 85 L22 81 L3 69 Z'],
@@ -25,18 +25,51 @@
   lamp:[886,1304,92,134,'M5 51 Q7 37 19 18 Q27 1 53 4 Q77 5 87 37 Q97 60 83 69 L55 80 L55 100 Q73 102 74 114 Q72 129 48 131 Q24 129 22 116 Q21 105 37 101 L37 80 Q12 79 5 66 Z']
  };
  const FURNITURE_IMAGES={desk:'02_writing_desk.png',books:'04_bookshelf.png',sofa:'06_sage_sofa.png'};
+ const PIXEL_FURNITURE_MAP={
+  bed:'pixel_furn_bed',shelf:'pixel_furn_bookshelf',books:'pixel_furn_bookshelf',
+  desk:'pixel_furn_table',chair:'pixel_furn_cushions',sofa:'pixel_furn_dresser',
+  aquarium:'pixel_furn_aquarium',lamp:'pixel_furn_lamp',plant:'pixel_furn_plant',
+  rug:'pixel_furn_cushions'
+ };
+ // Foot collision half-extents (hw, hh) in logical 600x1000 space so live room actors never walk through furniture.
+ const FURNITURE_FOOTPRINTS={
+  bed:{hw:54,hh:26,sit:true},shelf:{hw:34,hh:20},books:{hw:34,hh:20},
+  desk:{hw:38,hh:22},chair:{hw:36,hh:18,sit:true},sofa:{hw:38,hh:22,sit:true},
+  aquarium:{hw:34,hh:22},lamp:{hw:18,hh:14},plant:{hw:20,hh:14},rug:{hw:36,hh:18,sit:true}
+ };
+ const MASCOT_IDS=new Set(['chiikawa','hachiware','usagi','rakko','kurimanju']);
+ const ALL_RESIDENT_NAMES=[
+  ['chiikawa','치이카와'],['hachiware','하치와레'],['usagi','우사기'],['rakko','랏코'],['kurimanju','쿠리만쥬'],
+  ['alex','알렉스'],['elliott','엘리엇'],['harvey','하비'],['sam','샘'],['sebastian','세바스찬'],['shane','셰인'],
+  ['haley','헤일리'],['leah','레아'],['maru','마루'],['penny','페니'],['abigail','애비게일'],['emily','에밀리'],
+  ['toshiro','토시로'],['momo','모모'],['aizen','아이젠'],['madoka','마도카'],['homura','호무라']
+ ];
+ const FOOD_PROPS=['food_onigiri','food_pudding','food_cake','food_ramen'];
+ // Proportional rendering scale: mascots (~56px) vs human residents (~86px), matching town proportions!
+ const actorMetrics=id=>MASCOT_IDS.has(id)?{size:56,radius:17}:{size:86,radius:22};
  const eq=(value,min,max)=>Math.min(max,Math.max(min,value));
  const label=w=>String((w?.meanings&&w.meanings[0])||w?.meaning||'').split(/[;；]/)[0].trim();
  const itemTypes={
-  bed:{name:'포근침대',icon:'🛏️'},shelf:{name:'원목책장',icon:'📚'},chair:{name:'핑크의자',icon:'🪑'},
+  bed:{name:'포근침대',icon:'🛏️'},shelf:{name:'원목책장',icon:'📚'},chair:{name:'방석세트',icon:'🪑'},
   plant:{name:'화분',icon:'🪴'},lamp:{name:'스탠드조명',icon:'🪔'},rug:{name:'원형러그',icon:'🧶'},
-  desk:{name:'책상',icon:'🪑'},books:{name:'책장',icon:'📚'},aquarium:{name:'수족관',icon:'🐠'},
-  sofa:{name:'소파',icon:'🛋️'}
+  desk:{name:'원형테이블',icon:'🪑'},books:{name:'책장',icon:'📚'},aquarium:{name:'수족관',icon:'🐠'},
+  sofa:{name:'나무서랍장',icon:'🛋️'}
  };
  function freshRoom(){
-  return {unlocked:['bed','shelf','chair','plant','lamp'].map(id=>({id,...itemTypes[id]})),
-   placed:[],
-   dragIdx:-1};
+  return {
+   host:'chiikawa',
+   guests:['usagi'],
+   aquariumFish:[{name:'파랑물고기',color:'#5eaee0'},{name:'금붕어',color:'#f4945e'}],
+   unlocked:['bed','shelf','chair','plant','lamp','desk','aquarium'].map(id=>({id,...itemTypes[id]})),
+   placed:[
+    {id:'bed',x:225,y:388},
+    {id:'shelf',x:412,y:398},
+    {id:'aquarium',x:162,y:442},
+    {id:'chair',x:240,y:462},
+    {id:'desk',x:382,y:462}
+   ],
+   dragIdx:-1
+  };
  }
  class WordvilleGameEngine {
   constructor(canvasId){
@@ -53,6 +86,24 @@
     bg_weeding:'images/weeding/bg_meadow.png',weed_perfect:'images/weeding/chiikawa_perfect.png',
     weed_medium:'images/weeding/chiikawa_medium.png',weed_bad:'images/weeding/chiikawa_bad.png',
     bg_room:'images/room/room-decor.webp',
+    room_chiikawa:'images/minigames/room_chiikawa_empty.webp',
+    room_hachiware:'images/minigames/room_hachiware_empty.webp',
+    meadow_bg:'images/minigames/meadow_bg.webp',
+    prop_weed_full:'images/minigames/props/weed_full.png',
+    prop_weed_damaged:'images/minigames/props/weed_damaged.png',
+    prop_weed_clover:'images/minigames/props/weed_clover.png',
+    prop_food_onigiri:'images/minigames/props/food_onigiri.png',
+    prop_food_pudding:'images/minigames/props/food_pudding.png',
+    prop_food_cake:'images/minigames/props/food_cake.png',
+    prop_food_ramen:'images/minigames/props/food_ramen.png',
+    pixel_furn_bed:'images/minigames/furniture/bed.png',
+    pixel_furn_bookshelf:'images/minigames/furniture/bookshelf.png',
+    pixel_furn_table:'images/minigames/furniture/table.png',
+    pixel_furn_aquarium:'images/minigames/furniture/aquarium.png',
+    pixel_furn_cushions:'images/minigames/furniture/cushions.png',
+    pixel_furn_dresser:'images/minigames/furniture/dresser.png',
+    pixel_furn_lamp:'images/minigames/furniture/lamp.png',
+    pixel_furn_plant:'images/minigames/furniture/plant.png',
     ...Object.fromEntries(Object.entries(FURNITURE_IMAGES).map(([id,file])=>[
      'furniture_'+id,'art/furniture/'+file
     ]))
@@ -69,9 +120,16 @@
    this.artError=root.document.getElementById('wv-fishing-art-error');
    this.state={mode:'fishing',wordIdx:0,slots:[],popup:null,
     fishing:{pos:15,dir:1,caught:false,sceneDirty:true,counts:[0,0,0,0]},
-    weeding:{pos:0,dir:1,status:'idle',timer:0,pendingRetry:false},
-    foraging:{stage:1,timer:0,choices:[],pending:false},
+    weeding:{pos:0,dir:1,status:'idle',timer:0,pendingRetry:false,combo:0,bushHp:4,maxHp:4,
+     actor:{id:'chiikawa',x:195,y:580,tx:225,ty:580,direction:'right',walkDistance:0,action:'idle',jumpT:0},
+     particles:[],matchPairs:[],selectedEn:null,matchedIds:[]},
+    foraging:{stage:1,timer:0,choices:[],pending:false,foodIdx:0},
     room:this.loadRoomState()};
+   this.roomActors=[];
+   this.roomSocialBar=root.document.getElementById('wv-room-social-bar');
+   this.weedMatchNode=root.document.getElementById('wv-weed-match');
+   this.forageSentenceNode=root.document.getElementById('wv-forage-sentence');
+   this.forageFoodImg=root.document.getElementById('wv-forage-food-prop');
    this.running=false;this.raf=0;this.lastFrame=0;this.nextActionAt=0;
    this.status=root.document.getElementById('wordville-canvas-status');
    this.choicesNode=root.document.getElementById('foraging-choices');
@@ -111,7 +169,11 @@
      const unique=[...new Map([...defaults.unlocked,...unlocked].map(it=>[it.id,it])).values()];
      const placed=saved.placed.filter(it=>it&&itemTypes[it.id]&&Number.isFinite(it.x)&&Number.isFinite(it.y))
       .slice(0,ROOM_ITEM_LIMIT).map(it=>({id:it.id,...this.constrainFloor(it.x,it.y)}));
-     return {unlocked:unique,placed,dragIdx:-1};
+     const host=saved.host==='hachiware'?'hachiware':'chiikawa';
+     const validIds=new Set(ALL_RESIDENT_NAMES.map(x=>x[0]));
+     const guests=Array.isArray(saved.guests)?saved.guests.filter(id=>validIds.has(id)&&id!==host).slice(0,4):defaults.guests;
+     const aquariumFish=Array.isArray(saved.aquariumFish)?saved.aquariumFish.slice(-8):defaults.aquariumFish;
+     return {host,guests,aquariumFish,unlocked:unique,placed,dragIdx:-1};
     }
    }catch{}
    return defaults;
@@ -119,6 +181,9 @@
   saveRoomState(){
    try{
     root.localStorage.setItem(ROOM_KEY,JSON.stringify({
+     host:this.state.room.host,
+     guests:this.state.room.guests,
+     aquariumFish:this.state.room.aquariumFish,
      unlocked:this.state.room.unlocked,placed:this.state.room.placed,dragIdx:-1
     }));
     return true;
@@ -279,10 +344,14 @@
    root.document.getElementById('btn-clear-room').hidden=mode!=='room';
    this.setDrawerOpen(mode==='room');
    if(this.roomHandleLayer)this.roomHandleLayer.hidden=mode!=='room';
+   if(this.roomSocialBar)this.roomSocialBar.hidden=mode!=='room';
+   if(this.weedMatchNode)this.weedMatchNode.hidden=mode!=='weeding';
+   if(this.forageSentenceNode)this.forageSentenceNode.hidden=mode!=='foraging';
    const action=root.document.getElementById('wordville-action');
    if(action)action.hidden=mode!=='weeding';
+   if(mode==='weeding')this.buildWeedingMatchUI();
    if(mode==='foraging')this.buildForagingChoices();
-   if(mode==='room'){this.renderRoomInventoryUI();this.syncRoomHandles();}
+   if(mode==='room'){this.renderRoomInventoryUI();this.renderRoomSocialUI();this.syncRoomActors();this.syncRoomHandles();}
    this.refreshHeaderUI();this.resume();
   }
   refreshHeaderUI(){
@@ -376,7 +445,30 @@
      if(w.pos>=1){w.pos=1;w.dir=-1;}
      if(w.pos<=0){w.pos=0;w.dir=1;}
     }
+    // Live Chiikawa weeding actor animation & leaf particles
+    const wa=w.actor;
+    if(wa){
+     const dx=wa.tx-wa.x,dy=wa.ty-wa.y,dist=Math.hypot(dx,dy);
+     if(dist>2){
+      const step=Math.min(dist,dt*95);
+      wa.x+=dx/dist*step;wa.y+=dy/dist*step;
+      wa.walkDistance=(wa.walkDistance||0)+step*0.08;
+      wa.direction=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');
+      wa.action='walk';
+     }else{
+      wa.action=w.status==='perfect'?'talk':'idle';
+     }
+     if(wa.jumpT>0)wa.jumpT=Math.max(0,wa.jumpT-dt);
+    }
+    if(Array.isArray(w.particles)){
+     for(let i=w.particles.length-1;i>=0;i--){
+      const pt=w.particles[i];
+      pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.vy+=260*dt;pt.life-=dt;
+      if(pt.life<=0)w.particles.splice(i,1);
+     }
+    }
    }
+   if(this.state.mode==='room')this.updateRoomActors(dt);
    if(this.state.mode==='foraging'&&g.timer>0){
     g.timer=Math.max(0,g.timer-dt);
     if(!g.timer){
@@ -429,16 +521,40 @@
   renderWeeding(){
    const c=this.ctx,w=this.state.weeding;
    // The second user GIF is food collection, NOT a weed-removal scene.
-   if(!this.paintSprite('bg_weeding',0,0,W,H)){
+   if(!this.paintSprite('meadow_bg',0,0,W,H)&&!this.paintSprite('bg_weeding',0,0,W,H)){
     this.message('제초 배경 PNG 로드 실패 · 설치 이미지 확인 필요');
     return;
    }
-   const key=w.status==='idle'?'weed_medium':'weed_'+w.status;
-   if(!this.paintSprite(key,162,306,265,280))
-    this.atlas.drawPanel(c,'weeding_states',
-     w.status==='perfect'?0:w.status==='bad'?2:1,162,306,265,280);
-   const labels={idle:'잡초를 누른 후 단어의 뜻을 입력하세요',
-    perfect:'✨ 타이밍·뜻 정답!',medium:'🌱 뜻 정답!',
+   // Top giant weed bush HP + combo HUD
+   const hpRatio=Math.max(0,w.bushHp/Math.max(1,w.maxHp));
+   this.box(28,18,544,68,16,'#fffaf0e8',INK,3);
+   this.text('🌱 거대 잡초 덤불'+(w.combo>1?' · 연속 제초 x'+w.combo:''),300,44,18,INK,'850',500);
+   this.box(46,56,508,18,9,'#e8dcc8',INK,2);
+   if(hpRatio>0)this.box(48,58,Math.max(12,504*hpRatio),14,7,'#7bc670',INK,1);
+   // 3-stage pixel weed bush (full -> damaged -> lucky four-leaf clover!)
+   const bushKey=w.bushHp<=0?'prop_weed_clover':(w.bushHp<w.maxHp?'prop_weed_damaged':'prop_weed_full');
+   const shake=w.timer>0&&w.status!=='bad'?Math.sin(Date.now()/28)*7:0;
+   if(!this.paintSprite(bushKey,292+shake,420,185,165)){
+    const key=w.status==='idle'?'weed_medium':'weed_'+w.status;
+    if(!this.paintSprite(key,162,306,265,280))
+     this.atlas.drawPanel(c,'weeding_states',
+      w.status==='perfect'?0:w.status==='bad'?2:1,162,306,265,280);
+   }
+   // Live animated Chiikawa sprite (walks to bush, shakes/pulls, jumps on clear!)
+   const wa=w.actor;
+   if(wa&&root.WordvilleWalk?.paint){
+    const jumpOff=wa.jumpT>0?-Math.abs(Math.sin(wa.jumpT*Math.PI*3))*26:0;
+    const m=actorMetrics('chiikawa');
+    root.WordvilleWalk.paint(c,wa,wa.x,wa.y+jumpOff,{
+     width:m.size*1.45,height:m.size*1.45,walking:wa.action==='walk',action:wa.action
+    });
+   }
+   // Leaf burst particles on match/pull
+   for(const pt of (w.particles||[])){
+    c.save();c.fillStyle=pt.color;c.beginPath();c.ellipse(pt.x,pt.y,6,3.5,pt.rot,0,Math.PI*2);c.fill();c.restore();
+   }
+   const labels={idle:'아래 4쌍 단어 연결 또는 타이밍 제초!',
+    perfect:'✨ 연속 제초! 뜻 정답!',medium:'🌱 제초 성공!',
     bad:'❌ 타이밍 또는 단어 뜻 오답'};
    // Interactive timing meter only; never generate placeholder character geometry.
    this.box(30,860,540,96,18,'#fffaf0');
@@ -449,10 +565,10 @@
    this.text(labels[w.status],300,839,18,INK,'800',510);
   }
   constrainFloor(x,y){
-   let dx=(x-300)/245,dy=(y-480)/135;
-   const sum=Math.abs(dx)+Math.abs(dy);
-   if(sum>0.89){const r=.89/sum;dx*=r;dy*=r;}
-   return {x:300+245*dx,y:480+135*dy};
+   let dx=(x-300)/192,dy=(y-412)/78;
+   const len=Math.hypot(dx,dy);
+   if(len>1){dx/=len;dy/=len;}
+   return {x:300+192*dx,y:412+78*dy};
   }
   prepareRoomArt(image){
    // Use the reference's illustrated inventory icons as transparent room props.
@@ -465,19 +581,69 @@
    }
   }
   renderRoom(){
-   this.ctx.fillStyle='#acc8aa';this.ctx.fillRect(0,0,W,H);
-   if(!this.paintSprite('bg_room',0,0,W,H))return;
    const c=this.ctx,room=this.state.room;
-   const furniture=room.placed.map((item,index)=>({item,index})).sort((a,b)=>a.item.y-b.item.y);
-   for(const {item,index} of furniture){
-    const y=item.y+ROOM_FLOOR_OFFSET;
-    const sprite=this.roomArt[item.id]||this.sprites['furniture_'+item.id];
-    if(sprite){
-     const width=item.id==='bed'?112:78;
-     const height=width*(sprite.naturalHeight||sprite.height)/(sprite.naturalWidth||sprite.width)*1.3;
-     c.drawImage(sprite,item.x-width/2,y-height,width,height);
-    }else this.text(itemTypes[item.id].icon,item.x,y,43);
-    if(room.dragIdx===index)this.text('↕',item.x,y-12,22,'#8b4f39');
+   const bgKey=room.host==='hachiware'?'room_hachiware':'room_chiikawa';
+   c.fillStyle=room.host==='hachiware'?'#e6ddc7':'#1b1714';
+   c.fillRect(0,0,W,H);
+   // Paint Chiikawa / Hachiware circular pixel-art room base centered in upper stage
+   const hasPixelRoom=this.paintSprite(bgKey,-24,95,648,560);
+   if(!hasPixelRoom&&!this.paintSprite('bg_room',0,0,W,H))return;
+   // Wall learned-word frames (top inner wall)
+   const learnedFrames=(root.WordvilleSolo?.progress?.frames||[]).slice(0,2);
+   const fallbackWords=this.words.slice(0,2).map(w=>({word:w.word,meaning:label(w)}));
+   const wallFrames=learnedFrames.length?learnedFrames:fallbackWords;
+   wallFrames.forEach((fr,i)=>{
+    const fx=i===0?148:354,fy=228;
+    this.box(fx,fy,98,52,8,'#fffaf0f0','#9c724c',3);
+    this.text(fr.word||'word',fx+49,fy+22,13,INK,'850',88);
+    this.text(fr.meaning||'',fx+49,fy+40,11,'#7d5e48','650',88);
+   });
+   // Depth-sort BOTH placed furniture AND live room actors (host + invited residents) by footY!
+   const drawList=[];
+   room.placed.forEach((item,index)=>{
+    drawList.push({kind:'furn',footY:item.y+ROOM_FLOOR_OFFSET,item,index});
+   });
+   for(const actor of this.roomActors){
+    drawList.push({kind:'actor',footY:actor.y+ROOM_FLOOR_OFFSET,actor});
+   }
+   drawList.sort((a,b)=>a.footY-b.footY);
+   const nowSec=Date.now()/1000;
+   for(const entry of drawList){
+    if(entry.kind==='furn'){
+     const {item,index}=entry;
+     const y=entry.footY;
+     const pixKey=PIXEL_FURNITURE_MAP[item.id];
+     const sprite=(pixKey&&this.sprites[pixKey])||this.roomArt[item.id]||this.sprites['furniture_'+item.id];
+     if(sprite){
+      const width=item.id==='bed'?118:item.id==='lamp'?54:item.id==='plant'?60:84;
+      const height=width*(sprite.naturalHeight||sprite.height)/(sprite.naturalWidth||sprite.width);
+      c.drawImage(sprite,item.x-width/2,y-height,width,height);
+      // Swimming fish inside aquarium linked to Fishing minigame!
+      if(item.id==='aquarium'){
+       const fishes=room.aquariumFish||[];
+       fishes.slice(0,5).forEach((fish,fi)=>{
+        const fx=item.x+Math.sin(nowSec*(1.1+fi*.25)+fi*1.7)*(width*0.26);
+        const fy=y-height*0.48+Math.cos(nowSec*(1.4+fi*.2)+fi)*6;
+        c.save();c.fillStyle=fish.color||'#5eaee0';c.strokeStyle='#2c4c68';c.lineWidth=1.5;
+        c.beginPath();c.ellipse(fx,fy,6,3.5,0,0,Math.PI*2);c.fill();c.stroke();c.restore();
+       });
+      }
+     }else this.text(itemTypes[item.id].icon,item.x,y,43);
+     if(room.dragIdx===index)this.text('↕',item.x,y-12,22,'#8b4f39');
+    }else{
+     const a=entry.actor,m=actorMetrics(a.id);
+     if(root.WordvilleWalk?.paint){
+      root.WordvilleWalk.paint(c,a,a.x,entry.footY,{
+       width:m.size,height:m.size,walking:a.action==='walk',action:a.action
+      });
+     }
+     if(a.bubble&&a.bubbleT>0){
+      const bw=Math.min(180,Math.max(88,a.bubble.length*9+22));
+      const bx=eq(a.x-bw/2,20,W-bw-20),by=entry.footY-m.size-26;
+      this.box(bx,by,bw,24,10,'#fffdf5f2',INK,2);
+      this.text(a.bubble,bx+bw/2,by+16,11,INK,'800',bw-12);
+     }
+    }
    }
    c.save();c.scale(W/ART_W,H/ART_H);
    if(this.drawer?.hidden){
@@ -489,13 +655,17 @@
     const items=room.unlocked.slice(this.inventoryPage*5,this.inventoryPage*5+5);
     for(let i=0;i<ROOM_CARD_X.length;i++){
      const x=ROOM_CARD_X[i],item=items[i];
-     if(this.inventoryPage>0||(i===0&&this.selectedFurniture!=='bed')){
-      this.box(x,1290,160,164,24,item?'#fff7ec':'#c59a79','#795646',4);
-      if(item){
-       const art=this.roomArt[item.id]||this.sprites['furniture_'+item.id];
-       if(art)c.drawImage(art,x+33,1313,94,108);
-       else this.text(item.icon,x+80,1402,69);
+     this.box(x,1290,160,164,24,item?'#fff7ec':'#c59a79','#795646',4);
+     if(item){
+      const pixKey=PIXEL_FURNITURE_MAP[item.id];
+      const art=(pixKey&&this.sprites[pixKey])||this.roomArt[item.id]||this.sprites['furniture_'+item.id];
+      if(art){
+       const aw=art.naturalWidth||art.width||1,ah=art.naturalHeight||art.height||1;
+       const scale=Math.min(112/aw,112/ah);
+       const dw=aw*scale,dh=ah*scale;
+       c.drawImage(art,x+80-dw/2,1368-dh/2,dw,dh);
       }
+      else this.text(item.icon,x+80,1402,69);
      }
      if(!item)continue;
      if(item.id===this.selectedFurniture)this.box(x+3,1294,154,154,24,'#ffe18a35','#fff7d5',7);
@@ -557,6 +727,12 @@
     const weight=(Math.random()*2.5+2.5).toFixed(2)+' kg';
     f.counts[word.word.length%f.counts.length]++;
     f.caught=true;f.sceneDirty=true;
+    // Automatically add caught fish to the Room Aquarium!
+    const fishColors=['#5eaee0','#f4945e','#76c990','#e888b2'];
+    if(!Array.isArray(this.state.room.aquariumFish))this.state.room.aquariumFish=[];
+    this.state.room.aquariumFish.push({name:word.word,color:fishColors[word.word.length%fishColors.length]});
+    if(this.state.room.aquariumFish.length>8)this.state.room.aquariumFish.shift();
+    this.saveRoomState();
     this.fishingWeight.textContent=weight;
     this.fishingHint.textContent='정답! 다음 낚시를 하려면 찌를 누르세요';
     this.fishingPopup.setAttribute('aria-hidden','false');
@@ -607,6 +783,15 @@
    const node=this.choicesNode;if(!node)return;
    node.replaceChildren();
    const word=this.getCurrentWord();if(!word)return;
+   // Rotate giant pixel food prop & update sentence blank hint
+   const foodKey=FOOD_PROPS[(word.word.length+(this.state.foraging.foodIdx||0))%FOOD_PROPS.length];
+   if(this.forageFoodImg)this.forageFoodImg.src='images/minigames/props/'+foodKey+'.png';
+   if(this.forageSentenceNode){
+    const rawEx=String(word.example||word.sentence||'').trim();
+    const masked=rawEx?rawEx.replace(new RegExp(word.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),'______'):
+     'I want to learn "______" today!';
+    this.forageSentenceNode.innerHTML='<strong>'+masked+'</strong><span>뜻 힌트: '+label(word)+'</span>';
+   }
    const others=this.words.filter(w=>w.word!==word.word).slice();
    for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]];}
    const options=[word,...others.slice(0,2)];
@@ -629,7 +814,7 @@
      }
      if(this.award(word,word.word.length%2?'🍮':'🍙')){
       this.studyManager.playTone('success');
-      g.pending=true;
+      g.pending=true;g.foodIdx=(g.foodIdx||0)+1;
       this.setForageStage(2,1.4);
       this.advanceWord(true);
      }
@@ -640,6 +825,218 @@
   setDrawerOpen(open){
    if(this.drawer)this.drawer.hidden=!open;
    this.roomToggle?.setAttribute('aria-expanded',String(open));
+  }
+  isPointBlockedByFurniture(x,y,radius=16){
+   for(const item of this.state.room.placed){
+    const fp=FURNITURE_FOOTPRINTS[item.id]||{hw:30,hh:18};
+    if(Math.abs(x-item.x)<fp.hw+radius&&Math.abs(y-item.y)<fp.hh+radius*0.65)return item;
+   }
+   return null;
+  }
+  syncRoomActors(){
+   const room=this.state.room;
+   const desiredIds=[room.host,...(room.guests||[]).filter(id=>id!==room.host)];
+   const existing=new Map(this.roomActors.map(a=>[a.id,a]));
+   const next=[];
+   desiredIds.forEach((id,idx)=>{
+    if(existing.has(id)){next.push(existing.get(id));return;}
+    // Spawn on clear floor spot avoiding furniture footprints
+    let sx=280+idx*34,sy=428+(idx%2)*24;
+    for(let tries=0;tries<16;tries++){
+     const p=this.constrainFloor(185+((idx*73+tries*41)%230),365+((idx*53+tries*37)%115));
+     if(!this.isPointBlockedByFurniture(p.x,p.y,actorMetrics(id).radius)){sx=p.x;sy=p.y;break;}
+    }
+    next.push({id,x:sx,y:sy,tx:sx,ty:sy,direction:'down',walkDistance:0,action:'idle',stateTimer:1.2+idx*0.6,bubble:'',bubbleT:0});
+   });
+   this.roomActors=next;
+   // Run initial separation passes so spawned host + guests never overlap on frame 1
+   for(let pass=0;pass<5;pass++){
+    for(let i=0;i<this.roomActors.length;i++){
+     for(let j=i+1;j<this.roomActors.length;j++){
+      const a=this.roomActors[i],b=this.roomActors[j];
+      const minSep=actorMetrics(a.id).radius+actorMetrics(b.id).radius+12;
+      const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||0.1;
+      if(d<minSep){
+       const push=(minSep-d)*0.55;
+       const pa=this.constrainFloor(a.x-(dx/d)*push,a.y-(dy/d)*push);
+       const pb=this.constrainFloor(b.x+(dx/d)*push,b.y+(dy/d)*push);
+       if(!this.isPointBlockedByFurniture(pa.x,pa.y,12)){a.x=pa.x;a.y=pa.y;}
+       if(!this.isPointBlockedByFurniture(pb.x,pb.y,12)){b.x=pb.x;b.y=pb.y;}
+      }
+     }
+    }
+   }
+  }
+  updateRoomActors(dt){
+   if(!this.roomActors.length)this.syncRoomActors();
+   const room=this.state.room;
+   for(const a of this.roomActors){
+    const m=actorMetrics(a.id);
+    if(a.bubbleT>0)a.bubbleT=Math.max(0,a.bubbleT-dt);
+    a.stateTimer-=dt;
+    if(a.action==='walk'){
+     const dx=a.tx-a.x,dy=a.ty-a.y,dist=Math.hypot(dx,dy);
+     if(dist<5||a.stateTimer<=0){
+      a.action=a.nextAction||'idle';
+      a.stateTimer=2.4+Math.random()*2.5;
+      if(a.action==='write')a.direction='up';
+      else if(a.action==='sit')a.direction='down';
+      if(Math.random()<0.45&&this.words.length){
+       const w=this.words[Math.floor(Math.random()*Math.min(20,this.words.length))];
+       a.bubble=w.word+' = '+label(w);a.bubbleT=3.0;
+      }
+     }else{
+      const speed=MASCOT_IDS.has(a.id)?46:54;
+      const nx=a.x+(dx/dist)*speed*dt,ny=a.y+(dy/dist)*speed*dt;
+      const clamped=this.constrainFloor(nx,ny);
+      if(!this.isPointBlockedByFurniture(clamped.x,clamped.y,m.radius*0.75)){
+       a.x=clamped.x;a.y=clamped.y;a.walkDistance+=speed*dt*0.07;
+       a.direction=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');
+      }else{
+       a.action='idle';a.stateTimer=0.8;
+      }
+     }
+    }else if(a.stateTimer<=0){
+     // Pick a new collision-free destination (wall word frame -> write, cushion/bed -> sit, or wander)
+     const roll=Math.random();
+     let goal=null,nextAct='idle';
+     if(roll<0.25){
+      goal=this.constrainFloor(205+(Math.random()<0.5?0:190),346);nextAct='write';
+     }else if(roll<0.55){
+      const seats=room.placed.filter(it=>FURNITURE_FOOTPRINTS[it.id]?.sit);
+      if(seats.length){
+       const s=seats[Math.floor(Math.random()*seats.length)];
+       const fp=FURNITURE_FOOTPRINTS[s.id];
+       goal=this.constrainFloor(s.x,s.y+fp.hh+m.radius*0.6);nextAct='sit';
+      }
+     }
+     if(!goal){
+      for(let t=0;t<10;t++){
+       const cand=this.constrainFloor(150+Math.random()*300,350+Math.random()*145);
+       if(!this.isPointBlockedByFurniture(cand.x,cand.y,m.radius*0.85)){goal=cand;break;}
+      }
+     }
+     if(goal){a.tx=goal.x;a.ty=goal.y;a.action='walk';a.nextAction=nextAct;a.stateTimer=5.0;}
+     else{a.stateTimer=1.5;}
+    }
+   }
+   // Actor-to-actor separation so mascots & human residents never overlap!
+   for(let i=0;i<this.roomActors.length;i++){
+    for(let j=i+1;j<this.roomActors.length;j++){
+     const a=this.roomActors[i],b=this.roomActors[j];
+     const minSep=actorMetrics(a.id).radius+actorMetrics(b.id).radius+10;
+     const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||0.1;
+     if(d<minSep){
+      const push=(minSep-d)*0.5;
+      const pa=this.constrainFloor(a.x-(dx/d)*push,a.y-(dy/d)*push);
+      const pb=this.constrainFloor(b.x+(dx/d)*push,b.y+(dy/d)*push);
+      if(!this.isPointBlockedByFurniture(pa.x,pa.y,12)){a.x=pa.x;a.y=pa.y;}
+      if(!this.isPointBlockedByFurniture(pb.x,pb.y,12)){b.x=pb.x;b.y=pb.y;}
+     }
+    }
+   }
+  }
+  renderRoomSocialUI(){
+   const bar=this.roomSocialBar;if(!bar)return;
+   const room=this.state.room;
+   bar.replaceChildren();
+   const hostRow=root.document.createElement('div');hostRow.className='wv-room-social-row';
+   const hl=root.document.createElement('span');hl.className='wv-room-social-label';hl.textContent='🏠 방 호스트:';
+   hostRow.append(hl);
+   for(const [hid,hname] of [['chiikawa','치이카와 방'],['hachiware','하치와레 방']]){
+    const btn=root.document.createElement('button');btn.type='button';btn.className='wv-host-btn';
+    btn.dataset.host=hid;btn.setAttribute('aria-pressed',String(room.host===hid));btn.textContent=hname;
+    btn.addEventListener('click',()=>{
+     room.host=hid;
+     room.guests=(room.guests||[]).filter(id=>id!==hid);
+     this.saveRoomState();this.syncRoomActors();this.renderRoomSocialUI();
+     this.message(hname+'으로 전환했습니다!');
+    });
+    hostRow.append(btn);
+   }
+   const gRow=root.document.createElement('div');gRow.className='wv-room-social-row';
+   const gl=root.document.createElement('span');gl.className='wv-room-social-label';
+   gl.textContent='👥 마을 주민 초대 ('+(room.guests||[]).length+'/4):';
+   gRow.append(gl);
+   const chips=root.document.createElement('div');chips.className='wv-guest-chips';
+   for(const [rid,rname] of ALL_RESIDENT_NAMES){
+    if(rid===room.host)continue;
+    const active=(room.guests||[]).includes(rid);
+    const chip=root.document.createElement('button');chip.type='button';chip.className='wv-guest-chip';
+    chip.setAttribute('aria-pressed',String(active));
+    chip.textContent=active?rname+' ✓':rname+' +';
+    chip.addEventListener('click',()=>{
+     const cur=room.guests||[];
+     if(cur.includes(rid)){
+      room.guests=cur.filter(id=>id!==rid);
+     }else{
+      if(cur.length>=4){this.message('마을 주민은 최대 4명까지 함께 초대할 수 있어요.');return;}
+      room.guests=[...cur,rid];
+     }
+     this.saveRoomState();this.syncRoomActors();this.renderRoomSocialUI();
+    });
+    chips.append(chip);
+   }
+   bar.append(hostRow,gRow,chips);
+  }
+  buildWeedingMatchUI(){
+   const box=this.weedMatchNode;if(!box||!this.words.length)return;
+   const w=this.state.weeding;
+   const cur=this.getCurrentWord();
+   const pool=this.words.filter(x=>x&&cur&&x.id!==cur.id).slice();
+   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+   const picks=[cur,...pool.slice(0,3)].filter(Boolean);
+   w.matchPairs=picks;w.selectedEn=null;w.matchedIds=[];w.bushHp=picks.length;w.maxHp=picks.length;
+   const leftOrder=picks.slice();
+   const rightOrder=picks.slice();
+   for(let i=rightOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[rightOrder[i],rightOrder[j]]=[rightOrder[j],rightOrder[i]];}
+   box.replaceChildren();
+   const colL=root.document.createElement('div');colL.className='wv-weed-col';
+   const colR=root.document.createElement('div');colR.className='wv-weed-col';
+   const leftBtns=new Map(),rightBtns=new Map();
+   const spawnLeaves=()=>{
+    const cols=['#7ec468','#a4db7c','#5b9e4b','#f5e47a'];
+    for(let k=0;k<10;k++){
+     w.particles.push({x:375,y:495,vx:(Math.random()-.5)*210,vy:-90-Math.random()*130,rot:Math.random()*6,life:0.65+Math.random()*0.3,color:cols[k%cols.length]});
+    }
+   };
+   for(const item of leftOrder){
+    const b=root.document.createElement('button');b.type='button';b.className='wv-weed-card';b.textContent=item.word;
+    b.addEventListener('click',()=>{
+     if(w.matchedIds.includes(item.id))return;
+     leftBtns.forEach(btn=>btn.dataset.selected='false');
+     w.selectedEn=item.id;b.dataset.selected='true';
+     w.actor.tx=245;w.actor.ty=565;
+    });
+    leftBtns.set(item.id,b);colL.append(b);
+   }
+   for(const item of rightOrder){
+    const b=root.document.createElement('button');b.type='button';b.className='wv-weed-card';b.textContent=label(item);
+    b.addEventListener('click',()=>{
+     if(w.matchedIds.includes(item.id)||w.selectedEn==null)return;
+     if(w.selectedEn===item.id){
+      w.matchedIds.push(item.id);w.combo=(w.combo||0)+1;w.bushHp=Math.max(0,w.bushHp-1);
+      leftBtns.get(item.id).dataset.matched='true';b.dataset.matched='true';
+      leftBtns.get(item.id).dataset.selected='false';w.selectedEn=null;
+      w.status='perfect';w.timer=0.8;w.actor.tx=270;w.actor.jumpT=0.6;
+      spawnLeaves();
+      this.studyManager.playTone('success');
+      this.award(item,'🌱');
+      if(w.bushHp<=0){
+       this.message('🍀 거대 잡초 제초 완료! 네잎클로버 획득! (연속 제초 x'+w.combo+')');
+       this.advanceWord(true);
+       setTimeout(()=>{if(this.state.mode==='weeding')this.buildWeedingMatchUI();},850);
+      }
+     }else{
+      w.combo=0;w.status='bad';w.timer=0.6;
+      b.dataset.wrong='true';
+      setTimeout(()=>{b.dataset.wrong='false';},420);
+      this.message('❌ 뜻이 맞지 않습니다. 다시 연결해 보세요!');
+     }
+    });
+    rightBtns.set(item.id,b);colR.append(b);
+   }
+   box.append(colL,colR);
   }
   renderRoomInventoryUI(){
    const list=this.inventoryNode;if(!list)return;
@@ -660,7 +1057,7 @@
       this.message('가구는 최대 '+ROOM_ITEM_LIMIT+'개까지 배치할 수 있습니다.');return;
      }
      const offset=room.placed.length%6;
-     const placed={id:item.id,...this.constrainFloor(242+offset*31,532-(offset%2)*34)};
+     const placed={id:item.id,...this.constrainFloor(235+offset*26,422-(offset%2)*30)};
      room.placed.push(placed);
      if(!this.saveRoomState()){room.placed.pop();return;}
      this.selectedFurniture=item.id;this.syncRoomHandles();
@@ -846,6 +1243,7 @@
    <div id="wv-forage-card" data-stage="1" hidden>
     <div class="wv-forage-viewport">
      <div class="wv-forage-sprite" aria-hidden="true"></div>
+     <img id="wv-forage-food-prop" class="wv-forage-food-prop" src="images/minigames/props/food_pudding.png" alt="" aria-hidden="true">
      <span class="wv-forage-badge" role="status" lang="en">Perfect!</span>
     </div>
     <div class="wv-forage-controls">
@@ -880,7 +1278,10 @@
   stage.append(drawer,toggle);
   const action=root.document.createElement('button');action.type='button';
   action.id='wordville-action';action.textContent='🎯 타이밍 맞춰 누르기';
-  panel.append(heading,target,hint,stage,quiz,action,choices,clear,status);
+  const weedMatch=root.document.createElement('div');weedMatch.id='wv-weed-match';weedMatch.hidden=true;
+  const forageSentence=root.document.createElement('div');forageSentence.id='wv-forage-sentence';forageSentence.hidden=true;
+  const roomSocial=root.document.createElement('div');roomSocial.id='wv-room-social-bar';roomSocial.hidden=true;
+  panel.append(heading,target,hint,stage,quiz,weedMatch,action,forageSentence,choices,roomSocial,clear,status);
   const navbar=solo.querySelector('.wv-solo-topnav');navbar?.after(panel);
   root.wordvilleGame=new WordvilleGameEngine('wordvilleCanvas');
  }

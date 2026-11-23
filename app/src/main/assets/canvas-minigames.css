@@ -187,3 +187,68 @@
  .wv-canvas-stage[data-mode="fishing"] #wordvilleCanvas,.wv-fishing-shimmer,.wv-fishing-fish{animation:none}
  .wv-fishing-popup{transition:none}
 }
+
+/* Chiikawa-world Room Host & Town Resident Invite Bar */
+#wv-room-social-bar{
+ margin:10px 0 6px;padding:10px;border:2px solid #b88c66;border-radius:12px;
+ background:#fff9ec;display:flex;flex-direction:column;gap:8px;
+}
+#wv-room-social-bar[hidden],#wv-weed-match[hidden],#wv-forage-sentence[hidden]{display:none!important}
+.wv-room-social-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.wv-room-social-label{font-size:12px;font-weight:900;color:#6b4d35;margin-right:2px}
+#wv-room-social-bar .wv-host-btn{
+ min-height:34px;padding:4px 10px;font-size:12px;border-radius:999px;
+ background:#f3e7cf;border:2px solid #c29c76;color:#4a3b32;
+}
+#wv-room-social-bar .wv-host-btn[aria-pressed="true"]{
+ background:#f094b2;border-color:#8a435a;color:#fff;
+}
+#wv-room-social-bar .wv-host-btn[data-host="hachiware"][aria-pressed="true"]{
+ background:#6eb2de;border-color:#3a6f94;color:#fff;
+}
+.wv-guest-chips{display:flex;flex-wrap:wrap;gap:5px;max-height:92px;overflow-y:auto;padding:2px 0}
+#wv-room-social-bar .wv-guest-chip{
+ min-height:30px;padding:3px 9px;font-size:11px;border-radius:999px;
+ background:#fffdf7;border:1.5px solid #c4a482;color:#5a4636;
+}
+#wv-room-social-bar .wv-guest-chip[aria-pressed="true"]{
+ background:#cdecc2;border-color:#4b8552;color:#25492a;font-weight:900;
+}
+
+/* Weeding 4-pair Word Matching Board (Video 2 mechanic!) */
+#wv-weed-match{
+ margin:10px 0;padding:10px;border:2px solid #7aa66e;border-radius:14px;
+ background:#f6fbe9;display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.wv-weed-col{display:flex;flex-direction:column;gap:6px}
+#wv-weed-match .wv-weed-card{
+ min-height:42px;padding:6px 8px;font-size:13px;border-radius:10px;
+ background:#fffdf7;border:2px solid #8a735c;color:#4a3b32;text-align:center;
+ transition:transform .12s ease,background-color .15s ease;
+}
+#wv-weed-match .wv-weed-card[data-selected="true"]{
+ background:#fff0b8;border-color:#e0863a;transform:scale(1.02);
+}
+#wv-weed-match .wv-weed-card[data-matched="true"]{
+ background:#d3f0c8;border-color:#539459;color:#2f5e34;opacity:.45;pointer-events:none;
+}
+#wv-weed-match .wv-weed-card[data-wrong="true"]{
+ background:#ffd8d8;border-color:#d9534f;
+}
+
+/* Foraging Sentence Blank Hint & Pixel Food Overlay */
+#wv-forage-sentence{
+ margin:8px 0 4px;padding:9px 12px;border:2px solid #c49b72;border-radius:12px;
+ background:#fffdf7;text-align:center;font-size:13px;line-height:1.5;color:#4a3b32;
+}
+#wv-forage-sentence strong{display:block;font-size:15px;color:#3d2b1f;margin-bottom:2px}
+#wv-forage-card .wv-forage-viewport{
+ background:#c5e3a5 url('images/minigames/meadow_bg.webp') center bottom / cover no-repeat;
+}
+.wv-forage-food-prop{
+ position:absolute;right:14px;bottom:14px;width:78px;height:78px;
+ object-fit:contain;image-rendering:pixelated;pointer-events:none;
+ filter:drop-shadow(0 4px 4px #3c2e2240);
+ transition:transform .25s ease;
+}
+#wv-forage-card[data-stage="3"] .wv-forage-food-prop{transform:scale(1.18) translateY(-6px)}
