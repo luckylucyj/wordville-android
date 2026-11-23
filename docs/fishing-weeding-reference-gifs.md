@@ -1,10 +1,15 @@
-# Fishing and weeding GIF-reference parity
+# Reference GIFs mapped to the correct game
 
-The user uploaded two original 360×640 animated GIFs as visual references: fishing `22471.gif` and weeding/foraging artwork `22470.gif`. The game reads these GIFs as animated illustrations **only when bundled**; gameplay inputs, typed answer validation, score, fish count and timing meter are implemented in Wordville and are not sampled from the images.
+The two uploaded 360×640 GIFs show (1) Hachiware fishing and (2) Chiikawa with a pudding, rice ball and cake. The **second GIF is not weeding**, and rendering it under the weed mode is an error.
 
-## Add the two GIFs to the APK
-Upload the supplied file `wordville-reference-gifs.zip` to `app/src/main/assets/wordville-reference-gifs.zip` on the `design/town-resident-affinity` branch. It contains `images/reference/fishing.gif` and `images/reference/weeding.gif`. Android CI unpacks them before testing/packaging.
+Upload `wordville-reference-gifs-corrected.zip` from the conversation to `app/src/main/assets/wordville-reference-gifs.zip` on the PR branch. The corrected ZIP contains:
+- `images/reference/fishing.gif`
+- `images/reference/foraging.gif`
 
-The visual rendering falls back to existing authored fishing and generated weeding PNGs if the GIF files are not bundled, without drawing any new procedural characters at runtime. To obtain the reference appearance in the APK, you **must commit the ZIP**, and only a post-upload APK can be considered GIF-matched. The ZIP is excluded from final APK after unpacking.
+The previous ZIP with `images/reference/weeding.gif` is also accepted for compatibility: the installer maps that second file to `foraging.gif`, never the weed game.
 
-Fishing and weeding share one workflow: touch the bobber/weed at the correct timing, type the Korean meaning of the word displayed directly on the play area, then check. Incorrect answers do not earn coins and enter the review queue. The old parallel multiple-choice quiz panel is hidden. The appearance is based on the user-supplied GIFs, so illustrations are kept original rather than re-created by code.
+The fishing fallback is already a complete illustrated PNG with Hachiware and rod. The Canvas must paint the full original PNG/GIF **once**, not stamp another cat or procedural sprites on top. Touch controls, vocabulary and timing meters stay native DOM/Canvas and use the actual Wordville words.
+
+Weeding stays on existing PNGs until a **weeding-specific reference** is provided. Do not claim the current weed screen is pixel-identical to the food GIF.
+
+Without uploading the ZIP, the CI run bundles the existing PNGs rather than the two GIFs. A successful build does **not** imply the animation files are inside the APK.

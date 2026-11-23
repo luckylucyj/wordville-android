@@ -47,7 +47,7 @@
    this.LOGICAL_W=W;this.LOGICAL_H=H;
    this.sprites={};
    this.spriteManifest={
-    reference_fishing:'images/reference/fishing.gif',reference_weeding:'images/reference/weeding.gif',
+    reference_fishing:'images/reference/fishing.gif',reference_foraging:'images/reference/foraging.gif',
     bg_fishing:'images/fishing/bg_fishing.png',hachiware_idle:'images/fishing/hachiware_idle.png',
     hachiware_catch:'images/fishing/hachiware_catch.png',
     bg_weeding:'images/weeding/bg_meadow.png',weed_perfect:'images/weeding/chiikawa_perfect.png',
@@ -143,10 +143,11 @@
       if(!cleaned)console.warn('[Wordville Fishing] Chroma key unavailable, showing original PNG:',key);
      }else this.sprites[key]=image;
      if(key==='bg_room'){this.prepareRoomArt(image);this.paint();}
-     if(key==='reference_fishing'||key==='reference_weeding'){
-      this.stage.dataset.referenceArt='true';
+     if(key==='reference_fishing'){
       this.state.fishing.sceneDirty=true;
+      if(this.state.mode==='fishing')this.stage.dataset.referenceArt='true';
      }
+     if(key==='reference_foraging')this.forageCard.dataset.referenceArt='true';
      if(key==='bg_fishing'&&this.artError)this.artError.hidden=true;
      if(key.startsWith('hachiware_')||key==='bg_fishing'){
       this.state.fishing.sceneDirty=true;
@@ -154,7 +155,7 @@
      }
     };
     image.onerror=()=>{
-     if(key==='reference_fishing'||key==='reference_weeding')return; // optional user-uploaded reference GIF
+     if(key==='reference_fishing'||key==='reference_foraging')return; // optional user-uploaded reference GIF
      this.reportAssetError(key,url,'image.onerror');
     };
     image.src=url;
@@ -262,7 +263,7 @@
    this.pendingAnswer=null;this.answerForm.hidden=true;
    if(this.weedingWord)this.weedingWord.hidden=mode!=='weeding';
    if(this.artError)this.artError.hidden=true;
-   this.stage.dataset.referenceArt=String(Boolean(this.sprites[mode==='fishing'?'reference_fishing':'reference_weeding']));
+   this.stage.dataset.referenceArt=String(mode==='fishing'&&Boolean(this.sprites.reference_fishing));
    this.message('');
    this.state.fishing.sceneDirty=true;
    this.fishingControls.hidden=mode!=='fishing';
@@ -415,47 +416,31 @@
    this.syncFishingTiming();
   }
   renderFishing(){
+   // The complete authored PNG/GIF already contains Hachiware and the fishing rod.
+   // Do not stamp a duplicate character or procedural scenery over it.
    if(this.paintSprite('reference_fishing',0,0,W,H))return;
-   if(!this.paintSprite('bg_fishing',0,0,W,H)){
-    if(this.artError)this.artError.hidden=false;
-    return;
+   if(this.paintSprite('bg_fishing',0,0,W,H))return;
+   // The CSS bitmap remains visible when Canvas decode fails; never fill black.
+   if(this.artError){
+    this.artError.hidden=false;
+    this.artError.textContent='낚시 이미지를 불러오지 못했습니다. 앱 이미지 에셋을 확인해 주세요.';
    }
-   const c=this.ctx,f=this.state.fishing;
-   const catching=f.caught;
-   c.save();
-   c.scale(W/ART_W,H/ART_H);
-   const frame=catching?[76,410,797,459]:[550,445,323,424];
-   this.paintSprite(catching?'hachiware_catch':'hachiware_idle',...frame);
-
-   // The original bitmap includes sample numbers. Replace only its UI labels.
-   const countPositions=[[1035,312],[1031,459],[1038,602],[1035,751]];
-   countPositions.forEach(([x,y],index)=>{
-    this.box(x-13,y-21,26,29,7,'#f8ede2',INK,0);
-    this.text(String(f.counts[index]),x,y+1,23,'#774822','850',25);
-   });
-   this.box(176,919,157,55,12,'#fff9ed',INK,0);
-   if(!catching)this.text('FISH',253,960,36,'#925824','850',140);
-   this.box(141,1116,215,73,10,'#fff9ed',INK,0);
-   c.restore();
   }
   renderWeeding(){
    const c=this.ctx,w=this.state.weeding;
-   const hasReference=this.paintSprite('reference_weeding',0,0,W,H);
-   if(!hasReference){
-    if(!this.paintSprite('bg_weeding',0,0,W,H)){
-     this.message('제초 배경 에셋이 없습니다. GIF 또는 PNG 이미지 파일을 추가해 주세요.');
-     return;
-    }
-    const key=w.status==='idle'?'weed_medium':'weed_'+w.status;
-    // No procedurally drawn character fallback: only authored images.
-    if(!this.paintSprite(key,162,306,265,280))
-     this.atlas.drawPanel(c,'weeding_states',
-      w.status==='perfect'?0:w.status==='bad'?2:1,162,306,265,280);
+   // The second user GIF is food collection, NOT a weed-removal scene.
+   if(!this.paintSprite('bg_weeding',0,0,W,H)){
+    this.message('제초 배경 PNG 로드 실패 · 설치 이미지 확인 필요');
+    return;
    }
-   const labels={idle:'타이밍을 맞춰 잡초를 누른 후 단어 뜻을 입력하세요',
+   const key=w.status==='idle'?'weed_medium':'weed_'+w.status;
+   if(!this.paintSprite(key,162,306,265,280))
+    this.atlas.drawPanel(c,'weeding_states',
+     w.status==='perfect'?0:w.status==='bad'?2:1,162,306,265,280);
+   const labels={idle:'잡초를 누른 후 단어의 뜻을 입력하세요',
     perfect:'✨ 타이밍·뜻 정답!',medium:'🌱 뜻 정답!',
     bad:'❌ 타이밍 또는 단어 뜻 오답'};
-   // Timing meter is interactive UI; scenery and characters are images.
+   // Interactive timing meter only; never generate placeholder character geometry.
    this.box(30,860,540,96,18,'#fffaf0');
    this.box(52,889,496,36,17,'#f69ca3',INK,2);
    c.fillStyle='#f8d387';c.fillRect(52+496*.22,893,496*.56,28);

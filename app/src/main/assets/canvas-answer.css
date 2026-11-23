@@ -10,7 +10,15 @@
 #wv-weeding-word{position:absolute;left:50%;top:12%;transform:translateX(-50%);max-width:70%;z-index:2;background:#fff9eaf2;border:3px solid #ac885d;border-radius:12px;padding:7px 13px;font-weight:900;color:#513b2d;text-align:center;font-size:clamp(14px,4vw,21px);overflow-wrap:anywhere;pointer-events:none}
 .wv-canvas-stage[data-mode="fishing"] #wordvilleCanvas{background:#a4dbe9 url('images/fishing/bg_fishing.png') center / cover no-repeat}
 .wv-canvas-stage[data-mode="fishing"][data-reference-art="true"]{aspect-ratio:9/16}
-.wv-canvas-stage[data-mode="weeding"][data-reference-art="true"]{aspect-ratio:9/16;overflow:hidden;background:#c9e6bf}
-.wv-canvas-stage[data-mode="weeding"][data-reference-art="true"] #wordvilleCanvas{width:100%;height:100%;aspect-ratio:auto}
+/* The screenshot already has the full art and the bobber. Overlay the active
+   timing gauge without replacing the illustration or drawing another cat. */
+.wv-canvas-stage[data-mode="fishing"] #wv-fishing-controls .wv-fishing-reel{
+ bottom:4.4%;height:11%;left:5%;right:5%;
+ border:2px solid #a58b6e;background:#fff9e7ee;box-shadow:0 2px 4px #523b2a25;
+}
+.wv-canvas-stage[data-mode="fishing"] #wv-fishing-controls .wv-fishing-track{
+ background:linear-gradient(90deg,#bee5ef,#98d4ed 45%,#67b4dd 75%,#2d93c5);
+}
+.wv-canvas-stage[data-mode="fishing"] .wv-fishing-fish{display:none}
 #wv-fishing-art-error{position:absolute;top:25%;left:6%;right:6%;padding:15px;border-radius:14px;border:3px solid #9a6d41;background:#fff3da;color:#633f29;font-size:14px;font-weight:800;line-height:1.5;text-align:center;z-index:3}
 @media(max-width:390px){.wv-answer-line{grid-template-columns:minmax(0,1fr) auto}.wv-answer-line button:last-child{grid-column:1/-1;min-height:32px}}

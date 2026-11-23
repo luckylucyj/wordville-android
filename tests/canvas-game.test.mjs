@@ -89,8 +89,10 @@ test('fishing uses authored PNGs only, logs WebView URL errors and does not draw
  assert.match(canvas,/visited=new Uint8Array\(total\)/);
  const fishing=canvas.slice(canvas.indexOf('  renderFishing(){'),canvas.indexOf('  renderWeeding(){'));
  assert.match(fishing,/this\.paintSprite\('bg_fishing',0,0,W,H\)/);
- assert.match(fishing,/this\.paintSprite\(catching\?'hachiware_catch':'hachiware_idle'/);
+ assert.doesNotMatch(fishing,/hachiware_catch|hachiware_idle/,'Background already includes Hachiware');
  assert.match(canvas,/f\.pos>=FISH_ZONE\[0\]-2&&f\.pos<=FISH_ZONE\[1\]\+2/);
+ assert.match(canvas,/reference_foraging:'images\\/reference\\/foraging\\.gif'/);
+ assert.doesNotMatch(canvas,/reference_weeding:/);
  assert.match(canvas,/this\.openAnswer\('fishing','perfect'\)/);
  assert.match(canvas,/this\.submitAnswer\(this\.answerInput\.value\)/);
  assert.match(css,/width:var\(--fish-width\)/);
@@ -100,4 +102,12 @@ test('fishing uses authored PNGs only, logs WebView URL errors and does not draw
  assert.doesNotMatch(generator,/fishing\/bg_dock\.png/);
  assert.doesNotMatch(generator,/\("fishing\/hachiware_(idle|catch)\.png"/);
  assert.match(generator,/if path\.exists\(\): return/);
+});
+
+test('the second user GIF is food collecting, never weed removal',()=>{
+ const weeding=canvas.slice(canvas.indexOf('  renderWeeding(){'),canvas.indexOf('  constrainFloor('));
+ assert.doesNotMatch(weeding,/reference_foraging|reference_weeding/);
+ assert.match(css,/images\\/reference\\/foraging\\.gif/);
+ const installer=readFileSync(new URL('../scripts/install-reference-gifs.py',import.meta.url),'utf8');
+ assert.match(installer,/LEGACY=/);
 });

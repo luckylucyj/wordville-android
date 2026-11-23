@@ -72,6 +72,13 @@
  position:relative;height:220px;overflow:hidden;
  background:linear-gradient(#dff3f8 0 35%,#c5e3a5 86%);
 }
+/* Original user dessert GIF belongs to the food-collection game, not weeding. */
+#wv-forage-card[data-reference-art="true"] .wv-forage-viewport{
+ width:100%;height:auto;aspect-ratio:9/16;
+ background:#c7dfb5 url('images/reference/foraging.gif') center / 100% 100% no-repeat;
+}
+#wv-forage-card[data-reference-art="true"] .wv-forage-sprite,
+#wv-forage-card[data-reference-art="true"] .wv-forage-badge{display:none}
 .wv-forage-sprite{
  width:220px;height:220px;margin-inline:auto;
  background:url('images/foraging/chiikawa_3stage_atlas.png') no-repeat center var(--forage-frame) / 100% 300%;
