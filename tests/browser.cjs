@@ -434,7 +434,7 @@ const assert = require('node:assert/strict');
   const townCanvas=page.locator('#village-canvas'),greetBubble=page.locator('#wv-town-affinity');
   await townCanvas.click({position:greetingFixture.position});
   assert.equal(await greetBubble.isVisible(),true,'tapping a visible resident shows the map heart');
-  assert.match(await greetBubble.innerText(),/♥.*\/100.*\+2/);
+  assert.equal(await greetBubble.innerText(),'♥ '+(greetingFixture.affinity+2)+'/100','Only the heart and score appear above the resident');
   await townCanvas.click({position:greetingFixture.position});
   assert.equal(await page.evaluate(()=>WordvilleSocial.affection('alex')),greetingFixture.affinity+2,'rapid taps do not grant extra points');
   await page.evaluate(({originals,paused})=>{
