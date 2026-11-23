@@ -31,11 +31,12 @@
   aquarium:'pixel_furn_aquarium',lamp:'pixel_furn_lamp',plant:'pixel_furn_plant',
   rug:'pixel_furn_cushions'
  };
- // Foot collision half-extents (hw, hh) in logical 600x1000 space so live room actors never walk through furniture.
+ // Foot collision half-extents (hw, hh) & height layerBias in logical 600x1000 space.
+ // Flat items (cushions/rug) use negative layerBias so characters sit/stand over them; tall items occlude behind.
  const FURNITURE_FOOTPRINTS={
-  bed:{hw:54,hh:26,sit:true},shelf:{hw:34,hh:20},books:{hw:34,hh:20},
-  desk:{hw:38,hh:22},chair:{hw:36,hh:18,sit:true},sofa:{hw:38,hh:22,sit:true},
-  aquarium:{hw:34,hh:22},lamp:{hw:18,hh:14},plant:{hw:20,hh:14},rug:{hw:36,hh:18,sit:true}
+  bed:{hw:54,hh:26,sit:true,layerBias:0},shelf:{hw:34,hh:20,layerBias:4},books:{hw:34,hh:20,layerBias:4},
+  desk:{hw:38,hh:22,layerBias:0},chair:{hw:36,hh:18,sit:true,layerBias:-22},sofa:{hw:38,hh:22,sit:true,layerBias:2},
+  aquarium:{hw:34,hh:22,layerBias:4},lamp:{hw:18,hh:14,layerBias:4},plant:{hw:20,hh:14,layerBias:2},rug:{hw:36,hh:18,sit:true,layerBias:-26}
  };
  const MASCOT_IDS=new Set(['chiikawa','hachiware','usagi','rakko','kurimanju']);
  const ALL_RESIDENT_NAMES=[
@@ -88,6 +89,8 @@
     bg_room:'images/room/room-decor.webp',
     room_chiikawa:'images/minigames/room_chiikawa_empty.webp',
     room_hachiware:'images/minigames/room_hachiware_empty.webp',
+    room_chiikawa_fg:'images/minigames/room_chiikawa_fg.png',
+    room_hachiware_fg:'images/minigames/room_hachiware_fg.png',
     meadow_bg:'images/minigames/meadow_bg.webp',
     prop_weed_full:'images/minigames/props/weed_full.png',
     prop_weed_damaged:'images/minigames/props/weed_damaged.png',
@@ -126,6 +129,8 @@
     foraging:{stage:1,timer:0,choices:[],pending:false,foodIdx:0},
     room:this.loadRoomState()};
    this.roomActors=[];
+   this.roomInviteOpen=false;
+   this.roomGuestQuery='';
    this.roomSocialBar=root.document.getElementById('wv-room-social-bar');
    this.weedMatchNode=root.document.getElementById('wv-weed-match');
    this.forageSentenceNode=root.document.getElementById('wv-forage-sentence');
@@ -598,18 +603,26 @@
     this.text(fr.word||'word',fx+49,fy+22,13,INK,'850',88);
     this.text(fr.meaning||'',fx+49,fy+40,11,'#7d5e48','650',88);
    });
-   // Depth-sort BOTH placed furniture AND live room actors (host + invited residents) by footY!
+   // Depth-sort placed furniture, live room actors, AND front doorway arch/pillars by footY!
    const drawList=[];
    room.placed.forEach((item,index)=>{
-    drawList.push({kind:'furn',footY:item.y+ROOM_FLOOR_OFFSET,item,index});
+    const bias=FURNITURE_FOOTPRINTS[item.id]?.layerBias||0;
+    drawList.push({kind:'furn',footY:item.y+ROOM_FLOOR_OFFSET,sortY:item.y+ROOM_FLOOR_OFFSET+bias,item,index});
    });
    for(const actor of this.roomActors){
-    drawList.push({kind:'actor',footY:actor.y+ROOM_FLOOR_OFFSET,actor});
+    drawList.push({kind:'actor',footY:actor.y+ROOM_FLOOR_OFFSET,sortY:actor.y+ROOM_FLOOR_OFFSET,actor});
    }
-   drawList.sort((a,b)=>a.footY-b.footY);
+   // Front stone arch / dome door arch + lower rim occludes actors & furniture behind y=488
+   const fgKey=room.host==='hachiware'?'room_hachiware_fg':'room_chiikawa_fg';
+   if(this.sprites[fgKey]){
+    drawList.push({kind:'room_fg',footY:488,sortY:488,fgKey});
+   }
+   drawList.sort((a,b)=>a.sortY-b.sortY);
    const nowSec=Date.now()/1000;
    for(const entry of drawList){
-    if(entry.kind==='furn'){
+    if(entry.kind==='room_fg'){
+     this.paintSprite(entry.fgKey,-24,95,648,560);
+    }else if(entry.kind==='furn'){
      const {item,index}=entry;
      const y=entry.footY;
      const pixKey=PIXEL_FURNITURE_MAP[item.id];
@@ -954,30 +967,73 @@
     });
     hostRow.append(btn);
    }
-   const gRow=root.document.createElement('div');gRow.className='wv-room-social-row';
-   const gl=root.document.createElement('span');gl.className='wv-room-social-label';
-   gl.textContent='👥 마을 주민 초대 ('+(room.guests||[]).length+'/4):';
-   gRow.append(gl);
+   // Accordion header showing invited resident count + compact badges + expand/collapse arrow
+   const accBtn=root.document.createElement('button');accBtn.type='button';accBtn.className='wv-guest-accordion-btn';
+   accBtn.setAttribute('aria-expanded',String(Boolean(this.roomInviteOpen)));
+   const summary=root.document.createElement('span');summary.className='wv-guest-summary';
+   const guests=room.guests||[];
+   const nameMap=new Map(ALL_RESIDENT_NAMES);
+   summary.append('👥 마을 주민 초대 ('+guests.length+'/4)');
+   guests.forEach(gid=>{
+    const badge=root.document.createElement('span');badge.className='wv-guest-badge';
+    badge.textContent=nameMap.get(gid)||gid;
+    summary.append(badge);
+   });
+   const arrow=root.document.createElement('span');
+   arrow.textContent=this.roomInviteOpen?'접기 ▴':'펼치기 ▾';
+   accBtn.append(summary,arrow);
+
+   const panel=root.document.createElement('div');panel.className='wv-guest-panel';
+   panel.hidden=!this.roomInviteOpen;
+   const search=root.document.createElement('input');
+   search.type='search';search.className='wv-guest-search';
+   search.placeholder='🔍 주민 이름 검색 (예: 우사기, 토시로, 알렉스)...';
+   search.value=this.roomGuestQuery||'';
    const chips=root.document.createElement('div');chips.className='wv-guest-chips';
-   for(const [rid,rname] of ALL_RESIDENT_NAMES){
-    if(rid===room.host)continue;
-    const active=(room.guests||[]).includes(rid);
-    const chip=root.document.createElement('button');chip.type='button';chip.className='wv-guest-chip';
-    chip.setAttribute('aria-pressed',String(active));
-    chip.textContent=active?rname+' ✓':rname+' +';
-    chip.addEventListener('click',()=>{
-     const cur=room.guests||[];
-     if(cur.includes(rid)){
-      room.guests=cur.filter(id=>id!==rid);
-     }else{
-      if(cur.length>=4){this.message('마을 주민은 최대 4명까지 함께 초대할 수 있어요.');return;}
-      room.guests=[...cur,rid];
-     }
-     this.saveRoomState();this.syncRoomActors();this.renderRoomSocialUI();
-    });
-    chips.append(chip);
-   }
-   bar.append(hostRow,gRow,chips);
+
+   const populateChips=()=>{
+    chips.replaceChildren();
+    const q=(this.roomGuestQuery||'').trim().toLowerCase();
+    let count=0;
+    for(const [rid,rname] of ALL_RESIDENT_NAMES){
+     if(rid===room.host)continue;
+     if(q&&!rname.toLowerCase().includes(q)&&!rid.toLowerCase().includes(q))continue;
+     count++;
+     const active=(room.guests||[]).includes(rid);
+     const chip=root.document.createElement('button');chip.type='button';chip.className='wv-guest-chip';
+     chip.setAttribute('aria-pressed',String(active));
+     chip.textContent=active?rname+' ✓':rname+' +';
+     chip.addEventListener('click',()=>{
+      const cur=room.guests||[];
+      if(cur.includes(rid)){
+       room.guests=cur.filter(id=>id!==rid);
+      }else{
+       if(cur.length>=4){this.message('마을 주민은 최대 4명까지 함께 초대할 수 있어요.');return;}
+       room.guests=[...cur,rid];
+      }
+      this.saveRoomState();this.syncRoomActors();this.renderRoomSocialUI();
+     });
+     chips.append(chip);
+    }
+    if(!count){
+     const empty=root.document.createElement('span');empty.className='wv-guest-empty';
+     empty.textContent='“'+this.roomGuestQuery+'”에 해당하는 주민이 없습니다.';
+     chips.append(empty);
+    }
+   };
+   search.addEventListener('input',()=>{
+    this.roomGuestQuery=search.value;
+    populateChips();
+   });
+   accBtn.addEventListener('click',()=>{
+    this.roomInviteOpen=!this.roomInviteOpen;
+    panel.hidden=!this.roomInviteOpen;
+    accBtn.setAttribute('aria-expanded',String(this.roomInviteOpen));
+    arrow.textContent=this.roomInviteOpen?'접기 ▴':'펼치기 ▾';
+   });
+   populateChips();
+   panel.append(search,chips);
+   bar.append(hostRow,accBtn,panel);
   }
   buildWeedingMatchUI(){
    const box=this.weedMatchNode;if(!box||!this.words.length)return;
