@@ -126,7 +126,9 @@
     weeding:{pos:0,dir:1,status:'idle',timer:0,pendingRetry:false,combo:0,bushHp:4,maxHp:4,
      actor:{id:'chiikawa',x:195,y:580,tx:225,ty:580,direction:'right',walkDistance:0,action:'idle',jumpT:0},
      particles:[],matchPairs:[],selectedEn:null,matchedIds:[]},
-    foraging:{stage:1,timer:0,choices:[],pending:false,foodIdx:0},
+    foraging:{stage:1,timer:0,choices:[],pending:false,foodIdx:0,
+     actor:{id:'chiikawa',x:126,y:176,tx:148,ty:176,direction:'right',walkDistance:0,action:'walk'},
+     particles:[],t:0},
     room:this.loadRoomState()};
    this.roomActors=[];
    this.roomInviteOpen=false;
@@ -142,6 +144,8 @@
    this.forageBadge=this.forageCard.querySelector('.wv-forage-badge');
    this.forageGauge=this.forageCard.querySelector('.wv-forage-gauge');
    this.forageButtons=this.forageCard.querySelectorAll('[data-forage-action]');
+   this.forageLiveCanvas=root.document.getElementById('wv-forage-live');
+   this.forageLiveCtx=this.forageLiveCanvas?this.forageLiveCanvas.getContext('2d'):null;
    this.inventoryNode=root.document.getElementById('room-item-list');
    this.drawer=root.document.getElementById('room-drawer');
    this.stage=this.canvas.parentElement;
@@ -474,17 +478,83 @@
     }
    }
    if(this.state.mode==='room')this.updateRoomActors(dt);
-   if(this.state.mode==='foraging'&&g.timer>0){
-    g.timer=Math.max(0,g.timer-dt);
-    if(!g.timer){
-     if(g.stage===1)this.setForageStage(2,1.4);
-     else if(g.stage===2)this.setForageStage(3,g.pending?1:0);
-     else{
-      g.pending=false;
-      this.setForageStage(1);
+   if(this.state.mode==='foraging'){
+    g.t=(g.t||0)+dt;
+    const fa=g.actor;
+    if(fa){
+     if(g.stage===1){
+      fa.tx=138+Math.sin(g.t*2.2)*12;fa.direction='right';
+      fa.x+=(fa.tx-fa.x)*Math.min(1,dt*5);fa.walkDistance=(fa.walkDistance||0)+dt*3.4;fa.action='walk';
+     }else if(g.stage===2){
+      fa.x+=(166-fa.x)*Math.min(1,dt*6);fa.direction='right';fa.action='talk';
+      if(Math.random()<dt*7){
+       g.particles.push({x:210+(Math.random()-.5)*26,y:146,vx:(Math.random()-.5)*55,vy:-45-Math.random()*45,life:0.65,color:Math.random()<.5?'#f7a3b5':'#f7d97e',size:4});
+      }
+     }else{
+      fa.x+=(152-fa.x)*Math.min(1,dt*6);fa.direction='down';fa.action='idle';
+      if(Math.random()<dt*12){
+       g.particles.push({x:195+(Math.random()-.5)*70,y:125,vx:(Math.random()-.5)*80,vy:-65-Math.random()*55,life:0.75,color:Math.random()<.5?'#ffe066':'#92e088',size:5});
+      }
+     }
+    }
+    for(let i=g.particles.length-1;i>=0;i--){
+     const pt=g.particles[i];pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.vy+=120*dt;pt.life-=dt;
+     if(pt.life<=0)g.particles.splice(i,1);
+    }
+    if(g.timer>0){
+     g.timer=Math.max(0,g.timer-dt);
+     if(!g.timer){
+      if(g.stage===1)this.setForageStage(2,1.4);
+      else if(g.stage===2)this.setForageStage(3,g.pending?1:0);
+      else{
+       g.pending=false;
+       this.setForageStage(1);
+      }
      }
     }
    }
+  }
+  renderForagingLive(){
+   const c=this.forageLiveCtx;if(!c)return;
+   const g=this.state.foraging,cw=360,ch=220;
+   c.save();c.imageSmoothingEnabled=false;c.clearRect(0,0,cw,ch);
+   const bg=this.sprites.meadow_bg;
+   if(bg&&(bg.naturalWidth||bg.width))c.drawImage(bg,0,0,cw,ch);
+   else{c.fillStyle='#c5e3a5';c.fillRect(0,0,cw,ch);}
+   // Ground shadows
+   const fa=g.actor||{id:'chiikawa',x:138,y:180,direction:'right',walkDistance:0,action:'walk'};
+   const word=this.getCurrentWord();
+   const foodKey=FOOD_PROPS[((word?.word?.length||0)+(g.foodIdx||0))%FOOD_PROPS.length];
+   const foodImg=this.sprites['prop_'+foodKey];
+   const foodX=238,foodY=182;
+   const foodBob=g.stage===2?Math.sin((g.t||0)*14)*3:(g.stage===3?-8-Math.abs(Math.sin((g.t||0)*7))*8:0);
+   c.fillStyle='rgba(74,59,50,0.22)';
+   c.beginPath();c.ellipse(foodX,foodY+2,34,10,0,0,Math.PI*2);c.fill();
+   c.beginPath();c.ellipse(fa.x,fa.y+2,22,8,0,0,Math.PI*2);c.fill();
+   // Giant pixel food prop
+   if(foodImg&&(foodImg.naturalWidth||foodImg.width)){
+    const fw=84,fh=fw*(foodImg.naturalHeight||foodImg.height)/(foodImg.naturalWidth||foodImg.width);
+    c.drawImage(foodImg,foodX-fw/2,foodY-fh+6+foodBob,fw,fh);
+   }
+   // Live animated Wordville pixel-art Chiikawa!
+   const jumpOff=g.stage===3?-Math.abs(Math.sin((g.t||0)*7))*24:(g.stage===2?-Math.abs(Math.sin((g.t||0)*12))*5:0);
+   if(root.WordvilleWalk?.paint){
+    root.WordvilleWalk.paint(c,fa,fa.x,fa.y+jumpOff,{
+     width:88,height:88,walking:fa.action==='walk',action:fa.action
+    });
+   }
+   // Cute pixel reaction bubble
+   const mood=g.stage===3?'야호! ✨':(g.stage===2?'냠냠! 💕':'음식 발견!');
+   const bw=76,bx=Math.max(10,Math.min(cw-bw-10,fa.x-bw/2)),by=fa.y+jumpOff-106;
+   c.fillStyle='#fffdf5f2';c.strokeStyle=INK;c.lineWidth=2;
+   c.beginPath();c.roundRect(bx,by,bw,22,8);c.fill();c.stroke();
+   c.fillStyle=INK;c.textAlign='center';c.font='800 11px system-ui, sans-serif';
+   c.fillText(mood,bx+bw/2,by+15);
+   // Pixel sparkles / crumbs
+   for(const pt of (g.particles||[])){
+    c.fillStyle=pt.color;c.fillRect(Math.round(pt.x),Math.round(pt.y),pt.size,pt.size);
+   }
+   c.restore();
   }
   setForageStage(stage,timer=0){
    const game=this.state.foraging,display=FORAGE_STAGES[stage-1];
@@ -1236,7 +1306,7 @@
    root.document.getElementById('wv-solo-day')?.addEventListener('change',()=>this.refreshWordPool());
   }
   paint(){
-   if(this.state.mode==='foraging')return;
+   if(this.state.mode==='foraging'){this.renderForagingLive();return;}
    if(this.state.mode==='fishing'&&!this.state.fishing.sceneDirty&&!this.sprites.reference_fishing)return;
    this.ctx.clearRect(0,0,W,H);
    if(this.state.mode==='fishing'){
@@ -1298,6 +1368,7 @@
    </div>
    <div id="wv-forage-card" data-stage="1" hidden>
     <div class="wv-forage-viewport">
+     <canvas id="wv-forage-live" class="wv-forage-live" width="360" height="220" aria-hidden="true"></canvas>
      <div class="wv-forage-sprite" aria-hidden="true"></div>
      <img id="wv-forage-food-prop" class="wv-forage-food-prop" src="images/minigames/props/food_pudding.png" alt="" aria-hidden="true">
      <span class="wv-forage-badge" role="status" lang="en">Perfect!</span>

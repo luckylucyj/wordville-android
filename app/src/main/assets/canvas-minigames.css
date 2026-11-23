@@ -266,10 +266,10 @@
 #wv-forage-card .wv-forage-viewport{
  background:#c5e3a5 url('images/minigames/meadow_bg.webp') center bottom / cover no-repeat;
 }
-#wv-forage-card .wv-forage-sprite{
- width:215px;height:215px;
- background:url('images/minigames/chiikawa_forage_3stage.png') no-repeat var(--forage-frame) center / 300% 100%;
- filter:drop-shadow(0 4px 4px #3c2e2230);
+#wv-forage-card .wv-forage-sprite,
+#wv-forage-card .wv-forage-food-prop{display:none}
+.wv-forage-live{
+ display:block;width:100%;height:100%;image-rendering:pixelated;
 }
 .wv-forage-food-prop{
  position:absolute;right:14px;bottom:14px;width:78px;height:78px;
