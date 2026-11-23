@@ -12,21 +12,27 @@ await import('../app/src/main/assets/wordville-social.js');
 const L=globalThis.WordvilleScheduleLocale;
 const S=globalThis.WordvilleSocial;
 
-test('all 22 residents have distinct editable app birthdays and local status',()=>{
+test('all residents retain status and original birthdays use their own calendar',()=>{
  assert.equal(S.residents.length,22);
  assert.equal(S.phrases.length,22);
  assert.equal(new Set(S.phrases.map(row=>row[0])).size,22);
  for(const p of S.residents){
-  assert.match(S.birthday(p.id),/^\d{2}-\d{2}$/);
   const state=S.status(p.id,new Date('2026-11-20T15:00:00'));
   assert.ok(state.mood.length===4,p.id);
   assert.ok(state.affinity>=0&&state.affinity<=100,p.id);
   assert.ok(Array.isArray(state.plan),p.id);
  }
- assert.equal(S.updateBirthday('chiikawa','2000-02-29'),true);
- assert.equal(S.birthday('chiikawa'),'02-29');
- assert.equal(S.updateBirthday('chiikawa','2001-02-29'),false);
- assert.equal(S.updateBirthday('no-such-resident','2000-01-01'),false);
+ assert.deepEqual(S.birthday('alex'),{season:'summer',day:13});
+ assert.deepEqual(S.birthday('harvey'),{season:'winter',day:14});
+ assert.deepEqual(S.birthday('chiikawa'),{month:5,day:1});
+ assert.deepEqual(S.birthday('hachiware'),S.birthday('chiikawa'));
+ assert.deepEqual(S.birthday('usagi'),{month:1,day:22});
+ assert.deepEqual(S.birthday('momo'),{month:6,day:3});
+ assert.deepEqual(S.birthday('toshiro'),{month:12,day:20});
+ assert.deepEqual(S.birthday('aizen'),{month:5,day:29});
+ assert.deepEqual(S.birthday('madoka'),{month:10,day:3});
+ for(const id of ['rakko','kurimanju','homura'])assert.equal(S.birthday(id),null);
+ assert.equal(S.status('alex').relations.length,21);
 });
 
 test('daily authored bulletin board includes real IDs and examples, never live social data',()=>{
@@ -55,6 +61,25 @@ test('affinity updates on deliberate conversations, and meetings appear in both 
  assert.ok(S.status('hachiware').talks.some(e=>e.other==='chiikawa'));
 });
 
+test('resident affinity changes in both directions independently of player greetings',()=>{
+ const at=new Date(2026,10,23,12,0),later=new Date(2026,10,23,13,0);
+ const player=S.affection('homura');
+ const before=S.relationship('homura','madoka');
+ assert.ok(before.outgoing>before.incoming);
+ const after=S.meeting('homura','madoka','Hi!','안녕!',at);
+ assert.deepEqual(after,{...before,outgoing:before.outgoing+3,incoming:before.incoming+2});
+ assert.deepEqual(S.meeting('madoka','homura','Hi!','안녕!',at),{
+  id:'homura',type:after.type,outgoing:after.incoming,incoming:after.outgoing
+ });
+ assert.equal(S.affection('homura'),player);
+ const strained=S.relationship('toshiro','aizen');
+ const next=S.meeting('toshiro','aizen','Hello.','안녕.',later);
+ assert.equal(next.outgoing,strained.outgoing-1);
+ assert.equal(S.hello('homura',at).score,player+2);
+ assert.deepEqual(S.relationship('homura','madoka'),after);
+ const saved=JSON.parse(store.get(S.STORAGE_KEY));
+ assert.equal(saved.pairs['homura|madoka'].scores.homura,after.outgoing);
+});
 test('schedule locale never mutates the underlying Korean routine data',()=>{
  const original=globalThis.WordvilleSchedule.at('chiikawa',6*60);
  assert.equal(original.activity,'제초 5급 시험 공부');
