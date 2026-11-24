@@ -741,8 +741,6 @@
     c.fillStyle='rgba(74,59,50,0.22)';
     c.beginPath();c.ellipse(wa.x+8,wa.y+4,36,11,0,0,Math.PI*2);c.fill();
     c.translate(wa.x+8,wa.y+jumpOff);
-    // Mirror frames 0-2 so Chiikawa tugs toward the giant weed bush on the right!
-    if(frame<3)c.scale(-1,1);
     c.drawImage(weedSheet,frame*fw,0,fw,fh,-drawSize/2,-drawSize+14,drawSize,drawSize);
     c.restore();
    }else if(wa&&root.WordvilleWalk?.paint){
