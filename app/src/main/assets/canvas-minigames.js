@@ -149,7 +149,7 @@
      actor:{id:'chiikawa',x:195,y:580,tx:225,ty:580,direction:'right',walkDistance:0,action:'idle',jumpT:0},
      particles:[],matchPairs:[],selectedEn:null,matchedIds:[]},
     foraging:{stage:1,timer:0,choices:[],pending:false,foodIdx:0,
-     actor:{id:'chiikawa',x:126,y:176,tx:148,ty:176,direction:'right',walkDistance:0,action:'walk'},
+     actor:{id:'chiikawa',x:180,y:146,tx:180,ty:146,direction:'down',walkDistance:0,action:'walk'},
      particles:[],t:0},
     room:this.loadRoomState()};
    this.roomActors=[];
@@ -524,18 +524,20 @@
     g.t=(g.t||0)+dt;
     const fa=g.actor;
     if(fa){
+     fa.direction='down';
      if(g.stage===1){
-      fa.tx=138+Math.sin(g.t*2.2)*12;fa.direction='right';
-      fa.x+=(fa.tx-fa.x)*Math.min(1,dt*5);fa.walkDistance=(fa.walkDistance||0)+dt*3.4;fa.action='walk';
+      fa.tx=180+Math.sin(g.t*2.0)*6;
+      fa.x+=(fa.tx-fa.x)*Math.min(1,dt*5);fa.y+=(146-fa.y)*Math.min(1,dt*5);
+      fa.walkDistance=(fa.walkDistance||0)+dt*2.8;fa.action='walk';
      }else if(g.stage===2){
-      fa.x+=(166-fa.x)*Math.min(1,dt*6);fa.direction='right';fa.action='talk';
+      fa.x+=(180-fa.x)*Math.min(1,dt*6);fa.y+=(152-fa.y)*Math.min(1,dt*6);fa.action='talk';
       if(Math.random()<dt*7){
-       g.particles.push({x:210+(Math.random()-.5)*26,y:146,vx:(Math.random()-.5)*55,vy:-45-Math.random()*45,life:0.65,color:Math.random()<.5?'#f7a3b5':'#f7d97e',size:4});
+       g.particles.push({x:180+(Math.random()-.5)*46,y:162,vx:(Math.random()-.5)*55,vy:-45-Math.random()*45,life:0.65,color:Math.random()<.5?'#f7a3b5':'#f7d97e',size:4});
       }
      }else{
-      fa.x+=(152-fa.x)*Math.min(1,dt*6);fa.direction='down';fa.action='idle';
+      fa.x+=(180-fa.x)*Math.min(1,dt*6);fa.y+=(146-fa.y)*Math.min(1,dt*6);fa.action='idle';
       if(Math.random()<dt*12){
-       g.particles.push({x:195+(Math.random()-.5)*70,y:125,vx:(Math.random()-.5)*80,vy:-65-Math.random()*55,life:0.75,color:Math.random()<.5?'#ffe066':'#92e088',size:5});
+       g.particles.push({x:180+(Math.random()-.5)*80,y:120,vx:(Math.random()-.5)*80,vy:-65-Math.random()*55,life:0.75,color:Math.random()<.5?'#ffe066':'#92e088',size:5});
       }
      }
     }
@@ -563,31 +565,31 @@
    const bg=this.sprites.meadow_bg;
    if(bg&&(bg.naturalWidth||bg.width))c.drawImage(bg,0,0,cw,ch);
    else{c.fillStyle='#c5e3a5';c.fillRect(0,0,cw,ch);}
-   // Ground shadows
-   const fa=g.actor||{id:'chiikawa',x:138,y:180,direction:'right',walkDistance:0,action:'walk'};
+   // 1. Live front-facing Wordville pixel-art Chiikawa standing BEHIND the giant food!
+   const fa=g.actor||{id:'chiikawa',x:180,y:146,direction:'down',walkDistance:0,action:'walk'};
    const word=this.getCurrentWord();
    const foodKey=FOOD_PROPS[((word?.word?.length||0)+(g.foodIdx||0))%FOOD_PROPS.length];
    const foodImg=this.sprites['prop_'+foodKey];
-   const foodX=238,foodY=182;
-   const foodBob=g.stage===2?Math.sin((g.t||0)*14)*3:(g.stage===3?-8-Math.abs(Math.sin((g.t||0)*7))*8:0);
-   c.fillStyle='rgba(74,59,50,0.22)';
-   c.beginPath();c.ellipse(foodX,foodY+2,34,10,0,0,Math.PI*2);c.fill();
-   c.beginPath();c.ellipse(fa.x,fa.y+2,22,8,0,0,Math.PI*2);c.fill();
-   // Giant pixel food prop
-   if(foodImg&&(foodImg.naturalWidth||foodImg.width)){
-    const fw=84,fh=fw*(foodImg.naturalHeight||foodImg.height)/(foodImg.naturalWidth||foodImg.width);
-    c.drawImage(foodImg,foodX-fw/2,foodY-fh+6+foodBob,fw,fh);
-   }
-   // Live animated Wordville pixel-art Chiikawa!
-   const jumpOff=g.stage===3?-Math.abs(Math.sin((g.t||0)*7))*24:(g.stage===2?-Math.abs(Math.sin((g.t||0)*12))*5:0);
+   const foodX=180,foodY=204;
+   const foodBob=g.stage===2?Math.sin((g.t||0)*14)*3:(g.stage===3?-6-Math.abs(Math.sin((g.t||0)*7))*7:0);
+   const jumpOff=g.stage===3?-Math.abs(Math.sin((g.t||0)*7))*20:(g.stage===2?-Math.abs(Math.sin((g.t||0)*12))*5:0);
+   c.fillStyle='rgba(74,59,50,0.20)';
+   c.beginPath();c.ellipse(fa.x,fa.y+2,24,8,0,0,Math.PI*2);c.fill();
    if(root.WordvilleWalk?.paint){
     root.WordvilleWalk.paint(c,fa,fa.x,fa.y+jumpOff,{
-     width:88,height:88,walking:fa.action==='walk',action:fa.action
+     width:92,height:92,walking:fa.action==='walk',action:fa.action
     });
    }
-   // Cute pixel reaction bubble
+   // 2. Giant pixel food prop drawn IN FRONT OF Chiikawa!
+   c.fillStyle='rgba(74,59,50,0.24)';
+   c.beginPath();c.ellipse(foodX,foodY+2,38,10,0,0,Math.PI*2);c.fill();
+   if(foodImg&&(foodImg.naturalWidth||foodImg.width)){
+    const fw=88,fh=fw*(foodImg.naturalHeight||foodImg.height)/(foodImg.naturalWidth||foodImg.width);
+    c.drawImage(foodImg,foodX-fw/2,foodY-fh+6+foodBob,fw,fh);
+   }
+   // 3. Cute pixel reaction bubble cleanly above-right of Chiikawa
    const mood=g.stage===3?'야호! ✨':(g.stage===2?'냠냠! 💕':'음식 발견!');
-   const bw=76,bx=Math.max(10,Math.min(cw-bw-10,fa.x-bw/2)),by=fa.y+jumpOff-106;
+   const bw=76,bx=Math.min(cw-bw-12,fa.x+38),by=Math.max(12,fa.y+jumpOff-86);
    c.fillStyle='#fffdf5f2';c.strokeStyle=INK;c.lineWidth=2;
    c.beginPath();c.roundRect(bx,by,bw,22,8);c.fill();c.stroke();
    c.fillStyle=INK;c.textAlign='center';c.font='800 11px system-ui, sans-serif';
