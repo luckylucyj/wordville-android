@@ -108,6 +108,7 @@
     room_chiikawa_fg:'images/minigames/room_chiikawa_fg.png',
     room_hachiware_fg:'images/minigames/room_hachiware_fg.png',
     meadow_bg:'images/minigames/meadow_bg.webp',
+    chiikawa_weed_4f:'images/minigames/chiikawa_weed_4f.png',
     fishing_dock_bg:'images/minigames/fishing_dock_bg.webp',
     prop_fish_blue:'images/minigames/props/fish_blue.png',
     prop_fish_orange:'images/minigames/props/fish_orange.png',
@@ -717,9 +718,34 @@
      this.atlas.drawPanel(c,'weeding_states',
       w.status==='perfect'?0:w.status==='bad'?2:1,162,306,265,280);
    }
-   // Live animated Chiikawa sprite (walks to bush, shakes/pulls, jumps on clear!)
-   const wa=w.actor;
-   if(wa&&root.WordvilleWalk?.paint){
+   // Live 4-frame Chiikawa weed-pulling animation (Grab -> Tug -> Strain -> Pluck!)
+   const wa=w.actor,weedSheet=this.sprites.chiikawa_weed_4f;
+   if(wa&&weedSheet&&(weedSheet.naturalWidth||weedSheet.width)){
+    const now=Date.now();
+    let frame=0;
+    if(w.status==='perfect'||w.status==='medium'){
+     frame=w.timer>0.48?2:3; // Strain tug -> Happy pluck!
+    }else if(w.status==='bad'){
+     frame=2; // Straining sweat
+    }else if(w.selectedEn!=null){
+     frame=(Math.floor(now/210)%2)?2:1; // Actively tugging while matching!
+    }else{
+     const seq=[0,1,2,1];
+     frame=seq[Math.floor(now/340)%seq.length]; // Living crouch-grab-tug loop!
+    }
+    const jumpOff=wa.jumpT>0?-Math.abs(Math.sin(wa.jumpT*Math.PI*3))*26:0;
+    const fw=Math.floor((weedSheet.naturalWidth||weedSheet.width)/4);
+    const fh=weedSheet.naturalHeight||weedSheet.height;
+    const drawSize=136;
+    c.save();c.imageSmoothingEnabled=false;
+    c.fillStyle='rgba(74,59,50,0.22)';
+    c.beginPath();c.ellipse(wa.x+8,wa.y+4,36,11,0,0,Math.PI*2);c.fill();
+    c.translate(wa.x+8,wa.y+jumpOff);
+    // Mirror frames 0-2 so Chiikawa tugs toward the giant weed bush on the right!
+    if(frame<3)c.scale(-1,1);
+    c.drawImage(weedSheet,frame*fw,0,fw,fh,-drawSize/2,-drawSize+14,drawSize,drawSize);
+    c.restore();
+   }else if(wa&&root.WordvilleWalk?.paint){
     const jumpOff=wa.jumpT>0?-Math.abs(Math.sin(wa.jumpT*Math.PI*3))*26:0;
     const m=actorMetrics('chiikawa');
     root.WordvilleWalk.paint(c,wa,wa.x,wa.y+jumpOff,{
